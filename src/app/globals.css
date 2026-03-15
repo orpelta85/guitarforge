@@ -1,0 +1,234 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Barlow+Condensed:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import "tailwindcss";
+
+:root {
+  /* ── Backgrounds ── */
+  --bg-primary: #0A0A0A;
+  --bg-secondary: #141414;
+  --bg-tertiary: #1E1B18;
+  --bg-surface: #1A1A1A;
+  --bg-faceplate: #F5F0E1;
+
+  /* ── Text ── */
+  --text-primary: #FFFFFF;
+  --text-secondary: #A0A0A0;
+  --text-muted: #555555;
+
+  /* ── Accents ── */
+  --gold: #D4A843;
+  --gold-light: #DFBD69;
+  --gold-dark: #B8922E;
+  --crimson: #C41E3A;
+  --crimson-dark: #9A1830;
+  --cream: #F5F0E1;
+
+  /* ── LED ── */
+  --led-red: #FF3333;
+  --led-green: #33CC33;
+  --led-amber: #FFAA00;
+  --led-off: #2A2A2A;
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 400;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Typography ── */
+.font-heading {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+.font-label {
+  font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+}
+.font-readout {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+}
+
+/* ── Metal Panel ── */
+.panel {
+  background: var(--bg-secondary);
+  border: 1px solid #222;
+  border-radius: 2px;
+}
+
+/* ── Faceplate (cream strip) ── */
+.faceplate {
+  background: var(--bg-faceplate);
+  color: #1A1714;
+  border-radius: 2px;
+}
+
+/* ── Gold Button (Primary) ── */
+.btn-gold {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  background: var(--gold);
+  color: #0A0A0A;
+  border: none;
+  border-radius: 2px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-gold:hover { background: var(--gold-light); }
+.btn-gold:active { background: var(--gold-dark); }
+
+/* ── Ghost Button (Secondary) ── */
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid #444;
+  border-radius: 2px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-ghost:hover { border-color: #999; color: #fff; }
+.btn-ghost.active {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* ── Danger Button ── */
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  background: var(--crimson);
+  color: #fff;
+  border: none;
+  border-radius: 2px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-danger:hover { background: var(--crimson-dark); }
+
+/* ── Tag / Chip ── */
+.tag {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 2px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ── LED Indicator ── */
+.led {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.led-on {
+  background: var(--led-green);
+  box-shadow: 0 0 6px var(--led-green), 0 0 16px rgba(51,204,51,0.25);
+}
+.led-off { background: var(--led-off); }
+.led-red {
+  background: var(--led-red);
+  box-shadow: 0 0 6px var(--led-red), 0 0 16px rgba(255,51,51,0.25);
+}
+.led-gold {
+  background: var(--led-amber);
+  box-shadow: 0 0 6px var(--led-amber), 0 0 16px rgba(255,170,0,0.25);
+}
+
+/* ── Progress / VU Meter ── */
+.vu {
+  height: 6px;
+  background: #1A1A1A;
+  border-radius: 1px;
+  overflow: hidden;
+}
+.vu-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold-dark), var(--gold), var(--gold-light));
+  border-radius: 1px;
+  transition: width 0.4s ease;
+}
+.vu-green .vu-fill {
+  background: linear-gradient(90deg, #1a6b2a, var(--led-green));
+}
+
+/* ── Input ── */
+.input {
+  width: 100%;
+  background: #0A0A0A;
+  border: 1px solid #333;
+  color: var(--text-primary);
+  padding: 8px 10px;
+  border-radius: 2px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.input:focus { border-color: var(--gold-dark); }
+.input::placeholder { color: #444; }
+.input-gold { color: var(--gold); font-family: 'JetBrains Mono', monospace; }
+
+/* ── Select ── */
+select {
+  appearance: auto;
+  background: #0A0A0A;
+  border: 1px solid #333;
+  color: var(--text-primary);
+  padding: 6px 8px;
+  border-radius: 2px;
+  font-size: 12px;
+}
+option { background: #141414; color: #e5e5e5; }
+optgroup { background: #0A0A0A; color: #888; }
+
+/* ── Gold Divider ── */
+.divider-gold {
+  height: 1px;
+  background: var(--gold);
+  opacity: 0.2;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gold-dark); }
+
+/* ── Audio ── */
+audio { filter: invert(1) sepia(0.3) hue-rotate(-15deg); }
+audio::-webkit-media-controls-panel { background: #1a1a1a; }
+
+/* ── Number input spinners ── */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { opacity: 0.3; }

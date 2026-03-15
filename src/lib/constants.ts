@@ -1,0 +1,75 @@
+/* ── GuitarForge Constants ── */
+
+export const DAYS = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
+
+export const CATS = [
+  "חימום", "שרדינג", "לגאטו", "בנד", "טאפינג", "Sweep",
+  "קצב", "גריף", "אוזן", "אילתור", "ריפים", "פרזינג",
+  "מודוסים", "יצירה", "שירים", "דינמיקה"
+];
+
+export const COL: Record<string, string> = {
+  "חימום": "#f59e0b",
+  "שרדינג": "#ef4444",
+  "לגאטו": "#8b5cf6",
+  "בנד": "#ec4899",
+  "טאפינג": "#06b6d4",
+  "Sweep": "#14b8a6",
+  "קצב": "#f97316",
+  "גריף": "#84cc16",
+  "אוזן": "#6366f1",
+  "אילתור": "#22d3ee",
+  "ריפים": "#e11d48",
+  "פרזינג": "#d946ef",
+  "מודוסים": "#0ea5e9",
+  "יצירה": "#facc15",
+  "שירים": "#10b981",
+  "דינמיקה": "#a855f7",
+};
+
+export const MODES = [
+  "Aeolian", "Dorian", "Phrygian", "Lydian", "Mixolydian",
+  "Ionian", "Locrian", "Harmonic Minor", "Phrygian Dominant",
+  "Minor Pentatonic", "Minor Blues", "Whole Tone"
+];
+
+export const SCALES = [
+  "C", "Cm", "C#/Db", "C#/Dbm", "D", "Dm", "D#/Eb", "D#/Ebm",
+  "E", "Em", "F", "Fm", "F#/Gb", "F#/Gbm", "G", "Gm",
+  "G#/Ab", "G#/Abm", "A", "Am", "A#/Bb", "A#/Bbm", "B", "Bm"
+];
+
+export const STYLES = [
+  "Doom Metal", "Thrash Metal", "Death Metal", "Black Metal",
+  "Stoner Rock", "Blues Rock", "Hard Rock", "Progressive Metal",
+  "Neo-Classical", "Jazz Fusion", "Grunge"
+];
+
+export const STAGES = [
+  { name: "שלב 1 – פענוח", m: 10, d: "האזנה, ניתוח 8-16 תיבות." },
+  { name: "שלב 2 – טקסט", m: 20, d: "רק ביקוע טקסט. 60%." },
+  { name: "שלב 3 – חצאיות", m: 20, d: "מחציות. כל העיצורים." },
+  { name: "שלב 4 – האפלות", m: 30, d: "50 → 75 → 100%." },
+  { name: "שלב 5 – ביקוע", m: 15, d: "חופש מלא. ביקורות." },
+  { name: "שלב 6 – שיגור", m: 20, d: "ג'אם חופשי." },
+];
+
+export const DEFAULT_DAY_CATS: Record<string, string[]> = {
+  "ראשון": ["חימום", "שרדינג", "ריפים"],
+  "שני": ["חימום", "אוזן", "מודוסים", "אילתור"],
+  "שלישי": ["חימום", "לגאטו", "בנד", "פרזינג"],
+  "רביעי": ["חימום", "גריף", "אילתור", "מודוסים"],
+  "חמישי": ["חימום", "שרדינג", "שירים"],
+  "שישי": ["חימום", "קצב", "דינמיקה", "יצירה"],
+  "שבת": [],
+};
+
+export const DEFAULT_DAY_HRS: Record<string, number> = {
+  "ראשון": 2,
+  "שני": 2,
+  "שלישי": 2,
+  "רביעי": 2,
+  "חמישי": 2,
+  "שישי": 1.5,
+  "שבת": 0,
+};
