@@ -13,6 +13,7 @@ import StudioPage from "./StudioPage";
 import WeeklyCharts from "./WeeklyCharts";
 import SongsterrSearch from "./SongsterrSearch";
 import ProfilePage from "./ProfilePage";
+import AiCoachPage from "./AiCoachPage";
 
 export default function GuitarForgeApp() {
   const [view, setView] = useState<View>("dash");
@@ -110,6 +111,7 @@ export default function GuitarForgeApp() {
         {view === "studio" && <StudioPage />}
         {view === "knowledge" && <KnowledgePage />}
         {view === "profile" && <ProfilePage />}
+        {view === "coach" && <AiCoachPage />}
 
         {/* ══ DASHBOARD ══ */}
         {view === "dash" && (<div>
@@ -365,7 +367,7 @@ export default function GuitarForgeApp() {
             <div className="font-readout text-[11px] text-[#555] mt-2">{wDn}/{wTot} ({wPct}%)</div>
           </div>
 
-          <WeeklyCharts week={week} dayExMap={dayExMap} doneMap={doneMap} />
+          <WeeklyCharts week={week} dayExMap={dayExMap} doneMap={doneMap} bpmLog={bpmLog} />
 
           {songs.length > 0 && (
             <div className="panel p-5 mb-4">

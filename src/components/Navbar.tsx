@@ -1,6 +1,6 @@
 "use client";
 
-type View = "dash" | "daily" | "lib" | "ear" | "studio" | "knowledge" | "log" | "profile";
+type View = "dash" | "daily" | "lib" | "ear" | "studio" | "knowledge" | "log" | "profile" | "coach";
 
 interface NavbarProps {
   view: View;
@@ -14,6 +14,7 @@ const NAV_ITEMS: { id: View; label: string }[] = [
   { id: "ear", label: "Ear Training" },
   { id: "studio", label: "Studio" },
   { id: "knowledge", label: "Theory" },
+  { id: "coach", label: "Coach" },
   { id: "log", label: "Report" },
   { id: "profile", label: "Profile" },
 ];
