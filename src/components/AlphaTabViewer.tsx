@@ -27,17 +27,27 @@ export default function AlphaTabViewer({ fileData, fileUrl }: AlphaTabViewerProp
         const at = await import("@coderline/alphatab");
         if (destroyed || !mainRef.current) return;
 
+        const base = window.location.origin;
+
+        (at.Environment as any).createWebWorker = () => {
+          const workerUrl = base + "/alphatab/alphaTab.worker.mjs";
+          const script = `import ${JSON.stringify(workerUrl)}`;
+          const blob = new Blob([script], { type: "application/javascript" });
+          return new Worker(URL.createObjectURL(blob), { type: "module" });
+        };
+
         const s = new at.Settings();
-        s.core.fontDirectory = "/alphatab/font/";
+        s.core.fontDirectory = base + "/alphatab/font/";
+        s.core.scriptFile = base + "/alphatab/alphaTab.mjs";
         s.core.engine = "html5";
         s.core.logLevel = 1; // warning
+        s.core.includeNoteBounds = true;
         s.player.enablePlayer = true;
         s.player.enableCursor = true;
         s.player.enableUserInteraction = true;
-        s.player.soundFont = "/alphatab/soundfont/sonivox.sf2";
+        s.player.soundFont = base + "/alphatab/soundfont/sonivox.sf2";
         s.display.layoutMode = 0; // page layout
         s.display.staveProfile = 4; // tab + standard
-        s.notation.elements = new Map();
 
         const api = new at.AlphaTabApi(mainRef.current, s);
         apiRef.current = api;
@@ -66,7 +76,6 @@ export default function AlphaTabViewer({ fileData, fileUrl }: AlphaTabViewerProp
         if (fileData) {
           api.load(new Uint8Array(fileData));
         } else if (fileUrl) {
-          // Fetch the file and load
           const res = await fetch(fileUrl);
           const buf = await res.arrayBuffer();
           api.load(new Uint8Array(buf));
