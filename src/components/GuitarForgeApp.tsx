@@ -158,18 +158,34 @@ export default function GuitarForgeApp() {
             }} />
           </div>
 
-          {/* Progress */}
+          {/* Progress + Streak */}
           <div className="panel p-5 mb-4">
-            <div className="flex justify-between items-center mb-2">
+            <div className="flex justify-between items-center mb-3">
               <span className="font-label text-[11px] text-[#D4A843] flex items-center gap-2">
-                <div className={`led ${wPct >= 100 ? "led-on" : "led-gold"}`} /> Progress
+                <div className={`led ${wPct >= 100 ? "led-on" : "led-gold"}`} /> Week {week} Progress
               </span>
               <span className={`font-readout text-2xl font-bold ${wPct >= 100 ? "text-[#33CC33]" : "text-[#D4A843]"}`}>{wPct}%</span>
             </div>
             <div className="vu"><div className="vu-fill" style={{ width: wPct + "%" }} /></div>
-            <div className="flex justify-between mt-2">
-              <span className="font-readout text-[10px] text-[#555]">{wDn}/{wTot} exercises</span>
-              <span className="font-readout text-[10px] text-[#555]">{wMin} min</span>
+            <div className="grid grid-cols-4 gap-3 mt-3 text-center">
+              <div>
+                <div className="font-readout text-lg font-bold text-[#D4A843]">{wDn}</div>
+                <div className="font-label text-[8px] text-[#555]">Done</div>
+              </div>
+              <div>
+                <div className="font-readout text-lg font-bold text-[#888]">{wTot}</div>
+                <div className="font-label text-[8px] text-[#555]">Total</div>
+              </div>
+              <div>
+                <div className="font-readout text-lg font-bold text-[#D4A843]">{wMin}</div>
+                <div className="font-label text-[8px] text-[#555]">Minutes</div>
+              </div>
+              <div>
+                <div className="font-readout text-lg font-bold text-[#D4A843]">
+                  {DAYS.filter(d => (dayExMap[d] || []).some(e => doneMap[week + "-" + d + "-" + e.id])).length}
+                </div>
+                <div className="font-label text-[8px] text-[#555]">Days Active</div>
+              </div>
             </div>
           </div>
 
@@ -236,8 +252,19 @@ export default function GuitarForgeApp() {
             </div>
           </div>
 
-          <button onClick={() => { setWeek(week + 1); setDoneMap({}); setBpmLog({}); setDayExMap({}); }}
-            className="btn-ghost !border-[#C41E3A]/40 !text-[#C41E3A]">Reset Week</button>
+          <div className="flex gap-2">
+            <button onClick={() => {
+              // Archive current week data before moving on
+              try {
+                const archive = JSON.parse(localStorage.getItem("gf-archive") || "[]");
+                archive.push({ week, mode, scale, style, doneMap, bpmLog, dayExMap, date: new Date().toLocaleDateString("he-IL") });
+                localStorage.setItem("gf-archive", JSON.stringify(archive.slice(-52)));
+              } catch {}
+              setWeek(week + 1); setDoneMap({}); setBpmLog({});
+            }} className="btn-gold !text-[10px]">Finish Week &amp; Archive</button>
+            <button onClick={() => { setWeek(week + 1); setDoneMap({}); setBpmLog({}); setDayExMap({}); }}
+              className="btn-ghost !text-[10px] !text-[#C41E3A] !border-[#C41E3A]/30">Reset All</button>
+          </div>
         </div>)}
 
         {/* ══ PRACTICE ══ */}
@@ -345,8 +372,15 @@ export default function GuitarForgeApp() {
                       <label className="font-label text-[10px] text-[#555]">Duration<input type="number" value={ex.m} min={1} max={60} onChange={(e) => setExEdits((p) => ({ ...p, [ex.id]: { ...p[ex.id], m: Number(e.target.value) } }))} className="input input-gold mt-1" /></label>
                     </div>
                     <label className="font-label text-[10px] text-[#555] block mb-3">Description<input value={ex.d} onChange={(e) => setExEdits((p) => ({ ...p, [ex.id]: { ...p[ex.id], d: e.target.value } }))} className="input mt-1" /></label>
-                    <label className="font-label text-[10px] text-[#555] block mb-3">YouTube<input placeholder="URL or search terms" value={ex.yt} onChange={(e) => setExEdits((p) => ({ ...p, [ex.id]: { ...p[ex.id], yt: e.target.value } }))} className="input mt-1" /></label>
-                    <label className="font-label text-[10px] text-[#555] block mb-3">Notes<input value={exEdits[ex.id]?.notes || ""} onChange={(e) => setExEdits((p) => ({ ...p, [ex.id]: { ...p[ex.id], notes: e.target.value } }))} className="input mt-1" /></label>
+                    <label className="font-label text-[10px] text-[#555] block mb-3">YouTube Search
+                      <input placeholder="Search query for tutorials" value={ex.yt} onChange={(e) => setExEdits((p) => ({ ...p, [ex.id]: { ...p[ex.id], yt: e.target.value } }))} className="input mt-1" />
+                    </label>
+                    <label className="font-label text-[10px] text-[#D4A843] block mb-3">YouTube URL (paste link to embed in exercise)
+                      <input placeholder="https://youtube.com/watch?v=..." value={exEdits[ex.id]?.ytUrl || ""} onChange={(e) => setExEdits((p) => ({ ...p, [ex.id]: { ...p[ex.id], ytUrl: e.target.value } }))} className="input mt-1" />
+                    </label>
+                    <label className="font-label text-[10px] text-[#555] block mb-3">Notes
+                      <input value={exEdits[ex.id]?.notes || ""} onChange={(e) => setExEdits((p) => ({ ...p, [ex.id]: { ...p[ex.id], notes: e.target.value } }))} className="input mt-1" />
+                    </label>
                     <div className="flex gap-2">
                       <a href={ytSearch(ex.yt)} target="_blank" rel="noopener noreferrer" className="btn-gold no-underline !text-[11px]">YouTube</a>
                       <button onClick={() => setExEdits((p) => { const n = { ...p }; delete n[ex.id]; return n; })} className="btn-ghost !text-[#C41E3A] !text-[11px]">Reset</button>
@@ -409,10 +443,12 @@ export default function GuitarForgeApp() {
       </div>
 
       {modal && <ExerciseModal exercise={modal} mode={mode} scale={scale} style={style} week={week} day={selDay}
+        savedYtUrl={exEdits[modal.id]?.ytUrl || ""}
         bpm={bpmLog[week + "-" + selDay + "-" + modal.id] || ""} note={noteLog[week + "-" + selDay + "-" + modal.id] || ""}
         onBpmChange={(v) => setBpmLog((p) => ({ ...p, [week + "-" + selDay + "-" + modal.id]: v }))}
         onNoteChange={(v) => setNoteLog((p) => ({ ...p, [week + "-" + selDay + "-" + modal.id]: v }))}
-        onClose={() => setModal(null)} />}
+        onClose={() => setModal(null)}
+        onDone={() => { const k = week + "-" + selDay + "-" + modal.id; setDoneMap(p => ({ ...p, [k]: true })); setModal(null); }} />}
     </div>
   );
 }

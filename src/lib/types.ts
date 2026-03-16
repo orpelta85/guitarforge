@@ -59,7 +59,7 @@ export interface SongProgressMap {
 }
 
 export interface ExEditMap {
-  [id: number]: Partial<Exercise> & { notes?: string };
+  [id: number]: Partial<Exercise> & { notes?: string; ytUrl?: string; gpFileName?: string };
 }
 
 export interface SavedRecording {

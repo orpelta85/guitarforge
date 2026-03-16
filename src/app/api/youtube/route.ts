@@ -1,59 +1,66 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Proxy for YouTube Data API v3 search
-// GET /api/youtube?q=Am+backing+track
+// GET /api/youtube?q=search+query
+// Returns first video ID by scraping YouTube search results (no API key needed)
+// If YOUTUBE_API_KEY is set, uses official API instead
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q");
-  if (!q) return NextResponse.json({ error: "Missing 'q' parameter" }, { status: 400 });
+  if (!q) return NextResponse.json({ error: "Missing 'q'" }, { status: 400 });
 
   const apiKey = process.env.YOUTUBE_API_KEY;
 
-  // If no API key, return a search URL instead
-  if (!apiKey) {
-    return NextResponse.json({
-      fallback: true,
-      searchUrl: `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}&sp=EgIQAQ%3D%3D`,
-      items: [],
-    });
+  // Method 1: Official API (if key exists)
+  if (apiKey) {
+    try {
+      const res = await fetch(
+        `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=5&q=${encodeURIComponent(q)}&key=${apiKey}`,
+        { next: { revalidate: 3600 } }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        const items = (data.items || []).map((item: any) => ({
+          videoId: item.id?.videoId,
+          title: item.snippet?.title,
+          channel: item.snippet?.channelTitle,
+          thumbnail: item.snippet?.thumbnails?.medium?.url || "",
+        }));
+        return NextResponse.json({ items, fallback: false });
+      }
+    } catch {}
   }
 
+  // Method 2: Scrape YouTube search page (no API key needed)
   try {
     const res = await fetch(
-      `https://www.googleapis.com/youtube/v3/search?` +
-      `part=snippet&type=video&videoCategoryId=10&maxResults=8&` +
-      `q=${encodeURIComponent(q)}&key=${apiKey}`,
-      { next: { revalidate: 3600 } } // cache 1h
+      `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`,
+      {
+        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" },
+        next: { revalidate: 3600 },
+      }
     );
+    if (res.ok) {
+      const html = await res.text();
+      // Extract video IDs from the page
+      const ids: string[] = [];
+      const regex = /"videoId":"([a-zA-Z0-9_-]{11})"/g;
+      let match;
+      while ((match = regex.exec(html)) !== null) {
+        if (!ids.includes(match[1])) ids.push(match[1]);
+        if (ids.length >= 5) break;
+      }
 
-    if (!res.ok) {
       return NextResponse.json({
+        items: ids.map((id) => ({ videoId: id, title: "", channel: "", thumbnail: `https://img.youtube.com/vi/${id}/mqdefault.jpg` })),
         fallback: true,
-        searchUrl: `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}&sp=EgIQAQ%3D%3D`,
-        items: [],
-        error: "YouTube API quota exceeded or error",
+        searchUrl: `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`,
       });
     }
+  } catch {}
 
-    const data = await res.json();
-    const items = (data.items || []).map((item: Record<string, unknown>) => {
-      const snippet = item.snippet as Record<string, unknown>;
-      const id = item.id as Record<string, unknown>;
-      const thumbs = snippet?.thumbnails as Record<string, unknown>;
-      const medium = thumbs?.medium as Record<string, unknown>;
-      return {
-        videoId: id?.videoId,
-        title: snippet?.title,
-        channel: snippet?.channelTitle,
-        thumbnail: medium?.url || "",
-      };
-    });
-
-    return NextResponse.json({ items, fallback: false });
-  } catch {
-    return NextResponse.json({
-      fallback: true,
-      searchUrl: `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}&sp=EgIQAQ%3D%3D`,
-      items: [],
-    });
-  }
+  // Fallback: return search URL only
+  return NextResponse.json({
+    items: [],
+    fallback: true,
+    searchUrl: `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`,
+  });
 }
