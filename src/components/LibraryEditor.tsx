@@ -62,6 +62,31 @@ export default function LibraryEditor({ ex, exEdits, setExEdits }: Props) {
         <input value={ex.t} onChange={e => update("t", e.target.value)} className="input mt-1" />
       </label>
 
+      {/* BPM range */}
+      <div className="grid grid-cols-2 gap-3 mb-3">
+        <label className="font-label text-[10px] text-[#555]">Min BPM
+          <input type="number" value={ex.b ? Number(ex.b.split("-")[0]) || "" : ""} min={20} max={300}
+            onChange={e => {
+              const min = e.target.value;
+              const max = ex.b ? ex.b.split("-")[1] || min : min;
+              update("b", min + "-" + max);
+            }} className="input mt-1" />
+        </label>
+        <label className="font-label text-[10px] text-[#555]">Max BPM
+          <input type="number" value={ex.b ? Number(ex.b.split("-")[1]) || "" : ""} min={20} max={300}
+            onChange={e => {
+              const max = e.target.value;
+              const min = ex.b ? ex.b.split("-")[0] || max : max;
+              update("b", min + "-" + max);
+            }} className="input mt-1" />
+        </label>
+      </div>
+
+      {/* Focus areas */}
+      <label className="font-label text-[10px] text-[#555] block mb-3">Focus Areas (comma-separated)
+        <input value={ex.f} onChange={e => update("f", e.target.value)} className="input mt-1" placeholder="e.g. accuracy, speed, endurance" />
+      </label>
+
       {/* YouTube tutorial — auto-embedded */}
       <div className="panel p-3 mb-3">
         <div className="font-label text-[10px] text-[#D4A843] mb-2 flex items-center gap-2">

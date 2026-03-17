@@ -38,6 +38,8 @@ export default function GuitarForgeApp() {
   const [songProgress, setSongProgress] = useState<SongProgressMap>({});
   const [exEdits, setExEdits] = useState<ExEditMap>({});
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [libSearch, setLibSearch] = useState("");
+  const [libTab, setLibTab] = useState<"exercises" | "styles" | "songs">("exercises");
 
   useEffect(() => {
     try {
@@ -74,14 +76,14 @@ export default function GuitarForgeApp() {
   function buildDay(day: string) {
     const cats = dayCats[day] || [], mins = (dayHrs[day] || 0) * 60;
     if (!cats.length || mins <= 0) return;
-    setDayExMap((p) => ({ ...p, [day]: autoFill(cats, mins, cats.includes("שירים") ? getSongItems() : []) }));
+    setDayExMap((p) => ({ ...p, [day]: autoFill(cats, mins, cats.includes("שירים") ? getSongItems() : [], style) }));
   }
 
   function buildAll() {
     const nd: DayExMap = {};
     DAYS.forEach((day) => {
       const cats = dayCats[day] || [], mins = (dayHrs[day] || 0) * 60;
-      if (cats.length > 0 && mins > 0) nd[day] = autoFill(cats, mins, cats.includes("שירים") ? getSongItems() : []);
+      if (cats.length > 0 && mins > 0) nd[day] = autoFill(cats, mins, cats.includes("שירים") ? getSongItems() : [], style);
     });
     setDayExMap(nd);
   }
@@ -115,17 +117,17 @@ export default function GuitarForgeApp() {
         {/* ══ DASHBOARD ══ */}
         {view === "dash" && (<div>
           {/* Settings */}
-          <div className="panel p-5 mb-4">
-            <div className="font-label text-[11px] text-[#D4A843] mb-4 flex items-center gap-2">
-              <div className="led led-gold" /> Channel Settings
+          <div className="panel mb-4">
+            <div className="panel-header flex items-center gap-2">
+              <div className="led led-gold" /> CHANNEL SETTINGS
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="p-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
-                { l: "Week", v: <input type="number" value={week} min={1} onChange={(e) => setWeek(Number(e.target.value))} className="input input-gold text-center" /> },
-                { l: "Mode", v: <select value={mode} onChange={(e) => setMode(e.target.value)} className="input">{MODES.map((m) => <option key={m}>{m}</option>)}</select> },
-                { l: "Key", v: <select value={scale} onChange={(e) => setScale(e.target.value)} className="input">{SCALES.map((s) => <option key={s}>{s}</option>)}</select> },
-                { l: "Style", v: <select value={style} onChange={(e) => setStyle(e.target.value)} className="input">{STYLES.map((s) => <option key={s}>{s}</option>)}</select> },
-              ].map(({ l, v }) => <label key={l} className="font-label text-[10px] text-[#666]">{l}<div className="mt-1">{v}</div></label>)}
+                { l: "Week", v: <div className="segment-display text-center mt-1"><input type="number" value={week} min={1} onChange={(e) => setWeek(Number(e.target.value))} className="bg-transparent border-none outline-none text-center w-full font-mono font-bold text-[#D4A843]" style={{ boxShadow: 'none' }} /></div> },
+                { l: "Mode", v: <select value={mode} onChange={(e) => setMode(e.target.value)} className="input w-full">{MODES.map((m) => <option key={m}>{m}</option>)}</select> },
+                { l: "Key", v: <select value={scale} onChange={(e) => setScale(e.target.value)} className="input w-full">{SCALES.map((s) => <option key={s}>{s}</option>)}</select> },
+                { l: "Style", v: <select value={style} onChange={(e) => setStyle(e.target.value)} className="input w-full">{STYLES.map((s) => <option key={s}>{s}</option>)}</select> },
+              ].map(({ l, v }) => <label key={l} className="font-label text-[11px] text-[#666]">{l}<div className="mt-1">{v}</div></label>)}
             </div>
           </div>
 
@@ -342,32 +344,96 @@ export default function GuitarForgeApp() {
 
         {/* ══ LIBRARY ══ */}
         {view === "lib" && (<div>
-          <div className="flex gap-1 flex-wrap mb-4">
-            <button onClick={() => setLibFilter("הכל")} className={`font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border ${libFilter === "הכל" ? "bg-[#D4A843] text-[#0A0A0A] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>All ({EXERCISES.length})</button>
-            {CATS.filter((c) => c !== "שירים").map((cat) => {
-              const cnt = EXERCISES.filter((e) => e.c === cat).length, c = COL[cat];
-              if (!cnt) return null;
-              return <button key={cat} onClick={() => setLibFilter(cat)} className="font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border transition-all"
-                style={libFilter === cat ? { background: c, borderColor: c, color: "#0A0A0A" } : { borderColor: c + "40", color: c + "99" }}>{cat} ({cnt})</button>;
-            })}
+          {/* Sub-tabs */}
+          <div className="flex gap-1 mb-4">
+            {([["exercises", "תרגילים"], ["styles", "סגנונות"], ["songs", "שירים"]] as const).map(([key, label]) => (
+              <button key={key} onClick={() => setLibTab(key)}
+                className={`font-label text-[11px] px-4 py-1.5 rounded-sm cursor-pointer border transition-all ${libTab === key ? "bg-[#D4A843] text-[#0A0A0A] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>{label}</button>
+            ))}
           </div>
 
-          {EXERCISES.filter((e) => libFilter === "הכל" || e.c === libFilter).map((rawEx) => {
-            const ex = getEditedEx(rawEx), c = COL[ex.c], isEd = editingId === ex.id;
-            return (
-              <div key={ex.id} className={`panel mb-1.5 overflow-hidden ${isEd ? "!border-[#D4A843]/30" : ""}`}>
-                <div onClick={() => setEditingId(isEd ? null : ex.id)} className="flex items-center gap-3 px-4 py-3 cursor-pointer">
-                  <span className="tag min-w-[48px] text-center" style={{ border: `1px solid ${c}40`, color: c }}>{ex.c}</span>
-                  <div className="flex-1">
-                    <div className="text-[13px] font-medium">{ex.n}</div>
-                    <div className="font-readout text-[10px] text-[#444]">{ex.f} · {ex.m}min {ex.b ? "· " + ex.b : ""}</div>
+          {/* Exercises tab */}
+          {libTab === "exercises" && (<>
+            <input type="text" placeholder="חיפוש תרגיל..." className="input w-full mb-3"
+              value={libSearch} onChange={e => setLibSearch(e.target.value)} />
+
+            <div className="flex gap-1 flex-wrap mb-4">
+              <button onClick={() => setLibFilter("הכל")} className={`font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border ${libFilter === "הכל" ? "bg-[#D4A843] text-[#0A0A0A] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>All ({EXERCISES.length})</button>
+              {CATS.filter((c) => c !== "שירים").map((cat) => {
+                const cnt = EXERCISES.filter((e) => e.c === cat).length, c = COL[cat];
+                if (!cnt) return null;
+                return <button key={cat} onClick={() => setLibFilter(cat)} className="font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border transition-all"
+                  style={libFilter === cat ? { background: c, borderColor: c, color: "#0A0A0A" } : { borderColor: c + "40", color: c + "99" }}>{cat} ({cnt})</button>;
+              })}
+            </div>
+
+            {EXERCISES.filter((e) => {
+              if (libFilter !== "הכל" && e.c !== libFilter) return false;
+              if (libSearch.trim()) {
+                const q = libSearch.trim().toLowerCase();
+                return e.n.toLowerCase().includes(q) || e.d.toLowerCase().includes(q) || e.f.toLowerCase().includes(q);
+              }
+              return true;
+            }).map((rawEx) => {
+              const ex = getEditedEx(rawEx), c = COL[ex.c], isEd = editingId === ex.id;
+              return (
+                <div key={ex.id} className={`panel mb-1.5 overflow-hidden ${isEd ? "!border-[#D4A843]/30" : ""}`}>
+                  <div onClick={() => setEditingId(isEd ? null : ex.id)} className="flex items-center gap-3 px-4 py-3 cursor-pointer">
+                    <span className="tag min-w-[48px] text-center" style={{ border: `1px solid ${c}40`, color: c }}>{ex.c}</span>
+                    <div className="flex-1">
+                      <div className="text-[13px] font-medium">{ex.n}</div>
+                      <div className="font-readout text-[10px] text-[#444]">{ex.f} · {ex.m}min {ex.b ? "· " + ex.b : ""}</div>
+                    </div>
+                    <span className="text-[10px] text-[#333]">{isEd ? "−" : "+"}</span>
                   </div>
-                  <span className="text-[10px] text-[#333]">{isEd ? "−" : "+"}</span>
+                  {isEd && <LibraryEditor ex={ex} exEdits={exEdits} setExEdits={setExEdits} />}
                 </div>
-                {isEd && <LibraryEditor ex={ex} exEdits={exEdits} setExEdits={setExEdits} />}
-              </div>
-            );
-          })}
+              );
+            })}
+          </>)}
+
+          {/* Styles tab */}
+          {libTab === "styles" && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {STYLES.map((s) => {
+                const cnt = EXERCISES.filter((e) => e.styles?.includes(s)).length;
+                return (
+                  <div key={s} className="panel p-4 text-center">
+                    <div className="font-heading text-sm font-bold text-[#D4A843]">{s}</div>
+                    <div className="font-readout text-[11px] text-[#555] mt-1">{cnt} תרגילים</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Songs tab */}
+          {libTab === "songs" && (
+            <div>
+              {songs.length === 0 && <div className="panel p-12 text-center"><div className="font-label text-[#333] text-sm">אין שירים. הוסף שירים מה-Dashboard.</div></div>}
+              {songs.map((song) => {
+                const dn = STAGES.filter((_, si) => songProgress[week + "-" + song.id + "-" + si]?.done).length;
+                return (
+                  <div key={song.id} className="panel p-4 mb-1.5">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="text-sm font-medium">{song.name}</div>
+                        <div className="font-readout text-[10px] text-[#555] mt-1">שלב {dn + 1} מתוך {STAGES.length}</div>
+                      </div>
+                      <div className="font-readout text-lg font-bold text-[#D4A843]">{dn}/{STAGES.length}</div>
+                    </div>
+                    <div className="vu mt-2 !h-[3px]"><div className="vu-fill" style={{ width: Math.round((dn / STAGES.length) * 100) + "%" }} /></div>
+                    <div className="flex gap-1 mt-2 flex-wrap">
+                      {STAGES.map((st, si) => {
+                        const done = songProgress[week + "-" + song.id + "-" + si]?.done;
+                        return <span key={si} className="font-label text-[9px] px-2 py-0.5 rounded-sm border" style={{ borderColor: done ? "#33CC33" + "40" : "#222", color: done ? "#33CC33" : "#444" }}>{st.name}</span>;
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>)}
 
         {/* ══ REPORT ══ */}

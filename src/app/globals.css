@@ -48,6 +48,7 @@ body {
   color: var(--text-primary);
   font-family: 'Inter', system-ui, sans-serif;
   font-weight: 400;
+  font-size: 15px;
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
@@ -75,20 +76,23 @@ body::after {
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-weight: 600;
+  font-size: 13px;
 }
 .font-readout {
   font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 13px;
 }
 
 /* ── Segment Display (7-segment LED style) ── */
 .segment-display {
   font-family: 'JetBrains Mono', monospace;
   font-weight: 700;
+  font-size: 16px;
   color: var(--gold);
   text-shadow: 0 0 8px rgba(212,168,67,0.4);
   background: var(--bg-recess);
-  border: 1px solid var(--gray-warm-100);
-  padding: 8px 16px;
+  border: 1px solid #1A1A1A;
+  padding: 6px 14px;
   box-shadow: inset 0 2px 6px rgba(0,0,0,0.6);
   letter-spacing: 0.15em;
   border-radius: 2px;
@@ -96,9 +100,9 @@ body::after {
 
 /* ── Metal Panel (Rack Unit style) ── */
 .panel {
-  background: var(--bg-secondary);
-  border: 1px solid var(--gray-warm-100);
-  border-radius: 2px;
+  background: #141414;
+  border: 1px solid #2A2824;
+  border-radius: 3px;
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,0.03),
     inset 0 -1px 0 rgba(0,0,0,0.3),
@@ -108,8 +112,13 @@ body::after {
 /* ── Panel Header (brushed metal strip) ── */
 .panel-header {
   background: linear-gradient(180deg, #1E1C18 0%, #161412 100%);
-  border-bottom: 1px solid var(--gray-warm-100);
-  padding: 12px 20px;
+  border-bottom: 1px solid #2A2824;
+  padding: 10px 16px;
+  font-family: 'Barlow Condensed', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 11px;
+  color: var(--gray-warm-400);
 }
 
 /* ── Faceplate (cream strip) ── */
@@ -132,11 +141,11 @@ body::after {
   border-radius: 2px;
   font-family: 'Barlow Condensed', sans-serif;
   font-weight: 700;
-  font-size: 12px;
+  font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.1s;
   box-shadow:
     0 2px 0 #8A7020,
     0 3px 6px rgba(0,0,0,0.4);
@@ -144,7 +153,7 @@ body::after {
 .btn-gold:hover { background: var(--gold-light); }
 .btn-gold:active {
   background: var(--gold-dark);
-  box-shadow: 0 0 0 #8A7020;
+  box-shadow: 0 0px 0 #8A7020;
   transform: translateY(2px);
   border-bottom-width: 0;
 }
@@ -161,15 +170,16 @@ body::after {
   border-radius: 2px;
   font-family: 'Barlow Condensed', sans-serif;
   font-weight: 600;
-  font-size: 12px;
+  font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   cursor: pointer;
   transition: all 0.15s;
   box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+  border-color: #2A2824;
 }
 .btn-ghost:hover {
-  border-color: var(--gray-warm-300);
+  border-color: #5C5850;
   color: #fff;
   box-shadow: inset 0 1px 2px rgba(0,0,0,0.2), 0 0 8px rgba(212,168,67,0.08);
 }
@@ -191,7 +201,7 @@ body::after {
   border-radius: 2px;
   font-family: 'Barlow Condensed', sans-serif;
   font-weight: 700;
-  font-size: 12px;
+  font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   cursor: pointer;
@@ -212,23 +222,24 @@ body::after {
   border-radius: 2px;
   font-family: 'Barlow Condensed', sans-serif;
   font-weight: 600;
-  font-size: 10px;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 
 /* ── LED Indicator (with bezel) ── */
 .led {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
   border: 1px solid rgba(255,255,255,0.05);
+  box-shadow: inset 0 -1px 2px rgba(0,0,0,0.4);
 }
 .led-on {
   background: radial-gradient(circle at 35% 35%, #66FF66, #33CC33 60%, #1A8A1A);
   box-shadow:
-    0 0 4px var(--led-green),
+    0 0 4px #33CC33,
     0 0 12px rgba(51,204,51,0.3),
     inset 0 -1px 2px rgba(0,0,0,0.2);
 }
@@ -244,11 +255,10 @@ body::after {
     inset 0 -1px 2px rgba(0,0,0,0.2);
 }
 .led-gold {
-  background: radial-gradient(circle at 35% 35%, #FFD466, #FFAA00 60%, #AA7700);
+  background: radial-gradient(circle at 35% 35%, #FFD700, #D4A843 60%, #8A7020);
   box-shadow:
-    0 0 4px var(--led-amber),
-    0 0 12px rgba(255,170,0,0.3),
-    inset 0 -1px 2px rgba(0,0,0,0.2);
+    0 0 4px #D4A843,
+    0 0 12px rgba(212,168,67,0.3);
 }
 
 /* ── Progress / VU Meter (Segmented) ── */
@@ -284,19 +294,19 @@ body::after {
 /* ── Input (Recessed / jack-input style) ── */
 .input {
   width: 100%;
-  background: var(--bg-recess);
-  border: 1px solid var(--gray-warm-100);
+  background: #070707;
+  border: 1px solid #1A1A1A;
   color: var(--text-primary);
-  padding: 8px 10px;
-  border-radius: 2px;
+  padding: 8px 12px;
+  border-radius: 3px;
   font-family: 'Inter', sans-serif;
-  font-size: 13px;
+  font-size: 14px;
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
 }
 .input:focus {
-  border-color: var(--gold-dark);
+  border-color: #8A7020;
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.5), 0 0 0 1px rgba(212,168,67,0.15);
 }
 .input::placeholder { color: #444; }
@@ -305,24 +315,29 @@ body::after {
 /* ── Select ── */
 select {
   appearance: auto;
-  background: var(--bg-recess);
-  border: 1px solid var(--gray-warm-100);
+  background: #070707;
+  border: 1px solid #1A1A1A;
   color: var(--text-primary);
-  padding: 6px 8px;
-  border-radius: 2px;
-  font-size: 12px;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+  padding: 8px 12px;
+  border-radius: 3px;
+  font-size: 14px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+}
+select:focus {
+  border-color: #8A7020;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.5), 0 0 0 1px rgba(212,168,67,0.15);
+  outline: none;
 }
 option { background: var(--bg-secondary); color: #e5e5e5; }
 optgroup { background: var(--bg-primary); color: var(--gray-warm-400); }
 
 /* ── Toggle Switch ── */
 .toggle-switch {
-  width: 36px;
-  height: 18px;
-  background: var(--bg-recess);
-  border: 1px solid var(--gray-warm-100);
-  border-radius: 2px;
+  width: 40px;
+  height: 20px;
+  background: #0A0A0A;
+  border: 1px solid #2A2824;
+  border-radius: 3px;
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
   position: relative;
   cursor: pointer;
@@ -333,19 +348,19 @@ optgroup { background: var(--bg-primary); color: var(--gray-warm-400); }
   position: absolute;
   top: 2px;
   left: 2px;
-  width: 14px;
-  height: 12px;
-  background: linear-gradient(180deg, var(--gray-warm-200), var(--gray-warm-100));
-  border-radius: 1px;
+  width: 16px;
+  height: 14px;
+  background: linear-gradient(180deg, #3D3A34, #2A2824);
+  border-radius: 2px;
   transition: transform 0.15s;
   box-shadow: 0 1px 2px rgba(0,0,0,0.3);
 }
 .toggle-switch.on::after {
-  transform: translateX(16px);
-  background: linear-gradient(180deg, var(--gold-light), var(--gold));
+  transform: translateX(18px);
+  background: linear-gradient(180deg, #D4A843, #B8922F);
 }
 .toggle-switch.on {
-  border-color: rgba(212,168,67,0.3);
+  border-color: #8A7020;
 }
 
 /* ── Gold Divider ── */

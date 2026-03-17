@@ -36,7 +36,7 @@ export function makeSongItem(song: Song, stageIdx: number): Exercise {
   };
 }
 
-export function autoFill(catList: string[], maxMin: number, songItems: Exercise[]): Exercise[] {
+export function autoFill(catList: string[], maxMin: number, songItems: Exercise[], style?: string): Exercise[] {
   const result: Exercise[] = [];
   let used = 0;
 
@@ -50,8 +50,16 @@ export function autoFill(catList: string[], maxMin: number, songItems: Exercise[
       }
     } else {
       const pool = EXERCISES.filter((e) => e.c === cat);
-      const shuffled = pool.slice().sort(() => Math.random() - 0.5);
-      for (const ex of shuffled) {
+      let sorted: Exercise[];
+      if (style) {
+        const matched = pool.filter((e) => e.styles?.includes(style)).sort(() => Math.random() - 0.5);
+        const universal = pool.filter((e) => !e.styles).sort(() => Math.random() - 0.5);
+        const rest = pool.filter((e) => e.styles && !e.styles.includes(style)).sort(() => Math.random() - 0.5);
+        sorted = [...matched, ...universal, ...rest];
+      } else {
+        sorted = pool.slice().sort(() => Math.random() - 0.5);
+      }
+      for (const ex of sorted) {
         if (used + ex.m <= maxMin) {
           result.push(ex);
           used += ex.m;
