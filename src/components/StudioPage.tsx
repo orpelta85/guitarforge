@@ -35,6 +35,16 @@ interface StudioTrack {
   inputSettings?: TrackInputSettings;
 }
 
+interface TrackRegion {
+  id: string;
+  trackId: number;
+  startTime: number;
+  duration: number;
+  offset: number; // trim start within the original buffer
+  peaks: number[];
+  bufferDuration: number;
+}
+
 type ToneModule = typeof import("tone");
 
 interface ToneNodes {
@@ -243,7 +253,61 @@ const AMP_PRESETS: AmpPreset[] = [
   },
 ];
 
+// Amp simulator presets from DAW-SPEC
+interface AmpSimPreset {
+  name: string;
+  label: string;
+  gain: number;
+  bass: number;
+  mid: number;
+  treble: number;
+  presence: number;
+  master: number;
+}
+
+const AMP_SIM_PRESETS: AmpSimPreset[] = [
+  { name: "clean", label: "Clean", gain: 2, bass: 5, mid: 6, treble: 6, presence: 5, master: 7 },
+  { name: "crunch", label: "Crunch", gain: 5, bass: 6, mid: 6, treble: 6, presence: 5, master: 5 },
+  { name: "highgain", label: "High Gain", gain: 8, bass: 6, mid: 5, treble: 6, presence: 6, master: 4 },
+  { name: "lead", label: "Lead", gain: 7, bass: 5, mid: 7, treble: 6, presence: 6, master: 5 },
+  { name: "modernmetal", label: "Modern Metal", gain: 9, bass: 7, mid: 4, treble: 7, presence: 7, master: 4 },
+];
+
 const TIME_SIGS: [number, number][] = [[4, 4], [3, 4], [6, 8], [2, 4], [5, 4], [7, 8]];
+
+function computePeaks(buffer: AudioBuffer, width: number): number[] {
+  const data = buffer.getChannelData(0);
+  const step = Math.floor(data.length / width);
+  if (step <= 0) return Array(width).fill(0);
+  const peaks: number[] = [];
+  for (let i = 0; i < width; i++) {
+    let max = 0;
+    for (let j = 0; j < step; j++) {
+      const abs = Math.abs(data[i * step + j] || 0);
+      if (abs > max) max = abs;
+    }
+    peaks.push(max);
+  }
+  return peaks;
+}
+
+function drawWaveform(canvas: HTMLCanvasElement, peaks: number[], color: string, trimStart = 0, trimEnd = 1) {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  const { width, height } = canvas;
+  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = color + '88';
+  const mid = height / 2;
+  const startIdx = Math.floor(trimStart * peaks.length);
+  const endIdx = Math.floor(trimEnd * peaks.length);
+  const visiblePeaks = peaks.slice(startIdx, endIdx);
+  const step = width / visiblePeaks.length;
+  for (let i = 0; i < visiblePeaks.length; i++) {
+    const h = visiblePeaks[i] * mid;
+    const x = i * step;
+    ctx.fillRect(x, mid - h, Math.max(1, step - 0.5), h * 2);
+  }
+}
 
 function fmtTime(sec: number): string {
   const m = Math.floor(sec / 60);
@@ -298,6 +362,10 @@ export default function StudioPage() {
   const [showTimeSigPicker, setShowTimeSigPicker] = useState(false);
   const [showMetronomeSettings, setShowMetronomeSettings] = useState(false);
   const [metronomeVol, setMetronomeVol] = useState(50);
+
+  // Amp simulator state
+  const [ampPreset, setAmpPreset] = useState("highgain");
+  const [ampKnobs, setAmpKnobs] = useState({ gain: 8, bass: 6, mid: 5, treble: 6, presence: 6, master: 4 });
   const [showRightPanel, setShowRightPanel] = useState(false);
   const [projectKey, setProjectKey] = useState("Am");
   const [showKeyPicker, setShowKeyPicker] = useState(false);
@@ -315,7 +383,19 @@ export default function StudioPage() {
   const [previewingRecId, setPreviewingRecId] = useState<string | null>(null);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [savingToLibrary, setSavingToLibrary] = useState(false);
+  const [regions, setRegions] = useState<TrackRegion[]>([]);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; regionId: string } | null>(null);
+  const [dragState, setDragState] = useState<{
+    regionId: string;
+    mode: "move" | "trim-left" | "trim-right";
+    startX: number;
+    origStartTime: number;
+    origDuration: number;
+    origOffset: number;
+  } | null>(null);
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
+  const regionCanvasRefs = useRef<Record<string, HTMLCanvasElement | null>>({});
+  const audioBuffersRef = useRef<Record<number, AudioBuffer>>({});
 
   const timeSig = TIME_SIGS[timeSigIdx];
 
@@ -542,6 +622,12 @@ export default function StudioPage() {
     };
     setTracks((p) => [...p, newTrack]);
 
+    // Compute waveform peaks from blob
+    if (blob) createRegionFromBlob(id, blob);
+    else if (url) {
+      fetch(url).then((r) => r.blob()).then((b) => createRegionFromBlob(id, b)).catch(() => {});
+    }
+
     setTimeout(async () => {
       if (!mountedRef.current) return;
       const container = trackContainersRef.current[id];
@@ -641,6 +727,7 @@ export default function StudioPage() {
         if (armedTrack) {
           // Update the armed track with the recorded audio
           setTracks((prev) => prev.map((t) => t.id === armedTrack.id ? { ...t, audioBlob: blob, audioUrl: url, recordArm: false } : t));
+          createRegionFromBlob(armedTrack.id, blob);
           setTimeout(async () => {
             if (!mountedRef.current) return;
             const container = trackContainersRef.current[armedTrack.id];
@@ -1120,6 +1207,140 @@ export default function StudioPage() {
   const renameTrack = useCallback((id: number, name: string) => {
     setTracks((p) => p.map((t) => t.id === id ? { ...t, name } : t));
   }, []);
+
+  // ── Decode audio and create region with peaks ──
+  const createRegionFromBlob = useCallback(async (trackId: number, blob: Blob) => {
+    try {
+      const arrayBuffer = await blob.arrayBuffer();
+      const audioCtx = new AudioContext();
+      const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+      audioCtx.close();
+      audioBuffersRef.current[trackId] = audioBuffer;
+      const peakWidth = 2000;
+      const peaks = computePeaks(audioBuffer, peakWidth);
+      const region: TrackRegion = {
+        id: `region-${trackId}-${Date.now()}`,
+        trackId,
+        startTime: 0,
+        duration: audioBuffer.duration,
+        offset: 0,
+        peaks,
+        bufferDuration: audioBuffer.duration,
+      };
+      setRegions((prev) => [...prev.filter((r) => r.trackId !== trackId), region]);
+      setDuration((prev) => Math.max(prev, audioBuffer.duration));
+    } catch { /* decode failed, wavesurfer still handles display */ }
+  }, []);
+
+  // ── Region editing: split ──
+  const splitRegion = useCallback((regionId: string, splitTime: number) => {
+    setRegions((prev) => {
+      const region = prev.find((r) => r.id === regionId);
+      if (!region) return prev;
+      const relTime = splitTime - region.startTime;
+      if (relTime <= 0.05 || relTime >= region.duration - 0.05) return prev;
+      const splitRatio = relTime / region.duration;
+      const peakSplit = Math.floor(splitRatio * region.peaks.length);
+      const left: TrackRegion = {
+        ...region,
+        id: `region-${region.trackId}-${Date.now()}-L`,
+        duration: relTime,
+        peaks: region.peaks.slice(0, peakSplit),
+      };
+      const right: TrackRegion = {
+        ...region,
+        id: `region-${region.trackId}-${Date.now()}-R`,
+        startTime: region.startTime + relTime,
+        duration: region.duration - relTime,
+        offset: region.offset + relTime,
+        peaks: region.peaks.slice(peakSplit),
+      };
+      return [...prev.filter((r) => r.id !== regionId), left, right];
+    });
+  }, []);
+
+  // ── Region editing: delete ──
+  const deleteRegion = useCallback((regionId: string) => {
+    setRegions((prev) => prev.filter((r) => r.id !== regionId));
+    setContextMenu(null);
+  }, []);
+
+  // ── Region drag handlers ──
+  useEffect(() => {
+    if (!dragState) return;
+    const onMouseMove = (e: MouseEvent) => {
+      const pps = 20 + (zoom / 100) * 300;
+      const dx = e.clientX - dragState.startX;
+      const dt = dx / pps;
+      const beatSec = 60 / bpm;
+
+      setRegions((prev) => prev.map((r) => {
+        if (r.id !== dragState.regionId) return r;
+        if (dragState.mode === "move") {
+          let newStart = Math.max(0, dragState.origStartTime + dt);
+          if (snapToGrid) newStart = Math.round(newStart / beatSec) * beatSec;
+          return { ...r, startTime: newStart };
+        } else if (dragState.mode === "trim-left") {
+          const maxTrim = dragState.origDuration - 0.05;
+          const trimDelta = Math.max(-dragState.origOffset, Math.min(maxTrim, dt));
+          const snappedDelta = snapToGrid ? Math.round(trimDelta / beatSec) * beatSec : trimDelta;
+          return {
+            ...r,
+            startTime: dragState.origStartTime + snappedDelta,
+            offset: dragState.origOffset + snappedDelta,
+            duration: dragState.origDuration - snappedDelta,
+          };
+        } else { // trim-right
+          const newDur = Math.max(0.05, dragState.origDuration + dt);
+          const maxDur = r.bufferDuration - r.offset;
+          const clampedDur = Math.min(newDur, maxDur);
+          return { ...r, duration: snapToGrid ? Math.round(clampedDur / beatSec) * beatSec || 0.05 : clampedDur };
+        }
+      }));
+    };
+    const onMouseUp = () => {
+      setDragState(null);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+    document.body.style.userSelect = "none";
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+  }, [dragState, zoom, bpm, snapToGrid]);
+
+  // ── Draw waveforms on canvases when regions/zoom change ──
+  useEffect(() => {
+    const pps = 20 + (zoom / 100) * 300;
+    regions.forEach((region) => {
+      const canvas = regionCanvasRefs.current[region.id];
+      if (!canvas) return;
+      const regionWidth = Math.max(1, Math.floor(region.duration * pps));
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = regionWidth * dpr;
+      canvas.height = 56 * dpr;
+      canvas.style.width = `${regionWidth}px`;
+      canvas.style.height = '56px';
+      const ctx = canvas.getContext('2d');
+      if (ctx) ctx.scale(dpr, dpr);
+      const track = tracks.find((t) => t.id === region.trackId);
+      const color = track?.color || '#888';
+      const trimStart = region.offset / region.bufferDuration;
+      const trimEnd = (region.offset + region.duration) / region.bufferDuration;
+      drawWaveform(canvas, region.peaks, color, trimStart, trimEnd);
+    });
+  }, [regions, zoom, tracks]);
+
+  // ── Close context menu on click outside ──
+  useEffect(() => {
+    if (!contextMenu) return;
+    const handler = () => setContextMenu(null);
+    window.addEventListener("click", handler);
+    return () => window.removeEventListener("click", handler);
+  }, [contextMenu]);
 
   // ── VU meter simulation ──
   useEffect(() => {
@@ -1985,6 +2206,8 @@ export default function StudioPage() {
               const isSelected = selectedTrackId === tr.id;
               const hasSolo = tracks.some((t) => t.solo);
               const audible = hasSolo ? tr.solo : !tr.muted;
+              const trackRegions = regions.filter((r) => r.trackId === tr.id);
+              const hasRegions = trackRegions.length > 0;
               return (
                 <div key={tr.id}
                   className={`transition-colors relative ${isSelected ? "bg-[#12120e]" : ""}`}
@@ -1999,16 +2222,90 @@ export default function StudioPage() {
                       <span className="text-[8px] text-[#444]">{tr.name}</span>
                     </div>
                   ) : (
-                    <div className="relative">
+                    <div className="relative min-h-[56px]" style={{ background: isSelected ? "#0e0e0a" : "#0a0a0a" }}>
+                      {/* Hidden wavesurfer container (still needed for audio seek/interaction) */}
                       <div
                         ref={(el) => { if (el) trackContainersRef.current[tr.id] = el; }}
-                        className="min-h-[56px] cursor-pointer"
-                        style={{ background: isSelected ? "#0e0e0a" : "#0a0a0a" }}
+                        className="min-h-[56px]"
+                        style={{ display: hasRegions ? "none" : "block" }}
                       />
-                      {/* Track name label on waveform */}
-                      <div className="absolute top-0.5 left-1 z-[5] pointer-events-none">
-                        <span className="text-[8px] font-medium px-1 py-px rounded" style={{ color: tr.color, background: "#0a0a0acc" }}>{tr.name}</span>
-                      </div>
+                      {/* Canvas-based waveform regions */}
+                      {hasRegions && trackRegions.map((region) => {
+                        const regionLeft = region.startTime * pxPerSec;
+                        const regionWidth = Math.max(4, region.duration * pxPerSec);
+                        const edgeZone = 6;
+                        return (
+                          <div
+                            key={region.id}
+                            className="absolute top-0 bottom-0"
+                            style={{
+                              left: `${regionLeft}px`,
+                              width: `${regionWidth}px`,
+                              background: tr.color + '11',
+                              borderRadius: '2px',
+                              border: `1px solid ${tr.color}33`,
+                            }}
+                            onContextMenu={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setContextMenu({ x: e.clientX, y: e.clientY, regionId: region.id });
+                            }}
+                            onDoubleClick={(e) => {
+                              e.stopPropagation();
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const relX = e.clientX - rect.left;
+                              const relTime = (relX / regionWidth) * region.duration;
+                              splitRegion(region.id, region.startTime + relTime);
+                            }}
+                            onMouseDown={(e) => {
+                              if (e.button !== 0) return;
+                              e.stopPropagation();
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const relX = e.clientX - rect.left;
+                              let mode: "move" | "trim-left" | "trim-right" = "move";
+                              if (relX < edgeZone) mode = "trim-left";
+                              else if (relX > rect.width - edgeZone) mode = "trim-right";
+                              document.body.style.cursor = mode === "move" ? "grabbing" : "col-resize";
+                              setDragState({
+                                regionId: region.id,
+                                mode,
+                                startX: e.clientX,
+                                origStartTime: region.startTime,
+                                origDuration: region.duration,
+                                origOffset: region.offset,
+                              });
+                            }}
+                            onMouseMove={(e) => {
+                              if (dragState) return;
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const relX = e.clientX - rect.left;
+                              if (relX < edgeZone || relX > rect.width - edgeZone) {
+                                e.currentTarget.style.cursor = "col-resize";
+                              } else {
+                                e.currentTarget.style.cursor = "grab";
+                              }
+                            }}
+                          >
+                            <canvas
+                              ref={(el) => { regionCanvasRefs.current[region.id] = el; }}
+                              className="absolute top-0 left-0 w-full h-full pointer-events-none"
+                            />
+                            {/* Region label */}
+                            <div className="absolute top-0.5 left-1 z-[5] pointer-events-none">
+                              <span className="text-[8px] font-medium px-1 py-px rounded" style={{ color: tr.color, background: "#0a0a0acc" }}>{tr.name}</span>
+                            </div>
+                            {/* Trim edge indicators */}
+                            <div className="absolute top-0 bottom-0 left-0 w-[3px] rounded-l" style={{ background: tr.color + '44' }} />
+                            <div className="absolute top-0 bottom-0 right-0 w-[3px] rounded-r" style={{ background: tr.color + '44' }} />
+                          </div>
+                        );
+                      })}
+                      {/* Track name label (shown when no regions) */}
+                      {!hasRegions && (
+                        <div className="absolute top-0.5 left-1 z-[5] pointer-events-none">
+                          <span className="text-[8px] font-medium px-1 py-px rounded" style={{ color: tr.color, background: "#0a0a0acc" }}>{tr.name}</span>
+                        </div>
+                      )}
                       {/* Recording indicator for armed tracks */}
                       {isRec && tr.recordArm && (
                         <div className="absolute top-0.5 right-1 z-[5] flex items-center gap-1 pointer-events-none">
@@ -2026,6 +2323,32 @@ export default function StudioPage() {
             {(duration > 0 || currentTime > 0) && (
               <div className="absolute top-0 bottom-0 w-px bg-[#f59e0b] z-10 pointer-events-none"
                 style={{ left: `${currentTime * pxPerSec}px`, boxShadow: "0 0 4px rgba(245,158,11,0.3)" }} />
+            )}
+
+            {/* Context menu for region editing */}
+            {contextMenu && (
+              <div
+                className="fixed z-50 rounded shadow-lg py-1"
+                style={{ left: contextMenu.x, top: contextMenu.y, background: "#1a1a1a", border: "1px solid #333", minWidth: "140px" }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  className="w-full text-left px-3 py-1.5 text-xs text-[#ccc] hover:bg-[#252525] transition-colors cursor-pointer"
+                  onClick={() => deleteRegion(contextMenu.regionId)}
+                >
+                  Delete Region
+                </button>
+                <button
+                  className="w-full text-left px-3 py-1.5 text-xs text-[#ccc] hover:bg-[#252525] transition-colors cursor-pointer"
+                  onClick={() => {
+                    const region = regions.find((r) => r.id === contextMenu.regionId);
+                    if (region) splitRegion(region.id, region.startTime + region.duration / 2);
+                    setContextMenu(null);
+                  }}
+                >
+                  Split at Center
+                </button>
+              </div>
             )}
           </div>
 
@@ -2172,6 +2495,26 @@ export default function StudioPage() {
                       ))}
                       <button onClick={() => updateTrackEffects(fxTrack.id, JSON.parse(JSON.stringify(DEFAULT_EFFECTS)))}
                         className="text-[9px] px-2 py-0.5 rounded border border-[#2a1515] text-[#C41E3A] hover:border-[#C41E3A] hover:bg-[#1a0a0a] transition-all cursor-pointer">Reset All</button>
+                    </div>
+
+                    {/* ── Amp Simulator GUI ── */}
+                    <div className="mb-3 rounded-lg overflow-hidden" style={{ background: "linear-gradient(180deg, #141410 0%, #0e0e0c 100%)", border: "1px solid #2a2824" }}>
+                      <div className="px-3 py-2 flex items-center gap-3" style={{ background: "linear-gradient(180deg, #1a1815 0%, #141210 100%)", borderBottom: "1px solid #2a2824" }}>
+                        <span className="text-[10px] font-semibold text-[#D4A843] uppercase tracking-wider">Amp Simulator</span>
+                        <div className="flex gap-1 flex-1">
+                          {AMP_SIM_PRESETS.map((p) => (
+                            <button key={p.name} onClick={() => { setAmpPreset(p.name); setAmpKnobs({ gain: p.gain, bass: p.bass, mid: p.mid, treble: p.treble, presence: p.presence, master: p.master }); }}
+                              className={`text-[9px] px-2 py-0.5 rounded cursor-pointer transition-all ${ampPreset === p.name ? "bg-[#D4A843] text-[#111] font-semibold" : "border border-[#2a2a2a] text-[#666] hover:text-[#ccc] hover:border-[#444]"}`}>{p.label}</button>
+                          ))}
+                        </div>
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#D4A843] shadow-[0_0_4px_rgba(212,168,67,0.5)]" />
+                      </div>
+                      <div className="flex items-center justify-center gap-5 p-4" style={{ background: "radial-gradient(ellipse at center, #18160f 0%, #0e0e0c 100%)" }}>
+                        {(["gain", "bass", "mid", "treble", "presence", "master"] as const).map((k) => (
+                          <FxKnob key={k} label={k.charAt(0).toUpperCase() + k.slice(1)} value={ampKnobs[k]} min={0} max={10} step={0.5}
+                            onChange={(v) => setAmpKnobs((prev) => ({ ...prev, [k]: v }))} />
+                        ))}
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">

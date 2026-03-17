@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import type { Exercise, Song, DayCats, DayHrs, DayExMap, BoolMap, StringMap, SongProgressMap, ExEditMap } from "@/lib/types";
-import { DAYS, CATS, COL, MODES, SCALES, STYLES, STAGES, DEFAULT_DAY_CATS, DEFAULT_DAY_HRS } from "@/lib/constants";
+import { DAYS, CATS, COL, MODES, SCALES, STYLES, STAGES, DEFAULT_DAY_CATS, DEFAULT_DAY_HRS, CAT_GROUPS } from "@/lib/constants";
 import { EXERCISES } from "@/lib/exercises";
 import { autoFill, makeSongItem, ytSearch } from "@/lib/helpers";
 import ExerciseModal from "./ExerciseModal";
@@ -30,6 +30,7 @@ export default function GuitarForgeApp() {
   const [noteLog, setNoteLog] = useState<StringMap>({});
   const [ready, setReady] = useState(false);
   const [showEditor, setShowEditor] = useState(false);
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [libFilter, setLibFilter] = useState("הכל");
   const [modal, setModal] = useState<Exercise | null>(null);
   const [songs, setSongs] = useState<Song[]>([]);
@@ -213,17 +214,32 @@ export default function GuitarForgeApp() {
                           className="input input-gold w-14 text-center !py-1" />
                         <span className="font-label text-[9px] text-[#444]">hrs</span>
                       </div>
-                      <div className="pr-[62px] flex flex-wrap gap-1">
-                        {CATS.map((cat) => {
-                          const on = ac.includes(cat), c = COL[cat] || "#888";
+                      <div className="pr-[62px]">
+                        {Object.entries(CAT_GROUPS).map(([group, cats]) => {
+                          const isCollapsed = collapsedGroups[group] === true;
                           return (
-                            <span key={cat} onClick={() => setDayCats((p) => {
-                              const a = (p[day] || []).slice(), i = a.indexOf(cat);
-                              i >= 0 ? a.splice(i, 1) : a.push(cat); return { ...p, [day]: a };
-                            })} className="tag cursor-pointer transition-all" style={{
-                              border: `1px solid ${on ? c : "#2a2a2a"}`, color: on ? c : "#444",
-                              background: on ? c + "10" : "transparent",
-                            }}>{cat}</span>
+                            <div key={group} className="mb-1.5">
+                              <button onClick={() => setCollapsedGroups((p) => ({ ...p, [group]: !isCollapsed }))}
+                                className="flex items-center gap-1 mb-0.5 cursor-pointer text-[9px] font-semibold text-[#666] hover:text-[#aaa] transition-colors bg-transparent border-0 p-0">
+                                <span className="text-[8px]">{isCollapsed ? "▶" : "▼"}</span> {group}
+                              </button>
+                              {!isCollapsed && (
+                                <div className="flex flex-wrap gap-1 mr-3">
+                                  {cats.map((cat) => {
+                                    const on = ac.includes(cat), c = COL[cat] || "#888";
+                                    return (
+                                      <span key={cat} onClick={() => setDayCats((p) => {
+                                        const a = (p[day] || []).slice(), i = a.indexOf(cat);
+                                        i >= 0 ? a.splice(i, 1) : a.push(cat); return { ...p, [day]: a };
+                                      })} className="tag cursor-pointer transition-all" style={{
+                                        border: `1px solid ${on ? c : "#2a2a2a"}`, color: on ? c : "#444",
+                                        background: on ? c + "10" : "transparent",
+                                      }}>{cat}</span>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
                           );
                         })}
                       </div>
