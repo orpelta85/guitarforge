@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GuitarForge — Brand Identity</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #EBEBEC;
+      color: #18181B;
+      padding: 64px 48px;
+    }
+
+    .label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: #A1A1AA;
+      margin-bottom: 20px;
+    }
+
+    section { margin-bottom: 28px; }
+
+    /* Main logo tiles */
+    .logo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      max-width: 880px;
+    }
+
+    .tile {
+      border-radius: 14px;
+      padding: 52px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tile-light { background: #FFFFFF; box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 8px 24px rgba(0,0,0,.06); }
+    .tile-dark  { background: #0F0F10; }
+
+    .tile svg { width: 100%; max-width: 300px; height: auto; }
+
+    /* Scale strip */
+    .scale-tile {
+      max-width: 880px;
+      background: #fff;
+      border-radius: 14px;
+      padding: 36px 48px;
+      box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 8px 24px rgba(0,0,0,.06);
+    }
+
+    .scale-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 40px;
+    }
+
+    .scale-item {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .scale-item > span {
+      font-size: 10px;
+      color: #A1A1AA;
+      font-weight: 400;
+    }
+
+    .icon-only {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      overflow: visible;
+    }
+
+    /* Palette */
+    .palette-tile {
+      max-width: 880px;
+      background: #fff;
+      border-radius: 14px;
+      padding: 36px 48px;
+      box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 8px 24px rgba(0,0,0,.06);
+    }
+
+    .swatches { display: flex; gap: 20px; }
+
+    .swatch { display: flex; flex-direction: column; gap: 8px; }
+
+    .swatch-dot {
+      width: 56px;
+      height: 56px;
+      border-radius: 10px;
+      border: 1px solid rgba(0,0,0,.07);
+    }
+
+    .swatch-hex {
+      font-size: 11px;
+      font-weight: 600;
+      color: #3F3F46;
+      letter-spacing: .02em;
+    }
+
+    .swatch-name {
+      font-size: 10px;
+      color: #A1A1AA;
+      margin-top: -4px;
+    }
+
+    /* Design note */
+    .note {
+      max-width: 640px;
+      font-size: 13px;
+      color: #71717A;
+      line-height: 1.75;
+      padding: 4px 0;
+    }
+
+    .note strong { color: #18181B; font-weight: 600; }
+
+    /* Export */
+    .export-tile {
+      max-width: 880px;
+      background: #fff;
+      border-radius: 14px;
+      padding: 32px 48px;
+      box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 8px 24px rgba(0,0,0,.06);
+    }
+
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 7px 14px;
+      border-radius: 6px;
+      border: 1px solid #E4E4E7;
+      background: #FAFAFA;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 500;
+      color: #3F3F46;
+      cursor: pointer;
+      letter-spacing: .01em;
+      transition: background .12s, border-color .12s;
+    }
+    .btn:hover { background: #F4F4F5; border-color: #D4D4D8; }
+  </style>
+</head>
+<body>
+
+<!-- ── Main logos ── -->
+<section>
+  <p class="label">Primary mark</p>
+  <div class="logo-grid">
+    <div class="tile tile-light">
+      <svg id="logo-light" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 120">
+        <path d="M60 26C80 26,92 42,90 58C88 73,72 87,60 95C48 87,32 73,30 58C28 42,40 26,60 26Z" fill="#F0EAE0"/>
+        <path d="M60 95L57 87L60 82L63 87Z" fill="#D4852A"/>
+        <path fill-rule="evenodd" fill="#18181B"
+              d="M28 16 L92 16 Q104 16 104 28 L104 92 Q104 104 92 104 L28 104 Q16 104 16 92 L16 28 Q16 16 28 16Z
+                 M60 26C80 26,92 42,90 58C88 73,72 87,60 95C48 87,32 73,30 58C28 42,40 26,60 26Z"/>
+        <text x="126" y="45" font-family="system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif"
+              font-size="12" font-weight="400" fill="#71717A" letter-spacing="9">GUITAR</text>
+        <text x="123" y="98" font-family="system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif"
+              font-size="54" font-weight="900" fill="#18181B" letter-spacing="-1">FORGE</text>
+      </svg>
+    </div>
+    <div class="tile tile-dark">
+      <svg id="logo-dark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 120">
+        <path d="M60 26C80 26,92 42,90 58C88 73,72 87,60 95C48 87,32 73,30 58C28 42,40 26,60 26Z" fill="#F0EAE0"/>
+        <path d="M60 95L57 87L60 82L63 87Z" fill="#D4852A"/>
+        <path fill-rule="evenodd" fill="#18181B"
+              d="M28 16 L92 16 Q104 16 104 28 L104 92 Q104 104 92 104 L28 104 Q16 104 16 92 L16 28 Q16 16 28 16Z
+                 M60 26C80 26,92 42,90 58C88 73,72 87,60 95C48 87,32 73,30 58C28 42,40 26,60 26Z"/>
+        <rect x="16" y="16" width="88" height="88" rx="12" fill="none" stroke="#D4852A" stroke-width="1.5"/>
+        <text x="126" y="45" font-family="system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif"
+              font-size="12" font-weight="400" fill="#A1A1AA" letter-spacing="9">GUITAR</text>
+        <text x="123" y="98" font-family="system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif"
+              font-size="54" font-weight="900" fill="#FFFFFF" letter-spacing="-1">FORGE</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ── Scale ── -->
+<section>
+  <div class="scale-tile">
+    <p class="label">Scale test</p>
+    <div class="scale-row">
+
+      <div class="scale-item">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 120" width="200">
+          <path d="M60 26C80 26,92 42,90 58C88 73,72 87,60 95C48 87,32 73,30 58C28 42,40 26,60 26Z" fill="#F0EAE0"/>
+          <path d="M60 95L57 87L60 82L63 87Z" fill="#D4852A"/>
+          <path fill-rule="evenodd" fill="#18181B"
+                d="M28 16 L92 16 Q104 16 104 28 L104 92 Q104 104 92 104 L28 104 Q16 104 16 92 L16 28 Q16 16 28 16Z M60 26C80 26,92 42,90 58C88 73,72 87,60 95C48 87,32 73,30 58C28 42,40 26,60 26Z"/>
+          <text x="126" y="45" font-family="system-ui,-apple-system,sans-serif" font-size="12" font-weight="400" fill="#71717A" letter-spacing="9">GUITAR</text>
+          <text x="123" y="98" font-family="system-ui,-apple-system,sans-serif" font-size="54" font-weight="900" fill="#18181B" letter-spacing="-1">FORGE</text>
+        </svg>
+        <span>200px</span>
+      </div>
+
+      <div class="scale-item">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 120" width="120">
+          <path d="M60 26C80 26,92 42,90 58C88 73,72 87,60 95C48 87,32 73,30 58C28 42,40 26,60 26Z" fill="#F0EAE0"/>
+          <path d="M60 95L57 87L60 82L63 87Z" fill="#D4852A"/>
+          <path fill-rule="evenodd" fill="#18181B"
+                d="M28 16 L92 16 Q104 16 104 28 L104 92 Q104 104 92 104 L28 104 Q16 104 16 92 L16 28 Q16 16 28 16Z M60 26C80 26,92 42,90 58C88 73,72 87,60 95C48 87,32 73,30 58C28 42,40 26,60 26Z"/>
+          <text x="126" y="45" font-family="system-ui,-apple-system,sans-serif" font-size="12" font-weight="400" fill="#71717A" letter-spacing="9">GUITAR</text>
+          <text x="123" y="98" font-family="system-ui,-apple-system,sans-serif" font-size="54" font-weight="900" fill="#18181B" letter-spacing="-1">FORGE</text>
+        </svg>
+        <span>120px</span>
+      </div>
+
+      <!-- Icon-only at 40px -->
+      <div class="scale-item">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="13 13 95 95" width="40" height="40">
+          <path d="M60 26C80 26,92 42,90 58C88 73,72 87,60 95C48 87,32 73,30 58C28 42,40 26,60 26Z" fill="#F0EAE0"/>
+          <path d="M60 95L57 87L60 82L63 87Z" fill="#D4852A"/>
+          <path fill-rule="evenodd" fill="#18181B"
+                d="M28 16 L92 16 Q104 16 104 28 L104 92 Q104 104 92 104 L28 104 Q16 104 16 92 L16 28 Q16 16 28 16Z M60 26C80 26,92 42,90 58C88 73,72 87,60 95C48 87,32 73,30 58C28 42,40 26,60 26Z"/>
+        </svg>
+        <span>40px icon</span>
+      </div>
+
+      <!-- Icon-only at 24px -->
+      <div class="scale-item">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="13 13 95 95" width="24" height="24">
+          <path d="M60 26C80 26,92 42,90 58C88 73,72 87,60 95C48 87,32 73,30 58C28 42,40 26,60 26Z" fill="#F0EAE0"/>
+          <path d="M60 95L57 87L60 82L63 87Z" fill="#D4852A"/>
+          <path fill-rule="evenodd" fill="#18181B"
+                d="M28 16 L92 16 Q104 16 104 28 L104 92 Q104 104 92 104 L28 104 Q16 104 16 92 L16 28 Q16 16 28 16Z M60 26C80 26,92 42,90 58C88 73,72 87,60 95C48 87,32 73,30 58C28 42,40 26,60 26Z"/>
+        </svg>
+        <span>24px icon</span>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── Palette ── -->
+<section>
+  <div class="palette-tile">
+    <p class="label">Color palette</p>
+    <div class="swatches">
+      <div class="swatch">
+        <div class="swatch-dot" style="background:#18181B"></div>
+        <div class="swatch-hex">#18181B</div>
+        <div class="swatch-name">Charcoal</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-dot" style="background:#F0EAE0"></div>
+        <div class="swatch-hex">#F0EAE0</div>
+        <div class="swatch-name">Aged Cream</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-dot" style="background:#D4852A"></div>
+        <div class="swatch-hex">#D4852A</div>
+        <div class="swatch-name">Forge Amber</div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-dot" style="background:#71717A"></div>
+        <div class="swatch-hex">#71717A</div>
+        <div class="swatch-name">Zinc Gray</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Concept note ── -->
+<section>
+  <p class="note">
+    <strong>Concept:</strong> A guitar pick as negative space — carved out of a dark badge rather than drawn as a positive shape. The pick's tip becomes a small amber forge-spark, the single point where music and craft meet. The wordmark uses raw size contrast: <em>GUITAR</em> as a quiet descriptor in tracked caps, <em>FORGE</em> as the dominant brand word in ultra-bold. No frills. Inspired by the material confidence of Marshall and Gibson, reinterpreted for a modern app.
+  </p>
+</section>
+
+<!-- ── Export ── -->
+<section>
+  <div class="export-tile">
+    <p class="label">Export PNG</p>
+    <div class="btn-row">
+      <button class="btn" onclick="exportLogo('logo-light', 880, 320, 'guitarforge-light@2x.png', '#ffffff')">↓ Light 880×320</button>
+      <button class="btn" onclick="exportLogo('logo-dark',  880, 320, 'guitarforge-dark@2x.png',  '#0f0f10')">↓ Dark 880×320</button>
+      <button class="btn" onclick="exportIcon(512, 'guitarforge-icon-512.png')">↓ Icon 512×512</button>
+      <button class="btn" onclick="exportIcon(1024,'guitarforge-icon-1024.png')">↓ Icon 1024×1024</button>
+    </div>
+  </div>
+</section>
+
+<script>
+  function exportLogo(id, w, h, filename, bg) {
+    const svg = document.getElementById(id);
+    const clone = svg.cloneNode(true);
+    clone.setAttribute('width', w);
+    clone.setAttribute('height', h);
+    const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    bgRect.setAttribute('width', '330'); bgRect.setAttribute('height', '120'); bgRect.setAttribute('fill', bg);
+    clone.insertBefore(bgRect, clone.firstChild);
+    renderToPNG(clone, w, h, filename);
+  }
+
+  function exportIcon(size, filename) {
+    const src = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="13 13 95 95" width="${size}" height="${size}">
+      <rect x="13" y="13" width="95" height="95" fill="#18181B"/>
+      <path d="M60 26C80 26,92 42,90 58C88 73,72 87,60 95C48 87,32 73,30 58C28 42,40 26,60 26Z" fill="#F0EAE0"/>
+      <path d="M60 95L57 87L60 82L63 87Z" fill="#D4852A"/>
+      <path fill-rule="evenodd" fill="#18181B"
+            d="M28 16 L92 16 Q104 16 104 28 L104 92 Q104 104 92 104 L28 104 Q16 104 16 92 L16 28 Q16 16 28 16Z
+               M60 26C80 26,92 42,90 58C88 73,72 87,60 95C48 87,32 73,30 58C28 42,40 26,60 26Z"/>
+    </svg>`;
+    const blob = new Blob([src], { type: 'image/svg+xml;charset=utf-8' });
+    renderBlobToPNG(blob, size, size, filename);
+  }
+
+  function renderToPNG(svgEl, w, h, filename) {
+    const data = new XMLSerializer().serializeToString(svgEl);
+    renderBlobToPNG(new Blob([data], { type: 'image/svg+xml;charset=utf-8' }), w, h, filename);
+  }
+
+  function renderBlobToPNG(blob, w, h, filename) {
+    const url = URL.createObjectURL(blob);
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      const a = document.createElement('a');
+      a.download = filename;
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    };
+    img.src = url;
+  }
+</script>
+
+</body>
+</html>

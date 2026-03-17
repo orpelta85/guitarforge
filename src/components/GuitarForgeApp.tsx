@@ -14,6 +14,7 @@ import WeeklyCharts from "./WeeklyCharts";
 import SongsterrSearch from "./SongsterrSearch";
 import ProfilePage from "./ProfilePage";
 import AiCoachPage from "./AiCoachPage";
+import LibraryEditor from "./LibraryEditor";
 
 export default function GuitarForgeApp() {
   const [view, setView] = useState<View>("dash");
@@ -365,28 +366,7 @@ export default function GuitarForgeApp() {
                   </div>
                   <span className="text-[10px] text-[#333]">{isEd ? "−" : "+"}</span>
                 </div>
-                {isEd && (
-                  <div className="px-4 py-4 border-t border-[#1a1a1a] bg-[#0A0A0A]">
-                    <div className="grid grid-cols-2 gap-3 mb-3">
-                      <label className="font-label text-[10px] text-[#555]">Name<input value={ex.n} onChange={(e) => setExEdits((p) => ({ ...p, [ex.id]: { ...p[ex.id], n: e.target.value } }))} className="input mt-1" /></label>
-                      <label className="font-label text-[10px] text-[#555]">Duration<input type="number" value={ex.m} min={1} max={60} onChange={(e) => setExEdits((p) => ({ ...p, [ex.id]: { ...p[ex.id], m: Number(e.target.value) } }))} className="input input-gold mt-1" /></label>
-                    </div>
-                    <label className="font-label text-[10px] text-[#555] block mb-3">Description<input value={ex.d} onChange={(e) => setExEdits((p) => ({ ...p, [ex.id]: { ...p[ex.id], d: e.target.value } }))} className="input mt-1" /></label>
-                    <label className="font-label text-[10px] text-[#555] block mb-3">YouTube Search
-                      <input placeholder="Search query for tutorials" value={ex.yt} onChange={(e) => setExEdits((p) => ({ ...p, [ex.id]: { ...p[ex.id], yt: e.target.value } }))} className="input mt-1" />
-                    </label>
-                    <label className="font-label text-[10px] text-[#D4A843] block mb-3">YouTube URL (paste link to embed in exercise)
-                      <input placeholder="https://youtube.com/watch?v=..." value={exEdits[ex.id]?.ytUrl || ""} onChange={(e) => setExEdits((p) => ({ ...p, [ex.id]: { ...p[ex.id], ytUrl: e.target.value } }))} className="input mt-1" />
-                    </label>
-                    <label className="font-label text-[10px] text-[#555] block mb-3">Notes
-                      <input value={exEdits[ex.id]?.notes || ""} onChange={(e) => setExEdits((p) => ({ ...p, [ex.id]: { ...p[ex.id], notes: e.target.value } }))} className="input mt-1" />
-                    </label>
-                    <div className="flex gap-2">
-                      <a href={ytSearch(ex.yt)} target="_blank" rel="noopener noreferrer" className="btn-gold no-underline !text-[11px]">YouTube</a>
-                      <button onClick={() => setExEdits((p) => { const n = { ...p }; delete n[ex.id]; return n; })} className="btn-ghost !text-[#C41E3A] !text-[11px]">Reset</button>
-                    </div>
-                  </div>
-                )}
+                {isEd && <LibraryEditor ex={ex} exEdits={exEdits} setExEdits={setExEdits} />}
               </div>
             );
           })}

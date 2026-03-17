@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 120">
+
+  <!-- Pick interior — aged cream, visible through the cutout -->
+  <path d="M60 26C80 26,92 42,90 58C88 73,72 87,60 95C48 87,32 73,30 58C28 42,40 26,60 26Z"
+        fill="#F0EAE0"/>
+
+  <!-- Forge spark — amber diamond at the pick tip -->
+  <path d="M60 95L57 87L60 82L63 87Z" fill="#D4852A"/>
+
+  <!-- Dark badge with pick as negative space (even-odd cutout) -->
+  <path fill-rule="evenodd" fill="#18181B"
+        d="M28 16 L92 16 Q104 16 104 28 L104 92 Q104 104 92 104 L28 104 Q16 104 16 92 L16 28 Q16 16 28 16Z
+           M60 26C80 26,92 42,90 58C88 73,72 87,60 95C48 87,32 73,30 58C28 42,40 26,60 26Z"/>
+
+  <!-- GUITAR — small tracked category label -->
+  <text x="126" y="45"
+    font-family="system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif"
+    font-size="12" font-weight="400" fill="#71717A" letter-spacing="9">GUITAR</text>
+
+  <!-- FORGE — dominant brand word -->
+  <text x="123" y="98"
+    font-family="system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif"
+    font-size="54" font-weight="900" fill="#18181B" letter-spacing="-1">FORGE</text>
+
+</svg>
