@@ -310,12 +310,12 @@ export default function GuitarForgeApp() {
             const done = doneMap[week + "-" + selDay + "-" + ex.id], cc = COL[ex.c] || "#888", isSong = ex.c === "שירים";
             return (
               <div key={String(ex.id) + "-" + idx} className={`flex items-start gap-3 px-4 py-3 mb-1.5 rounded-sm transition-all ${isSong ? "bg-[#0a110a] border border-[#1a3a2a]" : "panel"}`} style={{ opacity: done ? 0.4 : 1 }}>
-                <div onClick={() => {
+                <button type="button" aria-label={done ? "Mark undone" : "Mark done"} onClick={() => {
                   const k = week + "-" + selDay + "-" + ex.id; setDoneMap((p) => ({ ...p, [k]: !p[k] }));
                   if (isSong && ex.songId !== undefined && ex.stageIdx !== undefined) setSongProgress((p) => ({ ...p, [week + "-" + ex.songId + "-" + ex.stageIdx]: { ...p[week + "-" + ex.songId + "-" + ex.stageIdx], done: !done } }));
-                }} className="cursor-pointer mt-1 flex-shrink-0">
+                }} className="cursor-pointer mt-1 flex-shrink-0 bg-transparent border-none p-0">
                   <div className={`led ${done ? "led-on" : "led-off"}`} style={{ width: 10, height: 10 }} />
-                </div>
+                </button>
                 <div className="flex-1 cursor-pointer" onClick={() => setModal(ex)}>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="tag" style={{ border: `1px solid ${cc}40`, color: cc }}>{ex.c}</span>
@@ -406,10 +406,10 @@ export default function GuitarForgeApp() {
             return (
               <div key={day} className="panel p-5 mb-4">
                 <div className="font-label text-[12px] text-[#aaa] mb-3">{day}</div>
-                {exs.map((ex) => {
+                {exs.map((ex, idx) => {
                   const k = week + "-" + day + "-" + ex.id, done = doneMap[k];
                   return (
-                    <div key={ex.id} className="flex gap-2 py-1.5 text-[12px] border-b border-[#111] last:border-0">
+                    <div key={String(ex.id) + "-" + idx} className="flex gap-2 py-1.5 text-[12px] border-b border-[#111] last:border-0">
                       <div className={`led ${done ? "led-on" : "led-off"}`} style={{ width: 6, height: 6, marginTop: 6 }} />
                       <span className="flex-1" style={{ color: done ? "#ccc" : "#444" }}>{ex.n}</span>
                       {bpmLog[k] && <span className="font-readout text-[#D4A843]">{bpmLog[k]} BPM</span>}
