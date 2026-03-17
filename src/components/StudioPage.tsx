@@ -30,9 +30,10 @@ interface StudioTrack {
   solo: boolean;
   recordArm: boolean;
   collapsed: boolean;
-  type: "recording" | "import" | "suno" | "mic" | "file" | "youtube";
+  type: "recording" | "import" | "suno" | "mic" | "file" | "youtube" | "drum";
   effects: TrackEffects;
   inputSettings?: TrackInputSettings;
+  drumPattern?: boolean[][];
 }
 
 interface TrackRegion {
@@ -275,6 +276,157 @@ const AMP_SIM_PRESETS: AmpSimPreset[] = [
 
 const TIME_SIGS: [number, number][] = [[4, 4], [3, 4], [6, 8], [2, 4], [5, 4], [7, 8]];
 
+// ── Drum Machine ──
+const DRUM_INSTRUMENTS = [
+  { name: "Kick", short: "KCK" },
+  { name: "Snare", short: "SNR" },
+  { name: "HiHat Closed", short: "HHC" },
+  { name: "HiHat Open", short: "HHO" },
+  { name: "Clap", short: "CLP" },
+  { name: "Ride", short: "RDE" },
+  { name: "Tom Low", short: "TML" },
+  { name: "Tom High", short: "TMH" },
+] as const;
+const DRUM_STEPS = 16;
+
+function createEmptyDrumPattern(): boolean[][] {
+  return DRUM_INSTRUMENTS.map(() => Array(DRUM_STEPS).fill(false));
+}
+
+function synthDrumHit(ctx: AudioContext, instrument: number, time: number) {
+  const t = time;
+  switch (instrument) {
+    case 0: { // Kick: sine pitch drop
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(150, t);
+      osc.frequency.exponentialRampToValueAtTime(50, t + 0.12);
+      gain.gain.setValueAtTime(1, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(t); osc.stop(t + 0.25);
+      break;
+    }
+    case 1: { // Snare: noise burst + sine
+      const bufSize = ctx.sampleRate * 0.15;
+      const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+      const noise = ctx.createBufferSource();
+      noise.buffer = buf;
+      const ng = ctx.createGain();
+      ng.gain.setValueAtTime(0.6, t);
+      ng.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+      noise.connect(ng).connect(ctx.destination);
+      noise.start(t); noise.stop(t + 0.15);
+      const osc = ctx.createOscillator();
+      const og = ctx.createGain();
+      osc.type = "sine"; osc.frequency.value = 180;
+      og.gain.setValueAtTime(0.7, t);
+      og.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+      osc.connect(og).connect(ctx.destination);
+      osc.start(t); osc.stop(t + 0.1);
+      break;
+    }
+    case 2: { // HiHat Closed: short HP noise
+      const bufSize = ctx.sampleRate * 0.05;
+      const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+      const noise = ctx.createBufferSource();
+      noise.buffer = buf;
+      const hp = ctx.createBiquadFilter();
+      hp.type = "highpass"; hp.frequency.value = 7000;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.3, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+      noise.connect(hp).connect(g).connect(ctx.destination);
+      noise.start(t); noise.stop(t + 0.05);
+      break;
+    }
+    case 3: { // HiHat Open: longer HP noise
+      const bufSize = ctx.sampleRate * 0.2;
+      const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+      const noise = ctx.createBufferSource();
+      noise.buffer = buf;
+      const hp = ctx.createBiquadFilter();
+      hp.type = "highpass"; hp.frequency.value = 6000;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.3, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+      noise.connect(hp).connect(g).connect(ctx.destination);
+      noise.start(t); noise.stop(t + 0.2);
+      break;
+    }
+    case 4: { // Clap: noise burst
+      const bufSize = ctx.sampleRate * 0.1;
+      const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+      const noise = ctx.createBufferSource();
+      noise.buffer = buf;
+      const bp = ctx.createBiquadFilter();
+      bp.type = "bandpass"; bp.frequency.value = 2500;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.5, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+      noise.connect(bp).connect(g).connect(ctx.destination);
+      noise.start(t); noise.stop(t + 0.1);
+      break;
+    }
+    case 5: { // Ride: sine + noise
+      const osc = ctx.createOscillator();
+      const og = ctx.createGain();
+      osc.type = "triangle"; osc.frequency.value = 800;
+      og.gain.setValueAtTime(0.15, t);
+      og.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+      osc.connect(og).connect(ctx.destination);
+      osc.start(t); osc.stop(t + 0.4);
+      const bufSize = ctx.sampleRate * 0.3;
+      const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < bufSize; i++) d[i] = Math.random() * 2 - 1;
+      const noise = ctx.createBufferSource();
+      noise.buffer = buf;
+      const hp = ctx.createBiquadFilter();
+      hp.type = "highpass"; hp.frequency.value = 8000;
+      const ng = ctx.createGain();
+      ng.gain.setValueAtTime(0.1, t);
+      ng.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+      noise.connect(hp).connect(ng).connect(ctx.destination);
+      noise.start(t); noise.stop(t + 0.3);
+      break;
+    }
+    case 6: { // Tom Low
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(120, t);
+      osc.frequency.exponentialRampToValueAtTime(60, t + 0.15);
+      g.gain.setValueAtTime(0.8, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+      osc.connect(g).connect(ctx.destination);
+      osc.start(t); osc.stop(t + 0.25);
+      break;
+    }
+    case 7: { // Tom High
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(200, t);
+      osc.frequency.exponentialRampToValueAtTime(100, t + 0.12);
+      g.gain.setValueAtTime(0.8, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+      osc.connect(g).connect(ctx.destination);
+      osc.start(t); osc.stop(t + 0.2);
+      break;
+    }
+  }
+}
+
 function computePeaks(buffer: AudioBuffer, width: number): number[] {
   const data = buffer.getChannelData(0);
   const step = Math.floor(data.length / width);
@@ -291,19 +443,24 @@ function computePeaks(buffer: AudioBuffer, width: number): number[] {
   return peaks;
 }
 
-function drawWaveform(canvas: HTMLCanvasElement, peaks: number[], color: string, trimStart = 0, trimEnd = 1) {
+function drawWaveform(canvas: HTMLCanvasElement, peaks: number[], color: string, trimStart = 0, trimEnd = 1, muted = false) {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
   const { width, height } = canvas;
   ctx.clearRect(0, 0, width, height);
-  ctx.fillStyle = color + '88';
   const mid = height / 2;
+  const fillColor = muted ? '#333' : color + '99';
+  // Center line
+  ctx.fillStyle = muted ? '#1a1a1a' : color + '22';
+  ctx.fillRect(0, mid, width, 1);
+  // Waveform bars
+  ctx.fillStyle = fillColor;
   const startIdx = Math.floor(trimStart * peaks.length);
   const endIdx = Math.floor(trimEnd * peaks.length);
   const visiblePeaks = peaks.slice(startIdx, endIdx);
   const step = width / visiblePeaks.length;
   for (let i = 0; i < visiblePeaks.length; i++) {
-    const h = visiblePeaks[i] * mid;
+    const h = visiblePeaks[i] * mid * 0.9;
     const x = i * step;
     ctx.fillRect(x, mid - h, Math.max(1, step - 0.5), h * 2);
   }
@@ -393,6 +550,12 @@ export default function StudioPage() {
     origDuration: number;
     origOffset: number;
   } | null>(null);
+  const [drumPlaying, setDrumPlaying] = useState(false);
+  const [drumStep, setDrumStep] = useState(-1);
+  const [soundsTab, setSoundsTab] = useState<"recordings" | "sounds">("recordings");
+  const [soundsSubTab, setSoundsSubTab] = useState<"files" | "presets" | "loops">("files");
+  const drumAudioCtxRef = useRef<AudioContext | null>(null);
+  const drumTimerRef = useRef<number | null>(null);
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
   const regionCanvasRefs = useRef<Record<string, HTMLCanvasElement | null>>({});
   const audioBuffersRef = useRef<Record<number, AudioBuffer>>({});
@@ -653,6 +816,64 @@ export default function StudioPage() {
     setTracks((p) => [...p, newTrack]);
     setShowAddTrackMenu(false);
   }, [selectedInputDevice]);
+
+  // ── Add Drum Machine track ──
+  const addDrumTrack = useCallback(() => {
+    ctr.current++;
+    const id = ctr.current;
+    const color = TRACK_COLORS[(id - 1) % TRACK_COLORS.length];
+    const newTrack: StudioTrack = {
+      id, name: `Drums ${id}`, color,
+      audioBlob: null, audioUrl: null,
+      volume: 100, pan: 0,
+      muted: false, solo: false, recordArm: false, collapsed: false,
+      type: "drum",
+      effects: JSON.parse(JSON.stringify(DEFAULT_EFFECTS)),
+      drumPattern: createEmptyDrumPattern(),
+    };
+    setTracks((p) => [...p, newTrack]);
+    setSelectedTrackId(id);
+    setBottomTab("editor");
+    setShowAddTrackMenu(false);
+  }, []);
+
+  // ── Drum pattern toggle ──
+  const toggleDrumCell = useCallback((trackId: number, instrIdx: number, stepIdx: number) => {
+    setTracks((prev) => prev.map((t) => {
+      if (t.id !== trackId || !t.drumPattern) return t;
+      const pat = t.drumPattern.map((row) => [...row]);
+      pat[instrIdx][stepIdx] = !pat[instrIdx][stepIdx];
+      return { ...t, drumPattern: pat };
+    }));
+  }, []);
+
+  // ── Drum playback ──
+  const startDrumPlayback = useCallback((pattern: boolean[][]) => {
+    if (!drumAudioCtxRef.current) drumAudioCtxRef.current = new AudioContext();
+    const ctx = drumAudioCtxRef.current;
+    const stepDuration = (60 / bpm) / 4; // 16th notes
+    let step = 0;
+    setDrumPlaying(true);
+    setDrumStep(0);
+    const tick = () => {
+      const currentPattern = pattern;
+      for (let i = 0; i < DRUM_INSTRUMENTS.length; i++) {
+        if (currentPattern[i][step]) {
+          synthDrumHit(ctx, i, ctx.currentTime);
+        }
+      }
+      setDrumStep(step);
+      step = (step + 1) % DRUM_STEPS;
+      drumTimerRef.current = window.setTimeout(tick, stepDuration * 1000);
+    };
+    tick();
+  }, [bpm]);
+
+  const stopDrumPlayback = useCallback(() => {
+    if (drumTimerRef.current !== null) { clearTimeout(drumTimerRef.current); drumTimerRef.current = null; }
+    setDrumPlaying(false);
+    setDrumStep(-1);
+  }, []);
 
   // ── Add YouTube track placeholder ──
   const addYoutubeTrack = useCallback(() => {
@@ -1328,9 +1549,11 @@ export default function StudioPage() {
       if (ctx) ctx.scale(dpr, dpr);
       const track = tracks.find((t) => t.id === region.trackId);
       const color = track?.color || '#888';
+      const hasSolo = tracks.some((t) => t.solo);
+      const isMuted = track ? (hasSolo ? !track.solo : track.muted) : false;
       const trimStart = region.offset / region.bufferDuration;
       const trimEnd = (region.offset + region.duration) / region.bufferDuration;
-      drawWaveform(canvas, region.peaks, color, trimStart, trimEnd);
+      drawWaveform(canvas, region.peaks, color, trimStart, trimEnd, isMuted);
     });
   }, [regions, zoom, tracks]);
 
@@ -1488,6 +1711,8 @@ export default function StudioPage() {
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") { try { mediaRecorderRef.current.stop(); } catch { /* ok */ } }
       if (recLevelAnimRef.current) cancelAnimationFrame(recLevelAnimRef.current);
       if (recAudioCtxRef.current) { try { recAudioCtxRef.current.close(); } catch { /* ok */ } }
+      if (drumTimerRef.current !== null) clearTimeout(drumTimerRef.current);
+      if (drumAudioCtxRef.current) { try { drumAudioCtxRef.current.close(); } catch { /* ok */ } }
     };
   }, []);
 
@@ -1842,6 +2067,15 @@ export default function StudioPage() {
                       <div className="text-[8px] text-[#666]">Import from link</div>
                     </div>
                   </button>
+                  <div className="border-t border-[#2a2a2a] my-0.5" />
+                  <button onClick={addDrumTrack}
+                    className="w-full text-left text-[10px] text-[#ccc] hover:bg-[#2a2a2a] px-3 py-2 cursor-pointer transition-colors flex items-center gap-2.5">
+                    <span className="text-[14px]">&#129345;</span>
+                    <div>
+                      <div className="font-medium">Drum Machine</div>
+                      <div className="text-[8px] text-[#666]">Step sequencer pattern</div>
+                    </div>
+                  </button>
                 </div>
               )}
             </div>
@@ -2137,7 +2371,7 @@ export default function StudioPage() {
               ))}
             </div>
             {/* Playhead on ruler */}
-            <div className="absolute top-0 h-full z-10 pointer-events-none" style={{ left: `${currentTime * pxPerSec}px` }}>
+            <div className="absolute top-0 h-full z-10 pointer-events-none" style={{ transform: `translateX(${currentTime * pxPerSec}px)`, left: 0, willChange: playing ? 'transform' : 'auto' }}>
               <div className="w-px h-full bg-[#f59e0b]" style={{ boxShadow: "0 0 4px rgba(245,158,11,0.3)" }} />
               <div className="absolute top-0 -translate-x-1/2 w-3 h-3 bg-[#f59e0b]" style={{ clipPath: "polygon(0 0, 100% 0, 50% 100%)", filter: "drop-shadow(0 1px 2px rgba(245,158,11,0.4))" }} />
             </div>
@@ -2322,7 +2556,12 @@ export default function StudioPage() {
             {/* Vertical playhead across all waveforms */}
             {(duration > 0 || currentTime > 0) && (
               <div className="absolute top-0 bottom-0 w-px bg-[#f59e0b] z-10 pointer-events-none"
-                style={{ left: `${currentTime * pxPerSec}px`, boxShadow: "0 0 4px rgba(245,158,11,0.3)" }} />
+                style={{
+                  transform: `translateX(${currentTime * pxPerSec}px)`,
+                  left: 0,
+                  willChange: playing ? 'transform' : 'auto',
+                  boxShadow: "0 0 6px rgba(245,158,11,0.4)",
+                }} />
             )}
 
             {/* Context menu for region editing */}
@@ -2581,7 +2820,64 @@ export default function StudioPage() {
                 )}
 
                 {/* ── EDITOR TAB ── */}
-                {bottomTab === "editor" && fxTrack && (
+                {bottomTab === "editor" && fxTrack && fxTrack.type === "drum" && fxTrack.drumPattern && (
+                  <div className="p-3 overflow-auto">
+                    <div className="flex items-center gap-3 mb-3">
+                      <button
+                        onClick={() => {
+                          if (drumPlaying) stopDrumPlayback();
+                          else if (fxTrack.drumPattern) startDrumPlayback(fxTrack.drumPattern);
+                        }}
+                        className={`flex items-center gap-1.5 px-3 py-1 rounded text-[10px] font-medium cursor-pointer transition-colors ${
+                          drumPlaying ? "bg-[#ef4444] text-white" : "bg-[#f59e0b] text-[#111]"
+                        }`}>
+                        {drumPlaying ? (
+                          <><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>Stop</>
+                        ) : (
+                          <><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>Play</>
+                        )}
+                      </button>
+                      <span className="text-[9px] text-[#555]">{bpm} BPM</span>
+                      <span className="text-[9px] text-[#555]">16 Steps</span>
+                      <button onClick={() => {
+                        setTracks((prev) => prev.map((t) => t.id === fxTrack.id ? { ...t, drumPattern: createEmptyDrumPattern() } : t));
+                      }} className="text-[9px] text-[#555] hover:text-[#ef4444] cursor-pointer transition-colors">Clear</button>
+                    </div>
+                    {/* Step numbers */}
+                    <div className="flex items-center mb-1" style={{ paddingLeft: 72 }}>
+                      {Array.from({ length: DRUM_STEPS }, (_, i) => (
+                        <div key={i} className={`w-6 h-4 flex items-center justify-center text-[7px] font-mono ${
+                          drumStep === i ? "text-[#f59e0b]" : i % 4 === 0 ? "text-[#555]" : "text-[#333]"
+                        }`}>{i + 1}</div>
+                      ))}
+                    </div>
+                    {/* Grid */}
+                    {DRUM_INSTRUMENTS.map((instr, instrIdx) => (
+                      <div key={instr.name} className="flex items-center mb-0.5">
+                        <div className="w-[72px] flex-shrink-0 text-[9px] text-[#888] truncate pr-2 text-right font-medium">{instr.name}</div>
+                        {fxTrack.drumPattern![instrIdx].map((on, stepIdx) => (
+                          <button
+                            key={stepIdx}
+                            onClick={() => toggleDrumCell(fxTrack.id, instrIdx, stepIdx)}
+                            className={`w-6 h-6 rounded-sm cursor-pointer transition-all border ${
+                              on
+                                ? "border-[#f59e0b66]"
+                                : stepIdx % 4 === 0
+                                  ? "border-[#2a2a2a] hover:border-[#444]"
+                                  : "border-[#1e1e1e] hover:border-[#333]"
+                            }`}
+                            style={{
+                              background: on
+                                ? drumStep === stepIdx ? "#f59e0b" : "#f59e0b99"
+                                : drumStep === stepIdx ? "#222" : stepIdx % 4 === 0 ? "#181818" : "#141414",
+                            }}
+                          />
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {bottomTab === "editor" && fxTrack && fxTrack.type !== "drum" && (
                   <div className="p-4">
                     <div className="grid grid-cols-2 gap-4 max-w-md">
                       <div>
@@ -2782,19 +3078,69 @@ export default function StudioPage() {
           </div>
         )}
 
-        {/* ═══════════════════ RIGHT PANEL: My Recordings ═══════════════════ */}
+        {/* ═══════════════════ RIGHT PANEL: My Recordings / Sounds ═══════════════════ */}
         {showRecordingsPanel && (
           <div className="flex-shrink-0 flex flex-col overflow-hidden" style={{ width: 260, background: "#141414", borderLeft: "1px solid #1e1e1e" }}>
             <div className="flex items-center h-7 px-3 flex-shrink-0" style={{ background: "#181818", borderBottom: "1px solid #1e1e1e" }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" className="mr-1.5 flex-shrink-0">
-                <path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/>
-              </svg>
-              <span className="text-[9px] text-[#888] font-medium" dir="rtl">{"\u05D4\u05D4\u05E7\u05DC\u05D8\u05D5\u05EA \u05E9\u05DC\u05D9"}</span>
-              <div className="flex-1" />
+              <div className="flex items-center gap-0.5 flex-1">
+                <button onClick={() => setSoundsTab("recordings")}
+                  className={`text-[9px] px-2 py-0.5 rounded cursor-pointer transition-colors font-medium ${soundsTab === "recordings" ? "text-[#f59e0b] bg-[#f59e0b11]" : "text-[#555] hover:text-[#888]"}`}>
+                  {"\u05D4\u05E7\u05DC\u05D8\u05D5\u05EA"}
+                </button>
+                <button onClick={() => setSoundsTab("sounds")}
+                  className={`text-[9px] px-2 py-0.5 rounded cursor-pointer transition-colors font-medium ${soundsTab === "sounds" ? "text-[#f59e0b] bg-[#f59e0b11]" : "text-[#555] hover:text-[#888]"}`}>
+                  Sounds
+                </button>
+              </div>
               <button onClick={() => setShowRecordingsPanel(false)}
                 className="text-[#444] hover:text-[#888] text-xs cursor-pointer">&#10005;</button>
             </div>
 
+            {/* Sounds tab */}
+            {soundsTab === "sounds" && (
+              <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex items-center gap-0.5 px-2 pt-2 pb-1 flex-shrink-0">
+                  {(["files", "presets", "loops"] as const).map((tab) => (
+                    <button key={tab} onClick={() => setSoundsSubTab(tab)}
+                      className={`text-[8px] px-2 py-1 rounded cursor-pointer transition-colors ${soundsSubTab === tab ? "bg-[#f59e0b22] text-[#f59e0b]" : "text-[#555] hover:text-[#888]"}`}>
+                      {tab === "files" ? "My Files" : tab === "presets" ? "Presets" : "Loops"}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
+                  {soundsSubTab === "files" && (
+                    <>
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="1.5" className="mb-2">
+                        <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/>
+                      </svg>
+                      <span className="text-[10px] text-[#444]" dir="rtl">{"\u05D0\u05D9\u05DF \u05E7\u05D1\u05E6\u05D9\u05DD"}</span>
+                      <span className="text-[8px] text-[#333] mt-1" dir="rtl">{"\u05D2\u05E8\u05D5\u05E8 \u05E7\u05D1\u05E6\u05D9 \u05D0\u05D5\u05D3\u05D9\u05D5 \u05DC\u05DB\u05D0\u05DF"}</span>
+                    </>
+                  )}
+                  {soundsSubTab === "presets" && (
+                    <>
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="1.5" className="mb-2">
+                        <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+                      </svg>
+                      <span className="text-[10px] text-[#555]">Coming soon...</span>
+                      <span className="text-[8px] text-[#333] mt-1" dir="rtl">{"\u05E4\u05E8\u05D9\u05E1\u05D8\u05D9\u05DD \u05DE\u05D5\u05DB\u05E0\u05D9\u05DD"}</span>
+                    </>
+                  )}
+                  {soundsSubTab === "loops" && (
+                    <>
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="1.5" className="mb-2">
+                        <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/>
+                      </svg>
+                      <span className="text-[10px] text-[#555]">Coming soon...</span>
+                      <span className="text-[8px] text-[#333] mt-1" dir="rtl">{"\u05DC\u05D5\u05E4\u05D9\u05DD \u05DE\u05D5\u05DB\u05E0\u05D9\u05DD"}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Recordings tab */}
+            {soundsTab === "recordings" && <>
             {/* Search */}
             <div className="px-3 pt-2 pb-1 flex-shrink-0">
               <div className="relative">
@@ -2900,6 +3246,7 @@ export default function StudioPage() {
                 );
               })}
             </div>
+            </>}
           </div>
         )}
       </div>
