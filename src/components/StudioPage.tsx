@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 
 // ── Types ──
 interface TrackEffects {
@@ -146,6 +146,13 @@ export default function StudioPage() {
   const [sunoBpm, setSunoBpm] = useState(120);
   const [sunoLoading, setSunoLoading] = useState(false);
   const [sunoError, setSunoError] = useState("");
+  const [selectedTrackId, setSelectedTrackId] = useState<number | null>(null);
+  const [editingTrackName, setEditingTrackName] = useState<number | null>(null);
+  const [sidebarWidth, setSidebarWidth] = useState(220);
+  const [bottomPanelHeight, setBottomPanelHeight] = useState(240);
+  const [bottomTab, setBottomTab] = useState<"fx" | "editor" | "none">("none");
+  const [trackMenuId, setTrackMenuId] = useState<number | null>(null);
+  const [vuLevels, setVuLevels] = useState<Record<number, number>>({});
 
   // ── Refs ──
   const toneRef = useRef<ToneModule | null>(null);
@@ -167,6 +174,9 @@ export default function StudioPage() {
   const trackContainersRef = useRef<Record<number, HTMLDivElement | null>>({});
   const recContainerRef = useRef<HTMLDivElement | null>(null);
   const mountedRef = useRef(true);
+  const sidebarDragRef = useRef(false);
+  const bottomDragRef = useRef(false);
+  const vuAnimRef = useRef<number>(0);
 
   // ── Tone.js initialization ──
   const ensureTone = useCallback(async () => {
@@ -796,6 +806,90 @@ export default function StudioPage() {
     return new Blob([arrayBuf], { type: "audio/wav" });
   }
 
+  // ── Track rename ──
+  const renameTrack = useCallback((id: number, name: string) => {
+    setTracks((p) => p.map((t) => t.id === id ? { ...t, name } : t));
+  }, []);
+
+  // ── VU meter simulation ──
+  useEffect(() => {
+    const tick = () => {
+      if (!mountedRef.current) return;
+      const levels: Record<number, number> = {};
+      tracks.forEach((t) => {
+        const hasSolo = tracks.some((tr) => tr.solo);
+        const audible = hasSolo ? t.solo : !t.muted;
+        if (playing && audible) {
+          levels[t.id] = 0.3 + Math.random() * 0.5 + (t.volume / 100) * 0.2;
+        } else if (isRec && t.type === "recording") {
+          levels[t.id] = 0.4 + Math.random() * 0.4;
+        } else {
+          levels[t.id] = 0;
+        }
+      });
+      setVuLevels(levels);
+      vuAnimRef.current = requestAnimationFrame(tick);
+    };
+    if (playing || isRec) {
+      vuAnimRef.current = requestAnimationFrame(tick);
+    } else {
+      setVuLevels({});
+    }
+    return () => { if (vuAnimRef.current) cancelAnimationFrame(vuAnimRef.current); };
+  }, [playing, isRec, tracks]);
+
+  // ── Resizable sidebar ──
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      if (sidebarDragRef.current) {
+        const w = Math.max(160, Math.min(400, e.clientX));
+        setSidebarWidth(w);
+      }
+      if (bottomDragRef.current) {
+        const h = Math.max(150, Math.min(500, window.innerHeight - e.clientY));
+        setBottomPanelHeight(h);
+      }
+    };
+    const onMouseUp = () => {
+      sidebarDragRef.current = false;
+      bottomDragRef.current = false;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+  }, []);
+
+  // ── Selected track for FX bottom panel ──
+  const selectedTrack = useMemo(() =>
+    selectedTrackId !== null ? tracks.find((t) => t.id === selectedTrackId) ?? null : null
+  , [selectedTrackId, tracks]);
+
+  // Open FX panel when selecting a track
+  useEffect(() => {
+    if (selectedTrackId !== null && bottomTab === "none") {
+      setBottomTab("fx");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTrackId]);
+
+  // ── Measure ruler data ──
+  const measures = useMemo(() => {
+    const beatsPerMeasure = 4;
+    const secPerBeat = 60 / bpm;
+    const secPerMeasure = secPerBeat * beatsPerMeasure;
+    const totalMeasures = duration > 0 ? Math.ceil(duration / secPerMeasure) + 1 : 8;
+    return Array.from({ length: totalMeasures }, (_, i) => ({
+      measure: i + 1,
+      time: i * secPerMeasure,
+      beats: Array.from({ length: beatsPerMeasure }, (_, b) => i * secPerMeasure + b * secPerBeat),
+    }));
+  }, [bpm, duration]);
+
   // ── Cleanup on unmount ──
   useEffect(() => {
     mountedRef.current = true;
@@ -839,412 +933,502 @@ export default function StudioPage() {
     };
   }, []);
 
-  // ── FX track reference ──
-  const fxTrack = fxTrackId !== null ? tracks.find((t) => t.id === fxTrackId) : null;
+  // FX track for bottom panel
+  const fxTrack = selectedTrack ?? (fxTrackId !== null ? tracks.find((t) => t.id === fxTrackId) ?? null : null);
+
+  const pxPerSec = 20 + (zoom / 100) * 300;
 
   return (
-    <div dir="rtl">
-      {/* ── Header ── */}
-      <div className="panel p-5 mb-3">
-        <div className="font-heading text-xl font-bold text-[#D4A843]">Recording Studio</div>
-        <div className="font-label text-[10px] text-[#555] mt-1">Record · Import · Mix · Export · Effects</div>
-      </div>
+    <div className="flex flex-col h-screen overflow-hidden" style={{ background: "#0a0a0a" }} dir="ltr">
+      {/* ── Top Transport Bar ── */}
+      <div className="flex items-center h-11 px-2 gap-1 border-b border-[#222] flex-shrink-0" style={{ background: "#111" }}>
+        {/* Left: BPM / Time Sig */}
+        <div className="flex items-center gap-2 min-w-[160px]">
+          <span className="font-label text-[8px] text-[#555] uppercase">BPM</span>
+          <input type="number" min={40} max={300} value={bpm}
+            onChange={(e) => setBpm(Number(e.target.value))}
+            className="w-12 h-6 bg-[#1a1a1a] border border-[#333] rounded text-[#D4A843] text-xs text-center font-mono focus:border-[#D4A843] outline-none" />
+          <span className="font-label text-[8px] text-[#555]">4/4</span>
+        </div>
 
-      {/* ── Transport Bar ── */}
-      <div className="panel p-4 mb-3">
-        <div className="flex items-center gap-3 flex-wrap" dir="ltr">
+        {/* Center: Transport controls */}
+        <div className="flex-1 flex items-center justify-center gap-2">
           {/* Record */}
           {!isRec ? (
             <button onClick={startRec} title="Record"
-              className="w-12 h-12 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95 flex-shrink-0"
-              style={{ background: "radial-gradient(circle at 40% 40%, #C41E3A, #7f1d1d 80%)", border: "2px solid #555" }} />
+              className="w-8 h-8 rounded-full cursor-pointer transition-all hover:brightness-125 active:scale-95 flex-shrink-0"
+              style={{ background: "radial-gradient(circle at 40% 40%, #C41E3A, #7f1d1d 80%)", border: "1px solid #444", boxShadow: "0 0 6px #C41E3A33" }} />
           ) : (
             <button onClick={stopRec} title="Stop Recording"
-              className="w-12 h-12 rounded-full cursor-pointer flex items-center justify-center flex-shrink-0"
-              style={{ background: "radial-gradient(circle at 40% 40%, #555, #222 80%)", border: "2px solid #555" }}>
-              <div className="w-4 h-4 bg-[#ccc] rounded-sm" />
+              className="w-8 h-8 rounded-full cursor-pointer flex items-center justify-center flex-shrink-0 hover:brightness-125"
+              style={{ background: "radial-gradient(circle at 40% 40%, #555, #222 80%)", border: "1px solid #444" }}>
+              <div className="w-3 h-3 bg-[#C41E3A] rounded-sm" />
             </button>
           )}
 
-          {/* Play/Stop */}
+          {/* Stop */}
+          <button onClick={stopAll} title="Stop"
+            className="w-8 h-8 rounded-full cursor-pointer flex items-center justify-center hover:brightness-125"
+            style={{ background: "linear-gradient(145deg, #333, #222)", border: "1px solid #444" }}>
+            <div className="w-3 h-3 bg-[#888] rounded-sm" />
+          </button>
+
+          {/* Play */}
           {!playing ? (
             <button onClick={playAll} title="Play"
-              className="w-10 h-10 rounded-full cursor-pointer flex items-center justify-center"
-              style={{ background: tracks.length > 0 ? "linear-gradient(145deg, #33CC33, #1a8a1a)" : "linear-gradient(145deg, #444, #333)", border: "2px solid #555" }}
+              className="w-9 h-9 rounded-full cursor-pointer flex items-center justify-center hover:brightness-125"
+              style={{ background: tracks.length > 0 ? "linear-gradient(145deg, #33CC33, #1a8a1a)" : "linear-gradient(145deg, #333, #222)", border: "1px solid #444", boxShadow: tracks.length > 0 ? "0 0 8px #33CC3333" : "none" }}
               disabled={tracks.length === 0}>
-              <span className="text-[#0A0A0A] text-sm ml-0.5">&#9654;</span>
+              <span className="text-[#0A0A0A] text-xs ml-0.5">&#9654;</span>
             </button>
           ) : (
-            <button onClick={stopAll} title="Stop"
-              className="w-10 h-10 rounded-full cursor-pointer flex items-center justify-center"
-              style={{ background: "linear-gradient(145deg, #888, #444)", border: "2px solid #555" }}>
-              <div className="w-3 h-3 bg-[#ccc] rounded-sm" />
+            <button onClick={stopAll} title="Pause"
+              className="w-9 h-9 rounded-full cursor-pointer flex items-center justify-center hover:brightness-125"
+              style={{ background: "linear-gradient(145deg, #D4A843, #a07830)", border: "1px solid #444", boxShadow: "0 0 8px #D4A84333" }}>
+              <span className="text-[#0A0A0A] text-xs font-bold">II</span>
             </button>
           )}
 
           {/* Loop */}
           <button onClick={() => setLooping(!looping)} title="Loop"
-            className={`w-8 h-8 rounded-sm cursor-pointer flex items-center justify-center text-xs font-bold border ${looping ? "border-[#D4A843] text-[#D4A843]" : "border-[#333] text-[#555]"}`}
-            style={{ background: "#111" }}>
+            className={`w-7 h-7 rounded-full cursor-pointer flex items-center justify-center text-[10px] border transition-all hover:brightness-125 ${looping ? "border-[#D4A843] text-[#D4A843] shadow-[0_0_6px_#D4A84344]" : "border-[#333] text-[#555]"}`}
+            style={{ background: "#1a1a1a" }}>
             &#8635;
           </button>
-
-          {/* Recording timer */}
-          {isRec && (
-            <div className="flex items-center gap-2">
-              <div className="led led-red" />
-              <span className="font-readout text-xl text-[#C41E3A]">{fmtTime(recTime)}</span>
-              <span className="font-label text-[9px] text-[#555]">REC</span>
-            </div>
-          )}
-
-          {/* Time display */}
-          <div className="segment-display !px-3 !py-1 text-sm flex items-center gap-1">
-            <span>{fmtTime(currentTime)}</span>
-            <span className="text-[#555]">/</span>
-            <span className="text-[#888]">{fmtTime(duration)}</span>
-          </div>
-
-          {/* BPM */}
-          <div className="flex items-center gap-1">
-            <span className="font-label text-[8px] text-[#555]">BPM</span>
-            <input type="number" min={40} max={300} value={bpm}
-              onChange={(e) => setBpm(Number(e.target.value))}
-              className="input input-gold !w-14 !text-xs !p-1 text-center" />
-          </div>
 
           {/* Metronome */}
           <button onClick={async () => { await setupMetronome(); setMetronomeOn(!metronomeOn); }}
             title="Metronome"
-            className={`w-8 h-8 rounded-sm cursor-pointer flex items-center justify-center text-[10px] font-bold border ${metronomeOn ? "border-[#D4A843] text-[#D4A843]" : "border-[#333] text-[#555]"}`}
-            style={{ background: "#111" }}>
+            className={`w-7 h-7 rounded-full cursor-pointer flex items-center justify-center text-[10px] border transition-all hover:brightness-125 ${metronomeOn ? "border-[#D4A843] text-[#D4A843] shadow-[0_0_6px_#D4A84344]" : "border-[#333] text-[#555]"}`}
+            style={{ background: "#1a1a1a" }}>
             &#9834;
           </button>
 
-          <div className="flex-1" />
-
-          {/* Master volume */}
-          <div className="flex items-center gap-1">
-            <span className="font-label text-[8px] text-[#555]">MST</span>
-            <input type="range" min={0} max={100} value={masterVol}
-              onChange={(e) => setMasterVol(Number(e.target.value))}
-              className="w-16 accent-[#D4A843]" />
-            <span className="font-readout text-[10px] text-[#D4A843] w-7">{masterVol}</span>
+          {/* Time display */}
+          <div className="bg-[#0a0a0a] border border-[#333] rounded px-3 py-1 font-mono text-xs flex items-center gap-1 min-w-[100px] justify-center">
+            <span className="text-[#D4A843]">{fmtTime(currentTime)}</span>
+            <span className="text-[#333]">/</span>
+            <span className="text-[#666]">{fmtTime(duration)}</span>
           </div>
 
+          {/* Recording indicator */}
+          {isRec && (
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-[#C41E3A] animate-pulse" />
+              <span className="font-mono text-xs text-[#C41E3A]">{fmtTime(recTime)}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Right: Master / Export */}
+        <div className="flex items-center gap-3 min-w-[240px] justify-end">
           {/* Zoom */}
           <div className="flex items-center gap-1">
-            <span className="font-label text-[8px] text-[#555]">ZOOM</span>
+            <span className="font-label text-[7px] text-[#555]">ZOOM</span>
             <input type="range" min={0} max={100} value={zoom}
               onChange={(e) => setZoom(Number(e.target.value))}
-              className="w-14 accent-[#D4A843]" />
+              className="w-12 accent-[#555] h-1" />
           </div>
-        </div>
-
-        {/* Source buttons row */}
-        <div className="flex items-center gap-2 mt-3 flex-wrap" dir="ltr">
-          <button onClick={() => fileRef.current?.click()}
-            className="btn-ghost !text-[10px]">Import</button>
-          <input ref={fileRef} type="file" accept="audio/*" className="hidden"
-            onChange={(e) => { if (e.target.files?.[0]) importFile(e.target.files[0]); }} />
-
-          <button onClick={() => setShowPanel(showPanel === "youtube" ? "none" : "youtube")}
-            className={`btn-ghost !text-[10px] ${showPanel === "youtube" ? "active" : ""}`}>YouTube</button>
-          <button onClick={() => setShowPanel(showPanel === "suno" ? "none" : "suno")}
-            className={`btn-ghost !text-[10px] ${showPanel === "suno" ? "active" : ""}`}>Suno AI</button>
+          {/* Master volume */}
+          <div className="flex items-center gap-1">
+            <span className="font-label text-[7px] text-[#D4A843]">MST</span>
+            <input type="range" min={0} max={100} value={masterVol}
+              onChange={(e) => setMasterVol(Number(e.target.value))}
+              className="w-16 accent-[#D4A843] h-1" />
+            <span className="font-mono text-[9px] text-[#D4A843] w-6">{masterVol}</span>
+          </div>
           <button onClick={exportMix} disabled={tracks.length === 0}
-            className="btn-gold !text-[10px]">Export WAV</button>
-        </div>
-
-        {/* VU meter */}
-        <div className="vu mt-2">
-          <div className="vu-fill" style={{ width: isRec ? "65%" : playing ? "40%" : "0%" }} />
+            className="text-[9px] font-semibold px-3 py-1 rounded border border-[#D4A843] text-[#D4A843] hover:bg-[#D4A843] hover:text-[#0a0a0a] transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer">
+            Export
+          </button>
         </div>
       </div>
 
-      {/* ── YouTube Panel ── */}
+      {/* ── Source buttons bar ── */}
+      <div className="flex items-center h-8 px-2 gap-2 border-b border-[#222] flex-shrink-0" style={{ background: "#0e0e0e" }}>
+        <button onClick={() => fileRef.current?.click()}
+          className="text-[9px] px-2 py-0.5 rounded border border-[#333] text-[#888] hover:text-[#ccc] hover:border-[#555] transition-colors cursor-pointer">Import File</button>
+        <input ref={fileRef} type="file" accept="audio/*" className="hidden"
+          onChange={(e) => { if (e.target.files?.[0]) importFile(e.target.files[0]); }} />
+        <button onClick={() => setShowPanel(showPanel === "youtube" ? "none" : "youtube")}
+          className={`text-[9px] px-2 py-0.5 rounded border transition-colors cursor-pointer ${showPanel === "youtube" ? "border-[#C41E3A] text-[#C41E3A]" : "border-[#333] text-[#888] hover:text-[#ccc] hover:border-[#555]"}`}>YouTube</button>
+        <button onClick={() => setShowPanel(showPanel === "suno" ? "none" : "suno")}
+          className={`text-[9px] px-2 py-0.5 rounded border transition-colors cursor-pointer ${showPanel === "suno" ? "border-[#8b5cf6] text-[#8b5cf6]" : "border-[#333] text-[#888] hover:text-[#ccc] hover:border-[#555]"}`}>Suno AI</button>
+
+        <div className="flex-1" />
+        <span className="font-label text-[8px] text-[#333]">{tracks.length} tracks</span>
+      </div>
+
+      {/* ── YouTube / Suno overlay panels ── */}
       {showPanel === "youtube" && (
-        <div className="panel p-4 mb-3">
-          <div className="font-label text-[10px] text-[#D4A843] mb-2">YouTube — Paste URL to embed</div>
-          <div className="flex gap-2 mb-3" dir="ltr">
+        <div className="border-b border-[#222] p-3" style={{ background: "#111" }}>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="font-label text-[10px] text-[#C41E3A]">YouTube</span>
+            <button onClick={() => setShowPanel("none")} className="text-[#555] hover:text-[#888] text-xs cursor-pointer ml-auto">X</button>
+          </div>
+          <div className="flex gap-2 mb-2">
             <input value={ytQuery} onChange={(e) => setYtQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && loadYt()}
-              placeholder="Paste YouTube URL here..." className="input flex-1 !text-xs" />
-            <button onClick={loadYt} className="btn-gold !text-[10px]">Load</button>
+              placeholder="Paste YouTube URL..." className="flex-1 bg-[#1a1a1a] border border-[#333] rounded px-2 py-1 text-xs text-[#ccc] outline-none focus:border-[#C41E3A]" />
+            <button onClick={loadYt} className="text-[9px] px-3 py-1 bg-[#C41E3A] text-white rounded hover:brightness-110 cursor-pointer">Load</button>
           </div>
           {ytVideoId && (
-            <div className="aspect-video w-full rounded-sm overflow-hidden bg-black mb-2">
+            <div className="aspect-video w-full max-w-lg rounded overflow-hidden bg-black mb-2">
               <iframe src={`https://www.youtube.com/embed/${ytVideoId}?modestbranding=1&rel=0`}
                 className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen title="YouTube" />
             </div>
           )}
-          <div className="font-label text-[9px] text-[#555] mb-1" dir="rtl">חפש Backing Track:</div>
-          <div className="flex gap-1 flex-wrap" dir="ltr">
+          <div className="flex gap-1 flex-wrap">
             {["Am Blues Backing Track", "Rock Jam Track", "Metal Backing Track", "Funk Guitar Jam"].map((q) => (
               <button key={q} onClick={() => window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`, "_blank")}
-                className="btn-ghost !text-[9px] !px-2 !py-1">{q}</button>
+                className="text-[8px] px-2 py-0.5 rounded border border-[#222] text-[#555] hover:text-[#888] hover:border-[#333] transition-colors cursor-pointer">{q}</button>
             ))}
           </div>
-          <div className="font-label text-[8px] text-[#333] mt-1" dir="rtl">העתק URL מ-YouTube והדבק למעלה</div>
         </div>
       )}
 
-      {/* ── Suno Panel ── */}
       {showPanel === "suno" && (
-        <div className="panel p-4 mb-3">
-          <div className="font-label text-[10px] text-[#D4A843] mb-3">AI Backing Track (Suno)</div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3" dir="ltr">
-            <label className="font-label text-[9px] text-[#555]">Key
-              <input value={sunoScale} onChange={(e) => setSunoScale(e.target.value)} className="input mt-0.5 !text-xs" />
-            </label>
-            <label className="font-label text-[9px] text-[#555]">Mode
-              <input value={sunoMode} onChange={(e) => setSunoMode(e.target.value)} className="input mt-0.5 !text-xs" />
-            </label>
-            <label className="font-label text-[9px] text-[#555]">Style
-              <input value={sunoStyle} onChange={(e) => setSunoStyle(e.target.value)} className="input mt-0.5 !text-xs" />
-            </label>
-            <label className="font-label text-[9px] text-[#555]">BPM
-              <input type="number" value={sunoBpm} onChange={(e) => setSunoBpm(Number(e.target.value))} className="input input-gold mt-0.5 !text-xs" />
-            </label>
-          </div>
-          <button onClick={generateSuno} disabled={sunoLoading} className="btn-gold">
-            {sunoLoading ? "...מייצר" : "ייצר טראק"}
-          </button>
-          <span className="font-label text-[9px] text-[#444] mr-2">דרוש SUNO_API_URL</span>
-          {sunoError && <div className="font-label text-[10px] text-[#C41E3A] mt-2">{sunoError}</div>}
-        </div>
-      )}
-
-      {/* ── Recording Waveform ── */}
-      {isRec && (
-        <div className="panel p-4 mb-3">
+        <div className="border-b border-[#222] p-3" style={{ background: "#111" }}>
           <div className="flex items-center gap-2 mb-2">
-            <div className="led led-red" />
-            <span className="font-label text-[11px] text-[#C41E3A]">מקליט...</span>
-            <span className="font-readout text-sm text-[#C41E3A]">{fmtTime(recTime)}</span>
+            <span className="font-label text-[10px] text-[#8b5cf6]">AI Backing Track (Suno)</span>
+            <button onClick={() => setShowPanel("none")} className="text-[#555] hover:text-[#888] text-xs cursor-pointer ml-auto">X</button>
           </div>
-          <div ref={recContainerRef} dir="ltr" className="bg-[#0A0A0A] rounded-sm border border-[#1a1a1a] overflow-hidden" />
-        </div>
-      )}
-
-      {/* ── Track Lanes ── */}
-      <div className="panel p-4 mb-3">
-        <div className="font-label text-[11px] text-[#D4A843] mb-3 flex items-center gap-2" dir="rtl">
-          <div className="led led-gold" /> מיקסר · {tracks.length} {tracks.length === 1 ? "טראק" : "טראקים"}
-        </div>
-
-        {tracks.length === 0 && !isRec && (
-          <div className="text-center py-8">
-            <div className="font-label text-sm text-[#333] mb-2" dir="rtl">אין טראקים עדיין</div>
-            <div className="font-label text-[10px] text-[#222]" dir="rtl">לחץ על הכפתור האדום כדי להקליט, או ייבא קובץ אודיו</div>
-          </div>
-        )}
-
-        {tracks.map((tr) => (
-          <div key={tr.id} className="bg-[#0A0A0A] border border-[#1a1a1a] rounded-sm mb-2 overflow-hidden">
-            {/* Track header */}
-            <div className="flex items-center gap-2 p-3" dir="ltr"
-              style={{ borderRight: `4px solid ${tr.color}` }}>
-              <div className={`led ${tr.muted ? "led-off" : "led-on"}`} />
-              <span className="font-label text-[11px] text-[#aaa] flex-1 truncate">{tr.name}</span>
-
-              {/* Mute */}
-              <button onClick={() => toggleMute(tr.id)}
-                className={`font-label text-[9px] px-2 py-0.5 rounded-sm cursor-pointer border ${!tr.muted ? "border-[#33CC33] text-[#33CC33]" : "border-[#333] text-[#555]"}`}>
-                M
-              </button>
-
-              {/* Solo */}
-              <button onClick={() => toggleSolo(tr.id)}
-                className={`font-label text-[9px] px-2 py-0.5 rounded-sm cursor-pointer border ${tr.solo ? "border-[#D4A843] text-[#D4A843]" : "border-[#333] text-[#555]"}`}>
-                S
-              </button>
-
-              {/* FX */}
-              <button onClick={() => setFxTrackId(fxTrackId === tr.id ? null : tr.id)}
-                className={`font-label text-[9px] px-2 py-0.5 rounded-sm cursor-pointer border ${fxTrackId === tr.id ? "border-[#8b5cf6] text-[#8b5cf6]" : "border-[#333] text-[#555]"}`}>
-                FX
-              </button>
-
-              {/* Volume fader */}
-              <div className="flex items-center gap-1">
-                <span className="font-label text-[7px] text-[#444]">VOL</span>
-                <input type="range" min={0} max={100} value={tr.volume}
-                  onChange={(e) => updateTrackVol(tr.id, Number(e.target.value))}
-                  className="w-16 accent-[#D4A843]" />
-                <span className="font-readout text-[9px] text-[#555] w-6">{tr.volume}</span>
-              </div>
-
-              {/* Pan knob */}
-              <div className="flex items-center gap-1">
-                <span className="font-label text-[7px] text-[#444]">PAN</span>
-                <input type="range" min={-100} max={100} value={tr.pan}
-                  onChange={(e) => updateTrackPan(tr.id, Number(e.target.value))}
-                  className="w-12 accent-[#D4A843]" />
-                <span className="font-readout text-[9px] text-[#555] w-6">
-                  {tr.pan === 0 ? "C" : tr.pan < 0 ? `L${Math.abs(tr.pan)}` : `R${tr.pan}`}
-                </span>
-              </div>
-
-              {/* Delete */}
-              <button onClick={() => deleteTrack(tr.id)}
-                className="font-label text-[9px] px-2 py-0.5 rounded-sm cursor-pointer border border-[#333] text-[#C41E3A] hover:border-[#C41E3A]">
-                DEL
+          <div className="flex gap-2 mb-2 flex-wrap">
+            <label className="text-[8px] text-[#555]">Key
+              <input value={sunoScale} onChange={(e) => setSunoScale(e.target.value)}
+                className="block w-16 bg-[#1a1a1a] border border-[#333] rounded px-1 py-0.5 text-xs text-[#ccc] outline-none mt-0.5" />
+            </label>
+            <label className="text-[8px] text-[#555]">Mode
+              <input value={sunoMode} onChange={(e) => setSunoMode(e.target.value)}
+                className="block w-20 bg-[#1a1a1a] border border-[#333] rounded px-1 py-0.5 text-xs text-[#ccc] outline-none mt-0.5" />
+            </label>
+            <label className="text-[8px] text-[#555]">Style
+              <input value={sunoStyle} onChange={(e) => setSunoStyle(e.target.value)}
+                className="block w-24 bg-[#1a1a1a] border border-[#333] rounded px-1 py-0.5 text-xs text-[#ccc] outline-none mt-0.5" />
+            </label>
+            <label className="text-[8px] text-[#555]">BPM
+              <input type="number" value={sunoBpm} onChange={(e) => setSunoBpm(Number(e.target.value))}
+                className="block w-14 bg-[#1a1a1a] border border-[#D4A843] rounded px-1 py-0.5 text-xs text-[#D4A843] outline-none mt-0.5" />
+            </label>
+            <div className="flex items-end gap-2">
+              <button onClick={generateSuno} disabled={sunoLoading}
+                className="text-[9px] px-3 py-1 bg-[#8b5cf6] text-white rounded hover:brightness-110 disabled:opacity-50 cursor-pointer">
+                {sunoLoading ? "Generating..." : "Generate"}
               </button>
             </div>
-
-            {/* Waveform */}
-            <div
-              ref={(el) => { if (el) trackContainersRef.current[tr.id] = el; }}
-              dir="ltr"
-              className="bg-[#080808] border-t border-[#1a1a1a] min-h-[64px]"
-            />
           </div>
-        ))}
-      </div>
-
-      {/* ── Effects Panel ── */}
-      {fxTrack && (
-        <div className="panel p-4 mb-3">
-          <div className="font-label text-[11px] text-[#8b5cf6] mb-3 flex items-center gap-2" dir="ltr">
-            <span>FX</span>
-            <span className="text-[#aaa]">—</span>
-            <span className="text-[#aaa]">{fxTrack.name}</span>
-            <div className="w-3 h-3 rounded-full" style={{ background: fxTrack.color }} />
-          </div>
-
-          {/* Presets */}
-          <div className="flex gap-2 mb-4 flex-wrap" dir="ltr">
-            <span className="font-label text-[9px] text-[#555] self-center">PRESETS:</span>
-            {AMP_PRESETS.map((p) => (
-              <button key={p.name} onClick={() => applyPreset(fxTrack.id, p)}
-                className="btn-ghost !text-[9px] !px-3 !py-1">{p.label}</button>
-            ))}
-            <button onClick={() => updateTrackEffects(fxTrack.id, JSON.parse(JSON.stringify(DEFAULT_EFFECTS)))}
-              className="btn-ghost !text-[9px] !px-3 !py-1 !text-[#C41E3A] !border-[#C41E3A33]">Reset</button>
-          </div>
-
-          {/* EQ */}
-          <EffectSection
-            title="EQ3"
-            enabled={fxTrack.effects.eq.enabled}
-            onToggle={() => {
-              const fx = { ...fxTrack.effects, eq: { ...fxTrack.effects.eq, enabled: !fxTrack.effects.eq.enabled } };
-              updateTrackEffects(fxTrack.id, fx);
-            }}
-          >
-            <FxSlider label="Low" value={fxTrack.effects.eq.low} min={-12} max={12} step={0.5}
-              onChange={(v) => {
-                const fx = { ...fxTrack.effects, eq: { ...fxTrack.effects.eq, low: v } };
-                updateTrackEffects(fxTrack.id, fx);
-              }} />
-            <FxSlider label="Mid" value={fxTrack.effects.eq.mid} min={-12} max={12} step={0.5}
-              onChange={(v) => {
-                const fx = { ...fxTrack.effects, eq: { ...fxTrack.effects.eq, mid: v } };
-                updateTrackEffects(fxTrack.id, fx);
-              }} />
-            <FxSlider label="High" value={fxTrack.effects.eq.high} min={-12} max={12} step={0.5}
-              onChange={(v) => {
-                const fx = { ...fxTrack.effects, eq: { ...fxTrack.effects.eq, high: v } };
-                updateTrackEffects(fxTrack.id, fx);
-              }} />
-          </EffectSection>
-
-          {/* Distortion */}
-          <EffectSection
-            title="Distortion"
-            enabled={fxTrack.effects.distortion.enabled}
-            onToggle={() => {
-              const fx = { ...fxTrack.effects, distortion: { ...fxTrack.effects.distortion, enabled: !fxTrack.effects.distortion.enabled } };
-              updateTrackEffects(fxTrack.id, fx);
-            }}
-          >
-            <FxSlider label="Wet" value={fxTrack.effects.distortion.wet} min={0} max={1} step={0.01}
-              onChange={(v) => {
-                const fx = { ...fxTrack.effects, distortion: { ...fxTrack.effects.distortion, wet: v } };
-                updateTrackEffects(fxTrack.id, fx);
-              }} />
-            <FxSlider label="Amount" value={fxTrack.effects.distortion.amount} min={0} max={1} step={0.01}
-              onChange={(v) => {
-                const fx = { ...fxTrack.effects, distortion: { ...fxTrack.effects.distortion, amount: v } };
-                updateTrackEffects(fxTrack.id, fx);
-              }} />
-          </EffectSection>
-
-          {/* Chorus */}
-          <EffectSection
-            title="Chorus"
-            enabled={fxTrack.effects.chorus.enabled}
-            onToggle={() => {
-              const fx = { ...fxTrack.effects, chorus: { ...fxTrack.effects.chorus, enabled: !fxTrack.effects.chorus.enabled } };
-              updateTrackEffects(fxTrack.id, fx);
-            }}
-          >
-            <FxSlider label="Wet" value={fxTrack.effects.chorus.wet} min={0} max={1} step={0.01}
-              onChange={(v) => {
-                const fx = { ...fxTrack.effects, chorus: { ...fxTrack.effects.chorus, wet: v } };
-                updateTrackEffects(fxTrack.id, fx);
-              }} />
-            <FxSlider label="Freq" value={fxTrack.effects.chorus.frequency} min={0.1} max={10} step={0.1}
-              onChange={(v) => {
-                const fx = { ...fxTrack.effects, chorus: { ...fxTrack.effects.chorus, frequency: v } };
-                updateTrackEffects(fxTrack.id, fx);
-              }} />
-            <FxSlider label="Depth" value={fxTrack.effects.chorus.depth} min={0} max={1} step={0.01}
-              onChange={(v) => {
-                const fx = { ...fxTrack.effects, chorus: { ...fxTrack.effects.chorus, depth: v } };
-                updateTrackEffects(fxTrack.id, fx);
-              }} />
-          </EffectSection>
-
-          {/* Delay */}
-          <EffectSection
-            title="Delay"
-            enabled={fxTrack.effects.delay.enabled}
-            onToggle={() => {
-              const fx = { ...fxTrack.effects, delay: { ...fxTrack.effects.delay, enabled: !fxTrack.effects.delay.enabled } };
-              updateTrackEffects(fxTrack.id, fx);
-            }}
-          >
-            <FxSlider label="Wet" value={fxTrack.effects.delay.wet} min={0} max={1} step={0.01}
-              onChange={(v) => {
-                const fx = { ...fxTrack.effects, delay: { ...fxTrack.effects.delay, wet: v } };
-                updateTrackEffects(fxTrack.id, fx);
-              }} />
-            <FxSlider label="Time" value={fxTrack.effects.delay.time} min={0.01} max={1} step={0.01}
-              onChange={(v) => {
-                const fx = { ...fxTrack.effects, delay: { ...fxTrack.effects.delay, time: v } };
-                updateTrackEffects(fxTrack.id, fx);
-              }} />
-            <FxSlider label="Feedback" value={fxTrack.effects.delay.feedback} min={0} max={0.9} step={0.01}
-              onChange={(v) => {
-                const fx = { ...fxTrack.effects, delay: { ...fxTrack.effects.delay, feedback: v } };
-                updateTrackEffects(fxTrack.id, fx);
-              }} />
-          </EffectSection>
-
-          {/* Reverb */}
-          <EffectSection
-            title="Reverb"
-            enabled={fxTrack.effects.reverb.enabled}
-            onToggle={() => {
-              const fx = { ...fxTrack.effects, reverb: { ...fxTrack.effects.reverb, enabled: !fxTrack.effects.reverb.enabled } };
-              updateTrackEffects(fxTrack.id, fx);
-            }}
-          >
-            <FxSlider label="Wet" value={fxTrack.effects.reverb.wet} min={0} max={1} step={0.01}
-              onChange={(v) => {
-                const fx = { ...fxTrack.effects, reverb: { ...fxTrack.effects.reverb, wet: v } };
-                updateTrackEffects(fxTrack.id, fx);
-              }} />
-            <FxSlider label="Decay" value={fxTrack.effects.reverb.decay} min={0.1} max={10} step={0.1}
-              onChange={(v) => {
-                const fx = { ...fxTrack.effects, reverb: { ...fxTrack.effects.reverb, decay: v } };
-                updateTrackEffects(fxTrack.id, fx);
-              }} />
-          </EffectSection>
+          {sunoError && <div className="text-[10px] text-[#C41E3A]">{sunoError}</div>}
         </div>
       )}
+
+      {/* ── Main 3-panel layout ── */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* ── Left Sidebar: Track List ── */}
+        <div className="flex-shrink-0 border-r border-[#222] flex flex-col overflow-hidden" style={{ width: sidebarWidth, background: "#141414" }}>
+          {/* Sidebar header */}
+          <div className="flex items-center h-7 px-2 border-b border-[#222] flex-shrink-0" style={{ background: "#1a1a1a" }}>
+            <span className="font-label text-[8px] text-[#666] uppercase tracking-wider">Tracks</span>
+          </div>
+
+          {/* Track entries */}
+          <div className="flex-1 overflow-y-auto">
+            {tracks.map((tr, idx) => {
+              const isSelected = selectedTrackId === tr.id;
+              const level = vuLevels[tr.id] ?? 0;
+              return (
+                <div key={tr.id}
+                  className={`relative border-b border-[#1a1a1a] cursor-pointer transition-colors ${isSelected ? "bg-[#1a1a0a]" : "hover:bg-[#181818]"}`}
+                  onClick={() => setSelectedTrackId(tr.id)}
+                  style={{ borderLeft: `3px solid ${isSelected ? "#D4A843" : tr.color}`, boxShadow: isSelected ? `inset 3px 0 8px -3px ${tr.color}66` : "none" }}>
+                  <div className="flex items-center gap-1.5 px-2 py-2">
+                    {/* Track number */}
+                    <span className="font-mono text-[9px] text-[#444] w-5 text-center">{String(idx + 1).padStart(2, "0")}</span>
+
+                    {/* Editable name */}
+                    {editingTrackName === tr.id ? (
+                      <input
+                        autoFocus
+                        defaultValue={tr.name}
+                        onBlur={(e) => { renameTrack(tr.id, e.target.value || tr.name); setEditingTrackName(null); }}
+                        onKeyDown={(e) => { if (e.key === "Enter") { renameTrack(tr.id, (e.target as HTMLInputElement).value || tr.name); setEditingTrackName(null); } }}
+                        className="flex-1 bg-[#0a0a0a] border border-[#D4A843] rounded px-1 py-0 text-[10px] text-[#ccc] outline-none min-w-0"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    ) : (
+                      <span className="flex-1 text-[10px] text-[#aaa] truncate min-w-0"
+                        onDoubleClick={(e) => { e.stopPropagation(); setEditingTrackName(tr.id); }}>
+                        {tr.name}
+                      </span>
+                    )}
+
+                    {/* Track menu */}
+                    <button onClick={(e) => { e.stopPropagation(); setTrackMenuId(trackMenuId === tr.id ? null : tr.id); }}
+                      className="text-[#444] hover:text-[#888] text-xs px-0.5 cursor-pointer">...</button>
+                  </div>
+
+                  {/* M / S / FX buttons row */}
+                  <div className="flex items-center gap-1 px-2 pb-1.5">
+                    <button onClick={(e) => { e.stopPropagation(); toggleMute(tr.id); }}
+                      className={`text-[8px] font-bold w-5 h-4 rounded-sm cursor-pointer border flex items-center justify-center transition-colors ${!tr.muted ? "border-[#33CC33] text-[#33CC33] bg-[#33CC3311]" : "border-[#333] text-[#555]"}`}>
+                      M
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); toggleSolo(tr.id); }}
+                      className={`text-[8px] font-bold w-5 h-4 rounded-sm cursor-pointer border flex items-center justify-center transition-colors ${tr.solo ? "border-[#D4A843] text-[#D4A843] bg-[#D4A84311]" : "border-[#333] text-[#555]"}`}>
+                      S
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); setFxTrackId(fxTrackId === tr.id ? null : tr.id); setSelectedTrackId(tr.id); setBottomTab("fx"); }}
+                      className={`text-[8px] font-bold px-1 h-4 rounded-sm cursor-pointer border flex items-center justify-center transition-colors ${fxTrackId === tr.id ? "border-[#8b5cf6] text-[#8b5cf6] bg-[#8b5cf611]" : "border-[#333] text-[#555]"}`}>
+                      + Fx
+                    </button>
+
+                    <div className="flex-1" />
+
+                    {/* Mini VU meter */}
+                    <div className="w-10 h-2.5 bg-[#0a0a0a] rounded-sm overflow-hidden border border-[#1a1a1a] flex">
+                      <div className="h-full transition-all duration-75" style={{
+                        width: `${Math.min(100, level * 100)}%`,
+                        background: level > 0.85 ? "linear-gradient(90deg, #33CC33, #D4A843, #C41E3A)"
+                          : level > 0.6 ? "linear-gradient(90deg, #33CC33, #D4A843)"
+                          : "#33CC33",
+                      }} />
+                    </div>
+                  </div>
+
+                  {/* Volume slider */}
+                  <div className="flex items-center gap-1 px-2 pb-1.5">
+                    <input type="range" min={0} max={100} value={tr.volume}
+                      onChange={(e) => { e.stopPropagation(); updateTrackVol(tr.id, Number(e.target.value)); }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex-1 accent-[#D4A843] h-1" />
+                    <span className="font-mono text-[8px] text-[#555] w-5 text-right">{tr.volume}</span>
+                  </div>
+
+                  {/* Context menu */}
+                  {trackMenuId === tr.id && (
+                    <div className="absolute top-8 right-2 z-50 bg-[#1a1a1a] border border-[#333] rounded shadow-lg py-1 min-w-[120px]"
+                      onClick={(e) => e.stopPropagation()}>
+                      <button onClick={() => { setEditingTrackName(tr.id); setTrackMenuId(null); }}
+                        className="w-full text-left text-[10px] text-[#aaa] hover:bg-[#222] px-3 py-1 cursor-pointer">Rename</button>
+                      <button onClick={() => { updateTrackPan(tr.id, 0); setTrackMenuId(null); }}
+                        className="w-full text-left text-[10px] text-[#aaa] hover:bg-[#222] px-3 py-1 cursor-pointer">Reset Pan</button>
+                      <div className="border-t border-[#222] my-0.5" />
+                      <button onClick={() => { deleteTrack(tr.id); setTrackMenuId(null); }}
+                        className="w-full text-left text-[10px] text-[#C41E3A] hover:bg-[#220a0a] px-3 py-1 cursor-pointer">Delete Track</button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Master track section */}
+            <div className="border-t border-[#333] mt-auto">
+              <div className="flex items-center gap-1.5 px-2 py-2" style={{ background: "#181818" }}>
+                <span className="font-label text-[8px] text-[#D4A843] uppercase tracking-wider">Master</span>
+                <div className="flex-1" />
+                {/* Master VU */}
+                <div className="w-12 h-3 bg-[#0a0a0a] rounded-sm overflow-hidden border border-[#1a1a1a] flex">
+                  <div className="h-full transition-all duration-75" style={{
+                    width: `${playing || isRec ? Math.min(100, (masterVol / 100) * 60 + Math.random() * 30) : 0}%`,
+                    background: "linear-gradient(90deg, #33CC33, #D4A843, #C41E3A)",
+                  }} />
+                </div>
+              </div>
+              <div className="flex items-center gap-1 px-2 pb-2" style={{ background: "#181818" }}>
+                <input type="range" min={0} max={100} value={masterVol}
+                  onChange={(e) => setMasterVol(Number(e.target.value))}
+                  className="flex-1 accent-[#D4A843] h-1" />
+                <span className="font-mono text-[9px] text-[#D4A843] w-6 text-right">{masterVol}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Sidebar Resize Handle ── */}
+        <div
+          className="w-1 cursor-col-resize hover:bg-[#D4A84344] active:bg-[#D4A84366] transition-colors flex-shrink-0"
+          onMouseDown={() => { sidebarDragRef.current = true; document.body.style.cursor = "col-resize"; document.body.style.userSelect = "none"; }}
+        />
+
+        {/* ── Center: Timeline ── */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Measure ruler */}
+          <div className="h-6 border-b border-[#222] flex-shrink-0 overflow-hidden relative" style={{ background: "#1a1a1a" }}>
+            <div className="absolute top-0 left-0 h-full flex" style={{ transform: `translateX(0px)` }}>
+              {measures.map((m) => (
+                <div key={m.measure} className="relative h-full" style={{ width: `${pxPerSec * (60 / bpm) * 4}px` }}>
+                  <span className="absolute top-0.5 left-1 font-mono text-[9px] text-[#666]">{m.measure}</span>
+                  {m.beats.map((_, bi) => (
+                    <div key={bi} className="absolute top-0 h-full" style={{ left: `${(bi / 4) * 100}%` }}>
+                      <div className={`absolute bottom-0 w-px ${bi === 0 ? "h-3 bg-[#555]" : "h-1.5 bg-[#333]"}`} />
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+            {/* Playhead on ruler */}
+            {duration > 0 && (
+              <div className="absolute top-0 h-full w-px bg-[#D4A843] z-10" style={{ left: `${currentTime * pxPerSec}px` }} />
+            )}
+          </div>
+
+          {/* Track waveforms area */}
+          <div className="flex-1 overflow-auto relative" style={{ background: "#0d0d0d" }}>
+            {/* Recording waveform */}
+            {isRec && (
+              <div className="border-b border-[#1a1a1a]" style={{ borderLeft: "3px solid #C41E3A" }}>
+                <div className="flex items-center gap-2 px-2 py-1">
+                  <div className="w-2 h-2 rounded-full bg-[#C41E3A] animate-pulse" />
+                  <span className="text-[9px] text-[#C41E3A]">Recording...</span>
+                  <span className="font-mono text-[9px] text-[#C41E3A]">{fmtTime(recTime)}</span>
+                </div>
+                <div ref={recContainerRef} className="bg-[#080808] min-h-[64px]" />
+              </div>
+            )}
+
+            {tracks.length === 0 && !isRec && (
+              <div className="flex items-center justify-center h-full">
+                <div className="border-2 border-dashed border-[#222] rounded-lg px-12 py-8 text-center">
+                  <div className="text-[#333] text-sm mb-1">Drop audio files here</div>
+                  <div className="text-[#222] text-[10px]">or use Record / Import to add tracks</div>
+                </div>
+              </div>
+            )}
+
+            {tracks.map((tr) => {
+              const isSelected = selectedTrackId === tr.id;
+              return (
+                <div key={tr.id}
+                  className={`border-b transition-colors ${isSelected ? "border-[#D4A84333]" : "border-[#1a1a1a]"}`}
+                  style={{
+                    borderLeft: `3px solid ${isSelected ? "#D4A843" : tr.color}`,
+                    opacity: tr.muted && !tr.solo ? 0.4 : 1,
+                  }}
+                  onClick={() => setSelectedTrackId(tr.id)}>
+                  <div
+                    ref={(el) => { if (el) trackContainersRef.current[tr.id] = el; }}
+                    className="bg-[#080808] min-h-[64px] cursor-pointer"
+                  />
+                </div>
+              );
+            })}
+
+            {/* Vertical playhead across all waveforms */}
+            {duration > 0 && (
+              <div className="absolute top-0 bottom-0 w-px bg-[#D4A843] z-10 pointer-events-none" style={{ left: `${currentTime * pxPerSec}px` }} />
+            )}
+          </div>
+
+          {/* ── Bottom Panel (contextual: FX / Editor) ── */}
+          {bottomTab !== "none" && fxTrack && (
+            <>
+              {/* Bottom panel resize handle */}
+              <div
+                className="h-1 cursor-row-resize hover:bg-[#D4A84344] active:bg-[#D4A84366] transition-colors flex-shrink-0 border-t border-[#222]"
+                onMouseDown={() => { bottomDragRef.current = true; document.body.style.cursor = "row-resize"; document.body.style.userSelect = "none"; }}
+              />
+
+              {/* Bottom tabs */}
+              <div className="flex items-center h-7 px-2 gap-1 border-b border-[#222] flex-shrink-0" style={{ background: "#141414" }}>
+                <button onClick={() => setBottomTab("fx")}
+                  className={`text-[9px] px-2 py-0.5 rounded cursor-pointer transition-colors ${bottomTab === "fx" ? "bg-[#8b5cf622] text-[#8b5cf6] border border-[#8b5cf644]" : "text-[#555] hover:text-[#888]"}`}>
+                  Fx
+                </button>
+                <button onClick={() => setBottomTab("editor")}
+                  className={`text-[9px] px-2 py-0.5 rounded cursor-pointer transition-colors ${bottomTab === "editor" ? "bg-[#D4A84322] text-[#D4A843] border border-[#D4A84344]" : "text-[#555] hover:text-[#888]"}`}>
+                  Editor
+                </button>
+                <div className="flex-1" />
+                <span className="text-[9px] text-[#555]">{fxTrack.name}</span>
+                <div className="w-2 h-2 rounded-full ml-1" style={{ background: fxTrack.color }} />
+                <button onClick={() => setBottomTab("none")}
+                  className="text-[#444] hover:text-[#888] text-xs ml-2 cursor-pointer">X</button>
+              </div>
+
+              {/* Bottom panel content */}
+              <div className="overflow-y-auto flex-shrink-0" style={{ height: bottomPanelHeight, background: "#111" }}>
+                {bottomTab === "fx" && (
+                  <div className="p-3">
+                    {/* Presets */}
+                    <div className="flex gap-1.5 mb-3 flex-wrap items-center">
+                      <span className="font-label text-[8px] text-[#555] uppercase">Presets:</span>
+                      {AMP_PRESETS.map((p) => (
+                        <button key={p.name} onClick={() => applyPreset(fxTrack.id, p)}
+                          className="text-[9px] px-2 py-0.5 rounded border border-[#333] text-[#888] hover:text-[#ccc] hover:border-[#555] transition-colors cursor-pointer">{p.label}</button>
+                      ))}
+                      <button onClick={() => updateTrackEffects(fxTrack.id, JSON.parse(JSON.stringify(DEFAULT_EFFECTS)))}
+                        className="text-[9px] px-2 py-0.5 rounded border border-[#33171a] text-[#C41E3A] hover:border-[#C41E3A] transition-colors cursor-pointer">Reset</button>
+                    </div>
+
+                    {/* Effects grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      <EffectSection title="EQ3" enabled={fxTrack.effects.eq.enabled}
+                        onToggle={() => { const fx = { ...fxTrack.effects, eq: { ...fxTrack.effects.eq, enabled: !fxTrack.effects.eq.enabled } }; updateTrackEffects(fxTrack.id, fx); }}>
+                        <FxKnob label="Low" value={fxTrack.effects.eq.low} min={-12} max={12} step={0.5}
+                          onChange={(v) => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, eq: { ...fxTrack.effects.eq, low: v } })} />
+                        <FxKnob label="Mid" value={fxTrack.effects.eq.mid} min={-12} max={12} step={0.5}
+                          onChange={(v) => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, eq: { ...fxTrack.effects.eq, mid: v } })} />
+                        <FxKnob label="High" value={fxTrack.effects.eq.high} min={-12} max={12} step={0.5}
+                          onChange={(v) => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, eq: { ...fxTrack.effects.eq, high: v } })} />
+                      </EffectSection>
+
+                      <EffectSection title="Distortion" enabled={fxTrack.effects.distortion.enabled}
+                        onToggle={() => { const fx = { ...fxTrack.effects, distortion: { ...fxTrack.effects.distortion, enabled: !fxTrack.effects.distortion.enabled } }; updateTrackEffects(fxTrack.id, fx); }}>
+                        <FxKnob label="Wet" value={fxTrack.effects.distortion.wet} min={0} max={1} step={0.01}
+                          onChange={(v) => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, distortion: { ...fxTrack.effects.distortion, wet: v } })} />
+                        <FxKnob label="Amount" value={fxTrack.effects.distortion.amount} min={0} max={1} step={0.01}
+                          onChange={(v) => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, distortion: { ...fxTrack.effects.distortion, amount: v } })} />
+                      </EffectSection>
+
+                      <EffectSection title="Chorus" enabled={fxTrack.effects.chorus.enabled}
+                        onToggle={() => { const fx = { ...fxTrack.effects, chorus: { ...fxTrack.effects.chorus, enabled: !fxTrack.effects.chorus.enabled } }; updateTrackEffects(fxTrack.id, fx); }}>
+                        <FxKnob label="Wet" value={fxTrack.effects.chorus.wet} min={0} max={1} step={0.01}
+                          onChange={(v) => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, chorus: { ...fxTrack.effects.chorus, wet: v } })} />
+                        <FxKnob label="Freq" value={fxTrack.effects.chorus.frequency} min={0.1} max={10} step={0.1}
+                          onChange={(v) => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, chorus: { ...fxTrack.effects.chorus, frequency: v } })} />
+                        <FxKnob label="Depth" value={fxTrack.effects.chorus.depth} min={0} max={1} step={0.01}
+                          onChange={(v) => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, chorus: { ...fxTrack.effects.chorus, depth: v } })} />
+                      </EffectSection>
+
+                      <EffectSection title="Delay" enabled={fxTrack.effects.delay.enabled}
+                        onToggle={() => { const fx = { ...fxTrack.effects, delay: { ...fxTrack.effects.delay, enabled: !fxTrack.effects.delay.enabled } }; updateTrackEffects(fxTrack.id, fx); }}>
+                        <FxKnob label="Wet" value={fxTrack.effects.delay.wet} min={0} max={1} step={0.01}
+                          onChange={(v) => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, delay: { ...fxTrack.effects.delay, wet: v } })} />
+                        <FxKnob label="Time" value={fxTrack.effects.delay.time} min={0.01} max={1} step={0.01}
+                          onChange={(v) => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, delay: { ...fxTrack.effects.delay, time: v } })} />
+                        <FxKnob label="Feedback" value={fxTrack.effects.delay.feedback} min={0} max={0.9} step={0.01}
+                          onChange={(v) => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, delay: { ...fxTrack.effects.delay, feedback: v } })} />
+                      </EffectSection>
+
+                      <EffectSection title="Reverb" enabled={fxTrack.effects.reverb.enabled}
+                        onToggle={() => { const fx = { ...fxTrack.effects, reverb: { ...fxTrack.effects.reverb, enabled: !fxTrack.effects.reverb.enabled } }; updateTrackEffects(fxTrack.id, fx); }}>
+                        <FxKnob label="Wet" value={fxTrack.effects.reverb.wet} min={0} max={1} step={0.01}
+                          onChange={(v) => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, reverb: { ...fxTrack.effects.reverb, wet: v } })} />
+                        <FxKnob label="Decay" value={fxTrack.effects.reverb.decay} min={0.1} max={10} step={0.1}
+                          onChange={(v) => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, reverb: { ...fxTrack.effects.reverb, decay: v } })} />
+                      </EffectSection>
+                    </div>
+                  </div>
+                )}
+
+                {bottomTab === "editor" && (
+                  <div className="p-3">
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="text-[10px] text-[#888]">Pan</span>
+                      <input type="range" min={-100} max={100} value={fxTrack.pan}
+                        onChange={(e) => updateTrackPan(fxTrack.id, Number(e.target.value))}
+                        className="flex-1 max-w-[200px] accent-[#D4A843] h-1" />
+                      <span className="font-mono text-[9px] text-[#555] w-8">
+                        {fxTrack.pan === 0 ? "C" : fxTrack.pan < 0 ? `L${Math.abs(fxTrack.pan)}` : `R${fxTrack.pan}`}
+                      </span>
+                    </div>
+                    <div className="text-[9px] text-[#444]">Track type: {fxTrack.type}</div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -1258,22 +1442,22 @@ function EffectSection({ title, enabled, onToggle, children }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className={`bg-[#0A0A0A] border border-[#1a1a1a] rounded-sm p-3 mb-2 ${!enabled ? "opacity-50" : ""}`} dir="ltr">
+    <div className={`bg-[#0a0a0a] border border-[#1a1a1a] rounded p-2.5 ${!enabled ? "opacity-40" : ""}`}>
       <div className="flex items-center gap-2 mb-2">
         <button onClick={onToggle}
-          className={`w-4 h-4 rounded-sm cursor-pointer border text-[8px] flex items-center justify-center ${enabled ? "border-[#D4A843] bg-[#D4A843] text-[#0A0A0A]" : "border-[#333] text-[#333]"}`}>
-          {enabled ? "✓" : ""}
+          className={`w-4 h-4 rounded cursor-pointer border text-[8px] flex items-center justify-center transition-colors ${enabled ? "border-[#D4A843] bg-[#D4A843] text-[#0A0A0A]" : "border-[#333] text-[#333] hover:border-[#555]"}`}>
+          {enabled ? "ON" : ""}
         </button>
         <span className="font-label text-[10px] text-[#aaa]">{title}</span>
       </div>
-      <div className="flex gap-4 flex-wrap">
+      <div className="flex gap-3 flex-wrap">
         {children}
       </div>
     </div>
   );
 }
 
-function FxSlider({ label, value, min, max, step, onChange }: {
+function FxKnob({ label, value, min, max, step, onChange }: {
   label: string;
   value: number;
   min: number;
@@ -1281,14 +1465,41 @@ function FxSlider({ label, value, min, max, step, onChange }: {
   step: number;
   onChange: (v: number) => void;
 }) {
+  const knobRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef<{ startY: number; startVal: number } | null>(null);
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (!dragRef.current) return;
+      const delta = (dragRef.current.startY - e.clientY) * ((max - min) / 150);
+      const raw = dragRef.current.startVal + delta;
+      const stepped = Math.round(raw / step) * step;
+      onChange(Math.max(min, Math.min(max, stepped)));
+    };
+    const onUp = () => { dragRef.current = null; document.body.style.cursor = ""; };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
+  }, [min, max, step, onChange]);
+
+  const pct = (value - min) / (max - min);
+  const angle = -135 + pct * 270;
+
   return (
-    <div className="flex flex-col items-center gap-1 min-w-[60px]">
+    <div className="flex flex-col items-center gap-0.5 min-w-[48px]">
       <span className="font-label text-[7px] text-[#555]">{label}</span>
-      <input type="range" min={min} max={max} step={step} value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="w-16 accent-[#D4A843]"
-        style={{ writingMode: "horizontal-tb" }} />
-      <span className="font-readout text-[8px] text-[#666]">{typeof value === "number" ? value.toFixed(step < 1 ? 2 : 0) : value}</span>
+      <div ref={knobRef}
+        className="w-8 h-8 rounded-full border-2 border-[#333] bg-[#1a1a1a] cursor-grab active:cursor-grabbing relative hover:border-[#555] transition-colors"
+        onMouseDown={(e) => { dragRef.current = { startY: e.clientY, startVal: value }; document.body.style.cursor = "grabbing"; }}>
+        {/* Knob indicator */}
+        <div className="absolute inset-1 rounded-full" style={{
+          background: `conic-gradient(from ${angle - 5}deg, #D4A843 0deg, #D4A843 10deg, transparent 10deg)`,
+        }}>
+          <div className="absolute top-0 left-1/2 w-0.5 h-2 bg-[#D4A843] rounded-full -translate-x-1/2"
+            style={{ transform: `translateX(-50%) rotate(${angle}deg)`, transformOrigin: "50% 300%" }} />
+        </div>
+      </div>
+      <span className="font-mono text-[8px] text-[#666]">{value.toFixed(step < 1 ? 2 : 0)}</span>
     </div>
   );
 }
