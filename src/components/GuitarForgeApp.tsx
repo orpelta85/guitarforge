@@ -20,7 +20,7 @@ export default function GuitarForgeApp() {
   const [week, setWeek] = useState(1);
   const [mode, setMode] = useState("Aeolian");
   const [scale, setScale] = useState("Am");
-  const [style, setStyle] = useState("Doom Metal");
+  const [style, setStyle] = useState("Metal");
   const [dayCats, setDayCats] = useState<DayCats>(DEFAULT_DAY_CATS);
   const [dayHrs, setDayHrs] = useState<DayHrs>(DEFAULT_DAY_HRS);
   const [selDay, setSelDay] = useState("ראשון");

@@ -11,6 +11,7 @@ export interface Exercise {
   t: string;       // tips
   f: string;       // focus areas
   bt: boolean;     // needs backing track
+  styles?: string[]; // applicable music styles
   ss?: boolean;    // needs Songsterr
   songId?: number;
   songName?: string;
