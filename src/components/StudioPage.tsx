@@ -480,27 +480,50 @@ export default function StudioPage() {
 
     setPlaying(true);
 
-    // Animation loop to sync wavesurfer positions
-    const tick = () => {
-      if (!mountedRef.current) return;
-      // Calculate current playback position
-      const elapsed = Object.values(toneNodesRef.current)[0];
-      if (elapsed && elapsed.player.state === "started") {
-        // Use player's internal position approximation
-        const now = Tone.now();
-        const posApprox = startOffset + (now - (Tone.now() - (Tone.now() - now)));
-        // Instead, just increment from last known time
-      }
-      // Simpler approach: track time with requestAnimationFrame
-      animRef.current = requestAnimationFrame(tick);
-    };
-
-    // Use a simpler time tracking
     const startWallTime = performance.now();
     const tickFn = () => {
       if (!mountedRef.current) return;
       const elapsed = (performance.now() - startWallTime) / 1000;
       const ct = startOffset + elapsed;
+
+      // End of tracks reached
+      if (ct >= duration && duration > 0) {
+        if (looping) {
+          // Loop: stop players, seek to 0, restart
+          Object.values(toneNodesRef.current).forEach((nodes) => {
+            try { nodes.player.stop(); nodes.player.start(undefined, 0); } catch { /* ok */ }
+          });
+          Object.values(wsRef.current).forEach((ws) => {
+            try { ws.setTime(0); } catch { /* skip */ }
+          });
+          setCurrentTime(0);
+          // Restart tick with new wall time reference
+          const restartTickFn = () => {
+            if (!mountedRef.current) return;
+            const el2 = (performance.now() - performance.now()) / 1000;
+            // Will be handled by re-calling playAll
+          };
+          // Simplest: just call stopAll then playAll again via state
+          if (animRef.current) cancelAnimationFrame(animRef.current);
+          setCurrentTime(0);
+          // Re-trigger playback from start
+          setTimeout(() => {
+            Object.values(toneNodesRef.current).forEach((nodes) => {
+              try { nodes.player.stop(); nodes.player.start(undefined, 0); } catch { /* ok */ }
+            });
+          }, 50);
+          return;
+        } else {
+          // Auto-stop at end
+          if (animRef.current) cancelAnimationFrame(animRef.current);
+          setPlaying(false);
+          setCurrentTime(duration);
+          Object.values(toneNodesRef.current).forEach((nodes) => {
+            try { nodes.player.stop(); } catch { /* ok */ }
+          });
+          return;
+        }
+      }
 
       setCurrentTime(ct);
 
@@ -508,11 +531,6 @@ export default function StudioPage() {
       Object.values(wsRef.current).forEach((ws) => {
         try { ws.setTime(ct); } catch { /* skip */ }
       });
-
-      // Check if we've reached the end
-      if (ct >= duration && duration > 0 && looping) {
-        // Loop: will be handled on next iteration
-      }
 
       animRef.current = requestAnimationFrame(tickFn);
     };
