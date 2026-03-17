@@ -7,8 +7,7 @@ import { autoFill, makeSongItem, ytSearch } from "@/lib/helpers";
 import ExerciseModal from "./ExerciseModal";
 import Navbar from "./Navbar";
 import type { View } from "./Navbar";
-import EarTrainingPage from "./EarTrainingPage";
-import KnowledgePage from "./KnowledgePage";
+import LearningCenterPage from "./LearningCenterPage";
 import StudioPage from "./StudioPage";
 import WeeklyCharts from "./WeeklyCharts";
 import SongsterrSearch from "./SongsterrSearch";
@@ -108,9 +107,8 @@ export default function GuitarForgeApp() {
       <Navbar view={view} onViewChange={setView} />
       <div className="px-5 py-5 max-w-[960px] mx-auto">
 
-        {view === "ear" && <EarTrainingPage />}
+        {view === "learn" && <LearningCenterPage />}
         {view === "studio" && <StudioPage />}
-        {view === "knowledge" && <KnowledgePage />}
         {view === "profile" && <ProfilePage />}
         {view === "coach" && <AiCoachPage />}
 
