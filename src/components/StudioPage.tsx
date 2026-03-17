@@ -327,6 +327,12 @@ export default function StudioPage() {
   const recWsRef = useRef<WaveSurferInstance | null>(null);
   const recPluginRef = useRef<{ stopRecording: () => void; destroy: () => void } | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recChunksRef = useRef<Blob[]>([]);
+  const recAnalyserRef = useRef<AnalyserNode | null>(null);
+  const recAudioCtxRef = useRef<AudioContext | null>(null);
+  const recLevelAnimRef = useRef<number>(0);
+  const [recLevel, setRecLevel] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const animRef = useRef<number>(0);
   const metronomeRef = useRef<{
@@ -580,54 +586,91 @@ export default function StudioPage() {
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       mediaStreamRef.current = stream;
 
-      const WaveSurfer = (await import("wavesurfer.js")).default;
-      const RecordPlugin = (await import("wavesurfer.js/dist/plugins/record.js")).default;
+      // Set up AnalyserNode for live level meter
+      const audioCtx = new AudioContext();
+      recAudioCtxRef.current = audioCtx;
+      const source = audioCtx.createMediaStreamSource(stream);
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      source.connect(analyser);
+      recAnalyserRef.current = analyser;
 
-      const recContainer = recContainerRef.current;
-      if (!recContainer) { stream.getTracks().forEach((t) => t.stop()); return; }
+      // Start live level meter animation
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      const tickLevel = () => {
+        if (!recAnalyserRef.current) return;
+        recAnalyserRef.current.getByteTimeDomainData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+          const v = (dataArray[i] - 128) / 128;
+          sum += v * v;
+        }
+        const rms = Math.sqrt(sum / dataArray.length);
+        setRecLevel(Math.min(1, rms * 3));
+        recLevelAnimRef.current = requestAnimationFrame(tickLevel);
+      };
+      recLevelAnimRef.current = requestAnimationFrame(tickLevel);
 
-      const mimeType = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4";
-      const record = RecordPlugin.create({ mimeType, continuousWaveform: true, continuousWaveformDuration: 30 });
+      // Set up MediaRecorder
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "";
+      const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      mediaRecorderRef.current = mediaRecorder;
+      recChunksRef.current = [];
 
-      const ws = WaveSurfer.create({
-        container: recContainer,
-        waveColor: "#C41E3A88",
-        progressColor: "#C41E3A",
-        cursorColor: "#C41E3A",
-        cursorWidth: 2,
-        height: 56,
-        barWidth: 2,
-        barGap: 1,
-        barRadius: 1,
-        interact: false,
-        plugins: [record],
-      }) as unknown as WaveSurferInstance;
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) recChunksRef.current.push(e.data);
+      };
 
-      recWsRef.current = ws;
-      recPluginRef.current = record as unknown as { stopRecording: () => void; destroy: () => void };
-
-      record.on("record-end", (blob: Blob) => {
+      mediaRecorder.onstop = async () => {
         if (!mountedRef.current) return;
+        // Stop level meter
+        if (recLevelAnimRef.current) cancelAnimationFrame(recLevelAnimRef.current);
+        recAnalyserRef.current = null;
+        if (recAudioCtxRef.current) { try { recAudioCtxRef.current.close(); } catch { /* ok */ } recAudioCtxRef.current = null; }
+        setRecLevel(0);
+
+        const chunks = recChunksRef.current;
+        recChunksRef.current = [];
+        if (chunks.length === 0) return;
+
+        const blob = new Blob(chunks, { type: mediaRecorder.mimeType || "audio/webm" });
         const url = URL.createObjectURL(blob);
-        addTrack(`Recording ${ctr.current + 1}`, url, "recording", blob);
-        try { ws.destroy(); } catch { /* ok */ }
-        recWsRef.current = null;
-        recPluginRef.current = null;
+
+        // Find armed mic track to assign recording to, or create new track
+        const armedTrack = tracks.find((t) => t.type === "mic" && t.recordArm && !t.audioUrl);
+        if (armedTrack) {
+          // Update the armed track with the recorded audio
+          setTracks((prev) => prev.map((t) => t.id === armedTrack.id ? { ...t, audioBlob: blob, audioUrl: url, recordArm: false } : t));
+          setTimeout(async () => {
+            if (!mountedRef.current) return;
+            const container = trackContainersRef.current[armedTrack.id];
+            const updatedTrack = { ...armedTrack, audioBlob: blob, audioUrl: url, recordArm: false };
+            if (container) await createWavesurfer(updatedTrack, container);
+            await createToneNodes(updatedTrack);
+          }, 100);
+        } else {
+          addTrack(`Recording ${ctr.current + 1}`, url, "recording", blob);
+        }
+
+        // Release mic
         stream.getTracks().forEach((t) => t.stop());
         mediaStreamRef.current = null;
-      });
+        mediaRecorderRef.current = null;
+      };
 
-      await record.startRecording({ deviceId: stream.getAudioTracks()[0].getSettings().deviceId });
+      mediaRecorder.start(100); // Collect data every 100ms for live updates
       setIsRec(true);
       setRecTime(0);
       timerRef.current = setInterval(() => setRecTime((t) => t + 1), 1000);
     } catch (err) {
       alert("Microphone access denied: " + (err instanceof Error ? err.message : String(err)));
     }
-  }, [addTrack, selectedInputDevice]);
+  }, [addTrack, selectedInputDevice, tracks, createWavesurfer, createToneNodes]);
 
   const stopRec = useCallback(() => {
-    if (recPluginRef.current) recPluginRef.current.stopRecording();
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
     setIsRec(false);
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
   }, []);
@@ -1221,6 +1264,9 @@ export default function StudioPage() {
       }
       if (masterGainRef.current) { try { masterGainRef.current.dispose(); } catch { /* ok */ } }
       if (mediaStreamRef.current) mediaStreamRef.current.getTracks().forEach((t) => t.stop());
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") { try { mediaRecorderRef.current.stop(); } catch { /* ok */ } }
+      if (recLevelAnimRef.current) cancelAnimationFrame(recLevelAnimRef.current);
+      if (recAudioCtxRef.current) { try { recAudioCtxRef.current.close(); } catch { /* ok */ } }
     };
   }, []);
 
@@ -1891,7 +1937,7 @@ export default function StudioPage() {
           <div className="flex-1 overflow-auto relative" style={{ background: "#0c0c0c" }}
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleDrop}>
-            {/* Recording waveform */}
+            {/* Recording live level meter */}
             {isRec && (
               <div style={{ borderLeft: "3px solid #C41E3A", borderBottom: "1px solid #1a1a1a" }}>
                 <div className="flex items-center gap-2 px-2 py-1" style={{ background: "#15090a" }}>
@@ -1899,7 +1945,24 @@ export default function StudioPage() {
                   <span className="text-[9px] text-[#C41E3A] font-medium">Recording...</span>
                   <span className="font-mono text-[9px] text-[#C41E3A]">{fmtTime(recTime)}</span>
                 </div>
-                <div ref={recContainerRef} className="min-h-[56px]" style={{ background: "#0a0808" }} />
+                <div className="min-h-[56px] flex items-center px-3 gap-2" style={{ background: "#0a0808" }}>
+                  {/* Live level bar */}
+                  <div className="flex-1 h-6 rounded overflow-hidden relative" style={{ background: "#111" }}>
+                    <div
+                      className="h-full rounded transition-all duration-75"
+                      style={{
+                        width: `${Math.min(100, recLevel * 100)}%`,
+                        background: recLevel > 0.8 ? "linear-gradient(90deg, #22c55e 0%, #f59e0b 60%, #ef4444 100%)" : recLevel > 0.4 ? "linear-gradient(90deg, #22c55e 0%, #f59e0b 100%)" : "linear-gradient(90deg, #22c55e 0%, #22c55e 100%)",
+                        boxShadow: recLevel > 0.1 ? `0 0 8px rgba(34,197,94,${recLevel * 0.5})` : "none",
+                      }}
+                    />
+                    {/* Grid lines */}
+                    {[25, 50, 75].map((p) => (
+                      <div key={p} className="absolute top-0 bottom-0 w-px bg-[#1a1a1a]" style={{ left: `${p}%` }} />
+                    ))}
+                  </div>
+                  <span className="font-mono text-[8px] text-[#666] w-8 text-right">{recLevel > 0 ? `${Math.round(20 * Math.log10(Math.max(0.001, recLevel)))} dB` : "-inf"}</span>
+                </div>
               </div>
             )}
 
@@ -2426,12 +2489,11 @@ export default function StudioPage() {
                 const durStr = `${durMin}:${String(durSec).padStart(2, "0")}`;
                 return (
                   <div key={rec.id}
-                    className="rounded-lg mt-1.5 p-2 transition-all hover:bg-[#222] cursor-pointer group"
+                    className="rounded-lg mt-1.5 p-2 transition-all hover:bg-[#222] group"
                     style={{
                       background: "#1a1a1a",
                       borderLeft: isPreviewing ? "2px solid #f59e0b" : "2px solid transparent",
-                    }}
-                    onClick={() => importRecordingToProject(rec)}>
+                    }}>
                     <div className="flex items-start gap-1.5">
                       <svg width="10" height="10" viewBox="0 0 24 24" fill={isPreviewing ? "#f59e0b" : "#555"} className="mt-0.5 flex-shrink-0">
                         <path d="M9 18V5l12-2v13M6 18a3 3 0 100-6 3 3 0 000 6zM18 16a3 3 0 100-6 3 3 0 000 6z"/>
