@@ -8,6 +8,8 @@ export default function RecorderBox({ storageKey }: RecorderBoxProps) {
   const [isRec, setIsRec] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [savedList, setSavedList] = useState<SavedRecording[]>([]);
+  const [micError, setMicError] = useState("");
+  const [storageWarning, setStorageWarning] = useState("");
   const [recTime, setRecTime] = useState(0);
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -21,15 +23,18 @@ export default function RecorderBox({ storageKey }: RecorderBoxProps) {
   }, [storageKey]);
 
   function startRecording() {
-    if (!navigator.mediaDevices) return;
+    if (!navigator.mediaDevices) { setMicError("Microphone not available on this device."); return; }
+    setMicError("");
     navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
     }).then((stream) => {
       chunksRef.current = [];
-      const mr = new MediaRecorder(stream);
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' :
+                       MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : '';
+      const mr = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
       mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
       mr.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        const blob = new Blob(chunksRef.current, { type: mr.mimeType });
         setAudioUrl(URL.createObjectURL(blob));
         stream.getTracks().forEach((t) => t.stop());
         const reader = new FileReader();
@@ -37,7 +42,19 @@ export default function RecorderBox({ storageKey }: RecorderBoxProps) {
           const newItem: SavedRecording = { dt: new Date().toLocaleString("he-IL"), d: reader.result as string };
           setSavedList((prev) => {
             const next = [newItem, ...prev].slice(0, 10);
-            try { localStorage.setItem("rec-" + storageKey, JSON.stringify(next)); } catch { /* ok */ }
+            try {
+              localStorage.setItem("rec-" + storageKey, JSON.stringify(next));
+              // Check localStorage usage
+              let total = 0;
+              for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (k) total += (localStorage.getItem(k) || "").length;
+              }
+              if (total > 4 * 1024 * 1024) setStorageWarning("Storage is almost full. Old recordings may be lost.");
+              else setStorageWarning("");
+            } catch {
+              setStorageWarning("Storage is full! Cannot save more recordings.");
+            }
             return next;
           });
         };
@@ -48,7 +65,10 @@ export default function RecorderBox({ storageKey }: RecorderBoxProps) {
       setIsRec(true);
       setRecTime(0);
       timerRef.current = setInterval(() => setRecTime((t) => t + 1), 1000);
-    }).catch(() => { /* no mic */ });
+    }).catch((err) => {
+      setMicError(err.name === "NotAllowedError" ? "Microphone access denied. Please allow microphone access in your browser settings."
+        : "Microphone error: " + err.message);
+    });
   }
 
   function stopRecording() {
@@ -85,6 +105,9 @@ export default function RecorderBox({ storageKey }: RecorderBoxProps) {
         {isRec && <span className="font-readout text-lg text-[#C41E3A]">{fmt}</span>}
         {!isRec && <span className="font-label text-[10px] text-[#444]">Press to record</span>}
       </div>
+
+      {micError && <div className="font-label text-[10px] text-[#C41E3A] mb-2">{micError}</div>}
+      {storageWarning && <div className="font-label text-[10px] text-[#D4A843] mb-2">{storageWarning}</div>}
 
       {audioUrl && (
         /* eslint-disable-next-line jsx-a11y/media-has-caption */

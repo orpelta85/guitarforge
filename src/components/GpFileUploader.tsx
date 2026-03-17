@@ -52,6 +52,8 @@ export default function GpFileUploader({ exerciseId }: { exerciseId?: string }) 
   const apiRef = useRef<any>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const loopCountRef = useRef(0);
+  const readyCheckRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const workerBlobUrlRef = useRef<string | null>(null);
 
   const MAX_SAVE_SIZE = 2 * 1024 * 1024; // 2MB
 
@@ -94,7 +96,8 @@ export default function GpFileUploader({ exerciseId }: { exerciseId?: string }) 
     setActiveNotes([]); setCurrentBeatInfo("");
     if (apiRef.current?.destroy) try { apiRef.current.destroy(); } catch {}
     apiRef.current = null;
-    if (mainRef.current) mainRef.current.innerHTML = "";
+    if (workerBlobUrlRef.current) { URL.revokeObjectURL(workerBlobUrlRef.current); workerBlobUrlRef.current = null; }
+    if (readyCheckRef.current) { clearInterval(readyCheckRef.current); readyCheckRef.current = null; }
     const reader = new FileReader();
     reader.onload = (e) => {
       const data = new Uint8Array(e.target?.result as ArrayBuffer);
@@ -113,14 +116,18 @@ export default function GpFileUploader({ exerciseId }: { exerciseId?: string }) 
       try {
         const at = await import("@coderline/alphatab");
         if (dead || !mainRef.current) return;
-        if (mainRef.current) mainRef.current.innerHTML = "";
+        if (apiRef.current?.destroy) try { apiRef.current.destroy(); } catch {}
+        apiRef.current = null;
         const base = window.location.origin;
 
         (at.Environment as any).createWebWorker = () => {
           const workerUrl = base + "/alphatab/alphaTab.worker.mjs";
           const script = `import ${JSON.stringify(workerUrl)}`;
           const blob = new Blob([script], { type: "application/javascript" });
-          return new Worker(URL.createObjectURL(blob), { type: "module" });
+          if (workerBlobUrlRef.current) URL.revokeObjectURL(workerBlobUrlRef.current);
+          const blobUrl = URL.createObjectURL(blob);
+          workerBlobUrlRef.current = blobUrl;
+          return new Worker(blobUrl, { type: "module" });
         };
 
         const s = new at.Settings();
@@ -152,12 +159,14 @@ export default function GpFileUploader({ exerciseId }: { exerciseId?: string }) 
         api.playerReady.on(() => { if (!dead) setPlayerReady(true); });
 
         let pollCount = 0;
+        if (readyCheckRef.current) clearInterval(readyCheckRef.current);
         const readyCheck = setInterval(() => {
-          if (dead) { clearInterval(readyCheck); return; }
+          if (dead) { clearInterval(readyCheck); readyCheckRef.current = null; return; }
           pollCount++;
-          if (api.isReadyForPlayback) { setPlayerReady(true); clearInterval(readyCheck); }
-          else if (pollCount >= 30) { setPlayerReady(true); clearInterval(readyCheck); }
+          if (api.isReadyForPlayback) { setPlayerReady(true); clearInterval(readyCheck); readyCheckRef.current = null; }
+          else if (pollCount >= 30) { setPlayerReady(true); clearInterval(readyCheck); readyCheckRef.current = null; }
         }, 500);
+        readyCheckRef.current = readyCheck;
 
         api.playerStateChanged.on((e: any) => { if (!dead) setPlaying(e.state === 1); });
 
@@ -206,8 +215,29 @@ export default function GpFileUploader({ exerciseId }: { exerciseId?: string }) 
       }
     })();
 
-    return () => { dead = true; };
+    return () => {
+      dead = true;
+      if (readyCheckRef.current) { clearInterval(readyCheckRef.current); readyCheckRef.current = null; }
+      if (apiRef.current?.destroy) {
+        try { apiRef.current.destroy(); } catch {}
+      }
+      apiRef.current = null;
+      if (workerBlobUrlRef.current) { URL.revokeObjectURL(workerBlobUrlRef.current); workerBlobUrlRef.current = null; }
+    };
   }, [fileData]);
+
+  const applyLoopRange = useCallback((start: number, end: number) => {
+    const api = apiRef.current;
+    if (!api?.score?.masterBars) return;
+    const s = Math.max(1, Math.min(start, totalBars));
+    const e = Math.max(s, Math.min(end, totalBars));
+    const startBar = api.score.masterBars[s - 1];
+    const endBar = api.score.masterBars[e - 1];
+    if (!startBar || !endBar) return;
+    api.playbackRange = { startTick: startBar.start, endTick: endBar.start + endBar.calculateDuration() };
+    api.isLooping = true;
+    setIsLooping(true); setLoopStart(s); setLoopEnd(e);
+  }, [totalBars]);
 
   // Handle bar clicks from tab notation
   useEffect(() => {
@@ -237,7 +267,7 @@ export default function GpFileUploader({ exerciseId }: { exerciseId?: string }) 
     }
     window.addEventListener("gf-bar-click", onBarClick);
     return () => window.removeEventListener("gf-bar-click", onBarClick);
-  }, [selectMode, loopStart, loopEnd, totalBars]);
+  }, [selectMode, loopStart, loopEnd, totalBars, applyLoopRange]);
 
   // Speed trainer: increase speed each loop iteration
   useEffect(() => {
@@ -283,19 +313,6 @@ export default function GpFileUploader({ exerciseId }: { exerciseId?: string }) 
     api.isLooping = newVal;
     setIsLooping(newVal);
     if (!newVal) { api.playbackRange = null; setLoopStart(null); setLoopEnd(null); setSpeedTrainer(false); }
-  }
-
-  function applyLoopRange(start: number, end: number) {
-    const api = apiRef.current;
-    if (!api?.score?.masterBars) return;
-    const s = Math.max(1, Math.min(start, totalBars));
-    const e = Math.max(s, Math.min(end, totalBars));
-    const startBar = api.score.masterBars[s - 1];
-    const endBar = api.score.masterBars[e - 1];
-    if (!startBar || !endBar) return;
-    api.playbackRange = { startTick: startBar.start, endTick: endBar.start + endBar.calculateDuration() };
-    api.isLooping = true;
-    setIsLooping(true); setLoopStart(s); setLoopEnd(e);
   }
 
   function setLoopFromCurrentBar(type: "start" | "end") {

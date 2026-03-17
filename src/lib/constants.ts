@@ -5,7 +5,8 @@ export const DAYS = ["ראשון", "שני", "שלישי", "רביעי", "חמי
 export const CATS = [
   "חימום", "שרדינג", "לגאטו", "בנד", "טאפינג", "Sweep",
   "קצב", "גריף", "אוזן", "אילתור", "ריפים", "פרזינג",
-  "מודוסים", "יצירה", "שירים", "דינמיקה"
+  "מודוסים", "יצירה", "שירים", "דינמיקה",
+  "אקורדים", "הרמוניקס", "פיקינג", "ארפג'יו", "סלייד", "כיוונים"
 ];
 
 export const COL: Record<string, string> = {
@@ -25,6 +26,12 @@ export const COL: Record<string, string> = {
   "יצירה": "#facc15",
   "שירים": "#10b981",
   "דינמיקה": "#a855f7",
+  "אקורדים": "#f472b6",
+  "הרמוניקס": "#38bdf8",
+  "פיקינג": "#fb923c",
+  "ארפג'יו": "#4ade80",
+  "סלייד": "#c084fc",
+  "כיוונים": "#fbbf24",
 };
 
 export const MODES = [
@@ -40,10 +47,18 @@ export const SCALES = [
 ];
 
 export const STYLES = [
-  "Doom Metal", "Thrash Metal", "Death Metal", "Black Metal",
-  "Stoner Rock", "Blues Rock", "Hard Rock", "Progressive Metal",
-  "Neo-Classical", "Jazz Fusion", "Grunge"
+  "Metal", "Hard Rock", "Classic Rock", "Blues", "Jazz",
+  "Grunge", "Stoner Rock", "Punk Rock", "Neo-Classical",
+  "Funk", "Country", "Flamenco", "Acoustic"
 ];
+
+export const CAT_GROUPS: Record<string, string[]> = {
+  "טכניקה": ["חימום", "שרדינג", "לגאטו", "טאפינג", "Sweep", "פיקינג", "ארפג'יו", "סלייד", "הרמוניקס"],
+  "קצב ודינמיקה": ["קצב", "דינמיקה", "אקורדים", "כיוונים"],
+  "תאוריה": ["גריף", "מודוסים"],
+  "מוזיקליות": ["אוזן", "אילתור", "פרזינג", "בנד"],
+  "יצירה": ["ריפים", "יצירה", "שירים"],
+};
 
 export const STAGES = [
   { name: "שלב 1 – פענוח", m: 10, d: "האזנה, ניתוח 8-16 תיבות." },

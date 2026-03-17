@@ -70,15 +70,20 @@ export default function StudioPage() {
   }
 
   // ── PLAYBACK ──
-  function playAll() {
+  async function playAll() {
     const hasSolo = tracks.some(t => t.solo);
-    tracks.forEach(t => {
+    const playable = tracks.filter(t => {
       const el = audioEls.current[t.id];
-      if (!el || !t.audioUrl) return;
+      if (!el || !t.audioUrl) return false;
       el.volume = (t.volume / 100) * (masterVol / 100);
       const shouldPlay = hasSolo ? t.solo : !t.muted;
-      if (shouldPlay) { el.currentTime = 0; el.play().catch(() => {}); }
+      if (shouldPlay) { el.currentTime = 0; return true; }
+      return false;
     });
+    await Promise.all(playable.map(t => {
+      const el = audioEls.current[t.id];
+      return el.play().catch(() => {});
+    }));
     setPlaying(true);
   }
 
@@ -122,6 +127,8 @@ export default function StudioPage() {
   function deleteTrack(id: number) {
     const el = audioEls.current[id]; if (el) el.pause();
     delete audioEls.current[id];
+    const track = tracks.find(t => t.id === id);
+    if (track?.audioUrl) URL.revokeObjectURL(track.audioUrl);
     setTracks(p => p.filter(t => t.id !== id));
   }
 
@@ -144,18 +151,41 @@ export default function StudioPage() {
   }
 
   // ── SUNO ──
+  const [sunoError, setSunoError] = useState("");
+
   async function generateSuno() {
     setSunoLoading(true);
+    setSunoError("");
     try {
       const res = await fetch("/api/suno", { method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ scale: sunoScale, mode: sunoMode, style: sunoStyle, bpm: sunoBpm }) });
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
       const data = await res.json();
       if (data.tracks) data.tracks.forEach((t: { title: string; audioUrl: string }) => addTrack(t.title || "AI Track", t.audioUrl, "suno"));
-    } catch {}
-    setSunoLoading(false); setShowPanel("none");
+      else throw new Error("No tracks returned");
+      setShowPanel("none");
+    } catch (err) {
+      setSunoError(err instanceof Error ? err.message : "Failed to generate track");
+    }
+    setSunoLoading(false);
   }
 
-  useEffect(() => { return () => { if (timerRef.current) clearInterval(timerRef.current); }; }, []);
+  // BUG 1 FIX: Master volume updates all audio elements
+  useEffect(() => {
+    tracks.forEach(tr => {
+      const el = audioEls.current[tr.id];
+      if (el) el.volume = (tr.volume / 100) * (masterVol / 100);
+    });
+  }, [masterVol, tracks]);
+
+  // BUG 4 FIX: Cleanup object URLs on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      tracks.forEach(tr => { if (tr.audioUrl) URL.revokeObjectURL(tr.audioUrl); });
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const fmt = Math.floor(recTime / 60) + ":" + String(recTime % 60).padStart(2, "0");
   const typeCol: Record<string, string> = { recording: "#C41E3A", import: "#D4A843", suno: "#8b5cf6" };
@@ -280,6 +310,7 @@ export default function StudioPage() {
           </div>
           <button onClick={generateSuno} disabled={sunoLoading} className="btn-gold">{sunoLoading ? "Generating..." : "Generate"}</button>
           <span className="font-label text-[9px] text-[#444] ml-2">Requires SUNO_API_URL</span>
+          {sunoError && <div className="font-label text-[10px] text-[#C41E3A] mt-2">{sunoError}</div>}
         </div>
       )}
 
@@ -319,10 +350,14 @@ export default function StudioPage() {
               <div>
                 <div className="h-12 bg-[#111] rounded-sm border border-[#1a1a1a] mb-2 flex items-end overflow-hidden px-0.5">
                   {Array.from({ length: 120 }, (_, i) => {
-                    const h = Math.sin(i * 0.13 + tr.id) * 25 + Math.cos(i * 0.07) * 15 + 30;
+                    // Seeded pseudo-random per track for realistic waveform
+                    const seed = (tr.id * 1000 + i * 37 + 7) % 97;
+                    const base = (seed / 97) * 60 + 10;
+                    const envelope = 1 - Math.abs(i - 60) / 70;
+                    const h = Math.max(5, base * Math.max(0.15, envelope));
                     return <div key={i} className="flex-1 mx-[0.2px] rounded-t-sm transition-all" style={{
                       height: h + "%",
-                      background: tr.muted ? "#1a1a1a" : `rgba(212,168,67,${0.25 + Math.sin(i * 0.1) * 0.2})`,
+                      background: tr.muted ? "#1a1a1a" : `rgba(212,168,67,${0.2 + (seed / 97) * 0.3})`,
                     }} />;
                   })}
                 </div>
