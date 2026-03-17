@@ -368,3 +368,132 @@ audio::-webkit-media-controls-panel { background: #1a1a1a; }
 /* ── Number input spinners ── */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button { opacity: 0.3; }
+
+/* ── Studio DAW ── */
+.studio-track {
+  display: flex;
+  border: 1px solid var(--gray-warm-100);
+  border-radius: 2px;
+  overflow: hidden;
+  background: var(--bg-secondary);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.02), 0 2px 6px rgba(0,0,0,0.3);
+}
+.studio-track-label {
+  width: 140px;
+  min-width: 140px;
+  padding: 10px;
+  background: var(--bg-rack);
+  border-left: 1px solid var(--gray-warm-100);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.studio-waveform {
+  flex: 1;
+  min-height: 80px;
+  background: var(--bg-recess);
+  position: relative;
+  direction: ltr;
+}
+.studio-fader {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  background: var(--bg-recess);
+  border-radius: 2px;
+  outline: none;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.5);
+}
+.studio-fader::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 18px;
+  background: linear-gradient(180deg, var(--gray-warm-200), var(--gray-warm-100));
+  border: 1px solid var(--gray-warm-300);
+  border-radius: 2px;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+.studio-fader::-webkit-slider-thumb:hover {
+  background: linear-gradient(180deg, var(--gold-light), var(--gold));
+  border-color: var(--gold-dark);
+}
+.studio-fader::-moz-range-thumb {
+  width: 12px;
+  height: 18px;
+  background: linear-gradient(180deg, var(--gray-warm-200), var(--gray-warm-100));
+  border: 1px solid var(--gray-warm-300);
+  border-radius: 2px;
+  cursor: pointer;
+}
+.studio-transport {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.studio-btn-rec {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #C41E3A;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.studio-btn-rec::after {
+  content: '';
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #C41E3A;
+  transition: all 0.15s;
+}
+.studio-btn-rec.recording {
+  border-color: #FF3333;
+  box-shadow: 0 0 12px rgba(255,51,51,0.4);
+}
+.studio-btn-rec.recording::after {
+  background: #FF3333;
+  border-radius: 2px;
+  width: 12px;
+  height: 12px;
+}
+.studio-fx-panel {
+  background: var(--bg-rack);
+  border: 1px solid var(--gray-warm-100);
+  border-radius: 2px;
+  padding: 16px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+}
+.studio-fx-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 3px;
+  background: var(--gray-warm-100);
+  border-radius: 2px;
+  outline: none;
+}
+.studio-fx-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 16px;
+  background: var(--gold);
+  border-radius: 2px;
+  cursor: pointer;
+}
+.studio-fx-slider::-moz-range-thumb {
+  width: 10px;
+  height: 16px;
+  background: var(--gold);
+  border-radius: 2px;
+  cursor: pointer;
+  border: none;
+}
