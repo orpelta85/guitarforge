@@ -123,15 +123,15 @@ export default function LibraryEditor({ ex, exEdits, setExEdits }: Props) {
         {!showGp && !ex.tex ? (
           <button onClick={() => setShowGp(true)} className="btn-ghost !text-[10px] w-full justify-center">Upload GP File</button>
         ) : (
-          <GpFileUploader exerciseId={String(ex.id)} tex={ex.tex} />
+          <GpFileUploader exerciseId={String(ex.id)} tex={ex.tex} songName={ex.n} />
         )}
         <button onClick={async () => {
           try {
-            const r = await fetch(`/api/gptabs?q=${encodeURIComponent(ex.songName || ex.n)}`);
+            const r = await fetch(`/api/gptabs?q=${encodeURIComponent(ex.n)}`);
             const data = await r.json();
             if (data.length > 0) window.open(data[0].downloadUrl, "_blank");
-            else window.open(`https://guitarprotabs.org/search.php?search=${encodeURIComponent(ex.songName || ex.n)}`, "_blank");
-          } catch { window.open(`https://guitarprotabs.org/search.php?search=${encodeURIComponent(ex.songName || ex.n)}`, "_blank"); }
+            else window.open(`https://guitarprotabs.org/search.php?search=${encodeURIComponent(ex.n)}&in=songs&page=1`, "_blank");
+          } catch { window.open(`https://guitarprotabs.org/search.php?search=${encodeURIComponent(ex.n)}&in=songs&page=1`, "_blank"); }
         }} className="btn-ghost !text-[9px] w-full justify-center mt-2">Download from guitarprotabs.org</button>
       </div>
 

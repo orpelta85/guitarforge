@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   if (!q) return NextResponse.json({ error: "Missing ?q= parameter" }, { status: 400 });
 
   try {
-    const res = await fetch(`${BASE}/search.php?search=${encodeURIComponent(q)}`, {
+    const res = await fetch(`${BASE}/search.php?search=${encodeURIComponent(q)}&in=songs&page=1`, {
       headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
       next: { revalidate: 86400 },
     });

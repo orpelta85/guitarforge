@@ -138,15 +138,15 @@ export default function SongModal({ song, onClose }: Props) {
                 <div className="font-label text-[10px] text-[#D4A843] mb-2 flex items-center gap-2">
                   <div className="led led-gold" /> Guitar Pro Tab
                 </div>
-                <GpFileUploader exerciseId={`song-${song.id}`} />
+                <GpFileUploader exerciseId={`song-${song.id}`} songName={song.title} />
                 <div className="flex gap-1 flex-wrap mt-2">
                   <button type="button" onClick={async () => {
                     try {
-                      const r = await fetch(`/api/gptabs?q=${encodeURIComponent(song.title + " " + song.artist)}`);
+                      const r = await fetch(`/api/gptabs?q=${encodeURIComponent(song.title)}`);
                       const data = await r.json();
                       if (data.length > 0) window.open(data[0].downloadUrl, "_blank");
-                      else window.open(`https://guitarprotabs.org/search.php?search=${encodeURIComponent(song.title + " " + song.artist)}`, "_blank");
-                    } catch { window.open(`https://guitarprotabs.org/search.php?search=${encodeURIComponent(song.title + " " + song.artist)}`, "_blank"); }
+                      else window.open(`https://guitarprotabs.org/search.php?search=${encodeURIComponent(song.title)}&in=songs&page=1`, "_blank");
+                    } catch { window.open(`https://guitarprotabs.org/search.php?search=${encodeURIComponent(song.title)}&in=songs&page=1`, "_blank"); }
                   }} className="btn-ghost !text-[9px] !px-2 !py-1">Download tabs</button>
                   {song.songsterrUrl && (
                     <a href={song.songsterrUrl} target="_blank" rel="noopener noreferrer"

@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 interface TrackInfo { index: number; name: string; volume: number; isMuted: boolean; isSolo: boolean }
 interface Bookmark { name: string; startBar: number; endBar: number }
 
-export default function GpFileUploader({ exerciseId, tex }: { exerciseId?: string; tex?: string }) {
+export default function GpFileUploader({ exerciseId, tex, songName }: { exerciseId?: string; tex?: string; songName?: string }) {
   const [fileData, setFileData] = useState<Uint8Array | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [savedIndicator, setSavedIndicator] = useState(false);
@@ -436,9 +436,16 @@ export default function GpFileUploader({ exerciseId, tex }: { exerciseId?: strin
           <div className="font-label text-sm text-[#555] mb-2">Drop Guitar Pro file or click to browse</div>
           <div className="font-label text-[10px] text-[#333]">.gp .gp3 .gp4 .gp5 .gpx</div>
           <div className="font-label text-[9px] text-[#444] mt-3">
-            Download free tabs from{" "}
-            <a href="https://guitarprotabs.org" target="_blank" rel="noopener noreferrer"
-              className="text-[#D4A843] underline" onClick={e => e.stopPropagation()}>guitarprotabs.org</a>
+            <button type="button" className="text-[#D4A843] underline bg-transparent border-none cursor-pointer font-label text-[9px]" onClick={async (e) => {
+              e.stopPropagation();
+              if (!songName) { window.open("https://guitarprotabs.org", "_blank"); return; }
+              try {
+                const r = await fetch(`/api/gptabs?q=${encodeURIComponent(songName)}`);
+                const data = await r.json();
+                if (data.length > 0) window.open(data[0].downloadUrl, "_blank");
+                else window.open(`https://guitarprotabs.org/search.php?search=${encodeURIComponent(songName)}&in=songs&page=1`, "_blank");
+              } catch { window.open(`https://guitarprotabs.org/search.php?search=${encodeURIComponent(songName)}&in=songs&page=1`, "_blank"); }
+            }}>Download from guitarprotabs.org</button>
           </div>
         </div>
       ) : (
