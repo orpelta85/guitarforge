@@ -19,37 +19,37 @@ const PLAN_TEMPLATES: Record<string, PracticePlan> = {
   "Beginner Rock": {
     name: "Beginner Rock Foundation", weeks: 8,
     phases: [
-      { name: "Basics", weeks: "1-2", focus: "Warm-up, basic chords, simple riffs", categories: ["חימום", "קצב", "גריף"], dailyMinutes: 60, exercises: [1, 4, 5, 28, 29, 33, 34] },
-      { name: "Building", weeks: "3-4", focus: "Pentatonic scale, simple solos, bends", categories: ["חימום", "שרדינג", "בנד", "גריף"], dailyMinutes: 75, exercises: [1, 5, 6, 17, 18, 35] },
-      { name: "Expanding", weeks: "5-6", focus: "Full songs, improvisation basics", categories: ["חימום", "שרדינג", "אילתור", "ריפים"], dailyMinutes: 90, exercises: [1, 6, 43, 47, 49, 50] },
-      { name: "Performing", weeks: "7-8", focus: "Song mastery, recording yourself", categories: ["חימום", "אילתור", "יצירה", "שירים"], dailyMinutes: 90, exercises: [1, 43, 46, 60, 63] },
+      { name: "Basics", weeks: "1-2", focus: "Warm-up, basic chords, simple riffs", categories: ["Warm-Up", "Rhythm", "Fretboard"], dailyMinutes: 60, exercises: [1, 4, 5, 28, 29, 33, 34] },
+      { name: "Building", weeks: "3-4", focus: "Pentatonic scale, simple solos, bends", categories: ["Warm-Up", "Shred", "Bends", "Fretboard"], dailyMinutes: 75, exercises: [1, 5, 6, 17, 18, 35] },
+      { name: "Expanding", weeks: "5-6", focus: "Full songs, improvisation basics", categories: ["Warm-Up", "Shred", "Improv", "Riffs"], dailyMinutes: 90, exercises: [1, 6, 43, 47, 49, 50] },
+      { name: "Performing", weeks: "7-8", focus: "Song mastery, recording yourself", categories: ["Warm-Up", "Improv", "Composition", "Songs"], dailyMinutes: 90, exercises: [1, 43, 46, 60, 63] },
     ],
   },
   "Shred Builder": {
     name: "Shred Speed Builder", weeks: 12,
     phases: [
-      { name: "Foundation", weeks: "1-3", focus: "Alternate picking, synchronization, pentatonic speed", categories: ["חימום", "שרדינג"], dailyMinutes: 90, exercises: [1, 2, 3, 5, 6, 9] },
-      { name: "Techniques", weeks: "4-6", focus: "Legato, economy picking, string skipping", categories: ["חימום", "שרדינג", "לגאטו"], dailyMinutes: 105, exercises: [1, 6, 10, 11, 12, 13] },
-      { name: "Speed Push", weeks: "7-9", focus: "Sextuplets, 3NPS, burst picking", categories: ["חימום", "שרדינג", "לגאטו", "פרזינג"], dailyMinutes: 120, exercises: [1, 7, 8, 9, 14, 53, 54] },
-      { name: "Application", weeks: "10-12", focus: "Musical application, solos, improvisation", categories: ["חימום", "שרדינג", "אילתור", "פרזינג"], dailyMinutes: 120, exercises: [1, 7, 8, 43, 44, 48, 55, 56] },
+      { name: "Foundation", weeks: "1-3", focus: "Alternate picking, synchronization, pentatonic speed", categories: ["Warm-Up", "Shred"], dailyMinutes: 90, exercises: [1, 2, 3, 5, 6, 9] },
+      { name: "Techniques", weeks: "4-6", focus: "Legato, economy picking, string skipping", categories: ["Warm-Up", "Shred", "Legato"], dailyMinutes: 105, exercises: [1, 6, 10, 11, 12, 13] },
+      { name: "Speed Push", weeks: "7-9", focus: "Sextuplets, 3NPS, burst picking", categories: ["Warm-Up", "Shred", "Legato", "Phrasing"], dailyMinutes: 120, exercises: [1, 7, 8, 9, 14, 53, 54] },
+      { name: "Application", weeks: "10-12", focus: "Musical application, solos, improvisation", categories: ["Warm-Up", "Shred", "Improv", "Phrasing"], dailyMinutes: 120, exercises: [1, 7, 8, 43, 44, 48, 55, 56] },
     ],
   },
   "Blues Master": {
     name: "Blues Guitar Mastery", weeks: 8,
     phases: [
-      { name: "Blues Basics", weeks: "1-2", focus: "Blues scale, bending, vibrato", categories: ["חימום", "בנד", "מודוסים"], dailyMinutes: 75, exercises: [1, 3, 17, 18, 19, 58] },
-      { name: "Phrasing", weeks: "3-4", focus: "Call-response, dynamics, space", categories: ["חימום", "בנד", "אילתור", "דינמיקה"], dailyMinutes: 90, exercises: [1, 19, 20, 46, 47, 65, 67] },
-      { name: "Ear & Feel", weeks: "5-6", focus: "Ear training, chord tones, transcription", categories: ["חימום", "אוזן", "אילתור"], dailyMinutes: 90, exercises: [1, 37, 39, 41, 42, 44] },
-      { name: "Expression", weeks: "7-8", focus: "Full blues performance, recording, creation", categories: ["חימום", "אילתור", "יצירה", "דינמיקה"], dailyMinutes: 90, exercises: [1, 43, 46, 60, 61, 64, 66] },
+      { name: "Blues Basics", weeks: "1-2", focus: "Blues scale, bending, vibrato", categories: ["Warm-Up", "Bends", "Modes"], dailyMinutes: 75, exercises: [1, 3, 17, 18, 19, 58] },
+      { name: "Phrasing", weeks: "3-4", focus: "Call-response, dynamics, space", categories: ["Warm-Up", "Bends", "Improv", "Dynamics"], dailyMinutes: 90, exercises: [1, 19, 20, 46, 47, 65, 67] },
+      { name: "Ear & Feel", weeks: "5-6", focus: "Ear training, chord tones, transcription", categories: ["Warm-Up", "Ear Training", "Improv"], dailyMinutes: 90, exercises: [1, 37, 39, 41, 42, 44] },
+      { name: "Expression", weeks: "7-8", focus: "Full blues performance, recording, creation", categories: ["Warm-Up", "Improv", "Composition", "Dynamics"], dailyMinutes: 90, exercises: [1, 43, 46, 60, 61, 64, 66] },
     ],
   },
   "Metal Technique": {
     name: "Metal Technique Complete", weeks: 12,
     phases: [
-      { name: "Rhythm", weeks: "1-3", focus: "Downpicking, palm muting, galloping, odd time", categories: ["חימום", "קצב"], dailyMinutes: 90, exercises: [1, 4, 28, 29, 30, 31, 32] },
-      { name: "Lead Basics", weeks: "4-6", focus: "Alternate picking, legato, bends", categories: ["חימום", "שרדינג", "לגאטו", "בנד"], dailyMinutes: 105, exercises: [1, 6, 9, 12, 13, 17, 18] },
-      { name: "Advanced", weeks: "7-9", focus: "Sweep, tapping, modes, riff writing", categories: ["חימום", "טאפינג", "Sweep", "מודוסים", "ריפים"], dailyMinutes: 120, exercises: [1, 22, 23, 25, 26, 49, 51, 57] },
-      { name: "Mastery", weeks: "10-12", focus: "Integration, song learning, improvisation", categories: ["חימום", "שרדינג", "אילתור", "שירים", "יצירה"], dailyMinutes: 120, exercises: [1, 7, 8, 27, 43, 44, 52, 62] },
+      { name: "Rhythm", weeks: "1-3", focus: "Downpicking, palm muting, galloping, odd time", categories: ["Warm-Up", "Rhythm"], dailyMinutes: 90, exercises: [1, 4, 28, 29, 30, 31, 32] },
+      { name: "Lead Basics", weeks: "4-6", focus: "Alternate picking, legato, bends", categories: ["Warm-Up", "Shred", "Legato", "Bends"], dailyMinutes: 105, exercises: [1, 6, 9, 12, 13, 17, 18] },
+      { name: "Advanced", weeks: "7-9", focus: "Sweep, tapping, modes, riff writing", categories: ["Warm-Up", "Tapping", "Sweep", "Modes", "Riffs"], dailyMinutes: 120, exercises: [1, 22, 23, 25, 26, 49, 51, 57] },
+      { name: "Mastery", weeks: "10-12", focus: "Integration, song learning, improvisation", categories: ["Warm-Up", "Shred", "Improv", "Songs", "Composition"], dailyMinutes: 120, exercises: [1, 7, 8, 27, 43, 44, 52, 62] },
     ],
   },
 };
@@ -166,7 +166,7 @@ export default function AiCoachPage() {
                 <span className="font-heading text-sm font-bold text-[#D4A843]">{plan.name}</span>
                 {key === suggested && <span className="font-label text-[8px] text-[#33CC33] border border-[#33CC33]/30 px-1.5 py-0.5 rounded-sm">Recommended</span>}
               </div>
-              <div className="font-readout text-[10px] text-[#555] mb-2" dir="ltr" style={{ textAlign: "right" }}>{plan.weeks} weeks · {plan.phases.length} phases</div>
+              <div className="font-readout text-[10px] text-[#555] mb-2" style={{ textAlign: "left" }}>{plan.weeks} weeks · {plan.phases.length} phases</div>
               <div className="flex gap-1 flex-wrap">
                 {plan.phases.map((p, i) => (
                   <span key={i} className="font-label text-[8px] text-[#444] border border-[#1a1a1a] px-1.5 py-0.5 rounded-sm">{p.name}</span>

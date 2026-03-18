@@ -19,14 +19,14 @@ export function makeSongItem(song: Song, stageIdx: number): Exercise {
   const st = STAGES[stageIdx];
   return {
     id: Number("99" + song.id + "" + stageIdx),
-    c: "שירים",
+    c: "Songs",
     n: song.name + " – " + st.name,
     m: st.m,
     b: "",
     d: st.d,
     yt: song.name + " guitar tutorial",
     t: "",
-    f: "שיר",
+    f: "Song",
     bt: stageIdx >= 5,
     ss: true,
     songId: song.id,
@@ -41,7 +41,7 @@ export function autoFill(catList: string[], maxMin: number, songItems: Exercise[
   let used = 0;
 
   for (const cat of catList) {
-    if (cat === "שירים" && songItems.length > 0) {
+    if (cat === "Songs" && songItems.length > 0) {
       for (const si of songItems) {
         if (used + si.m <= maxMin) {
           result.push(si);

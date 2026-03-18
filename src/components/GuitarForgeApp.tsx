@@ -27,7 +27,7 @@ export default function GuitarForgeApp() {
   const [style, setStyle] = useState("Metal");
   const [dayCats, setDayCats] = useState<DayCats>(DEFAULT_DAY_CATS);
   const [dayHrs, setDayHrs] = useState<DayHrs>(DEFAULT_DAY_HRS);
-  const [selDay, setSelDay] = useState("ראשון");
+  const [selDay, setSelDay] = useState("Sunday");
   const [dayExMap, setDayExMap] = useState<DayExMap>({});
   const [doneMap, setDoneMap] = useState<BoolMap>({});
   const [bpmLog, setBpmLog] = useState<StringMap>({});
@@ -35,7 +35,7 @@ export default function GuitarForgeApp() {
   const [ready, setReady] = useState(false);
   const [showEditor, setShowEditor] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
-  const [libFilter, setLibFilter] = useState("הכל");
+  const [libFilter, setLibFilter] = useState("All");
   const [modal, setModal] = useState<Exercise | null>(null);
   const [songs, setSongs] = useState<Song[]>([]);
   const [newSongName, setNewSongName] = useState("");
@@ -93,14 +93,14 @@ export default function GuitarForgeApp() {
   function buildDay(day: string) {
     const cats = dayCats[day] || [], mins = (dayHrs[day] || 0) * 60;
     if (!cats.length || mins <= 0) return;
-    setDayExMap((p) => ({ ...p, [day]: autoFill(cats, mins, cats.includes("שירים") ? getSongItems() : [], style) }));
+    setDayExMap((p) => ({ ...p, [day]: autoFill(cats, mins, cats.includes("Songs") ? getSongItems() : [], style) }));
   }
 
   function buildAll() {
     const nd: DayExMap = {};
     DAYS.forEach((day) => {
       const cats = dayCats[day] || [], mins = (dayHrs[day] || 0) * 60;
-      if (cats.length > 0 && mins > 0) nd[day] = autoFill(cats, mins, cats.includes("שירים") ? getSongItems() : [], style);
+      if (cats.length > 0 && mins > 0) nd[day] = autoFill(cats, mins, cats.includes("Songs") ? getSongItems() : [], style);
     });
     setDayExMap(nd);
   }
@@ -123,7 +123,7 @@ export default function GuitarForgeApp() {
 
   return (
     <ErrorBoundary>
-    <div className="min-h-screen text-white" style={{ background: "#0A0A0A" }} dir="rtl">
+    <div className="min-h-screen text-white" style={{ background: "#0A0A0A" }} dir="ltr">
       <Navbar view={view} onViewChange={setView} />
       {view === "studio" && <StudioPage />}
       <div className="px-2 sm:px-5 py-3 sm:py-5 max-w-[960px] mx-auto overflow-x-hidden">
@@ -144,8 +144,8 @@ export default function GuitarForgeApp() {
           const diffCounts = { all: allSongs.length, Beginner: allSongs.filter(s => s.difficulty === "Beginner").length, Intermediate: allSongs.filter(s => s.difficulty === "Intermediate").length, Advanced: allSongs.filter(s => s.difficulty === "Advanced").length };
           return (
             <div className="animate-fade-in">
-              <div className="font-heading text-xl font-bold text-[#D4A843] mb-4">ספריית שירים</div>
-              <input type="text" placeholder="חיפוש שיר, אמן, ז'אנר..." className="input w-full mb-3"
+              <div className="font-heading text-xl font-bold text-[#D4A843] mb-4">Song Library</div>
+              <input type="text" placeholder="Search song, artist, genre..." className="input w-full mb-3"
                 value={songLibSearch} onChange={e => setSongLibSearch(e.target.value)} />
               <div className="flex gap-1 flex-wrap mb-4">
                 {([["all", "All", "#D4A843"], ["Beginner", "Beginner", "#22c55e"], ["Intermediate", "Intermediate", "#f59e0b"], ["Advanced", "Advanced", "#ef4444"]] as const).map(([key, label, color]) => (
@@ -158,7 +158,7 @@ export default function GuitarForgeApp() {
               </div>
               <div className="mb-4">
                 <button onClick={() => setShowAddSong(!showAddSong)} className="btn-ghost !text-[10px] mb-2">
-                  {showAddSong ? "סגור" : "+ הוסף שיר"}
+                  {showAddSong ? "Close" : "+ Add Song"}
                 </button>
                 {showAddSong && (
                   <div className="panel p-4">
@@ -176,7 +176,7 @@ export default function GuitarForgeApp() {
               </div>
               {filtered.length === 0 && (
                 <div className="panel p-8 text-center">
-                  <div className="font-label text-sm text-[#444]">לא נמצאו שירים</div>
+                  <div className="font-label text-sm text-[#444]">No songs found</div>
                 </div>
               )}
               {filtered.map(song => {
@@ -426,7 +426,7 @@ export default function GuitarForgeApp() {
                 <button onClick={() => buildDay(selDay)} className="btn-ghost">Auto Fill</button>
                 <select title="Add exercise" onChange={(e) => { if (!e.target.value) return; const ex = EXERCISES.find((x) => x.id === Number(e.target.value)); if (ex) setDayExMap((p) => ({ ...p, [selDay]: [...(p[selDay] || []), ex] })); e.target.value = ""; }} className="input w-full sm:!w-auto !py-1.5 text-[11px]" defaultValue="">
                   <option value="" disabled>+ Exercise</option>
-                  {CATS.filter((c) => c !== "שירים").map((cat) => <optgroup key={cat} label={cat}>{EXERCISES.filter((e) => e.c === cat).map((e) => <option key={e.id} value={e.id}>{e.n} ({e.m}m)</option>)}</optgroup>)}
+                  {CATS.filter((c) => c !== "Songs").map((cat) => <optgroup key={cat} label={cat}>{EXERCISES.filter((e) => e.c === cat).map((e) => <option key={e.id} value={e.id}>{e.n} ({e.m}m)</option>)}</optgroup>)}
                 </select>
                 {songs.length > 0 && (
                   <select title="Add song" onChange={(e) => { if (!e.target.value) return; const [sid, sidx] = e.target.value.split("x").map(Number); const song = songs.find((s) => s.id === sid); if (song) setDayExMap((p) => ({ ...p, [selDay]: [...(p[selDay] || []), makeSongItem(song, sidx)] })); e.target.value = ""; }} className="input w-full sm:!w-auto !py-1.5 text-[11px]" style={{ borderColor: "#1a3a2a" }} defaultValue="">
@@ -443,14 +443,14 @@ export default function GuitarForgeApp() {
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-4 opacity-30">
               <path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z"/>
             </svg>
-            <div className="font-heading text-lg text-[#D4A843] mb-2">התחל לתרגל!</div>
-            <div className="font-readout text-[11px] text-[#444] mb-4">בחר קטגוריות בלוח הזמנים ולחץ Auto Fill</div>
+            <div className="font-heading text-lg text-[#D4A843] mb-2">Start Practicing!</div>
+            <div className="font-readout text-[11px] text-[#444] mb-4">Select categories in the schedule and click Auto Fill</div>
             <button onClick={() => buildDay(selDay)} className="btn-gold">Auto Fill</button>
           </div>}
 
           {curExList.map((rawEx, idx) => {
             const ex = typeof rawEx.id === "number" && rawEx.id < 1000 ? getEditedEx(rawEx) : rawEx;
-            const done = doneMap[week + "-" + selDay + "-" + ex.id], cc = COL[ex.c] || "#888", isSong = ex.c === "שירים";
+            const done = doneMap[week + "-" + selDay + "-" + ex.id], cc = COL[ex.c] || "#888", isSong = ex.c === "Songs";
             return (
               <div key={String(ex.id) + "-" + idx} className={`flex items-start gap-2 sm:gap-3 px-2 sm:px-4 py-2.5 sm:py-3 mb-2 rounded-sm transition-all ${isSong ? "bg-[#0a110a] border border-[#1a3a2a]" : "panel"}`} style={{ opacity: done ? 0.4 : 1 }}>
                 <button type="button" aria-label={done ? "Mark undone" : "Mark done"} onClick={() => {
@@ -500,7 +500,7 @@ export default function GuitarForgeApp() {
         {view === "lib" && (<div className="animate-fade-in">
           {/* Sub-tabs */}
           <div className="flex gap-1 mb-4 overflow-x-auto scrollbar-hide">
-            {([["exercises", "תרגילים"], ["styles", "סגנונות"], ["songs", "שירים"], ["songlib", "ספריית שירים +"]] as const).map(([key, label]) => (
+            {([["exercises", "Exercises"], ["styles", "Styles"], ["songs", "Songs"], ["songlib", "Song Library +"]] as const).map(([key, label]) => (
               <button key={key} onClick={() => setLibTab(key)}
                 className={`font-label text-[11px] px-4 py-1.5 rounded-sm cursor-pointer border transition-all flex-shrink-0 ${libTab === key ? "bg-[#D4A843] text-[#0A0A0A] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>{label}</button>
             ))}
@@ -508,12 +508,12 @@ export default function GuitarForgeApp() {
 
           {/* Exercises tab */}
           {libTab === "exercises" && (<>
-            <input type="text" placeholder="חיפוש תרגיל..." className="input w-full mb-3"
+            <input type="text" placeholder="Search exercise..." className="input w-full mb-3"
               value={libSearch} onChange={e => setLibSearch(e.target.value)} />
 
             <div className="flex gap-1 flex-wrap mb-4">
-              <button onClick={() => setLibFilter("הכל")} className={`font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border ${libFilter === "הכל" ? "bg-[#D4A843] text-[#0A0A0A] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>All ({EXERCISES.length})</button>
-              {CATS.filter((c) => c !== "שירים").map((cat) => {
+              <button onClick={() => setLibFilter("All")} className={`font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border ${libFilter === "All" ? "bg-[#D4A843] text-[#0A0A0A] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>All ({EXERCISES.length})</button>
+              {CATS.filter((c) => c !== "Songs").map((cat) => {
                 const cnt = EXERCISES.filter((e) => e.c === cat).length, c = COL[cat];
                 if (!cnt) return null;
                 return <button key={cat} onClick={() => setLibFilter(cat)} className="font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border transition-all"
@@ -522,7 +522,7 @@ export default function GuitarForgeApp() {
             </div>
 
             {EXERCISES.filter((e) => {
-              if (libFilter !== "הכל" && e.c !== libFilter) return false;
+              if (libFilter !== "All" && e.c !== libFilter) return false;
               if (libSearch.trim()) {
                 const q = libSearch.trim().toLowerCase();
                 return e.n.toLowerCase().includes(q) || e.d.toLowerCase().includes(q) || e.f.toLowerCase().includes(q);
@@ -554,7 +554,7 @@ export default function GuitarForgeApp() {
                 return (
                   <div key={s} className="panel p-4 text-center">
                     <div className="font-heading text-sm font-bold text-[#D4A843]">{s}</div>
-                    <div className="font-readout text-[11px] text-[#555] mt-1">{cnt} תרגילים</div>
+                    <div className="font-readout text-[11px] text-[#555] mt-1">{cnt} exercises</div>
                   </div>
                 );
               })}
@@ -568,8 +568,8 @@ export default function GuitarForgeApp() {
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#33CC33" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-4 opacity-30">
                   <path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z"/>
                 </svg>
-                <div className="font-heading text-lg text-[#33CC33] mb-2">אין שירים</div>
-                <div className="font-readout text-[11px] text-[#444] mb-4">הוסף שירים מהדשבורד</div>
+                <div className="font-heading text-lg text-[#33CC33] mb-2">No Songs</div>
+                <div className="font-readout text-[11px] text-[#444] mb-4">Add songs from the Dashboard</div>
                 <button type="button" onClick={() => setView("dash")} className="btn-ghost">Dashboard</button>
               </div>}
               {songs.map((song) => {
@@ -579,7 +579,7 @@ export default function GuitarForgeApp() {
                     <div className="flex justify-between items-center">
                       <div>
                         <div className="text-sm font-medium">{song.name}</div>
-                        <div className="font-readout text-[10px] text-[#555] mt-1">שלב {dn + 1} מתוך {STAGES.length}</div>
+                        <div className="font-readout text-[10px] text-[#555] mt-1">Stage {dn + 1} of {STAGES.length}</div>
                       </div>
                       <div className="font-readout text-lg font-bold text-[#D4A843]">{dn}/{STAGES.length}</div>
                     </div>
@@ -613,7 +613,7 @@ export default function GuitarForgeApp() {
             return (
               <div>
                 {/* Search */}
-                <input type="text" placeholder="חיפוש שיר, אמן, ז'אנר..." className="input w-full mb-3"
+                <input type="text" placeholder="Search song, artist, genre..." className="input w-full mb-3"
                   value={songLibSearch} onChange={e => setSongLibSearch(e.target.value)} />
 
                 {/* Difficulty filter */}
@@ -630,7 +630,7 @@ export default function GuitarForgeApp() {
                 {/* Add custom song */}
                 <div className="mb-4">
                   <button onClick={() => setShowAddSong(!showAddSong)} className="btn-ghost !text-[10px] mb-2">
-                    {showAddSong ? "סגור" : "+ הוסף שיר"}
+                    {showAddSong ? "Close" : "+ Add Song"}
                   </button>
                   {showAddSong && (
                     <div className="panel p-4">
@@ -650,7 +650,7 @@ export default function GuitarForgeApp() {
                 {/* Song cards */}
                 {filtered.length === 0 && (
                   <div className="panel p-8 text-center">
-                    <div className="font-label text-sm text-[#444]">לא נמצאו שירים</div>
+                    <div className="font-label text-sm text-[#444]">No songs found</div>
                   </div>
                 )}
                 {filtered.map(song => {

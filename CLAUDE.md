@@ -12,7 +12,7 @@ Next.js 16 + TypeScript + Tailwind CSS 4 + Supabase.
 - `src/components/GuitarForgeApp.tsx` — Main app component with all views
 
 ## Rules
-- UI language is Hebrew (RTL). Music terminology stays in English.
+- UI language is English (LTR).
 - Dark theme only (#0a0a0a background). No light mode.
 - All new components must be client components ("use client") if they use browser APIs.
 - alphaTab, Tone.js, wavesurfer.js, waveform-playlist — MUST use dynamic import with `{ ssr: false }`.

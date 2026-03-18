@@ -26,7 +26,7 @@ interface Props {
 }
 
 type Tab = "practice" | "tutorial" | "log";
-const BACKING_CATS = ["אילתור", "ריפים", "יצירה", "שירים", "מודוסים"];
+const BACKING_CATS = ["Improv", "Riffs", "Composition", "Songs", "Modes"];
 
 /* ── Tutorial Tab Component ── */
 function TutorialTab({ exerciseName, ytQuery, tutorialVideoId, setTutorialVideoId, tutorialLoading, setTutorialLoading, tutorialSearched, setTutorialSearched }: {
@@ -128,7 +128,7 @@ export default function ExerciseModal({ exercise: ex, mode, scale, style, week, 
 
         {/* Close button — prominent fixed at top-right (Task 2) */}
         <button type="button" onClick={onClose}
-          className="sticky top-3 float-left ml-3 z-10 w-9 h-9 rounded-full bg-[#222] border border-[#333] flex items-center justify-center text-[#888] text-lg cursor-pointer hover:bg-[#333] hover:text-white transition-colors"
+          className="sticky top-3 float-right mr-3 z-10 w-9 h-9 rounded-full bg-[#222] border border-[#333] flex items-center justify-center text-[#888] text-lg cursor-pointer hover:bg-[#333] hover:text-white transition-colors"
           aria-label="Close">
           ×
         </button>
@@ -278,7 +278,7 @@ export default function ExerciseModal({ exercise: ex, mode, scale, style, week, 
                     <input value={bpm} onChange={(e) => onBpmChange(e.target.value)} placeholder="e.g. 120" className="input input-gold mt-1" />
                   </label>
                   <label className="font-label text-[9px] text-[#555]">Date
-                    <input value={new Date().toLocaleDateString("he-IL")} disabled className="input mt-1 !text-[#444]" />
+                    <input value={new Date().toLocaleDateString("en-US")} disabled className="input mt-1 !text-[#444]" />
                   </label>
                 </div>
                 <label className="font-label text-[9px] text-[#555]">Notes

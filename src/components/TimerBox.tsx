@@ -31,7 +31,7 @@ export default function TimerBox({ minutes = 5 }: TimerBoxProps) {
       </div>
       <div className="flex items-center gap-4">
         {!active && (
-          <RotaryKnob value={setMins} min={1} max={60} onChange={(v) => { setSetMins(v); setSec(v * 60); }} label="דקות" size={40} accentColor="#33CC33" gradientId="knobGradTimer" />
+          <RotaryKnob value={setMins} min={1} max={60} onChange={(v) => { setSetMins(v); setSec(v * 60); }} label="Minutes" size={40} accentColor="#33CC33" gradientId="knobGradTimer" />
         )}
         <span className={`font-readout text-3xl font-bold ${active ? "text-[#33CC33]" : "text-[#ccc]"}`}>{disp}</span>
         <div className="flex-1">

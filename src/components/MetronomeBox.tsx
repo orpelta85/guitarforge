@@ -257,7 +257,7 @@ export default function MetronomeBox({ startBpm: propBpm, standalone }: Props) {
       {/* header */}
       <div className="font-label text-[10px] text-[#D4A843] mb-3 flex items-center gap-2">
         <div className={`led ${on ? "led-gold" : "led-off"}`} />
-        מטרונום {prog ? "· Progressive" : ""}
+        Metronome {prog ? "· Progressive" : ""}
       </div>
 
       {/* BPM display + beat indicators */}
@@ -324,7 +324,7 @@ export default function MetronomeBox({ startBpm: propBpm, standalone }: Props) {
           {/* time signature + subdivision */}
           <div className="flex gap-2 items-end flex-wrap">
             <label className="font-label text-[9px] text-[#555]">
-              משקל
+              Time Sig
               <div className="flex gap-1 mt-0.5">
                 {(Object.keys(TIME_SIG_BEATS) as TimeSig[]).map((ts) => (
                   <button
@@ -341,7 +341,7 @@ export default function MetronomeBox({ startBpm: propBpm, standalone }: Props) {
             </label>
 
             <label className="font-label text-[9px] text-[#555]">
-              חלוקה
+              Subdivision
               <div className="flex gap-1 mt-0.5">
                 {([1, 2, 3, 4] as Subdivision[]).map((s) => (
                   <button
@@ -392,7 +392,7 @@ export default function MetronomeBox({ startBpm: propBpm, standalone }: Props) {
                 {countIn ? "✓" : ""}
               </div>
               <span className="font-label text-[10px] text-[#666]">
-                ספירה לפני
+                Count In
               </span>
             </label>
           </div>
@@ -400,14 +400,14 @@ export default function MetronomeBox({ startBpm: propBpm, standalone }: Props) {
           {/* BPM inputs */}
           <div className="grid grid-cols-4 gap-2 items-end">
             <div className="flex flex-col items-center">
-              <RotaryKnob value={bpm} min={30} max={300} onChange={setBpmState} label="התחלה" size={44} gradientId="knobGradMet" />
+              <RotaryKnob value={bpm} min={30} max={300} onChange={setBpmState} label="Start" size={44} gradientId="knobGradMet" />
             </div>
             <label
               className={`font-label text-[9px] ${
                 prog ? "text-[#555]" : "text-[#333]"
               }`}
             >
-              יעד
+              Target
               <input
                 type="number"
                 value={targetBpm}
@@ -439,7 +439,7 @@ export default function MetronomeBox({ startBpm: propBpm, standalone }: Props) {
                 prog ? "text-[#555]" : "text-[#333]"
               }`}
             >
-              כל (שניות)
+              Every (sec)
               <input
                 type="number"
                 value={incSec}
@@ -458,7 +458,7 @@ export default function MetronomeBox({ startBpm: propBpm, standalone }: Props) {
             onClick={handleTap}
             className="btn-ghost w-full !py-2 justify-center text-[11px]"
           >
-            Tap Tempo — הקש לקצב
+            Tap Tempo
           </button>
         </div>
       )}
@@ -470,14 +470,14 @@ export default function MetronomeBox({ startBpm: propBpm, standalone }: Props) {
           className="btn-gold w-full !py-2.5 justify-center"
         >
           {prog ? bpm + " → " + targetBpm + " BPM" : bpm + " BPM"}
-          {countIn ? " (ספירה)" : ""}
+          {countIn ? " (Count In)" : ""}
         </button>
       ) : (
         <button
           onClick={doStop}
           className="btn-danger w-full !py-2.5 justify-center"
         >
-          עצור
+          Stop
         </button>
       )}
     </div>

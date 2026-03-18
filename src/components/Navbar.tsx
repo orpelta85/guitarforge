@@ -28,7 +28,7 @@ export default function Navbar({ view, onViewChange }: NavbarProps) {
       <div className="px-3 sm:px-5 py-2 flex items-center justify-between bg-[#0d0d0d] border-b border-[#1a1a1a]">
         <div className="flex items-center gap-2 sm:gap-3">
           <Image src="/logo-dark.svg" alt="GuitarForge" width={120} height={44} className="h-[36px] sm:h-[44px]" style={{ width: 'auto' }} priority />
-          <div className="flex items-center gap-1.5 mr-2">
+          <div className="flex items-center gap-1.5 ml-2">
             <div className="led led-on" />
           </div>
         </div>

@@ -1,39 +1,39 @@
 /* ── GuitarForge Constants ── */
 
-export const DAYS = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
+export const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 export const CATS = [
-  "חימום", "שרדינג", "לגאטו", "בנד", "טאפינג", "Sweep",
-  "קצב", "גריף", "אוזן", "אילתור", "ריפים", "פרזינג",
-  "מודוסים", "יצירה", "שירים", "דינמיקה",
-  "אקורדים", "הרמוניקס", "פיקינג", "ארפג'יו", "סלייד", "כיוונים",
-  "קלידים"
+  "Warm-Up", "Shred", "Legato", "Bends", "Tapping", "Sweep",
+  "Rhythm", "Fretboard", "Ear Training", "Improv", "Riffs", "Phrasing",
+  "Modes", "Composition", "Songs", "Dynamics",
+  "Chords", "Harmonics", "Picking", "Arpeggios", "Slide", "Tunings",
+  "Keys"
 ];
 
 export const COL: Record<string, string> = {
-  "חימום": "#f59e0b",
-  "שרדינג": "#ef4444",
-  "לגאטו": "#8b5cf6",
-  "בנד": "#ec4899",
-  "טאפינג": "#06b6d4",
+  "Warm-Up": "#f59e0b",
+  "Shred": "#ef4444",
+  "Legato": "#8b5cf6",
+  "Bends": "#ec4899",
+  "Tapping": "#06b6d4",
   "Sweep": "#14b8a6",
-  "קצב": "#f97316",
-  "גריף": "#84cc16",
-  "אוזן": "#6366f1",
-  "אילתור": "#22d3ee",
-  "ריפים": "#e11d48",
-  "פרזינג": "#d946ef",
-  "מודוסים": "#0ea5e9",
-  "יצירה": "#facc15",
-  "שירים": "#10b981",
-  "דינמיקה": "#a855f7",
-  "אקורדים": "#f472b6",
-  "הרמוניקס": "#38bdf8",
-  "פיקינג": "#fb923c",
-  "ארפג'יו": "#4ade80",
-  "סלייד": "#c084fc",
-  "כיוונים": "#fbbf24",
-  "קלידים": "#818cf8",
+  "Rhythm": "#f97316",
+  "Fretboard": "#84cc16",
+  "Ear Training": "#6366f1",
+  "Improv": "#22d3ee",
+  "Riffs": "#e11d48",
+  "Phrasing": "#d946ef",
+  "Modes": "#0ea5e9",
+  "Composition": "#facc15",
+  "Songs": "#10b981",
+  "Dynamics": "#a855f7",
+  "Chords": "#f472b6",
+  "Harmonics": "#38bdf8",
+  "Picking": "#fb923c",
+  "Arpeggios": "#4ade80",
+  "Slide": "#c084fc",
+  "Tunings": "#fbbf24",
+  "Keys": "#818cf8",
 };
 
 export const MODES = [
@@ -57,38 +57,38 @@ export const STYLES = [
 ];
 
 export const CAT_GROUPS: Record<string, string[]> = {
-  "טכניקה": ["חימום", "שרדינג", "לגאטו", "טאפינג", "Sweep", "פיקינג", "ארפג'יו", "סלייד", "הרמוניקס"],
-  "קצב ודינמיקה": ["קצב", "דינמיקה", "אקורדים", "כיוונים"],
-  "תאוריה": ["גריף", "מודוסים"],
-  "מוזיקליות": ["אוזן", "אילתור", "פרזינג", "בנד"],
-  "יצירה": ["ריפים", "יצירה", "שירים"],
+  "Technique": ["Warm-Up", "Shred", "Legato", "Tapping", "Sweep", "Picking", "Arpeggios", "Slide", "Harmonics"],
+  "Rhythm & Dynamics": ["Rhythm", "Dynamics", "Chords", "Tunings"],
+  "Theory": ["Fretboard", "Modes"],
+  "Musicality": ["Ear Training", "Improv", "Phrasing", "Bends"],
+  "Creation": ["Riffs", "Composition", "Songs"],
 };
 
 export const STAGES = [
-  { name: "שלב 1 – פענוח", m: 10, d: "האזנה, ניתוח 8-16 תיבות." },
-  { name: "שלב 2 – טקסט", m: 20, d: "רק ביקוע טקסט. 60%." },
-  { name: "שלב 3 – חצאיות", m: 20, d: "מחציות. כל העיצורים." },
-  { name: "שלב 4 – האפלות", m: 30, d: "50 → 75 → 100%." },
-  { name: "שלב 5 – ביקוע", m: 15, d: "חופש מלא. ביקורות." },
-  { name: "שלב 6 – שיגור", m: 20, d: "ג'אם חופשי." },
+  { name: "Stage 1 – Decode", m: 10, d: "Listen, analyze 8-16 bars." },
+  { name: "Stage 2 – Text", m: 20, d: "Text-only reading. 60%." },
+  { name: "Stage 3 – Half notes", m: 20, d: "Half notes. All articulations." },
+  { name: "Stage 4 – Tempo build", m: 30, d: "50 → 75 → 100%." },
+  { name: "Stage 5 – Run-through", m: 15, d: "Full freedom. Reviews." },
+  { name: "Stage 6 – Launch", m: 20, d: "Free jam." },
 ];
 
 export const DEFAULT_DAY_CATS: Record<string, string[]> = {
-  "ראשון": ["חימום", "שרדינג", "ריפים"],
-  "שני": ["חימום", "אוזן", "מודוסים", "אילתור"],
-  "שלישי": ["חימום", "לגאטו", "בנד", "פרזינג"],
-  "רביעי": ["חימום", "גריף", "אילתור", "מודוסים"],
-  "חמישי": ["חימום", "שרדינג", "שירים"],
-  "שישי": ["חימום", "קצב", "דינמיקה", "יצירה"],
-  "שבת": [],
+  "Sunday": ["Warm-Up", "Shred", "Riffs"],
+  "Monday": ["Warm-Up", "Ear Training", "Modes", "Improv"],
+  "Tuesday": ["Warm-Up", "Legato", "Bends", "Phrasing"],
+  "Wednesday": ["Warm-Up", "Fretboard", "Improv", "Modes"],
+  "Thursday": ["Warm-Up", "Shred", "Songs"],
+  "Friday": ["Warm-Up", "Rhythm", "Dynamics", "Composition"],
+  "Saturday": [],
 };
 
 export const DEFAULT_DAY_HRS: Record<string, number> = {
-  "ראשון": 2,
-  "שני": 2,
-  "שלישי": 2,
-  "רביעי": 2,
-  "חמישי": 2,
-  "שישי": 1.5,
-  "שבת": 0,
+  "Sunday": 2,
+  "Monday": 2,
+  "Tuesday": 2,
+  "Wednesday": 2,
+  "Thursday": 2,
+  "Friday": 1.5,
+  "Saturday": 0,
 };

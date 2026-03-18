@@ -167,7 +167,7 @@ export default function RecorderBox({ storageKey }: RecorderBoxProps) {
         stream.getTracks().forEach((t) => t.stop());
 
         const idx = nextIdxRef.current++;
-        const newItem: SavedRecording = { dt: new Date().toLocaleString("he-IL"), d: url };
+        const newItem: SavedRecording = { dt: new Date().toLocaleString("en-US"), d: url };
         setSavedList((prev) => {
           const next = [newItem, ...prev].slice(0, 10);
           blobMapRef.current.set(idx, blob);

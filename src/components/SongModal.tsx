@@ -22,7 +22,7 @@ const DIFFICULTY_COLORS: Record<string, string> = {
 };
 
 const PROGRESS_OPTIONS = [
-  { value: "not-started", label: "לא התחלתי" },
+  { value: "not-started", label: "Not Started" },
   { value: "learning", label: "Learning" },
   { value: "slow", label: "Can Play Slow" },
   { value: "full-speed", label: "Can Play Full Speed" },
@@ -117,9 +117,9 @@ export default function SongModal({ song, onClose }: Props) {
         {/* Tabs */}
         <div className="flex border-b border-[#1a1a1a] bg-[#0d0d0d]">
           {([
-            { id: "practice" as Tab, label: "תרגול" },
-            { id: "tutorial" as Tab, label: "לימוד" },
-            { id: "notes" as Tab, label: "הערות" },
+            { id: "practice" as Tab, label: "Practice" },
+            { id: "tutorial" as Tab, label: "Tutorial" },
+            { id: "notes" as Tab, label: "Notes" },
           ]).map(({ id, label }) => (
             <button key={id} onClick={() => setTab(id)}
               className={`flex-1 py-2.5 font-label text-[10px] cursor-pointer border-b-2 transition-all ${
@@ -263,7 +263,7 @@ export default function SongModal({ song, onClose }: Props) {
                   <div className="led led-gold" /> Notes
                 </div>
                 <textarea value={notes} onChange={e => setNotes(e.target.value)}
-                  placeholder="הערות אישיות על השיר..."
+                  placeholder="Personal notes about this song..."
                   className="input w-full !h-32 resize-none" />
               </div>
             </div>

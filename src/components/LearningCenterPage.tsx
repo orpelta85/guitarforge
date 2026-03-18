@@ -117,7 +117,7 @@ const CHORD_SHAPES: { name: string; iv: number[]; positions: number[][] }[] = [
 ];
 
 /* ── Lessons Data ── */
-type LessonCategory = "יסודות" | "קצב" | "סקאלות" | "אינטרוולים" | "אקורדים" | "אקורדים דיאטוניים" | "פרוגרסיות" | "מתקדם";
+type LessonCategory = "Fundamentals" | "Rhythm" | "Scales" | "Intervals" | "Chords" | "Diatonic Chords" | "Progressions" | "Advanced";
 interface LessonStep {
   text: string;
   highlight?: number[]; // MIDI notes to highlight on fretboard/piano
@@ -134,311 +134,311 @@ interface Lesson {
 }
 
 const LESSONS: Lesson[] = [
-  // ═══ יסודות (6 lessons) ═══
-  { id: "b1", title: "מהי תו?", cat: "יסודות", desc: "תדר, גובה צליל ושמות התווים",
-    content: ["תו מוזיקלי הוא צליל בגובה מסוים. ב-Western Music יש 12 תווים שונים שחוזרים על עצמם באוקטבות.","12 התווים: C, C#, D, D#, E, F, F#, G, G#, A, A#, B","המרחק בין כל שני תווים סמוכים הוא חצי-טון (semitone). שני חצאי-טון = טון שלם (whole tone)."],
+  // ═══ Fundamentals (6 lessons) ═══
+  { id: "b1", title: "What Is a Note?", cat: "Fundamentals", desc: "Frequency, pitch and note names",
+    content: ["A musical note is a sound at a specific pitch. In Western Music there are 12 different notes that repeat in octaves.","The 12 notes: C, C#, D, D#, E, F, F#, G, G#, A, A#, B","The distance between any two adjacent notes is a semitone (half step). Two semitones = whole tone (whole step)."],
     visual: "fretboard",
     steps: [
-      { text: "תו מוזיקלי הוא צליל בגובה מסוים. נתחיל עם C — התו הבסיסי ביותר.", highlight: [48, 60], label: "C" },
-      { text: "D — טון שלם (2 פרטים) מעל C.", highlight: [50, 62], label: "D" },
-      { text: "E — טון שלם מעל D.", highlight: [52, 64], label: "E" },
-      { text: "F — חצי טון בלבד מעל E! בין E ל-F אין דיאז.", highlight: [53, 65], label: "F" },
-      { text: "G — טון שלם מעל F.", highlight: [55, 67], label: "G" },
-      { text: "A — טון שלם מעל G. זהו תו הייחוס (A4 = 440Hz).", highlight: [57, 69], label: "A" },
-      { text: "B — טון שלם מעל A.", highlight: [59, 71], label: "B" },
-      { text: "וחוזרים ל-C — אוקטבה למעלה! אותו שם, תדר כפול.", highlight: [48, 60, 72], label: "C (Octave)" },
-      { text: "סה\"כ 12 תווים שונים, כולל דיאזים: C, C#, D, D#, E, F, F#, G, G#, A, A#, B.", highlight: [48,49,50,51,52,53,54,55,56,57,58,59], label: "Chromatic" },
+      { text: "A musical note is a sound at a specific pitch. Let's start with C — the most basic note.", highlight: [48, 60], label: "C" },
+      { text: "D — a whole step (2 frets) above C.", highlight: [50, 62], label: "D" },
+      { text: "E — a whole step above D.", highlight: [52, 64], label: "E" },
+      { text: "F — only a half step above E! Between E and F there is no sharp.", highlight: [53, 65], label: "F" },
+      { text: "G — a whole step above F.", highlight: [55, 67], label: "G" },
+      { text: "A — a whole step above G. This is the reference note (A4 = 440Hz).", highlight: [57, 69], label: "A" },
+      { text: "B — a whole step above A.", highlight: [59, 71], label: "B" },
+      { text: "Back to C — one octave up! Same name, double the frequency.", highlight: [48, 60, 72], label: "C (Octave)" },
+      { text: "12 different notes total, including sharps: C, C#, D, D#, E, F, F#, G, G#, A, A#, B.", highlight: [48,49,50,51,52,53,54,55,56,57,58,59], label: "Chromatic" },
     ],
-    quiz: { q: "כמה תווים שונים יש בסולם הכרומטי?", opts: ["7","10","12","14"], ans: 2 } },
-  { id: "b2", title: "הסולם הכרומטי", cat: "יסודות", desc: "12 התווים וסדר החצאי-טונים",
-    content: ["הסולם הכרומטי כולל את כל 12 התווים ברצף של חצאי-טונים.","על הגיטרה, כל פרט (fret) = חצי טון. 12 פרטים = אוקטבה שלמה.","שימו לב: בין E-F ובין B-C אין דיאז (#). אלה כבר במרחק חצי-טון."],
+    quiz: { q: "How many different notes are in the chromatic scale?", opts: ["7","10","12","14"], ans: 2 } },
+  { id: "b2", title: "The Chromatic Scale", cat: "Fundamentals", desc: "All 12 notes in semitone order",
+    content: ["The chromatic scale contains all 12 notes in a sequence of semitones.","On the guitar, each fret = one semitone. 12 frets = one full octave.","Note: between E-F and B-C there is no sharp (#). They are already a semitone apart."],
     fretboardRoot: "C", fretboardNotes: NOTES,
     visual: "fretboard",
     steps: [
-      { text: "הסולם הכרומטי מתחיל מ-C. כל פרט על הגיטרה = חצי טון.", highlight: [48], label: "C (שורש)" },
-      { text: "C# — חצי טון מעל C. פרט אחד למעלה.", highlight: [48, 49], label: "C → C#" },
-      { text: "D — חצי טון מעל C#.", highlight: [48, 49, 50], label: "C → D" },
-      { text: "D# — ממשיכים עם חצאי טונים.", highlight: [48, 49, 50, 51], label: "C → D#" },
-      { text: "E — שימו לב: התו הבא (F) הוא חצי טון בלבד!", highlight: [48, 49, 50, 51, 52], label: "C → E" },
-      { text: "F — בין E ל-F אין דיאז! הם כבר במרחק חצי טון.", highlight: [48, 49, 50, 51, 52, 53], label: "E→F: אין #!" },
-      { text: "F# → G → G# → A → A# — ממשיכים בחצאי טונים.", highlight: [48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58], label: "F# → A#" },
-      { text: "B — גם בין B ל-C הבא אין דיאז!", highlight: [48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59], label: "B→C: אין #!" },
-      { text: "חזרנו ל-C! 12 חצאי-טונים = אוקטבה שלמה.", highlight: [48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60], label: "אוקטבה שלמה" },
+      { text: "The chromatic scale starts from C. Each fret on the guitar = one semitone.", highlight: [48], label: "C (Root)" },
+      { text: "C# — a semitone above C. One fret up.", highlight: [48, 49], label: "C → C#" },
+      { text: "D — a semitone above C#.", highlight: [48, 49, 50], label: "C → D" },
+      { text: "D# — continuing in semitones.", highlight: [48, 49, 50, 51], label: "C → D#" },
+      { text: "E — note: the next note (F) is only a semitone away!", highlight: [48, 49, 50, 51, 52], label: "C → E" },
+      { text: "F — between E and F there is no sharp! They are already a semitone apart.", highlight: [48, 49, 50, 51, 52, 53], label: "E→F: no #!" },
+      { text: "F# → G → G# → A → A# — continuing in semitones.", highlight: [48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58], label: "F# → A#" },
+      { text: "B — between B and the next C there is no sharp either!", highlight: [48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59], label: "B→C: no #!" },
+      { text: "Back to C! 12 semitones = one full octave.", highlight: [48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60], label: "Full Octave" },
     ],
-    quiz: { q: "בין אילו תווים אין דיאז?", opts: ["C-D ו-F-G","E-F ו-B-C","A-B ו-D-E","G-A ו-C-D"], ans: 1 } },
-  { id: "b3", title: "דיאזים ובמולים", cat: "יסודות", desc: "Sharp (#) ו-Flat (b) — אותו תו, שם אחר",
-    content: ["דיאז (#) מעלה תו בחצי-טון. במול (b) מוריד תו בחצי-טון.","C# = Db — אותו צליל בדיוק, שני שמות (enharmonic equivalents).","על הגיטרה זה פשוט: פרט אחד למעלה = #, פרט אחד למטה = b."],
-    quiz: { q: "מהו השם האנהרמוני של F#?", opts: ["Eb","Gb","G","E"], ans: 1 } },
-  { id: "b4", title: "האוקטבה", cat: "יסודות", desc: "למה C נשמע כמו C, רק גבוה יותר",
-    content: ["אוקטבה = 12 חצאי-טונים. תו באוקטבה גבוהה יותר נשמע \"אותו דבר\" אבל גבוה יותר.","הסיבה: יחס התדרים הוא 2:1. A4 = 440Hz, A5 = 880Hz.","על הגיטרה: אוקטבה = 12 פרטים, או 2 מיתרים למעלה + 2 פרטים ימינה."],
+    quiz: { q: "Between which notes is there no sharp?", opts: ["C-D and F-G","E-F and B-C","A-B and D-E","G-A and C-D"], ans: 1 } },
+  { id: "b3", title: "Sharps and Flats", cat: "Fundamentals", desc: "Sharp (#) and Flat (b) — same note, different name",
+    content: ["Sharp (#) raises a note by a semitone. Flat (b) lowers a note by a semitone.","C# = Db — the exact same pitch, two names (enharmonic equivalents).","On guitar it's simple: one fret up = #, one fret down = b."],
+    quiz: { q: "What is the enharmonic name for F#?", opts: ["Eb","Gb","G","E"], ans: 1 } },
+  { id: "b4", title: "The Octave", cat: "Fundamentals", desc: "Why C sounds like C, just higher",
+    content: ["Octave = 12 semitones. A note an octave higher sounds \"the same\" but higher.","The reason: the frequency ratio is 2:1. A4 = 440Hz, A5 = 880Hz.","On guitar: octave = 12 frets, or 2 strings up + 2 frets over."],
     audioDemo: { type: "interval", data: [12] },
     visual: "piano",
     steps: [
-      { text: "אוקטבה = 12 חצאי-טונים. אותו תו, תדר כפול.", highlight: [48], label: "C3" },
-      { text: "C3 (נמוך) ו-C4 (גבוה). נשמעים \"אותו דבר\" אבל C4 גבוה יותר.", highlight: [48, 60], label: "C3 → C4" },
-      { text: "יחס התדרים: 2:1. אם C3 = 131Hz, אז C4 = 262Hz.", highlight: [48, 60], label: "2:1 Ratio" },
-      { text: "ספרו: 12 חצאי-טונים מ-C ל-C. כל הקלידים — לבנים ושחורים.", highlight: [48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60], label: "12 Semitones" },
-      { text: "A4 = 440Hz (תו הייחוס). A5 = 880Hz. A3 = 220Hz.", highlight: [57, 69], label: "A4=440Hz, A5=880Hz" },
-      { text: "על הגיטרה: פרט 12 = אותו תו כמו מיתר פתוח, אוקטבה למעלה.", highlight: [40, 52, 45, 57], label: "Fret 12 = Octave" },
+      { text: "Octave = 12 semitones. Same note, double the frequency.", highlight: [48], label: "C3" },
+      { text: "C3 (low) and C4 (high). Sound \"the same\" but C4 is higher.", highlight: [48, 60], label: "C3 → C4" },
+      { text: "Frequency ratio: 2:1. If C3 = 131Hz, then C4 = 262Hz.", highlight: [48, 60], label: "2:1 Ratio" },
+      { text: "Count: 12 semitones from C to C. All keys — white and black.", highlight: [48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60], label: "12 Semitones" },
+      { text: "A4 = 440Hz (the reference note). A5 = 880Hz. A3 = 220Hz.", highlight: [57, 69], label: "A4=440Hz, A5=880Hz" },
+      { text: "On guitar: fret 12 = same note as the open string, one octave up.", highlight: [40, 52, 45, 57], label: "Fret 12 = Octave" },
     ],
-    quiz: { q: "כמה חצאי-טונים באוקטבה?", opts: ["7","10","12","24"], ans: 2 } },
-  { id: "b5", title: "משכי תווים", cat: "יסודות", desc: "שלמה, חצי, רבע, שמינית, שש-עשרית",
-    content: ["כל תו מוזיקלי יש לו שני מאפיינים: גובה (pitch) ומשך (duration).","תו שלם (whole note) = 4 פעימות. חצי (half) = 2. רבע (quarter) = 1. שמינית (eighth) = 0.5. שש-עשרית (sixteenth) = 0.25.","נקודה (dot) אחרי תו מוסיפה 50% מהערך שלו. רבע מנוקד = 1.5 פעימות. שמינית מנוקדת = 0.75 פעימות.","במטאל, שש-עשריות (16th notes) הן הבסיס ל-tremolo picking ול-double bass drumming. gallop rhythm = שמינית + 2 שש-עשריות."],
-    quiz: { q: "כמה שמיניות נכנסות בתו שלם?", opts: ["4","6","8","16"], ans: 2 } },
-  { id: "b6", title: "צעדים ואקצידנטלים", cat: "יסודות", desc: "Half steps, whole steps, enharmonic equivalents",
-    content: ["Half step (חצי-טון) = המרחק הקטן ביותר בין שני תווים. על הגיטרה = פרט אחד.","Whole step (טון שלם) = שני חצאי-טונים. על הגיטרה = שני פרטים.","Enharmonic equivalents: שני שמות לאותו צליל. C# = Db, D# = Eb, F# = Gb, G# = Ab, A# = Bb.","Double sharp (x) מעלה בשני חצאי-טונים. Double flat (bb) מוריד בשני חצאי-טונים. Fx = G, Abb = G.","הרעיון חשוב כי באותו סולם לא יופיעו שני תווים עם אותו אות. ב-D Major כותבים F# ולא Gb."],
-    quiz: { q: "מהו Enharmonic Equivalent של D#?", opts: ["Db","E","Eb","Fb"], ans: 2 } },
+    quiz: { q: "How many semitones in an octave?", opts: ["7","10","12","24"], ans: 2 } },
+  { id: "b5", title: "Note Durations", cat: "Fundamentals", desc: "Whole, half, quarter, eighth, sixteenth",
+    content: ["Every musical note has two properties: pitch and duration.","Whole note = 4 beats. Half = 2. Quarter = 1. Eighth = 0.5. Sixteenth = 0.25.","A dot after a note adds 50% of its value. Dotted quarter = 1.5 beats. Dotted eighth = 0.75 beats.","In metal, sixteenth notes (16th notes) are the basis for tremolo picking and double bass drumming. Gallop rhythm = eighth + 2 sixteenths."],
+    quiz: { q: "How many eighth notes fit in a whole note?", opts: ["4","6","8","16"], ans: 2 } },
+  { id: "b6", title: "Steps and Accidentals", cat: "Fundamentals", desc: "Half steps, whole steps, enharmonic equivalents",
+    content: ["Half step = the smallest distance between two notes. On guitar = one fret.","Whole step = two semitones. On guitar = two frets.","Enharmonic equivalents: two names for the same pitch. C# = Db, D# = Eb, F# = Gb, G# = Ab, A# = Bb.","Double sharp (x) raises by two semitones. Double flat (bb) lowers by two semitones. Fx = G, Abb = G.","This matters because in any scale, no two notes share the same letter name. In D Major we write F# not Gb."],
+    quiz: { q: "What is the enharmonic equivalent of D#?", opts: ["Db","E","Eb","Fb"], ans: 2 } },
 
-  // ═══ קצב (4 lessons) ═══
-  { id: "r1", title: "קצב בסיסי", cat: "קצב", desc: "פעימות, טמפו ומשקל",
-    content: ["קצב = ארגון צלילים בזמן. BPM (beats per minute) = מהירות.","משקל 4/4 = 4 פעימות בכל תיבה. הנפוץ ביותר ברוק ומטאל.","הפעימה הראשונה (downbeat) היא הכי חזקה. ספירה: 1-2-3-4."],
-    quiz: { q: "מה המשמעות של 120 BPM?", opts: ["120 תיבות לדקה","120 פעימות לדקה","120 תווים לדקה","120 אקורדים לדקה"], ans: 1 } },
-  { id: "r2", title: "ערכי תווים", cat: "קצב", desc: "שלמה, חצי, רבע, שמינית, שש-עשרית",
-    content: ["תו שלם = 4 פעימות. חצי = 2. רבע = 1. שמינית = 0.5. שש-עשרית = 0.25.","במטאל, שש-עשריות (16th notes) הן הבסיס ל-tremolo picking ו-double bass.","נקודה (.) אחרי תו מוסיפה 50% מהערך שלו. רבע מנוקד = 1.5 פעימות."],
-    quiz: { q: "כמה שמיניות נכנסות בתיבת 4/4?", opts: ["4","6","8","16"], ans: 2 } },
-  { id: "r3", title: "סינקופה", cat: "קצב", desc: "הדגשה על הפעימות החלשות — groove",
-    content: ["סינקופה = הדגשת off-beats (פעימות חלשות). זה מה שיוצר groove.","במקום 1-2-3-4, ההדגשה על ה-\"ו\": 1-וְ-2-וְ-3-וְ-4-וְ.","דוגמאות: funk rhythm guitar, reggae skank, metal breakdowns עם דגש לא צפוי."] },
-  { id: "r4", title: "משקלים מורכבים", cat: "קצב", desc: "5/4, 7/8, 7/4 — Odd Meter בפרוג ובמטאל",
-    content: ["Odd meter = משקלים עם מספר אי-זוגי של פעימות או חלוקות לא סימטריות.","5/4: מרגיש כמו 3+2 או 2+3. דוגמה מפורסמת: Take Five (Dave Brubeck), Lateralus (Tool).","7/8: חלוקה נפוצה 2+2+3 או 3+2+2. דוגמה: Money (Pink Floyd), Schism (Tool).","7/4: מרגיש כמו 4+3 או 3+4. דוגמה: All You Need Is Love (Beatles).","במטאל פרוגרסיבי (Meshuggah, Dream Theater, Tool) משלבים משקלים מורכבים כדי ליצור polyrhythm וmeter changes.","טיפ לתרגול: ספרו בקול 1-2-3-4-5 על 5/4. הדגישו את 1 ואת 4. נגנו ריף פשוט במשקל הזה."],
-    quiz: { q: "מה החלוקה הנפוצה ביותר של 7/8?", opts: ["4+3","3+3+1","2+2+3","7 שווים"], ans: 2 } },
+  // ═══ Rhythm (4 lessons) ═══
+  { id: "r1", title: "Basic Rhythm", cat: "Rhythm", desc: "Beats, tempo and time signatures",
+    content: ["Rhythm = organizing sounds in time. BPM (beats per minute) = speed.","4/4 time = 4 beats per bar. The most common in rock and metal.","The first beat (downbeat) is the strongest. Count: 1-2-3-4."],
+    quiz: { q: "What does 120 BPM mean?", opts: ["120 bars per minute","120 beats per minute","120 notes per minute","120 chords per minute"], ans: 1 } },
+  { id: "r2", title: "Note Values", cat: "Rhythm", desc: "Whole, half, quarter, eighth, sixteenth",
+    content: ["Whole note = 4 beats. Half = 2. Quarter = 1. Eighth = 0.5. Sixteenth = 0.25.","In metal, sixteenth notes are the basis for tremolo picking and double bass.","A dot (.) after a note adds 50% of its value. Dotted quarter = 1.5 beats."],
+    quiz: { q: "How many eighth notes fit in a 4/4 bar?", opts: ["4","6","8","16"], ans: 2 } },
+  { id: "r3", title: "Syncopation", cat: "Rhythm", desc: "Emphasis on weak beats — groove",
+    content: ["Syncopation = emphasizing off-beats (weak beats). This is what creates groove.","Instead of 1-2-3-4, the emphasis on the \"and\": 1-and-2-and-3-and-4-and.","Examples: funk rhythm guitar, reggae skank, metal breakdowns with unexpected emphasis."] },
+  { id: "r4", title: "Complex Time Signatures", cat: "Rhythm", desc: "5/4, 7/8, 7/4 — Odd Meter in prog and metal",
+    content: ["Odd meter = time signatures with an odd number of beats or asymmetric groupings.","5/4: feels like 3+2 or 2+3. Famous example: Take Five (Dave Brubeck), Lateralus (Tool).","7/8: common grouping 2+2+3 or 3+2+2. Example: Money (Pink Floyd), Schism (Tool).","7/4: feels like 4+3 or 3+4. Example: All You Need Is Love (Beatles).","Progressive metal (Meshuggah, Dream Theater, Tool) combines complex meters to create polyrhythm and meter changes.","Practice tip: count aloud 1-2-3-4-5 in 5/4. Accent beats 1 and 4. Play a simple riff in that meter."],
+    quiz: { q: "What is the most common grouping of 7/8?", opts: ["4+3","3+3+1","2+2+3","7 equal"], ans: 2 } },
 
-  // ═══ סקאלות (5 lessons) ═══
-  { id: "s1", title: "נוסחת הסולם המז'ורי", cat: "סקאלות", desc: "W-W-H-W-W-W-H — הבסיס לכל השאר",
-    content: ["הסולם המז'ורי = 7 תווים לפי הנוסחה: Whole-Whole-Half-Whole-Whole-Whole-Half.","C Major: C-D-E-F-G-A-B — בלי דיאזים או במולים.","כל סולם מז'ורי אחר עוקב אחרי אותה נוסחה מתו שורש אחר."],
+  // ═══ Scales (5 lessons) ═══
+  { id: "s1", title: "The Major Scale Formula", cat: "Scales", desc: "W-W-H-W-W-W-H — the foundation of everything",
+    content: ["The Major scale = 7 notes following the formula: Whole-Whole-Half-Whole-Whole-Whole-Half.","C Major: C-D-E-F-G-A-B — no sharps or flats.","Every other Major scale follows the same formula from a different root note."],
     fretboardRoot: "C", fretboardNotes: ["C","D","E","F","G","A","B"],
     audioDemo: { type: "scale", data: [0,2,4,5,7,9,11,12] },
     visual: "fretboard",
     steps: [
-      { text: "הסולם המז'ורי בנוי מ-7 תווים. נתחיל מ-C — השורש (1).", highlight: [48, 60], label: "C — Root (1)" },
-      { text: "Whole step למעלה → D. מעלה 2 (Supertonic).", highlight: [48, 50, 60, 62], label: "D — W (2)" },
-      { text: "Whole step נוסף → E. מעלה 3 (Mediant). ה-3rd קובע Major/Minor!", highlight: [48, 50, 52, 60, 62, 64], label: "E — W (3)" },
-      { text: "Half step בלבד → F. מעלה 4 (Subdominant). כאן הנוסחה משתנה!", highlight: [48, 50, 52, 53, 60, 62, 64, 65], label: "F — H (4)" },
-      { text: "Whole step → G. מעלה 5 (Dominant). Power chord = 1+5.", highlight: [48, 50, 52, 53, 55, 60, 62, 64, 65, 67], label: "G — W (5)" },
-      { text: "Whole step → A. מעלה 6 (Submediant).", highlight: [48, 50, 52, 53, 55, 57, 60, 62, 64, 65, 67, 69], label: "A — W (6)" },
-      { text: "Whole step → B. מעלה 7 (Leading Tone). חצי טון מתחת ל-C!", highlight: [48, 50, 52, 53, 55, 57, 59, 60, 62, 64, 65, 67, 69, 71], label: "B — W (7)" },
-      { text: "Half step → C! חזרנו הביתה. הנוסחה: W-W-H-W-W-W-H.", highlight: [48, 50, 52, 53, 55, 57, 59, 60, 62, 64, 65, 67, 69, 71, 72], label: "C — H (8) ✓" },
+      { text: "The Major scale has 7 notes. Starting from C — the root (1).", highlight: [48, 60], label: "C — Root (1)" },
+      { text: "Whole step up → D. Degree 2 (Supertonic).", highlight: [48, 50, 60, 62], label: "D — W (2)" },
+      { text: "Another whole step → E. Degree 3 (Mediant). The 3rd determines Major/Minor!", highlight: [48, 50, 52, 60, 62, 64], label: "E — W (3)" },
+      { text: "Only a half step → F. Degree 4 (Subdominant). Here the formula changes!", highlight: [48, 50, 52, 53, 60, 62, 64, 65], label: "F — H (4)" },
+      { text: "Whole step → G. Degree 5 (Dominant). Power chord = 1+5.", highlight: [48, 50, 52, 53, 55, 60, 62, 64, 65, 67], label: "G — W (5)" },
+      { text: "Whole step → A. Degree 6 (Submediant).", highlight: [48, 50, 52, 53, 55, 57, 60, 62, 64, 65, 67, 69], label: "A — W (6)" },
+      { text: "Whole step → B. Degree 7 (Leading Tone). A semitone below C!", highlight: [48, 50, 52, 53, 55, 57, 59, 60, 62, 64, 65, 67, 69, 71], label: "B — W (7)" },
+      { text: "Half step → C! Back home. The formula: W-W-H-W-W-W-H.", highlight: [48, 50, 52, 53, 55, 57, 59, 60, 62, 64, 65, 67, 69, 71, 72], label: "C — H (8) ✓" },
     ],
-    quiz: { q: "מה הנוסחה של סולם Major?", opts: ["W-H-W-W-H-W-W","W-W-H-W-W-W-H","H-W-W-W-H-W-W","W-W-W-H-W-W-H"], ans: 1 } },
-  { id: "s2", title: "סולמות מינוריים", cat: "סקאלות", desc: "Natural Minor, Harmonic Minor, Melodic Minor",
-    content: ["Natural Minor = W-H-W-W-H-W-W. הצליל העצוב הקלאסי.","Harmonic Minor = Natural Minor עם מעלה 7 מוגבהת. צליל מזרחי/קלאסי.","A Natural Minor: A-B-C-D-E-F-G. A Harmonic Minor: A-B-C-D-E-F-G#."],
+    quiz: { q: "What is the Major scale formula?", opts: ["W-H-W-W-H-W-W","W-W-H-W-W-W-H","H-W-W-W-H-W-W","W-W-W-H-W-W-H"], ans: 1 } },
+  { id: "s2", title: "Minor Scales", cat: "Scales", desc: "Natural Minor, Harmonic Minor, Melodic Minor",
+    content: ["Natural Minor = W-H-W-W-H-W-W. The classic sad sound.","Harmonic Minor = Natural Minor with a raised 7th degree. Eastern/classical sound.","A Natural Minor: A-B-C-D-E-F-G. A Harmonic Minor: A-B-C-D-E-F-G#."],
     fretboardRoot: "A", fretboardNotes: ["A","B","C","D","E","F","G"],
     audioDemo: { type: "scale", data: [0,2,3,5,7,8,10,12] },
     visual: "fretboard",
     steps: [
-      { text: "A Natural Minor: הסולם המינורי הבסיסי. נוסחה: W-H-W-W-H-W-W.", highlight: [57, 59, 60, 62, 64, 65, 67, 69], label: "A Natural Minor" },
-      { text: "A — השורש. B — מעלה 2.", highlight: [57, 59], label: "A→B (W)" },
-      { text: "C — מעלה b3. ה-minor 3rd הוא מה שהופך את הסולם למינורי!", highlight: [57, 59, 60], label: "C = b3 (H)" },
-      { text: "D — מעלה 4. E — מעלה 5.", highlight: [57, 59, 60, 62, 64], label: "D, E (W-W)" },
-      { text: "F — מעלה b6. G — מעלה b7. הסולם המינורי שלם.", highlight: [57, 59, 60, 62, 64, 65, 67], label: "F=b6, G=b7" },
-      { text: "A Harmonic Minor: מעלה 7 מוגבהת! G הופך ל-G#. צליל מזרחי.", highlight: [57, 59, 60, 62, 64, 65, 68, 69], label: "A Harmonic Minor" },
-      { text: "השוו: G (Natural) vs G# (Harmonic). ההבדל — תו אחד בלבד!", highlight: [67, 68], label: "G vs G#" },
-      { text: "ה-G# יוצר leading tone — חצי טון מתחת ל-A, שמושך חזרה לטוניקה.", highlight: [68, 69], label: "G#→A: Leading Tone" },
+      { text: "A Natural Minor: the basic minor scale. Formula: W-H-W-W-H-W-W.", highlight: [57, 59, 60, 62, 64, 65, 67, 69], label: "A Natural Minor" },
+      { text: "A — the root. B — degree 2.", highlight: [57, 59], label: "A→B (W)" },
+      { text: "C — degree b3. The minor 3rd is what makes the scale minor!", highlight: [57, 59, 60], label: "C = b3 (H)" },
+      { text: "D — degree 4. E — degree 5.", highlight: [57, 59, 60, 62, 64], label: "D, E (W-W)" },
+      { text: "F — degree b6. G — degree b7. The minor scale is complete.", highlight: [57, 59, 60, 62, 64, 65, 67], label: "F=b6, G=b7" },
+      { text: "A Harmonic Minor: raised 7th degree! G becomes G#. Eastern sound.", highlight: [57, 59, 60, 62, 64, 65, 68, 69], label: "A Harmonic Minor" },
+      { text: "Compare: G (Natural) vs G# (Harmonic). The difference — just one note!", highlight: [67, 68], label: "G vs G#" },
+      { text: "The G# creates a leading tone — a semitone below A, pulling back to the tonic.", highlight: [68, 69], label: "G#→A: Leading Tone" },
     ],
-    quiz: { q: "מה ההבדל בין Natural Minor ל-Harmonic Minor?", opts: ["מעלה 3 מוגבהת","מעלה 5 מוגבהת","מעלה 7 מוגבהת","מעלה 2 מוגבהת"], ans: 2 } },
-  { id: "s3", title: "סולמות פנטטוניים", cat: "סקאלות", desc: "Minor & Major Pentatonic + Blues Scale — 5 תווים",
-    content: ["פנטטוני = 5 תווים. שני סוגים עיקריים: Minor Pentatonic ו-Major Pentatonic.","Minor Pentatonic: 1-b3-4-5-b7. A Minor Pent: A-C-D-E-G. הסולם הראשון שכל גיטריסט לומד.","Major Pentatonic: 1-2-3-5-6. C Major Pent: C-D-E-G-A. צליל שמח, קאנטרי. שימו לב — אותם תווים כמו A Minor Pent!","Blues Scale = Minor Pentatonic + b5 (blue note): 1-b3-4-b5-5-b7. A Blues: A-C-D-Eb-E-G.","אין חצאי-טונים בפנטטוני — הכל נשמע טוב. לכן הוא מושלם לאימפרוביזציה."],
+    quiz: { q: "What is the difference between Natural Minor and Harmonic Minor?", opts: ["Raised 3rd","Raised 5th","Raised 7th","Raised 2nd"], ans: 2 } },
+  { id: "s3", title: "Pentatonic Scales", cat: "Scales", desc: "Minor & Major Pentatonic + Blues Scale — 5 notes",
+    content: ["Pentatonic = 5 notes. Two main types: Minor Pentatonic and Major Pentatonic.","Minor Pentatonic: 1-b3-4-5-b7. A Minor Pent: A-C-D-E-G. The first scale every guitarist learns.","Major Pentatonic: 1-2-3-5-6. C Major Pent: C-D-E-G-A. Happy, country sound. Note — same notes as A Minor Pent!","Blues Scale = Minor Pentatonic + b5 (blue note): 1-b3-4-b5-5-b7. A Blues: A-C-D-Eb-E-G.","No semitones in the pentatonic — everything sounds good. That's why it's perfect for improvisation."],
     fretboardRoot: "A", fretboardNotes: ["A","C","D","E","G"],
     audioDemo: { type: "scale", data: [0,3,5,7,10,12] },
     visual: "fretboard",
     steps: [
-      { text: "A Minor Pentatonic — 5 תווים. הסולם הראשון שכל גיטריסט לומד!", highlight: [57], label: "A — Root" },
-      { text: "A → C (b3). 3 חצאי-טונים. הצליל המינורי.", highlight: [57, 60], label: "A → C (b3)" },
-      { text: "C → D (4). Perfect 4th מהשורש.", highlight: [57, 60, 62], label: "+ D (4)" },
-      { text: "D → E (5). Perfect 5th מהשורש. הבסיס.", highlight: [57, 60, 62, 64], label: "+ E (5)" },
-      { text: "E → G (b7). Minor 7th. הסולם הפנטטוני שלם: A-C-D-E-G.", highlight: [57, 60, 62, 64, 67], label: "A Min Pent שלם" },
+      { text: "A Minor Pentatonic — 5 notes. The first scale every guitarist learns!", highlight: [57], label: "A — Root" },
+      { text: "A → C (b3). 3 semitones. The minor sound.", highlight: [57, 60], label: "A → C (b3)" },
+      { text: "C → D (4). Perfect 4th from the root.", highlight: [57, 60, 62], label: "+ D (4)" },
+      { text: "D → E (5). Perfect 5th from the root. The foundation.", highlight: [57, 60, 62, 64], label: "+ E (5)" },
+      { text: "E → G (b7). Minor 7th. The pentatonic scale is complete: A-C-D-E-G.", highlight: [57, 60, 62, 64, 67], label: "A Min Pent complete" },
       { text: "Blues Scale = Pentatonic + blue note (Eb)! A-C-D-Eb-E-G.", highlight: [57, 60, 62, 63, 64, 67], label: "A Blues Scale" },
-      { text: "ה-blue note (Eb/D#) הוא ה-b5 — Tritone מהשורש. מוסיף צבע בלוזי.", highlight: [57, 63], label: "Blue Note = b5" },
-      { text: "C Major Pentatonic = אותם תווים בדיוק! C-D-E-G-A. הנקודה ההתחלתית שונה.", highlight: [48, 50, 52, 55, 57], label: "C Maj Pent = A Min Pent" },
+      { text: "The blue note (Eb/D#) is the b5 — Tritone from the root. Adds bluesy color.", highlight: [57, 63], label: "Blue Note = b5" },
+      { text: "C Major Pentatonic = the exact same notes! C-D-E-G-A. Different starting point.", highlight: [48, 50, 52, 55, 57], label: "C Maj Pent = A Min Pent" },
     ],
-    quiz: { q: "כמה תווים בסולם פנטטוני?", opts: ["4","5","6","7"], ans: 1 } },
-  { id: "s4", title: "מבוא למודים", cat: "סקאלות", desc: "Modes — 7 סולמות מאותם תווים",
-    content: ["מוד (Mode) = סולם שמתחיל ממעלה שונה של הסולם המז'ורי. 7 מעלות = 7 מודים.","Ionian (I) = Major Scale. Dorian (ii) = מינורי עם major 6th. Phrygian (iii) = מינורי עם b2, צליל ספרדי.","Lydian (IV) = מז'ורי עם #4, חלומי. Mixolydian (V) = מז'ורי עם b7, בלוזי.","Aeolian (vi) = Natural Minor. Locrian (vii°) = מינורי עם b2 ו-b5, הכי כהה.","כל המודים של C Major משתמשים באותם תווים: C-D-E-F-G-A-B. ההבדל הוא רק נקודת ההתחלה.","הטריק: אל תחשבו \"D Dorian = C Major מ-D\". תחשבו \"Dorian = minor scale עם 6th מוגבה\". ככה שומעים את הצבע."],
+    quiz: { q: "How many notes in a pentatonic scale?", opts: ["4","5","6","7"], ans: 1 } },
+  { id: "s4", title: "Introduction to Modes", cat: "Scales", desc: "Modes — 7 scales from the same notes",
+    content: ["A Mode = a scale starting from a different degree of the Major scale. 7 degrees = 7 modes.","Ionian (I) = Major Scale. Dorian (ii) = minor with major 6th. Phrygian (iii) = minor with b2, Spanish sound.","Lydian (IV) = major with #4, dreamy. Mixolydian (V) = major with b7, bluesy.","Aeolian (vi) = Natural Minor. Locrian (vii) = minor with b2 and b5, the darkest.","All modes of C Major use the same notes: C-D-E-F-G-A-B. The difference is only the starting point.","The trick: don't think \"D Dorian = C Major from D\". Think \"Dorian = minor scale with raised 6th\". That's how you hear the color."],
     fretboardRoot: "D", fretboardNotes: ["C","D","E","F","G","A","B"],
     audioDemo: { type: "scale", data: [0,2,3,5,7,9,10,12] },
     visual: "fretboard",
     steps: [
-      { text: "7 מודים מאותם תווים (C Major). ההבדל = מאיפה מתחילים.", highlight: [48, 50, 52, 53, 55, 57, 59, 60], label: "C Major = Ionian" },
-      { text: "C Ionian (I) = C Major Scale. הצליל הבהיר והשמח.", highlight: [48, 50, 52, 53, 55, 57, 59, 60], label: "C Ionian (Major)" },
-      { text: "D Dorian (ii) = Minor + Major 6th. צליל ג'אזי. Santana, Pink Floyd.", highlight: [50, 52, 53, 55, 57, 59, 60, 62], label: "D Dorian (minor+M6)" },
-      { text: "E Phrygian (iii) = Minor + b2. צליל ספרדי/מטאלי. Metallica!", highlight: [52, 53, 55, 57, 59, 60, 62, 64], label: "E Phrygian (minor+b2)" },
-      { text: "F Lydian (IV) = Major + #4. חלומי, מרחף. Joe Satriani, Steve Vai.", highlight: [53, 55, 57, 59, 60, 62, 64, 65], label: "F Lydian (major+#4)" },
-      { text: "G Mixolydian (V) = Major + b7. בלוזי, פאנקי. AC/DC.", highlight: [55, 57, 59, 60, 62, 64, 65, 67], label: "G Mixolydian (major+b7)" },
-      { text: "A Aeolian (vi) = Natural Minor. הצליל העצוב הקלאסי.", highlight: [57, 59, 60, 62, 64, 65, 67, 69], label: "A Aeolian (Nat. Minor)" },
-      { text: "B Locrian (vii°) = Minor + b2 + b5. הכי כהה ולא יציב.", highlight: [59, 60, 62, 64, 65, 67, 69, 71], label: "B Locrian (הכי כהה)" },
+      { text: "7 modes from the same notes (C Major). The difference = where you start.", highlight: [48, 50, 52, 53, 55, 57, 59, 60], label: "C Major = Ionian" },
+      { text: "C Ionian (I) = C Major Scale. The bright, happy sound.", highlight: [48, 50, 52, 53, 55, 57, 59, 60], label: "C Ionian (Major)" },
+      { text: "D Dorian (ii) = Minor + Major 6th. Jazzy sound. Santana, Pink Floyd.", highlight: [50, 52, 53, 55, 57, 59, 60, 62], label: "D Dorian (minor+M6)" },
+      { text: "E Phrygian (iii) = Minor + b2. Spanish/metal sound. Metallica!", highlight: [52, 53, 55, 57, 59, 60, 62, 64], label: "E Phrygian (minor+b2)" },
+      { text: "F Lydian (IV) = Major + #4. Dreamy, floating. Joe Satriani, Steve Vai.", highlight: [53, 55, 57, 59, 60, 62, 64, 65], label: "F Lydian (major+#4)" },
+      { text: "G Mixolydian (V) = Major + b7. Bluesy, funky. AC/DC.", highlight: [55, 57, 59, 60, 62, 64, 65, 67], label: "G Mixolydian (major+b7)" },
+      { text: "A Aeolian (vi) = Natural Minor. The classic sad sound.", highlight: [57, 59, 60, 62, 64, 65, 67, 69], label: "A Aeolian (Nat. Minor)" },
+      { text: "B Locrian (vii) = Minor + b2 + b5. The darkest and most unstable.", highlight: [59, 60, 62, 64, 65, 67, 69, 71], label: "B Locrian (darkest)" },
     ],
-    quiz: { q: "מהו מוד Dorian?", opts: ["Major עם b7","Minor עם #6","Minor עם b2","Major עם #4"], ans: 1 } },
-  { id: "s5", title: "מעלות הסולם", cat: "סקאלות", desc: "Tonic, Dominant, Leading Tone — שמות ותפקידים",
-    content: ["לכל תו בסולם יש שם ותפקיד. אלה מעלות הסולם (Scale Degrees):","מעלה 1 — Tonic (טוניקה): \"הבית\", מרכז הכובד. מעלה 2 — Supertonic: מעל הטוניקה. מעלה 3 — Mediant: באמצע בין טוניקה לדומיננטה.","מעלה 4 — Subdominant: מתחת לדומיננטה. מעלה 5 — Dominant (דומיננטה): הכי חזקה אחרי הטוניקה, יוצרת מתח. מעלה 6 — Submediant: באמצע בין סאבדומיננטה לאוקטבה.","מעלה 7 — Leading Tone: חצי-טון מתחת לטוניקה, \"מושכת\" אליה. ב-Natural Minor היא Subtonic (טון שלם מתחת).","ב-C Major: C=Tonic, D=Supertonic, E=Mediant, F=Subdominant, G=Dominant, A=Submediant, B=Leading Tone."],
+    quiz: { q: "What is Dorian mode?", opts: ["Major with b7","Minor with #6","Minor with b2","Major with #4"], ans: 1 } },
+  { id: "s5", title: "Scale Degrees", cat: "Scales", desc: "Tonic, Dominant, Leading Tone — names and functions",
+    content: ["Every note in a scale has a name and function. These are the Scale Degrees:","Degree 1 — Tonic: \"home\", center of gravity. Degree 2 — Supertonic: above the tonic. Degree 3 — Mediant: between tonic and dominant.","Degree 4 — Subdominant: below the dominant. Degree 5 — Dominant: strongest after the tonic, creates tension. Degree 6 — Submediant: between subdominant and octave.","Degree 7 — Leading Tone: a semitone below the tonic, \"pulls\" toward it. In Natural Minor it's the Subtonic (a whole tone below).","In C Major: C=Tonic, D=Supertonic, E=Mediant, F=Subdominant, G=Dominant, A=Submediant, B=Leading Tone."],
     fretboardRoot: "C", fretboardNotes: ["C","D","E","F","G","A","B"],
     audioDemo: { type: "scale", data: [0,2,4,5,7,9,11,12] },
     visual: "piano",
     steps: [
-      { text: "מעלה 1 — Tonic (טוניקה): \"הבית\", מרכז הכובד של הסולם. C.", highlight: [48, 60], label: "1 — Tonic (C)" },
-      { text: "מעלה 2 — Supertonic: מעל הטוניקה. D.", highlight: [50, 62], label: "2 — Supertonic (D)" },
-      { text: "מעלה 3 — Mediant: באמצע בין טוניקה לדומיננטה. E.", highlight: [52, 64], label: "3 — Mediant (E)" },
-      { text: "מעלה 4 — Subdominant: מתחת לדומיננטה. F.", highlight: [53, 65], label: "4 — Subdominant (F)" },
-      { text: "מעלה 5 — Dominant: הכי חזקה אחרי הטוניקה! יוצרת מתח. G.", highlight: [55, 67], label: "5 — Dominant (G)" },
-      { text: "מעלה 6 — Submediant: באמצע בין סאבדומיננטה לאוקטבה. A.", highlight: [57, 69], label: "6 — Submediant (A)" },
-      { text: "מעלה 7 — Leading Tone: חצי-טון מתחת לטוניקה, \"מושכת\" אליה. B.", highlight: [59, 71], label: "7 — Leading Tone (B)" },
-      { text: "כל 7 מעלות הסולם יחד. לכל מעלה תפקיד הרמוני ייחודי.", highlight: [48, 50, 52, 53, 55, 57, 59, 60], label: "C Major — כל המעלות" },
+      { text: "Degree 1 — Tonic: \"home\", the gravitational center of the scale. C.", highlight: [48, 60], label: "1 — Tonic (C)" },
+      { text: "Degree 2 — Supertonic: above the tonic. D.", highlight: [50, 62], label: "2 — Supertonic (D)" },
+      { text: "Degree 3 — Mediant: between tonic and dominant. E.", highlight: [52, 64], label: "3 — Mediant (E)" },
+      { text: "Degree 4 — Subdominant: below the dominant. F.", highlight: [53, 65], label: "4 — Subdominant (F)" },
+      { text: "Degree 5 — Dominant: strongest after the tonic! Creates tension. G.", highlight: [55, 67], label: "5 — Dominant (G)" },
+      { text: "Degree 6 — Submediant: between subdominant and octave. A.", highlight: [57, 69], label: "6 — Submediant (A)" },
+      { text: "Degree 7 — Leading Tone: a semitone below the tonic, \"pulls\" toward it. B.", highlight: [59, 71], label: "7 — Leading Tone (B)" },
+      { text: "All 7 scale degrees together. Each degree has a unique harmonic function.", highlight: [48, 50, 52, 53, 55, 57, 59, 60], label: "C Major — All Degrees" },
     ],
-    quiz: { q: "איזו מעלה נקראת Dominant?", opts: ["מעלה 3","מעלה 4","מעלה 5","מעלה 7"], ans: 2 } },
+    quiz: { q: "Which degree is called Dominant?", opts: ["Degree 3","Degree 4","Degree 5","Degree 7"], ans: 2 } },
 
-  // ═══ אינטרוולים (4 lessons) ═══
-  { id: "i1", title: "מה זה אינטרוול?", cat: "אינטרוולים", desc: "המרחק בין שני תווים",
-    content: ["אינטרוול = המרחק (במספר חצאי-טונים) בין שני תווים.","יש 12 אינטרוולים בסיסיים, מ-minor 2nd (1 חצי-טון) עד Octave (12 חצאי-טונים).","אינטרוולים הם הבסיס להבנת אקורדים, סקאלות ומלודיות."],
+  // ═══ Intervals (4 lessons) ═══
+  { id: "i1", title: "What Is an Interval?", cat: "Intervals", desc: "The distance between two notes",
+    content: ["An interval = the distance (in semitones) between two notes.","There are 12 basic intervals, from minor 2nd (1 semitone) to Octave (12 semitones).","Intervals are the foundation for understanding chords, scales and melodies."],
     visual: "fretboard",
     steps: [
-      { text: "אינטרוול = המרחק בין שני תווים. נתחיל מ-C כשורש.", highlight: [48], label: "C — שורש" },
-      { text: "Minor 2nd (m2) — חצי טון אחד. C → C#. הצליל הכי צורם.", highlight: [48, 49], label: "m2 — 1 st" },
-      { text: "Major 2nd (M2) — טון שלם. C → D.", highlight: [48, 50], label: "M2 — 2 st" },
-      { text: "Minor 3rd (m3) — 3 חצאי-טונים. C → Eb. הצליל המינורי.", highlight: [48, 51], label: "m3 — 3 st" },
-      { text: "Major 3rd (M3) — 4 חצאי-טונים. C → E. הצליל המז'ורי.", highlight: [48, 52], label: "M3 — 4 st" },
-      { text: "Perfect 4th (P4) — 5 חצאי-טונים. C → F.", highlight: [48, 53], label: "P4 — 5 st" },
-      { text: "Tritone (TT) — 6 חצאי-טונים. C → F#. \"The Devil's Interval\".", highlight: [48, 54], label: "TT — 6 st" },
-      { text: "Perfect 5th (P5) — 7 חצאי-טונים. C → G. בסיס ה-Power Chord!", highlight: [48, 55], label: "P5 — 7 st" },
-      { text: "Octave (P8) — 12 חצאי-טונים. C → C. אותו תו, כפול התדר.", highlight: [48, 60], label: "P8 — 12 st" },
+      { text: "An interval = the distance between two notes. Starting from C as root.", highlight: [48], label: "C — Root" },
+      { text: "Minor 2nd (m2) — one semitone. C → C#. The most dissonant sound.", highlight: [48, 49], label: "m2 — 1 st" },
+      { text: "Major 2nd (M2) — whole tone. C → D.", highlight: [48, 50], label: "M2 — 2 st" },
+      { text: "Minor 3rd (m3) — 3 semitones. C → Eb. The minor sound.", highlight: [48, 51], label: "m3 — 3 st" },
+      { text: "Major 3rd (M3) — 4 semitones. C → E. The major sound.", highlight: [48, 52], label: "M3 — 4 st" },
+      { text: "Perfect 4th (P4) — 5 semitones. C → F.", highlight: [48, 53], label: "P4 — 5 st" },
+      { text: "Tritone (TT) — 6 semitones. C → F#. \"The Devil's Interval\".", highlight: [48, 54], label: "TT — 6 st" },
+      { text: "Perfect 5th (P5) — 7 semitones. C → G. The basis of the Power Chord!", highlight: [48, 55], label: "P5 — 7 st" },
+      { text: "Octave (P8) — 12 semitones. C → C. Same note, double the frequency.", highlight: [48, 60], label: "P8 — 12 st" },
     ],
-    quiz: { q: "מה הוא אינטרוול?", opts: ["אקורד","מרחק בין שני תווים","סוג סולם","קצב"], ans: 1 } },
-  { id: "i2", title: "איכות האינטרוול", cat: "אינטרוולים", desc: "Perfect, Major, Minor, Augmented, Diminished",
-    content: ["לכל אינטרוול יש מספר (2nd, 3rd, 4th...) ואיכות (Perfect, Major, Minor, Augmented, Diminished).","Perfect Intervals: P1 (Unison), P4 (5 st), P5 (7 st), P8 (12 st). נשמעים יציבים ו\"ריקים\". הם הבסיס ל-power chords.","Major Intervals: M2 (2 st), M3 (4 st), M6 (9 st), M7 (11 st). נשמעים שמחים/בהירים.","Minor Intervals: m2 (1 st), m3 (3 st), m6 (8 st), m7 (10 st). נשמעים עצובים/כהים.","Augmented = חצי טון מעל Perfect/Major. Diminished = חצי טון מתחת ל-Perfect/Minor.","Tritone (TT) = 6 חצאי-טונים. Aug 4th או Dim 5th. \"the Devil's Interval\" — בסיס הצליל של Black Sabbath."],
+    quiz: { q: "What is an interval?", opts: ["A chord","Distance between two notes","A type of scale","A rhythm"], ans: 1 } },
+  { id: "i2", title: "Interval Quality", cat: "Intervals", desc: "Perfect, Major, Minor, Augmented, Diminished",
+    content: ["Every interval has a number (2nd, 3rd, 4th...) and a quality (Perfect, Major, Minor, Augmented, Diminished).","Perfect Intervals: P1 (Unison), P4 (5 st), P5 (7 st), P8 (12 st). Sound stable and \"open\". They are the basis for power chords.","Major Intervals: M2 (2 st), M3 (4 st), M6 (9 st), M7 (11 st). Sound happy/bright.","Minor Intervals: m2 (1 st), m3 (3 st), m6 (8 st), m7 (10 st). Sound sad/dark.","Augmented = a semitone above Perfect/Major. Diminished = a semitone below Perfect/Minor.","Tritone (TT) = 6 semitones. Aug 4th or Dim 5th. \"The Devil's Interval\" — the foundation of the Black Sabbath sound."],
     audioDemo: { type: "interval", data: [5,7,3,4] },
     visual: "piano",
     steps: [
-      { text: "Perfect Intervals — נשמעים יציבים, \"ריקים\". בסיס ל-Power Chords.", highlight: [48], label: "Perfect Intervals" },
-      { text: "P1 (Unison) — אותו תו. P4 — 5 חצאי-טונים: C → F.", highlight: [48, 53], label: "P4 — C→F (5 st)" },
-      { text: "P5 — 7 חצאי-טונים: C → G. זה ה-Power Chord!", highlight: [48, 55], label: "P5 — C→G (7 st)" },
-      { text: "Major Intervals — נשמעים שמחים, בהירים.", highlight: [48], label: "Major Intervals" },
-      { text: "M3 — 4 חצאי-טונים: C → E. הצליל ה\"שמח\" של Major chord.", highlight: [48, 52], label: "M3 — C→E (4 st)" },
-      { text: "Minor Intervals — נשמעים עצובים, כהים.", highlight: [48], label: "Minor Intervals" },
-      { text: "m3 — 3 חצאי-טונים: C → Eb. הצליל ה\"עצוב\" של Minor chord.", highlight: [48, 51], label: "m3 — C→Eb (3 st)" },
-      { text: "השוו: M3 (שמח) vs m3 (עצוב). הבדל של חצי טון אחד בלבד!", highlight: [48, 51, 52], label: "M3 vs m3" },
-      { text: "Tritone — 6 חצאי-טונים: C → F#. Aug 4th = Dim 5th. \"The Devil's Interval\".", highlight: [48, 54], label: "TT — C→F# (6 st)" },
+      { text: "Perfect Intervals — sound stable, \"open\". Basis for Power Chords.", highlight: [48], label: "Perfect Intervals" },
+      { text: "P1 (Unison) — same note. P4 — 5 semitones: C → F.", highlight: [48, 53], label: "P4 — C→F (5 st)" },
+      { text: "P5 — 7 semitones: C → G. This is the Power Chord!", highlight: [48, 55], label: "P5 — C→G (7 st)" },
+      { text: "Major Intervals — sound happy, bright.", highlight: [48], label: "Major Intervals" },
+      { text: "M3 — 4 semitones: C → E. The \"happy\" sound of a Major chord.", highlight: [48, 52], label: "M3 — C→E (4 st)" },
+      { text: "Minor Intervals — sound sad, dark.", highlight: [48], label: "Minor Intervals" },
+      { text: "m3 — 3 semitones: C → Eb. The \"sad\" sound of a Minor chord.", highlight: [48, 51], label: "m3 — C→Eb (3 st)" },
+      { text: "Compare: M3 (happy) vs m3 (sad). A difference of just one semitone!", highlight: [48, 51, 52], label: "M3 vs m3" },
+      { text: "Tritone — 6 semitones: C → F#. Aug 4th = Dim 5th. \"The Devil's Interval\".", highlight: [48, 54], label: "TT — C→F# (6 st)" },
     ],
-    quiz: { q: "מהי האיכות של אינטרוול 4th עם 5 חצאי-טונים?", opts: ["Major","Minor","Perfect","Augmented"], ans: 2 } },
-  { id: "i3", title: "היפוך אינטרוולים", cat: "אינטרוולים", desc: "Interval Inversion — מה קורה כשהופכים",
-    content: ["Inversion = שמים את התו התחתון אוקטבה למעלה (או העליון אוקטבה למטה).","הכלל: האינטרוול + ההיפוך שלו = אוקטבה (12 חצאי-טונים). M3 (4) + m6 (8) = 12.","Perfect נשאר Perfect: P4 ↔ P5. Major הופך ל-Minor: M3 ↔ m6, M2 ↔ m7.","Augmented הופך ל-Diminished: Aug4 ↔ Dim5 (שניהם = Tritone!).","הכלל המספרי: אינטרוול + היפוך = 9. 3rd ↔ 6th (3+6=9). 2nd ↔ 7th (2+7=9). 4th ↔ 5th.","על הגיטרה: אם M3 למעלה = 4 פרטים, אז m6 למטה = 8 פרטים. שניהם מגיעים לאותו pitch class."],
+    quiz: { q: "What is the quality of a 4th interval with 5 semitones?", opts: ["Major","Minor","Perfect","Augmented"], ans: 2 } },
+  { id: "i3", title: "Interval Inversion", cat: "Intervals", desc: "What happens when you flip an interval",
+    content: ["Inversion = put the bottom note an octave up (or the top note an octave down).","The rule: interval + its inversion = octave (12 semitones). M3 (4) + m6 (8) = 12.","Perfect stays Perfect: P4 ↔ P5. Major becomes Minor: M3 ↔ m6, M2 ↔ m7.","Augmented becomes Diminished: Aug4 ↔ Dim5 (both = Tritone!).","The numerical rule: interval + inversion = 9. 3rd ↔ 6th (3+6=9). 2nd ↔ 7th (2+7=9). 4th ↔ 5th.","On guitar: if M3 up = 4 frets, then m6 down = 8 frets. Both arrive at the same pitch class."],
     audioDemo: { type: "interval", data: [4,8] },
-    quiz: { q: "מהו ההיפוך של Major 3rd?", opts: ["Minor 3rd","Major 6th","Minor 6th","Perfect 5th"], ans: 2 } },
-  { id: "i4", title: "אינטרוולים מורכבים", cat: "אינטרוולים", desc: "Compound Intervals — מעבר לאוקטבה",
-    content: ["Compound Interval = אינטרוול גדול מאוקטבה. 9th, 10th, 11th, 13th.","9th = אוקטבה + 2nd (14 st). 10th = אוקטבה + 3rd (16 st). 11th = אוקטבה + 4th (17 st). 13th = אוקטבה + 6th (21 st).","באקורדים מורכבים: C9 = C7 + 9th. C11 = C7 + 9th + 11th. C13 = C7 + 9th + 11th + 13th.","בפועל, על הגיטרה, compound intervals מנגנים בvoicings פתוחים. ה-9th של אקורד הוא פשוט ה-2nd אוקטבה למעלה.","ג'אז ופיוז'ן משתמשים הרבה ב-9th, 11th, 13th chords. במטאל, 9th chords נפוצים ב-djent ו-progressive."],
+    quiz: { q: "What is the inversion of a Major 3rd?", opts: ["Minor 3rd","Major 6th","Minor 6th","Perfect 5th"], ans: 2 } },
+  { id: "i4", title: "Compound Intervals", cat: "Intervals", desc: "Intervals beyond the octave",
+    content: ["Compound Interval = an interval larger than an octave. 9th, 10th, 11th, 13th.","9th = octave + 2nd (14 st). 10th = octave + 3rd (16 st). 11th = octave + 4th (17 st). 13th = octave + 6th (21 st).","In extended chords: C9 = C7 + 9th. C11 = C7 + 9th + 11th. C13 = C7 + 9th + 11th + 13th.","In practice, on guitar, compound intervals are played in open voicings. The 9th of a chord is simply the 2nd an octave higher.","Jazz and fusion use 9th, 11th, 13th chords extensively. In metal, 9th chords are common in djent and progressive."],
     audioDemo: { type: "interval", data: [14] },
-    quiz: { q: "מהו אינטרוול 9th?", opts: ["אוקטבה + Unison","אוקטבה + 2nd","אוקטבה + 3rd","אוקטבה + 4th"], ans: 1 } },
+    quiz: { q: "What is a 9th interval?", opts: ["Octave + Unison","Octave + 2nd","Octave + 3rd","Octave + 4th"], ans: 1 } },
 
-  // ═══ אקורדים (6 lessons) ═══
-  { id: "c1", title: "טריאדות", cat: "אקורדים", desc: "Triads — 3 תווים: Major, Minor, Dim, Aug",
-    content: ["אקורד = 3+ תווים שנשמעים יחד. הבסיסי ביותר הוא טריאד (3 תווים).","טריאד = שורש (Root) + טרצה (3rd) + קווינטה (5th).","Major triad: R-M3-P5 (0-4-7). שמח/בהיר. Minor triad: R-m3-P5 (0-3-7). עצוב/כהה.","Diminished: R-m3-b5 (0-3-6). מתוח, לא יציב. Augmented: R-M3-#5 (0-4-8). חלומי, מוזר.","Major ו-Minor הם 90% מהאקורדים שתשמעו. Dim ו-Aug מוסיפים צבע ומתח."],
+  // ═══ Chords (6 lessons) ═══
+  { id: "c1", title: "Triads", cat: "Chords", desc: "3 notes: Major, Minor, Dim, Aug",
+    content: ["A chord = 3+ notes sounding together. The most basic is a triad (3 notes).","Triad = Root + 3rd + 5th.","Major triad: R-M3-P5 (0-4-7). Happy/bright. Minor triad: R-m3-P5 (0-3-7). Sad/dark.","Diminished: R-m3-b5 (0-3-6). Tense, unstable. Augmented: R-M3-#5 (0-4-8). Dreamy, strange.","Major and Minor are 90% of chords you'll hear. Dim and Aug add color and tension."],
     audioDemo: { type: "chord", data: [0,4,7] },
     visual: "piano",
     steps: [
-      { text: "טריאד = 3 תווים: Root + 3rd + 5th. נתחיל עם C כשורש.", highlight: [48], label: "C — Root" },
-      { text: "C Major Triad: C-E-G (0-4-7). צליל שמח, בהיר.", highlight: [48, 52, 55], label: "C Major (0-4-7)" },
-      { text: "C Minor Triad: C-Eb-G (0-3-7). צליל עצוב, כהה. ה-3rd ירד חצי טון!", highlight: [48, 51, 55], label: "C Minor (0-3-7)" },
-      { text: "ההבדל בין Major ל-Minor: רק ה-3rd! E (Major) vs Eb (Minor).", highlight: [51, 52], label: "M3 vs m3" },
-      { text: "C Diminished: C-Eb-Gb (0-3-6). גם ה-5th ירד! צליל מתוח, לא יציב.", highlight: [48, 51, 54], label: "C Dim (0-3-6)" },
-      { text: "C Augmented: C-E-G# (0-4-8). ה-5th עלה! צליל חלומי, מוזר.", highlight: [48, 52, 56], label: "C Aug (0-4-8)" },
-      { text: "סיכום — 4 סוגי טריאדות. Major ו-Minor = 90% מהמוזיקה.", highlight: [48, 52, 55], label: "4 סוגים" },
+      { text: "Triad = 3 notes: Root + 3rd + 5th. Starting with C as root.", highlight: [48], label: "C — Root" },
+      { text: "C Major Triad: C-E-G (0-4-7). Happy, bright sound.", highlight: [48, 52, 55], label: "C Major (0-4-7)" },
+      { text: "C Minor Triad: C-Eb-G (0-3-7). Sad, dark sound. The 3rd dropped a semitone!", highlight: [48, 51, 55], label: "C Minor (0-3-7)" },
+      { text: "The difference between Major and Minor: only the 3rd! E (Major) vs Eb (Minor).", highlight: [51, 52], label: "M3 vs m3" },
+      { text: "C Diminished: C-Eb-Gb (0-3-6). The 5th dropped too! Tense, unstable sound.", highlight: [48, 51, 54], label: "C Dim (0-3-6)" },
+      { text: "C Augmented: C-E-G# (0-4-8). The 5th raised! Dreamy, strange sound.", highlight: [48, 52, 56], label: "C Aug (0-4-8)" },
+      { text: "Summary — 4 types of triads. Major and Minor = 90% of music.", highlight: [48, 52, 55], label: "4 Types" },
     ],
-    quiz: { q: "כמה תווים בטריאד?", opts: ["2","3","4","5"], ans: 1 } },
-  { id: "c2", title: "היפוכים (Inversions)", cat: "אקורדים", desc: "Root position, 1st & 2nd inversion",
-    content: ["Inversion = האקורד עם תו שאינו השורש ב-Bass.","Root position: C-E-G. 1st inversion: E-G-C (3rd ב-Bass). 2nd inversion: G-C-E (5th ב-Bass).","היפוכים משנים את הצבע והתנועה של הפרוגרסיה. נפוצים בפסנתר ובגיטרה קלאסית.","על הגיטרה: slash chords. C/E = C עם E ב-Bass. Am/C = Am עם C ב-Bass.","דוגמה פרקטית: C → C/B → Am → Am/G. ה-Bass יורד כרומטית: C-B-A-G. זה ה-walkdown הקלאסי."],
-    quiz: { q: "ב-1st inversion, מה ב-Bass?", opts: ["Root","3rd","5th","7th"], ans: 1 } },
-  { id: "c3", title: "Power Chords", cat: "אקורדים", desc: "Root + 5th — הבסיס של רוק ומטאל",
-    content: ["Power chord = Root + Perfect 5th בלבד (0-7). אין 3rd, אז הוא לא Major ולא Minor.","סימון: A5, E5, D5. על הגיטרה: שני תווים על שני מיתרים סמוכים באותו פרט (למעט G-B).","Power chords הם הבסיס של כל מוזיקת רוק ומטאל. עם distortion הם נשמעים מלאים ואגרסיביים.","אפשר להוסיף אוקטבה: Root-5th-Octave (0-7-12). זה power chord עם 3 תווים. נפוץ מאוד בפאנק-רוק ובמטאל.","Palm muting + power chords = הצליל הבסיסי של thrash metal (Metallica, Megadeth, Slayer)."],
+    quiz: { q: "How many notes in a triad?", opts: ["2","3","4","5"], ans: 1 } },
+  { id: "c2", title: "Inversions", cat: "Chords", desc: "Root position, 1st & 2nd inversion",
+    content: ["Inversion = the chord with a non-root note in the bass.","Root position: C-E-G. 1st inversion: E-G-C (3rd in bass). 2nd inversion: G-C-E (5th in bass).","Inversions change the color and movement of progressions. Common in piano and classical guitar.","On guitar: slash chords. C/E = C with E in bass. Am/C = Am with C in bass.","Practical example: C → C/B → Am → Am/G. The bass descends chromatically: C-B-A-G. The classic walkdown."],
+    quiz: { q: "In 1st inversion, what's in the bass?", opts: ["Root","3rd","5th","7th"], ans: 1 } },
+  { id: "c3", title: "Power Chords", cat: "Chords", desc: "Root + 5th — the foundation of rock and metal",
+    content: ["Power chord = Root + Perfect 5th only (0-7). No 3rd, so it's neither Major nor Minor.","Notation: A5, E5, D5. On guitar: two notes on two adjacent strings at the same fret (except G-B).","Power chords are the foundation of all rock and metal music. With distortion they sound full and aggressive.","You can add an octave: Root-5th-Octave (0-7-12). That's a 3-note power chord. Very common in punk-rock and metal.","Palm muting + power chords = the basic sound of thrash metal (Metallica, Megadeth, Slayer)."],
     audioDemo: { type: "chord", data: [0,7,12] },
     visual: "fretboard",
     steps: [
-      { text: "Power Chord = Root + Perfect 5th. אין 3rd — לא Major ולא Minor!", highlight: [40], label: "Root (E)" },
-      { text: "E5 Power Chord: E + B. שני תווים בלבד. פשוט ויעיל.", highlight: [40, 47], label: "E5: E + B" },
-      { text: "E5 עם אוקטבה: E + B + E. 3 תווים. יותר מלא.", highlight: [40, 47, 52], label: "E5: E+B+E" },
-      { text: "A5 Power Chord: A + E. אותה צורת אצבעות, מיתר אחד למעלה.", highlight: [45, 52], label: "A5: A + E" },
-      { text: "D5 Power Chord: D + A. ממשיכים באותה צורה.", highlight: [50, 57], label: "D5: D + A" },
-      { text: "Power Chords נעים על הצוואר. E5 → F5 → G5 — פרט אחד = חצי טון.", highlight: [40, 47, 41, 48, 43, 50], label: "E5→F5→G5" },
-      { text: "עם Distortion, ה-Power Chord נשמע מלא ואגרסיבי. בסיס כל מוזיקת רוק ומטאל.", highlight: [40, 47, 52], label: "Rock & Metal!" },
+      { text: "Power Chord = Root + Perfect 5th. No 3rd — neither Major nor Minor!", highlight: [40], label: "Root (E)" },
+      { text: "E5 Power Chord: E + B. Only two notes. Simple and effective.", highlight: [40, 47], label: "E5: E + B" },
+      { text: "E5 with octave: E + B + E. 3 notes. Fuller sound.", highlight: [40, 47, 52], label: "E5: E+B+E" },
+      { text: "A5 Power Chord: A + E. Same finger shape, one string up.", highlight: [45, 52], label: "A5: A + E" },
+      { text: "D5 Power Chord: D + A. Continuing with the same shape.", highlight: [50, 57], label: "D5: D + A" },
+      { text: "Power Chords move along the neck. E5 → F5 → G5 — one fret = one semitone.", highlight: [40, 47, 41, 48, 43, 50], label: "E5→F5→G5" },
+      { text: "With Distortion, the Power Chord sounds full and aggressive. The foundation of all rock and metal.", highlight: [40, 47, 52], label: "Rock & Metal!" },
     ],
-    quiz: { q: "מה חסר ב-power chord לעומת טריאד?", opts: ["Root","3rd","5th","Octave"], ans: 1 } },
-  { id: "c4", title: "אקורדים מושהים", cat: "אקורדים", desc: "Sus2 ו-Sus4 — מתח ללא Major/Minor",
-    content: ["Suspended chord = ה-3rd מוחלף בתו אחר. הצליל \"מושהה\" — לא Major ולא Minor.","Sus4: Root-P4-P5 (0-5-7). ה-4th \"רוצה\" לרדת ל-3rd. מתח שדורש פתרון.","Sus2: Root-M2-P5 (0-2-7). צליל פתוח ומודרני. נפוץ ברוק אלטרנטיבי ופוסט-רוק.","הפתרון הקלאסי: Asus4 → A. ה-4th (D) יורד ל-3rd (C#). זה יוצר תנועה מלודית.","בפועל: Dsus2 = D-E-A. Dsus4 = D-G-A. שניהם נשמעים \"פתוחים\" ומבטלים את ה-major/minor.","The Who, Pete Townshend — מלך ה-sus chords. גם Jimi Hendrix השתמש הרבה ב-sus חלופות."],
+    quiz: { q: "What's missing in a power chord compared to a triad?", opts: ["Root","3rd","5th","Octave"], ans: 1 } },
+  { id: "c4", title: "Suspended Chords", cat: "Chords", desc: "Sus2 and Sus4 — tension without Major/Minor",
+    content: ["Suspended chord = the 3rd is replaced by another note. The sound is \"suspended\" — neither Major nor Minor.","Sus4: Root-P4-P5 (0-5-7). The 4th \"wants\" to resolve down to the 3rd. Tension requiring resolution.","Sus2: Root-M2-P5 (0-2-7). Open, modern sound. Common in alternative rock and post-rock.","Classic resolution: Asus4 → A. The 4th (D) resolves down to the 3rd (C#). Creates melodic motion.","In practice: Dsus2 = D-E-A. Dsus4 = D-G-A. Both sound \"open\" and neutralize the major/minor quality.","The Who, Pete Townshend — the king of sus chords. Jimi Hendrix also used sus alternatives extensively."],
     audioDemo: { type: "chord", data: [0,5,7] },
-    quiz: { q: "מה מחליף את ה-3rd באקורד Sus4?", opts: ["2nd","4th","5th","7th"], ans: 1 } },
-  { id: "c5", title: "אקורדי שביעית", cat: "אקורדים", desc: "Dom7, Maj7, Min7, m7b5, Dim7 — כל הסוגים",
-    content: ["אקורד 7 = טריאד + מעלה 7. חמש סוגים עיקריים:","1) Dominant 7 (dom7) = Major + m7: 0-4-7-10. הנפוץ ביותר בבלוז ורוק. דוגמה: A7 = A-C#-E-G.","2) Major 7 (Maj7) = Major + M7: 0-4-7-11. צליל חם ורומנטי. דוגמה: Amaj7 = A-C#-E-G#.","3) Minor 7 (m7) = Minor + m7: 0-3-7-10. צליל ג'אזי עצוב. דוגמה: Am7 = A-C-E-G.","4) Half-diminished (m7b5) = Dim + m7: 0-3-6-10. צליל מתוח. דוגמה: Am7b5 = A-C-Eb-G.","5) Fully-diminished (dim7) = Dim + dim7: 0-3-6-9. סימטרי לחלוטין. דוגמה: Adim7 = A-C-Eb-Gb."],
+    quiz: { q: "What replaces the 3rd in a Sus4 chord?", opts: ["2nd","4th","5th","7th"], ans: 1 } },
+  { id: "c5", title: "Seventh Chords", cat: "Chords", desc: "Dom7, Maj7, Min7, m7b5, Dim7 — all types",
+    content: ["7th chord = triad + 7th degree. Five main types:","1) Dominant 7 (dom7) = Major + m7: 0-4-7-10. Most common in blues and rock. Example: A7 = A-C#-E-G.","2) Major 7 (Maj7) = Major + M7: 0-4-7-11. Warm, romantic sound. Example: Amaj7 = A-C#-E-G#.","3) Minor 7 (m7) = Minor + m7: 0-3-7-10. Jazzy, sad sound. Example: Am7 = A-C-E-G.","4) Half-diminished (m7b5) = Dim + m7: 0-3-6-10. Tense sound. Example: Am7b5 = A-C-Eb-G.","5) Fully-diminished (dim7) = Dim + dim7: 0-3-6-9. Completely symmetrical. Example: Adim7 = A-C-Eb-Gb."],
     audioDemo: { type: "chord", data: [0,4,7,10] },
     visual: "piano",
     steps: [
-      { text: "אקורד שביעית = טריאד + מעלה 7. נבנה מ-C כשורש.", highlight: [48], label: "C — Root" },
-      { text: "C Dominant 7 (C7): C-E-G-Bb (0-4-7-10). הנפוץ ביותר בבלוז.", highlight: [48, 52, 55, 58], label: "C7 (dom7)" },
-      { text: "C Major 7 (Cmaj7): C-E-G-B (0-4-7-11). צליל חם ורומנטי.", highlight: [48, 52, 55, 59], label: "Cmaj7" },
-      { text: "ההבדל בין dom7 ל-Maj7: רק ה-7th! Bb (m7) vs B (M7).", highlight: [58, 59], label: "m7 vs M7" },
-      { text: "C Minor 7 (Cm7): C-Eb-G-Bb (0-3-7-10). צליל ג'אזי עצוב.", highlight: [48, 51, 55, 58], label: "Cm7" },
-      { text: "C Half-Diminished (Cø7): C-Eb-Gb-Bb (0-3-6-10). מתוח, לא יציב.", highlight: [48, 51, 54, 58], label: "Cø7 (m7b5)" },
-      { text: "C Fully-Diminished (Cdim7): C-Eb-Gb-A (0-3-6-9). סימטרי לחלוטין.", highlight: [48, 51, 54, 57], label: "Cdim7" },
-      { text: "סיכום: 5 סוגי אקורדי שביעית. ההבדל — ב-3rd, 5th ו-7th.", highlight: [48, 52, 55, 58], label: "5 סוגים" },
+      { text: "Seventh chord = triad + 7th degree. Building from C as root.", highlight: [48], label: "C — Root" },
+      { text: "C Dominant 7 (C7): C-E-G-Bb (0-4-7-10). Most common in blues.", highlight: [48, 52, 55, 58], label: "C7 (dom7)" },
+      { text: "C Major 7 (Cmaj7): C-E-G-B (0-4-7-11). Warm, romantic sound.", highlight: [48, 52, 55, 59], label: "Cmaj7" },
+      { text: "Difference between dom7 and Maj7: only the 7th! Bb (m7) vs B (M7).", highlight: [58, 59], label: "m7 vs M7" },
+      { text: "C Minor 7 (Cm7): C-Eb-G-Bb (0-3-7-10). Jazzy, sad sound.", highlight: [48, 51, 55, 58], label: "Cm7" },
+      { text: "C Half-Diminished (Cø7): C-Eb-Gb-Bb (0-3-6-10). Tense, unstable.", highlight: [48, 51, 54, 58], label: "Cø7 (m7b5)" },
+      { text: "C Fully-Diminished (Cdim7): C-Eb-Gb-A (0-3-6-9). Completely symmetrical.", highlight: [48, 51, 54, 57], label: "Cdim7" },
+      { text: "Summary: 5 types of seventh chords. The difference is in the 3rd, 5th and 7th.", highlight: [48, 52, 55, 58], label: "5 Types" },
     ],
-    quiz: { q: "מה ההבדל בין dom7 ל-Maj7?", opts: ["ה-3rd","ה-5th","ה-7th — m7 vs M7","ה-Root"], ans: 2 } },
-  { id: "c6", title: "היפוכים על הגיטרה", cat: "אקורדים", desc: "Slash chords, voice leading, walkdowns",
-    content: ["על הגיטרה, היפוכים נעשים בעיקר דרך slash chords — שינוי תו הבס.","C/E = C Major עם E ב-Bass (1st inversion). C/G = C Major עם G ב-Bass (2nd inversion).","Voice leading: תנועה חלקה בין אקורדים. במקום קפיצות, תווים זזים בצעד.","Walkdown קלאסי: C → C/B → Am → Am/G → F. ה-Bass יורד: C-B-A-G-F. נשמע מדהים.","באקורדי שביעית: Cmaj7/E, Am7/C. כל היפוך נותן צבע אחר.","טיפ פרקטי: כשאתם מנגנים פרוגרסיה, נסו להפוך אקורד אחד. הצליל הכללי ישתנה דרמטית."],
-    quiz: { q: "מהו C/E?", opts: ["E Major","C Major עם E ב-Bass","E Minor","C Minor"], ans: 1 } },
+    quiz: { q: "What is the difference between dom7 and Maj7?", opts: ["The 3rd","The 5th","The 7th — m7 vs M7","The Root"], ans: 2 } },
+  { id: "c6", title: "Inversions on Guitar", cat: "Chords", desc: "Slash chords, voice leading, walkdowns",
+    content: ["On guitar, inversions are mainly done through slash chords — changing the bass note.","C/E = C Major with E in bass (1st inversion). C/G = C Major with G in bass (2nd inversion).","Voice leading: smooth movement between chords. Instead of jumps, notes move by step.","Classic walkdown: C → C/B → Am → Am/G → F. Bass descends: C-B-A-G-F. Sounds amazing.","With seventh chords: Cmaj7/E, Am7/C. Each inversion gives a different color.","Practical tip: when playing a progression, try inverting one chord. The overall sound will change dramatically."],
+    quiz: { q: "What is C/E?", opts: ["E Major","C Major with E in bass","E Minor","C Minor"], ans: 1 } },
 
-  // ═══ אקורדים דיאטוניים (4 lessons) ═══
-  { id: "dc1", title: "טריאדות דיאטוניות", cat: "אקורדים דיאטוניים", desc: "איך תווי הסולם יוצרים אקורדים — I ii iii IV V vi vii°",
-    content: ["אקורד דיאטוני = אקורד שבנוי רק מתווים של הסולם.","לוקחים כל מעלה בסולם ובונים טריאד בדילוג: מעלה 1-3-5, מעלה 2-4-6, וכו'.","ב-C Major: C-E-G = C (I), D-F-A = Dm (ii), E-G-B = Em (iii), F-A-C = F (IV), G-B-D = G (V), A-C-E = Am (vi), B-D-F = Bdim (vii°).","התבנית קבועה לכל סולם מז'ורי: Major-minor-minor-Major-Major-minor-diminished.","הרומאים הגדולים (I, IV, V) הם Major. הרומאים הקטנים (ii, iii, vi) הם Minor. vii° הוא Diminished."],
+  // ═══ Diatonic Chords (4 lessons) ═══
+  { id: "dc1", title: "Diatonic Triads", cat: "Diatonic Chords", desc: "How scale notes form chords — I ii iii IV V vi vii°",
+    content: ["A diatonic chord = a chord built only from notes of the scale.","Take each scale degree and build a triad by skipping: degrees 1-3-5, degrees 2-4-6, etc.","In C Major: C-E-G = C (I), D-F-A = Dm (ii), E-G-B = Em (iii), F-A-C = F (IV), G-B-D = G (V), A-C-E = Am (vi), B-D-F = Bdim (vii°).","The pattern is fixed for every Major scale: Major-minor-minor-Major-Major-minor-diminished.","The uppercase Roman numerals (I, IV, V) are Major. The lowercase (ii, iii, vi) are Minor. vii° is Diminished."],
     visual: "piano",
     steps: [
-      { text: "נבנה טריאדות דיאטוניות מתווי C Major בלבד: C-D-E-F-G-A-B.", highlight: [48, 50, 52, 53, 55, 57, 59], label: "C Major Scale" },
-      { text: "I — C Major: C-E-G (1-3-5). טוניקה. הבית.", highlight: [48, 52, 55], label: "I — C Major" },
-      { text: "ii — D Minor: D-F-A (2-4-6). סאבדומיננטה קלה.", highlight: [50, 53, 57], label: "ii — Dm" },
-      { text: "iii — E Minor: E-G-B (3-5-7). מדיאנט.", highlight: [52, 55, 59], label: "iii — Em" },
-      { text: "IV — F Major: F-A-C (4-6-1). סאבדומיננטה.", highlight: [53, 57, 60], label: "IV — F Major" },
-      { text: "V — G Major: G-B-D (5-7-2). דומיננטה — מתח!", highlight: [55, 59, 62], label: "V — G Major" },
-      { text: "vi — A Minor: A-C-E (6-1-3). Relative Minor של C Major.", highlight: [57, 60, 64], label: "vi — Am" },
-      { text: "vii° — B Diminished: B-D-F (7-2-4). מכיל Tritone (B-F)!", highlight: [59, 62, 65], label: "vii° — Bdim" },
-      { text: "התבנית: I-ii-iii-IV-V-vi-vii°. Major-minor-minor-Major-Major-minor-dim.", highlight: [48, 52, 55, 50, 53, 57, 52, 55, 59, 53, 57, 60, 55, 59, 62, 57, 60, 64, 59, 62, 65], label: "כל 7 הטריאדות" },
+      { text: "Building diatonic triads from C Major notes only: C-D-E-F-G-A-B.", highlight: [48, 50, 52, 53, 55, 57, 59], label: "C Major Scale" },
+      { text: "I — C Major: C-E-G (1-3-5). Tonic. Home.", highlight: [48, 52, 55], label: "I — C Major" },
+      { text: "ii — D Minor: D-F-A (2-4-6). Mild subdominant.", highlight: [50, 53, 57], label: "ii — Dm" },
+      { text: "iii — E Minor: E-G-B (3-5-7). Mediant.", highlight: [52, 55, 59], label: "iii — Em" },
+      { text: "IV — F Major: F-A-C (4-6-1). Subdominant.", highlight: [53, 57, 60], label: "IV — F Major" },
+      { text: "V — G Major: G-B-D (5-7-2). Dominant — tension!", highlight: [55, 59, 62], label: "V — G Major" },
+      { text: "vi — A Minor: A-C-E (6-1-3). Relative Minor of C Major.", highlight: [57, 60, 64], label: "vi — Am" },
+      { text: "vii° — B Diminished: B-D-F (7-2-4). Contains a Tritone (B-F)!", highlight: [59, 62, 65], label: "vii° — Bdim" },
+      { text: "The pattern: I-ii-iii-IV-V-vi-vii°. Major-minor-minor-Major-Major-minor-dim.", highlight: [48, 52, 55, 50, 53, 57, 52, 55, 59, 53, 57, 60, 55, 59, 62, 57, 60, 64, 59, 62, 65], label: "All 7 Triads" },
     ],
-    quiz: { q: "מה סוג האקורד על מעלה vi בסולם Major?", opts: ["Major","Minor","Diminished","Augmented"], ans: 1 } },
-  { id: "dc2", title: "ניתוח בספרות רומיות", cat: "אקורדים דיאטוניים", desc: "Roman Numeral Analysis ומערכת Nashville Number",
-    content: ["ספרות רומיות מתארות את תפקיד האקורד בטונאליות, לא את השם שלו.","אות גדולה = Major. אות קטנה = Minor. ° = Diminished. + = Augmented.","I = טוניקה (מרכז). IV = סאבדומיננטה. V = דומיננטה (מתח). vi = relative minor.","Nashville Number System: אותו רעיון, אבל עם מספרים רגילים: 1-4-5 במקום I-IV-V.","היתרון: אפשר לתמלל שיר פעם אחת ולנגן אותו בכל טונאליות. 1-5-6m-4 = I-V-vi-IV.","דוגמה: \"הוד השיר\" = 6m-4-1-5. לא משנה באיזה key אתם מנגנים, הספרות נשארות."],
-    quiz: { q: "מה מסמנת ספרה רומית קטנה (ii)?", opts: ["Major","Minor","Diminished","Dominant"], ans: 1 } },
-  { id: "dc3", title: "אקורדי שביעית דיאטוניים", cat: "אקורדים דיאטוניים", desc: "Imaj7 ii7 iii7 IVmaj7 V7 vi7 viiø7",
-    content: ["אם ממשיכים את הדילוג למעלה 7 (1-3-5-7), מקבלים אקורדי שביעית דיאטוניים.","ב-C Major: Cmaj7, Dm7, Em7, Fmaj7, G7, Am7, Bm7b5 (Bø7).","התבנית: Maj7 - m7 - m7 - Maj7 - dom7 - m7 - m7b5 (half-diminished).","שימו לב: רק V הוא dom7! זה מה שנותן לו את המתח המיוחד (יש לו tritone בפנים).","בג'אז, כמעט תמיד מנגנים אקורדי שביעית במקום טריאדות. זה נותן צליל עשיר יותר."],
-    quiz: { q: "איזה אקורד שביעית יושב על מעלה V?", opts: ["Maj7","m7","dom7","m7b5"], ans: 2 } },
-  { id: "dc4", title: "הלחנה עם סולמות מינוריים", cat: "אקורדים דיאטוניים", desc: "Natural vs Harmonic Minor בפרוגרסיות",
-    content: ["ב-Natural Minor, האקורדים הדיאטוניים הם: i-ii°-III-iv-v-VI-VII.","הבעיה: אקורד v הוא Minor, ולכן אין מתח דומיננטי חזק (אין leading tone).","הפתרון: Harmonic Minor מעלה את מעלה 7, מה שהופך את v ל-V (Major!). עכשיו V→i נשמע חזק.","ב-A Minor: Am-Bdim-C-Dm-Em-F-G (Natural). Am-Bdim-C+-Dm-E-F-G#dim (Harmonic).","בפועל, מטאל וקלאסיקה משלבים בין שניהם באותו שיר: VI-VII-i (Natural) → V-i (Harmonic).","דוגמה קלאסית מטאלית: Am-F-G-Am (Natural Minor), ואז E-Am בסיום (Harmonic Minor)."],
-    quiz: { q: "למה משתמשים ב-Harmonic Minor בפרוגרסיות?", opts: ["כי הוא נשמע יפה","כדי לקבל V Major במקום v minor","כי יש בו פחות תווים","כדי להימנע מ-tritone"], ans: 1 } },
+    quiz: { q: "What type of chord sits on degree vi in Major?", opts: ["Major","Minor","Diminished","Augmented"], ans: 1 } },
+  { id: "dc2", title: "Roman Numeral Analysis", cat: "Diatonic Chords", desc: "Roman Numeral Analysis and Nashville Number System",
+    content: ["Roman numerals describe the chord's function in a key, not its name.","Uppercase = Major. Lowercase = Minor. ° = Diminished. + = Augmented.","I = tonic (center). IV = subdominant. V = dominant (tension). vi = relative minor.","Nashville Number System: same idea, but with regular numbers: 1-4-5 instead of I-IV-V.","The advantage: you can chart a song once and play it in any key. 1-5-6m-4 = I-V-vi-IV.","Example: the same progression works regardless of key — the numbers stay the same."],
+    quiz: { q: "What does a lowercase Roman numeral (ii) indicate?", opts: ["Major","Minor","Diminished","Dominant"], ans: 1 } },
+  { id: "dc3", title: "Diatonic Seventh Chords", cat: "Diatonic Chords", desc: "Imaj7 ii7 iii7 IVmaj7 V7 vi7 viiø7",
+    content: ["If you continue stacking thirds to the 7th (1-3-5-7), you get diatonic seventh chords.","In C Major: Cmaj7, Dm7, Em7, Fmaj7, G7, Am7, Bm7b5 (Bø7).","The pattern: Maj7 - m7 - m7 - Maj7 - dom7 - m7 - m7b5 (half-diminished).","Note: only V is dom7! That's what gives it its special tension (it contains a tritone).","In jazz, seventh chords are almost always played instead of triads. It gives a richer sound."],
+    quiz: { q: "Which seventh chord sits on degree V?", opts: ["Maj7","m7","dom7","m7b5"], ans: 2 } },
+  { id: "dc4", title: "Composing with Minor Scales", cat: "Diatonic Chords", desc: "Natural vs Harmonic Minor in progressions",
+    content: ["In Natural Minor, the diatonic chords are: i-ii°-III-iv-v-VI-VII.","The problem: chord v is Minor, so there's no strong dominant tension (no leading tone).","The solution: Harmonic Minor raises the 7th degree, turning v into V (Major!). Now V→i sounds strong.","In A Minor: Am-Bdim-C-Dm-Em-F-G (Natural). Am-Bdim-C+-Dm-E-F-G#dim (Harmonic).","In practice, metal and classical music combine both in the same song: VI-VII-i (Natural) → V-i (Harmonic).","Classic metal example: Am-F-G-Am (Natural Minor), then E-Am at the end (Harmonic Minor)."],
+    quiz: { q: "Why use Harmonic Minor in progressions?", opts: ["Because it sounds nice","To get V Major instead of v minor","Because it has fewer notes","To avoid the tritone"], ans: 1 } },
 
-  // ═══ פרוגרסיות (5 lessons) ═══
-  { id: "p1", title: "I - IV - V", cat: "פרוגרסיות", desc: "הפרוגרסיה הבסיסית ביותר — רוק, בלוז, קאנטרי",
-    content: ["I-IV-V = 3 האקורדים הראשיים של כל טונאליות Major.","ב-C Major: C-F-G. ב-A Major: A-D-E. ב-G Major: G-C-D.","זו הפרוגרסיה של 90% משירי הרוק, הבלוז והקאנטרי בהיסטוריה."],
+  // ═══ Progressions (5 lessons) ═══
+  { id: "p1", title: "I - IV - V", cat: "Progressions", desc: "The most basic progression — rock, blues, country",
+    content: ["I-IV-V = the 3 main chords of any Major key.","In C Major: C-F-G. In A Major: A-D-E. In G Major: G-C-D.","This is the progression of 90% of rock, blues and country songs in history."],
     audioDemo: { type: "chord", data: [0,4,7] },
-    quiz: { q: "מה האקורדים של I-IV-V ב-G Major?", opts: ["G-C-D","G-B-D","G-A-B","G-D-E"], ans: 0 } },
-  { id: "p2", title: "פרוגרסיות מעגל", cat: "פרוגרסיות", desc: "Circle Progressions — תנועה בחמישיות",
-    content: ["Circle Progression = כל אקורד הוא P5 (או P4) מהקודם. תנועת שורשים במעגל החמישיות.","ii-V-I = הפרוגרסיה הקלאסית של ג'אז. ב-C: Dm7-G7-Cmaj7. שורשים: D→G→C = כל אחד P5 למטה.","הדוגמה המורחבת: iii → vi → ii → V → I. ב-C: Em-Am-Dm-G-C. כל שורש יורד P5.","Autumn Leaves, Fly Me to the Moon — מבוססים על circle progression.","למה זה עובד? תנועה של P5 למטה (= P4 למעלה) נשמעת הכי \"טבעית\" לאוזן."],
-    quiz: { q: "בcircle progression, מה המרחק בין שורשי אקורדים?", opts: ["M2","m3","P4/P5","Tritone"], ans: 2 } },
-  { id: "p3", title: "I - V - vi - IV", cat: "פרוגרסיות", desc: "פרוגרסיית הפופ — Axis of Awesome",
-    content: ["I-V-vi-IV = הפרוגרסיה של מאות שירי פופ מצליחים.","ב-C: C-G-Am-F. ב-G: G-D-Em-C.","דוגמאות: Let It Be, No Woman No Cry, Someone Like You, With or Without You."] },
-  { id: "p4", title: "משפטים וקדנצות", cat: "פרוגרסיות", desc: "Authentic, Plagal, Half, Deceptive — איך לסיים פרזה",
-    content: ["קדנצה (cadence) = הסיום של פרזה מוזיקלית. כמו נקודה בסוף משפט.","Authentic Cadence: V → I. הסיום הכי חזק ומשכנע. \"הגענו הביתה\". דוגמה: G → C.","Plagal Cadence: IV → I. הסיום ה\"אמן\" מהכנסייה. רך יותר. דוגמה: F → C.","Half Cadence: X → V. סיום על מתח — \"יש המשך\". הפרזה לא באמת נגמרה.","Deceptive Cadence: V → vi. במקום לחזור הביתה (I), הולכים ל-vi. הפתעה! G → Am במקום G → C.","במטאל: Power chord cadences. E5-F5-E5 = Phrygian half cadence. אופייני ל-thrash ו-death metal."],
-    quiz: { q: "מהי Authentic Cadence?", opts: ["IV → I","V → I","I → V","V → vi"], ans: 1 } },
-  { id: "p5", title: "ניתוח פרוגרסיות", cat: "פרוגרסיות", desc: "Analysis — איך לנתח שירים",
-    content: ["ניתוח פרוגרסיה = זיהוי הטונאליות, ספרות רומיות, וקדנצות בשיר.","שלב 1: מצאו את הטוניקה (I). בדרך כלל האקורד הראשון או האחרון.","שלב 2: סווגו כל אקורד לפי ספרות רומיות. Am-F-C-G ב-C Major = vi-IV-I-V.","שלב 3: זהו תבניות — האם זה I-IV-V? ii-V-I? Circle progression?","שלב 4: מצאו קדנצות — Authentic (V→I), Plagal (IV→I), Deceptive (V→vi).","דוגמה — Hotel California (Eagles): i-V-VII-IV-VI-III-iv-V. מינורי עם circle-of-fifths motion."],
-    quiz: { q: "Am-F-C-G בטונאליות C Major הם:", opts: ["I-IV-V-vi","vi-IV-I-V","ii-IV-I-V","vi-V-I-IV"], ans: 1 } },
+    quiz: { q: "What are the I-IV-V chords in G Major?", opts: ["G-C-D","G-B-D","G-A-B","G-D-E"], ans: 0 } },
+  { id: "p2", title: "Circle Progressions", cat: "Progressions", desc: "Movement in fifths",
+    content: ["Circle Progression = each chord is a P5 (or P4) from the previous. Root movement through the circle of fifths.","ii-V-I = the classic jazz progression. In C: Dm7-G7-Cmaj7. Roots: D→G→C = each a P5 down.","The extended example: iii → vi → ii → V → I. In C: Em-Am-Dm-G-C. Each root descends by P5.","Autumn Leaves, Fly Me to the Moon — based on circle progressions.","Why does it work? P5 down movement (= P4 up) sounds the most \"natural\" to the ear."],
+    quiz: { q: "In a circle progression, what is the distance between chord roots?", opts: ["M2","m3","P4/P5","Tritone"], ans: 2 } },
+  { id: "p3", title: "I - V - vi - IV", cat: "Progressions", desc: "The pop progression — Axis of Awesome",
+    content: ["I-V-vi-IV = the progression of hundreds of successful pop songs.","In C: C-G-Am-F. In G: G-D-Em-C.","Examples: Let It Be, No Woman No Cry, Someone Like You, With or Without You."] },
+  { id: "p4", title: "Phrases and Cadences", cat: "Progressions", desc: "Authentic, Plagal, Half, Deceptive — how to end a phrase",
+    content: ["Cadence = the ending of a musical phrase. Like a period at the end of a sentence.","Authentic Cadence: V → I. The strongest, most convincing ending. \"We're home\". Example: G → C.","Plagal Cadence: IV → I. The \"Amen\" cadence from church. Softer. Example: F → C.","Half Cadence: X → V. Ending on tension — \"to be continued\". The phrase hasn't really ended.","Deceptive Cadence: V → vi. Instead of going home (I), you go to vi. Surprise! G → Am instead of G → C.","In metal: Power chord cadences. E5-F5-E5 = Phrygian half cadence. Typical of thrash and death metal."],
+    quiz: { q: "What is an Authentic Cadence?", opts: ["IV → I","V → I","I → V","V → vi"], ans: 1 } },
+  { id: "p5", title: "Progression Analysis", cat: "Progressions", desc: "How to analyze songs",
+    content: ["Progression analysis = identifying the key, Roman numerals, and cadences in a song.","Step 1: Find the tonic (I). Usually the first or last chord.","Step 2: Label each chord with Roman numerals. Am-F-C-G in C Major = vi-IV-I-V.","Step 3: Identify patterns — is it I-IV-V? ii-V-I? Circle progression?","Step 4: Find cadences — Authentic (V→I), Plagal (IV→I), Deceptive (V→vi).","Example — Hotel California (Eagles): i-V-VII-IV-VI-III-iv-V. Minor with circle-of-fifths motion."],
+    quiz: { q: "Am-F-C-G in the key of C Major are:", opts: ["I-IV-V-vi","vi-IV-I-V","ii-IV-I-V","vi-V-I-IV"], ans: 1 } },
 
-  // ═══ מתקדם (5 lessons) ═══
-  { id: "a1", title: "מודים לעומק", cat: "מתקדם", desc: "Modes Deep Dive — צבע, שימוש ואימפרוביזציה",
-    content: ["הטריק: אל תחשבו על מודים כ\"סולם שמתחיל ממקום אחר\". חשבו על הצבע הייחודי.","Dorian: minor + major 6th. הצליל הג'אזי. Carlos Santana, Pink Floyd.","Phrygian: minor + b2. ספרדי, מזרחי, מטאלי. Metallica (Wherever I May Roam), Megadeth.","Lydian: major + #4. חלומי, מרחף. Joe Satriani (Flying in a Blue Dream), Steve Vai.","Mixolydian: major + b7. בלוזי, פאנקי. AC/DC, Lynyrd Skynyrd, Grateful Dead.","להתאמן: נגנו drone note (שורש) וסולם מעליו. שימו לב לתו המיוחד של כל מוד — ה-characteristic note."],
-    quiz: { q: "מה ה-characteristic note של Lydian?", opts: ["b2","b3","#4","b7"], ans: 2 } },
-  { id: "a2", title: "Modal Interchange", cat: "מתקדם", desc: "הלוואת אקורדים ממוד מקביל",
-    content: ["Modal Interchange = שימוש באקורדים ממוד מקביל (parallel mode). למשל, להשתמש באקורד מ-C Minor בתוך שיר ב-C Major.","הדוגמה הקלאסית: bVI-bVII-I. ב-C Major: Ab-Bb-C. ה-Ab ו-Bb מגיעים מ-C Minor (Aeolian).","שימושים נפוצים: bIII (Eb ב-C Major), bVI (Ab), bVII (Bb), iv (Fm). כולם \"שאולים\" מ-minor.","Radiohead משתמשים הרבה: Creep = I-III-IV-iv. ה-iv (Fm) הוא modal interchange מ-C Minor.","במטאל: i-bVI-bVII-i כבר מוכר? זה modal interchange! הפרוגרסיה המטאלית הקלאסית.","טיפ: כשפרוגרסיה ב-Major נשמעת \"חשוכה מדי\" — כנראה יש modal interchange."],
-    quiz: { q: "bVI בטונאליות C Major זה:", opts: ["A Major","Ab Major","F Major","Bb Major"], ans: 1 } },
-  { id: "a3", title: "Advanced Harmony", cat: "מתקדם", desc: "Extended chords, alterations, reharmonization",
-    content: ["Extended chords: 9th, 11th, 13th. מוסיפים צבע מעבר לאקורדי שביעית.","C9 = C-E-G-Bb-D. C11 = C-E-G-Bb-D-F. C13 = C-E-G-Bb-D-F-A. בפועל משמיטים תווים.","Altered chords: b9, #9, #11, b13. Jimi Hendrix chord (7#9) = E7#9 = E-G#-B-D-G. שמח ועצוב בו-זמנית.","Reharmonization: החלפת אקורד באקורד אחר שמשרת את אותו תפקיד. ii במקום IV, Tritone substitution (bII7 במקום V7).","Tritone sub: G7 → Db7. שניהם חולקים את אותו tritone (B-F). זה יוצר כרומטי bass line: Dm7-Db7-Cmaj7 = ii-bII7-I.","בפרקטיקה: התחילו עם ii-V-I ונסו reharmonizations שונות. כל אחת נותנת צבע אחר."],
-    quiz: { q: "מהו Tritone Substitution?", opts: ["החלפת V ב-IV","החלפת V7 ב-bII7","החלפת I ב-vi","החלפת ii ב-IV"], ans: 1 } },
-  { id: "a4", title: "Chord Voicings", cat: "מתקדם", desc: "Open vs Closed, Drop-2, Drop-3 — על הגיטרה",
-    content: ["Voicing = הסידור הספציפי של תווי האקורד (אילו אוקטבות, איזה סדר).","Close voicing: כל התווים צמודים ככל האפשר. צליל צפוף ו\"שמן\".","Open voicing: התווים מפוזרים על פני אוקטבות. צליל פתוח ומרווח.","Drop-2: לוקחים את התו השני מלמעלה ב-close voicing ומורידים אוקטבה. הvoicing הנפוץ ביותר בגיטרת ג'אז!","Drop-3: אותו רעיון, התו השלישי מלמעלה יורד אוקטבה. יוצר voicings רחבים.","על הגיטרה, close voicings קשים לנגינה (מרווחי אצבעות קטנים מדי). Drop-2 ו-Drop-3 מתאימים מצוין."],
-    quiz: { q: "מהו Drop-2 voicing?", opts: ["מורידים את ה-Bass אוקטבה","מורידים את התו השני מלמעלה אוקטבה","מורידים שני תווים","מוסיפים תו שני"], ans: 1 } },
-  { id: "a5", title: "תווים לא-הרמוניים", cat: "מתקדם", desc: "Passing tones, neighbor tones, suspensions, appoggiaturas",
-    content: ["Nonharmonic tones = תווים שלא שייכים לאקורד הנוכחי אבל יוצרים תנועה מלודית.","Passing Tone: תו מעבר בין שני תווים של האקורד. דוגמה: על Cmaj, E-F-G. ה-F הוא passing tone.","Neighbor Tone: תו שיוצא מתו של האקורד וחוזר אליו. E-F-E. ה-F הוא upper neighbor.","Suspension (sus): תו מהאקורד הקודם שנשאר ואז נפתר. 4-3 sus = ה-4 נשאר ואז יורד ל-3.","Appoggiatura: תו לא-הרמוני שנכנס בקפיצה (לא בצעד) ונפתר בצעד. \"הנחיתה\" על תו זר ואז תיקון.","בסולו גיטרה, כל bend, slide-in, hammer-on לתו \"לא נכון\" שנפתר — הוא nonharmonic tone. זה מה שיוצר ביטוי מוזיקלי."],
-    quiz: { q: "מהו Passing Tone?", opts: ["תו של האקורד","תו שעובר בין שני תווים הרמוניים","תו שחוזר על עצמו","תו בס"], ans: 1 } },
+  // ═══ Advanced (5 lessons) ═══
+  { id: "a1", title: "Modes in Depth", cat: "Advanced", desc: "Modes Deep Dive — color, usage and improvisation",
+    content: ["The trick: don't think of modes as \"a scale starting from a different place\". Think about the unique color.","Dorian: minor + major 6th. The jazzy sound. Carlos Santana, Pink Floyd.","Phrygian: minor + b2. Spanish, eastern, metal. Metallica (Wherever I May Roam), Megadeth.","Lydian: major + #4. Dreamy, floating. Joe Satriani (Flying in a Blue Dream), Steve Vai.","Mixolydian: major + b7. Bluesy, funky. AC/DC, Lynyrd Skynyrd, Grateful Dead.","Practice: play a drone note (root) and a scale over it. Notice the characteristic note of each mode."],
+    quiz: { q: "What is the characteristic note of Lydian?", opts: ["b2","b3","#4","b7"], ans: 2 } },
+  { id: "a2", title: "Modal Interchange", cat: "Advanced", desc: "Borrowing chords from a parallel mode",
+    content: ["Modal Interchange = using chords from a parallel mode. For example, using a chord from C Minor in a song in C Major.","The classic example: bVI-bVII-I. In C Major: Ab-Bb-C. The Ab and Bb come from C Minor (Aeolian).","Common uses: bIII (Eb in C Major), bVI (Ab), bVII (Bb), iv (Fm). All \"borrowed\" from minor.","Radiohead uses this extensively: Creep = I-III-IV-iv. The iv (Fm) is modal interchange from C Minor.","In metal: i-bVI-bVII-i sound familiar? That's modal interchange! The classic metal progression.","Tip: when a Major progression sounds \"too dark\" — there's probably modal interchange involved."],
+    quiz: { q: "bVI in the key of C Major is:", opts: ["A Major","Ab Major","F Major","Bb Major"], ans: 1 } },
+  { id: "a3", title: "Advanced Harmony", cat: "Advanced", desc: "Extended chords, alterations, reharmonization",
+    content: ["Extended chords: 9th, 11th, 13th. Add color beyond seventh chords.","C9 = C-E-G-Bb-D. C11 = C-E-G-Bb-D-F. C13 = C-E-G-Bb-D-F-A. In practice, some notes are omitted.","Altered chords: b9, #9, #11, b13. Jimi Hendrix chord (7#9) = E7#9 = E-G#-B-D-G. Happy and sad simultaneously.","Reharmonization: replacing a chord with another that serves the same function. ii instead of IV, Tritone substitution (bII7 instead of V7).","Tritone sub: G7 → Db7. Both share the same tritone (B-F). Creates a chromatic bass line: Dm7-Db7-Cmaj7 = ii-bII7-I.","In practice: start with ii-V-I and try different reharmonizations. Each gives a different color."],
+    quiz: { q: "What is Tritone Substitution?", opts: ["Replacing V with IV","Replacing V7 with bII7","Replacing I with vi","Replacing ii with IV"], ans: 1 } },
+  { id: "a4", title: "Chord Voicings", cat: "Advanced", desc: "Open vs Closed, Drop-2, Drop-3 — on guitar",
+    content: ["Voicing = the specific arrangement of chord tones (which octaves, what order).","Close voicing: all notes as close together as possible. Dense, \"thick\" sound.","Open voicing: notes spread across octaves. Open, spacious sound.","Drop-2: take the second note from the top in close voicing and drop it an octave. The most common voicing in jazz guitar!","Drop-3: same idea, the third note from the top drops an octave. Creates wide voicings.","On guitar, close voicings are hard to play (finger spans too small). Drop-2 and Drop-3 work perfectly."],
+    quiz: { q: "What is a Drop-2 voicing?", opts: ["Drop the bass an octave","Drop the second note from top an octave","Drop two notes","Add a second note"], ans: 1 } },
+  { id: "a5", title: "Non-Harmonic Tones", cat: "Advanced", desc: "Passing tones, neighbor tones, suspensions, appoggiaturas",
+    content: ["Nonharmonic tones = notes that don't belong to the current chord but create melodic movement.","Passing Tone: a transition note between two chord tones. Example: over Cmaj, E-F-G. The F is a passing tone.","Neighbor Tone: a note that leaves a chord tone and returns to it. E-F-E. The F is an upper neighbor.","Suspension (sus): a note from the previous chord that stays and then resolves. 4-3 sus = the 4 stays then descends to 3.","Appoggiatura: a non-harmonic tone approached by leap (not step) and resolved by step. \"Landing\" on a foreign note then correcting.","In guitar solos, every bend, slide-in, hammer-on to a \"wrong\" note that resolves — is a nonharmonic tone. That's what creates musical expression."],
+    quiz: { q: "What is a Passing Tone?", opts: ["A chord tone","A note that passes between two harmonic tones","A repeated note","A bass note"], ans: 1 } },
 ];
 
 /* ═══════════════════════════════════════════════════════════
@@ -649,7 +649,7 @@ export default function LearningCenterPage() {
   const [mainTab, setMainTab] = useState<MainTab>("lessons");
 
   /* ── Lessons state ── */
-  const [lessonCat, setLessonCat] = useState<LessonCategory>("יסודות");
+  const [lessonCat, setLessonCat] = useState<LessonCategory>("Fundamentals");
   const [openLesson, setOpenLesson] = useState<string | null>(null);
   const [quizPicked, setQuizPicked] = useState<number | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
@@ -1244,7 +1244,7 @@ export default function LearningCenterPage() {
   const MINOR_KEYS = ["Am","Em","Bm","F#m","C#m","G#m","Ebm","Bbm","Fm","Cm","Gm","Dm"];
   const filteredLessons = LESSONS.filter(l => l.cat === lessonCat);
   const activeLessonObj = openLesson ? LESSONS.find(l => l.id === openLesson) : null;
-  const LESSON_CATS: LessonCategory[] = ["יסודות","קצב","סקאלות","אינטרוולים","אקורדים","אקורדים דיאטוניים","פרוגרסיות","מתקדם"];
+  const LESSON_CATS: LessonCategory[] = ["Fundamentals","Rhythm","Scales","Intervals","Chords","Diatonic Chords","Progressions","Advanced"];
 
   /* ── Exercise modes that use the generic ear training UI ── */
   const isStandardEarMode = ["intervals","chords","scales","progressions"].includes(exMode);
@@ -1281,8 +1281,8 @@ export default function LearningCenterPage() {
       <div className="panel p-3 sm:p-5 mb-3">
         <div className="flex justify-between items-start">
           <div>
-            <div className="font-heading text-lg sm:text-xl font-bold text-[#D4A843]">מרכז למידה</div>
-            <div className="font-label text-[10px] text-[#555] mt-0.5">שיעורים, תרגילים וכלים מוזיקליים</div>
+            <div className="font-heading text-lg sm:text-xl font-bold text-[#D4A843]">Learning Center</div>
+            <div className="font-label text-[10px] text-[#555] mt-0.5">Lessons, exercises & music tools</div>
           </div>
           <div className="text-left">
             <div className="font-readout text-xl sm:text-2xl font-bold text-[#D4A843]">LV.{ls.level}</div>
@@ -1298,7 +1298,7 @@ export default function LearningCenterPage() {
 
       {/* ── Main Tabs ── */}
       <div className="flex gap-1 mb-3">
-        {([["lessons","שיעורים"],["exercises","תרגילים"],["tools","כלים"]] as [MainTab,string][]).map(([k,lbl]) => (
+        {([["lessons","Lessons"],["exercises","Exercises"],["tools","Tools"]] as [MainTab,string][]).map(([k,lbl]) => (
           <button key={k} onClick={() => setMainTab(k)}
             className={`font-label text-[11px] px-3 sm:px-4 py-2.5 sm:py-2 rounded-sm cursor-pointer transition-all flex-1 min-h-[36px] ${mainTab === k ? "bg-[#D4A843] text-[#0A0A0A]" : "text-[#555] border border-[#222]"}`}>{lbl}</button>
         ))}
@@ -1339,7 +1339,7 @@ export default function LearningCenterPage() {
         ) : (
           /* Single lesson view */
           <div>
-            <button onClick={() => setOpenLesson(null)} className="btn-ghost !text-[10px] !px-3 mb-3">חזרה לרשימה</button>
+            <button onClick={() => setOpenLesson(null)} className="btn-ghost !text-[10px] !px-3 mb-3">Back to list</button>
             <div className="panel p-3 sm:p-5 mb-3">
               <div className="font-heading text-base sm:text-lg font-bold text-[#D4A843] mb-1">{activeLessonObj.title}</div>
               <div className="font-label text-[10px] text-[#555] mb-3 sm:mb-4">{activeLessonObj.desc}</div>
@@ -1348,7 +1348,7 @@ export default function LearningCenterPage() {
               ))}
               {activeLessonObj.audioDemo && !activeLessonObj.steps && (
                 <button onClick={() => playLessonAudio(activeLessonObj.audioDemo)} className="btn-gold !text-[10px] mt-2 mb-4">
-                  &#9654; השמע דוגמה
+                  &#9654; Play example
                 </button>
               )}
               {!activeLessonObj.steps && activeLessonObj.fretboardRoot && activeLessonObj.fretboardNotes && (
@@ -1369,7 +1369,7 @@ export default function LearningCenterPage() {
               const vis = activeLessonObj.visual || "fretboard";
               return (
                 <div className="panel p-3 sm:p-5 mb-3">
-                  <div className="font-label text-[10px] text-[#D4A843] mb-3">למידה אינטראקטיבית — שלב {currentStep + 1} / {steps.length}</div>
+                  <div className="font-label text-[10px] text-[#D4A843] mb-3">Interactive learning — Step {currentStep + 1} / {steps.length}</div>
 
                   {/* Visualization area */}
                   <div className="bg-[#0d0d0d] border border-[#1a1a1a] rounded-sm p-2 sm:p-3 mb-3 overflow-x-auto">
@@ -1392,7 +1392,7 @@ export default function LearningCenterPage() {
                       onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
                       disabled={currentStep === 0}
                       className={`font-label text-[10px] px-3 sm:px-4 py-2.5 sm:py-2 rounded-sm border transition-all min-h-[36px] ${currentStep === 0 ? "border-[#1a1a1a] text-[#333] cursor-not-allowed" : "border-[#333] text-[#aaa] cursor-pointer hover:border-[#D4A843] hover:text-[#D4A843]"}`}>
-                      הקודם
+                      Previous
                     </button>
                     <button
                       onClick={() => {
@@ -1401,13 +1401,13 @@ export default function LearningCenterPage() {
                         }
                       }}
                       className="font-label text-[10px] px-3 sm:px-4 py-2.5 sm:py-2 rounded-sm bg-[#D4A843] text-[#0A0A0A] cursor-pointer hover:bg-[#e5b84a] transition-all min-h-[36px]">
-                      &#9654; נגן
+                      &#9654; Play
                     </button>
                     <button
                       onClick={() => setCurrentStep(Math.min(steps.length - 1, currentStep + 1))}
                       disabled={currentStep === steps.length - 1}
                       className={`font-label text-[10px] px-3 sm:px-4 py-2.5 sm:py-2 rounded-sm border transition-all min-h-[36px] ${currentStep === steps.length - 1 ? "border-[#1a1a1a] text-[#333] cursor-not-allowed" : "border-[#333] text-[#aaa] cursor-pointer hover:border-[#D4A843] hover:text-[#D4A843]"}`}>
-                      הבא
+                      Next
                     </button>
                     <div className="flex-1" />
                     <div className="font-readout text-[9px] text-[#444]">{currentStep + 1}/{steps.length}</div>
@@ -1415,7 +1415,7 @@ export default function LearningCenterPage() {
 
                   {/* Step list */}
                   <div className="border-t border-[#1a1a1a] pt-3">
-                    <div className="font-label text-[9px] text-[#555] mb-2">כל השלבים</div>
+                    <div className="font-label text-[9px] text-[#555] mb-2">All steps</div>
                     <div className="max-h-[200px] overflow-y-auto space-y-1">
                       {steps.map((s, i) => (
                         <div
@@ -1439,7 +1439,7 @@ export default function LearningCenterPage() {
             {/* Quiz */}
             {activeLessonObj.quiz && (
               <div className="panel p-3 sm:p-5 mb-3">
-                <div className="font-label text-[10px] text-[#D4A843] mb-3">בחן את עצמך</div>
+                <div className="font-label text-[10px] text-[#D4A843] mb-3">Test yourself</div>
                 <div className="text-[12px] text-[#ccc] mb-3">{activeLessonObj.quiz.q}</div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {activeLessonObj.quiz.opts.map((opt, i) => {
@@ -1459,10 +1459,10 @@ export default function LearningCenterPage() {
                   })}
                 </div>
                 {quizPicked !== null && quizPicked === activeLessonObj.quiz.ans && (
-                  <div className="text-[11px] text-[#22c55e] mt-2 text-center">נכון!</div>
+                  <div className="text-[11px] text-[#22c55e] mt-2 text-center">Correct!</div>
                 )}
                 {quizPicked !== null && quizPicked !== activeLessonObj.quiz.ans && (
-                  <div className="text-[11px] text-[#C41E3A] mt-2 text-center">לא נכון — נסו שוב</div>
+                  <div className="text-[11px] text-[#C41E3A] mt-2 text-center">Incorrect — try again</div>
                 )}
               </div>
             )}
@@ -1470,10 +1470,10 @@ export default function LearningCenterPage() {
             {/* Complete button */}
             {!ls.lessonsCompleted.includes(activeLessonObj.id) ? (
               <button onClick={() => completeLesson(activeLessonObj.id)} className="btn-gold w-full justify-center !py-3">
-                סיום שיעור (+50 XP)
+                Complete Lesson (+50 XP)
               </button>
             ) : (
-              <div className="text-center font-label text-[11px] text-[#D4A843] py-3">שיעור הושלם ✓</div>
+              <div className="text-center font-label text-[11px] text-[#D4A843] py-3">Lesson completed ✓</div>
             )}
           </div>
         )}
@@ -1511,7 +1511,7 @@ export default function LearningCenterPage() {
         {isConstructionMode && (
           <div>
             <div className="panel p-3 sm:p-4 mb-3">
-              <div className="font-label text-[10px] text-[#D4A843] mb-3">בנייה — בחר מצב</div>
+              <div className="font-label text-[10px] text-[#D4A843] mb-3">Construction — choose mode</div>
               <div className="flex gap-1 mb-4 flex-wrap">
                 {(["scale","interval","chord"] as ConSubMode[]).map(m => (
                   <button key={m} onClick={() => { setConSubMode(m); setConSelected(new Set()); setConRevealed(false); }}
@@ -1575,7 +1575,7 @@ export default function LearningCenterPage() {
                 Build: {conRoot} {conSubMode === "scale" ? conScale : conSubMode === "interval" ? conIvName : conChordType}
               </div>
               <div className="text-[10px] text-[#555] mb-3">
-                בחרו: {conSelected.size > 0 ? [...conSelected].join(", ") : "—"}
+                Selected: {conSelected.size > 0 ? [...conSelected].join(", ") : "—"}
               </div>
 
               {/* Clickable note grid */}
@@ -1612,8 +1612,8 @@ export default function LearningCenterPage() {
               </div>
 
               <div className="flex gap-2">
-                <button onClick={checkConstruction} className="btn-gold !text-[10px]" disabled={conRevealed}>בדוק</button>
-                <button onClick={() => { setConSelected(new Set()); setConRevealed(false); }} className="btn-ghost !text-[10px]">נקה</button>
+                <button onClick={checkConstruction} className="btn-gold !text-[10px]" disabled={conRevealed}>Check</button>
+                <button onClick={() => { setConSelected(new Set()); setConRevealed(false); }} className="btn-ghost !text-[10px]">Clear</button>
                 <button onClick={() => {
                   let expected = new Set<string>();
                   const cri = NOTES.indexOf(conRoot);
@@ -1629,7 +1629,7 @@ export default function LearningCenterPage() {
                   }
                   setConSelected(expected);
                   setConRevealed(true);
-                }} className="btn-ghost !text-[10px]">הצג תשובה</button>
+                }} className="btn-ghost !text-[10px]">Show answer</button>
               </div>
 
               {conRevealed && (() => {
@@ -1649,8 +1649,8 @@ export default function LearningCenterPage() {
                 return (
                   <div className="mt-3 text-center">
                     {correct
-                      ? <div className="font-heading text-lg text-[#22c55e]">נכון! +{conSubMode === "scale" ? 25 : conSubMode === "interval" ? 15 : 20} XP</div>
-                      : <div className="font-heading text-lg text-[#C41E3A]">לא מדויק — התווים הנכונים מסומנים</div>
+                      ? <div className="font-heading text-lg text-[#22c55e]">Correct! +{conSubMode === "scale" ? 25 : conSubMode === "interval" ? 15 : 20} XP</div>
+                      : <div className="font-heading text-lg text-[#C41E3A]">Not quite — the correct notes are highlighted</div>
                     }
                   </div>
                 );
@@ -1680,9 +1680,9 @@ export default function LearningCenterPage() {
             <div className="panel p-3 sm:p-4 mb-3">
               <div className="flex justify-between items-center mb-4">
                 <div className="font-label text-[10px] text-[#555]">
-                  {exMode === "fb-intervals" ? "מה האינטרוול בין שתי הנקודות?" :
-                   exMode === "fb-scales" ? "מהו הסולם המסומן?" :
-                   "מהו סוג האקורד?"}
+                  {exMode === "fb-intervals" ? "What is the interval between the two points?" :
+                   exMode === "fb-scales" ? "What is the highlighted scale?" :
+                   "What type of chord is this?"}
                 </div>
                 <div className="flex gap-2">
                   <button onClick={newQ} className="btn-gold !text-[10px]">New</button>
@@ -1756,7 +1756,7 @@ export default function LearningCenterPage() {
 
             <div className="panel p-6 mb-3">
               <div className="text-center mb-4">
-                <div className="font-label text-[10px] text-[#555] mb-2">זהה את התו שנשמע</div>
+                <div className="font-label text-[10px] text-[#555] mb-2">Identify the note you hear</div>
               </div>
               <div className="flex justify-center gap-3 mb-6">
                 <button onClick={newQ} className="w-16 h-16 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95 flex items-center justify-center"
@@ -1829,7 +1829,7 @@ export default function LearningCenterPage() {
               {ivConRoot && ivConInterval && (
                 <div className="text-center mb-4">
                   <div className="font-heading text-2xl text-[#D4A843]">Build {ivConInterval} from {ivConRoot}</div>
-                  <div className="text-[11px] text-[#555] mt-1">בחר את התו שנמצא {ivConInterval} מעל {ivConRoot}</div>
+                  <div className="text-[11px] text-[#555] mt-1">Select the note that is {ivConInterval} above {ivConRoot}</div>
                 </div>
               )}
 
@@ -1901,9 +1901,9 @@ export default function LearningCenterPage() {
               {chConRoot && chConType && (
                 <div className="text-center mb-4">
                   <div className="font-heading text-2xl text-[#D4A843]">Build: {chConRoot} {chConType}</div>
-                  <div className="text-[11px] text-[#555] mt-1">בחר את כל התווים של האקורד</div>
+                  <div className="text-[11px] text-[#555] mt-1">Select all notes of the chord</div>
                   <div className="text-[10px] text-[#666] mt-1">
-                    בחרת: {chConSelected.size > 0 ? [...chConSelected].join(", ") : "—"}
+                    Selected: {chConSelected.size > 0 ? [...chConSelected].join(", ") : "—"}
                   </div>
                 </div>
               )}
@@ -1928,8 +1928,8 @@ export default function LearningCenterPage() {
                     })}
                   </div>
                   <div className="flex justify-center gap-2">
-                    <button onClick={checkChordConstruction} className="btn-gold !text-[10px]" disabled={chConRevealed || chConSelected.size === 0}>בדוק</button>
-                    <button onClick={() => { setChConSelected(new Set()); setChConRevealed(false); }} className="btn-ghost !text-[10px]">נקה</button>
+                    <button onClick={checkChordConstruction} className="btn-gold !text-[10px]" disabled={chConRevealed || chConSelected.size === 0}>Check</button>
+                    <button onClick={() => { setChConSelected(new Set()); setChConRevealed(false); }} className="btn-ghost !text-[10px]">Clear</button>
                   </div>
                 </>
               )}
@@ -2566,7 +2566,7 @@ export default function LearningCenterPage() {
           <div className="panel p-3 sm:p-5">
             <div className="font-label text-[11px] text-[#D4A843] mb-4">Tempo Tapper</div>
             <div className="text-center mb-4">
-              <div className="text-[11px] text-[#666] mb-3">הקש על הכפתור בקצב שאתה רוצה למדוד</div>
+              <div className="text-[11px] text-[#666] mb-3">Tap the button at the tempo you want to measure</div>
               <button onClick={handleTap}
                 className="w-32 h-32 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95 flex items-center justify-center mx-auto"
                 style={{ background: "linear-gradient(145deg, #D4A843, #B8922E)", border: "3px solid #DFBD69", boxShadow: "0 6px 24px rgba(212,168,67,0.3)" }}>
@@ -2593,7 +2593,7 @@ export default function LearningCenterPage() {
         {toolTab === "iv-calc" && (<div>
           <div className="panel p-3 sm:p-5">
             <div className="font-label text-[11px] text-[#D4A843] mb-4">Interval Calculator</div>
-            <div className="text-[11px] text-[#666] mb-3">בחר תו התחלה ואינטרוול — רואה ושומע את התוצאה</div>
+            <div className="text-[11px] text-[#666] mb-3">Choose a starting note and interval — see and hear the result</div>
 
             <div className="mb-3">
               <div className="font-label text-[9px] text-[#555] mb-1">Starting Note</div>
@@ -2636,7 +2636,7 @@ export default function LearningCenterPage() {
         {toolTab === "piano" && (<div>
           <div className="panel p-3 sm:p-5 mb-3">
             <div className="font-heading text-lg font-bold text-[#D4A843] mb-3">Piano</div>
-            <div className="text-[11px] text-[#555] mb-4">לחצו על מקשים כדי לנגן. בחרו שורש + סקאלה להדגשה.</div>
+            <div className="text-[11px] text-[#555] mb-4">Click keys to play. Choose a root + scale to highlight.</div>
 
             {/* Root + Scale selectors */}
             <div className="mb-3">
