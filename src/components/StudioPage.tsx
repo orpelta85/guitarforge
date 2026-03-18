@@ -3265,7 +3265,7 @@ export default function StudioPage() {
               <div className="flex items-center gap-0.5 flex-1">
                 <button onClick={() => setSoundsTab("recordings")}
                   className={`text-[9px] px-2 py-0.5 rounded cursor-pointer transition-colors font-medium ${soundsTab === "recordings" ? "text-[#f59e0b] bg-[#f59e0b11]" : "text-[#555] hover:text-[#888]"}`}>
-                  {"\u05D4\u05E7\u05DC\u05D8\u05D5\u05EA"}
+                  Recordings
                 </button>
                 <button onClick={() => setSoundsTab("sounds")}
                   className={`text-[9px] px-2 py-0.5 rounded cursor-pointer transition-colors font-medium ${soundsTab === "sounds" ? "text-[#f59e0b] bg-[#f59e0b11]" : "text-[#555] hover:text-[#888]"}`}>
@@ -3293,8 +3293,8 @@ export default function StudioPage() {
                       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="1.5" className="mb-2">
                         <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/>
                       </svg>
-                      <span className="text-[10px] text-[#444]" dir="rtl">{"\u05D0\u05D9\u05DF \u05E7\u05D1\u05E6\u05D9\u05DD"}</span>
-                      <span className="text-[8px] text-[#333] mt-1" dir="rtl">{"\u05D2\u05E8\u05D5\u05E8 \u05E7\u05D1\u05E6\u05D9 \u05D0\u05D5\u05D3\u05D9\u05D5 \u05DC\u05DB\u05D0\u05DF"}</span>
+                      <span className="text-[10px] text-[#444]">No files</span>
+                      <span className="text-[8px] text-[#333] mt-1">Drag audio files here</span>
                     </>
                   )}
                   {soundsSubTab === "presets" && (
@@ -3303,7 +3303,7 @@ export default function StudioPage() {
                         <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
                       </svg>
                       <span className="text-[10px] text-[#555]">Coming soon...</span>
-                      <span className="text-[8px] text-[#333] mt-1" dir="rtl">{"\u05E4\u05E8\u05D9\u05E1\u05D8\u05D9\u05DD \u05DE\u05D5\u05DB\u05E0\u05D9\u05DD"}</span>
+                      <span className="text-[8px] text-[#333] mt-1">Presets ready</span>
                     </>
                   )}
                   {soundsSubTab === "loops" && (
@@ -3312,7 +3312,7 @@ export default function StudioPage() {
                         <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/>
                       </svg>
                       <span className="text-[10px] text-[#555]">Coming soon...</span>
-                      <span className="text-[8px] text-[#333] mt-1" dir="rtl">{"\u05DC\u05D5\u05E4\u05D9\u05DD \u05DE\u05D5\u05DB\u05E0\u05D9\u05DD"}</span>
+                      <span className="text-[8px] text-[#333] mt-1">Loops ready</span>
                     </>
                   )}
                 </div>
@@ -3344,7 +3344,7 @@ export default function StudioPage() {
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="1.5" className="mb-2">
                     <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
                   </svg>
-                  <span className="text-[10px] text-[#444]" dir="rtl">{"\u05D0\u05D9\u05DF \u05D4\u05E7\u05DC\u05D8\u05D5\u05EA \u05E9\u05DE\u05D5\u05E8\u05D5\u05EA"}</span>
+                  <span className="text-[10px] text-[#444]">No saved recordings</span>
                   <span className="text-[8px] text-[#333] mt-1">Export &gt; Save to Library</span>
                 </div>
               )}

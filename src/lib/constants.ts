@@ -59,7 +59,7 @@ export const STYLES = [
 export const CAT_GROUPS: Record<string, string[]> = {
   "Technique": ["Warm-Up", "Shred", "Legato", "Tapping", "Sweep", "Picking", "Arpeggios", "Slide", "Harmonics"],
   "Rhythm & Dynamics": ["Rhythm", "Dynamics", "Chords", "Tunings"],
-  "Theory": ["Fretboard", "Modes"],
+  "Theory": ["Fretboard", "Modes", "Keys"],
   "Musicality": ["Ear Training", "Improv", "Phrasing", "Bends"],
   "Creation": ["Riffs", "Composition", "Songs"],
 };

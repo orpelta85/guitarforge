@@ -1276,7 +1276,7 @@ export default function LearningCenterPage() {
      RENDER
      ═══════════════════════════════════════════════════════════ */
   return (
-    <div dir="rtl">
+    <div>
       {/* ── Header ── */}
       <div className="panel p-3 sm:p-5 mb-3">
         <div className="flex justify-between items-start">
@@ -1284,7 +1284,7 @@ export default function LearningCenterPage() {
             <div className="font-heading text-lg sm:text-xl font-bold text-[#D4A843]">Learning Center</div>
             <div className="font-label text-[10px] text-[#555] mt-0.5">Lessons, exercises & music tools</div>
           </div>
-          <div className="text-left">
+          <div className="text-right">
             <div className="font-readout text-xl sm:text-2xl font-bold text-[#D4A843]">LV.{ls.level}</div>
             <div className="font-readout text-[10px] text-[#555]">{ls.xp} XP</div>
           </div>
