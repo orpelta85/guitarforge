@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import FretboardChallenge from "./FretboardChallenge";
 
 /* ═══════════════════════════════════════════════════════════
@@ -15,15 +15,15 @@ const IV_NAMES = ["R","b2","2","b3","3","4","b5","5","b6","6","b7","7"];
 const ALL_INTERVALS = [
   { name: "m2", label: "Minor 2nd", st: 1, color: "#ef4444", ref: "Jaws" },
   { name: "M2", label: "Major 2nd", st: 2, color: "#f97316", ref: "Happy Birthday" },
-  { name: "m3", label: "Minor 3rd", st: 3, color: "#eab308", ref: "Smoke on the Water" },
+  { name: "m3", label: "Minor 3rd", st: 3, color: "#eab308", ref: "Greensleeves" },
   { name: "M3", label: "Major 3rd", st: 4, color: "#84cc16", ref: "When the Saints" },
   { name: "P4", label: "Perfect 4th", st: 5, color: "#22c55e", ref: "Here Comes the Bride" },
   { name: "TT", label: "Tritone", st: 6, color: "#14b8a6", ref: "Black Sabbath" },
   { name: "P5", label: "Perfect 5th", st: 7, color: "#06b6d4", ref: "Star Wars" },
-  { name: "m6", label: "Minor 6th", st: 8, color: "#3b82f6", ref: "The Entertainer" },
+  { name: "m6", label: "Minor 6th", st: 8, color: "#3b82f6", ref: "Go Down Moses" },
   { name: "M6", label: "Major 6th", st: 9, color: "#6366f1", ref: "My Bonnie" },
   { name: "m7", label: "Minor 7th", st: 10, color: "#8b5cf6", ref: "Somewhere (WSS)" },
-  { name: "M7", label: "Major 7th", st: 11, color: "#a855f7", ref: "Take On Me" },
+  { name: "M7", label: "Major 7th", st: 11, color: "#a855f7", ref: "Superman Theme" },
   { name: "P8", label: "Octave", st: 12, color: "#ec4899", ref: "Over the Rainbow" },
 ];
 const ALL_CHORDS = [
@@ -87,6 +87,10 @@ const PROG_PRESETS = [
   { g: "Jazz", n: "ii–V–I", ch: ["Bm7","E7","Amaj7"] },
   { g: "Grunge", n: "i–iv–i–v", ch: ["Em","Am","Em","Bm"] },
   { g: "Ballad", n: "I–vi–IV–V", ch: ["C","Am","F","G"] },
+  { g: "Progressive Metal", n: "i–bVI–bVII–iv", ch: ["Am","F","G","Dm"] },
+  { g: "Neo-Classical", n: "i–bII–V–i", ch: ["Am","Bb","E","Am"] },
+  { g: "Funk", n: "I7–IV7–I7–V7", ch: ["A7","D7","A7","E7"] },
+  { g: "Country", n: "I–IV–V–I", ch: ["A","D","E","A"] },
 ];
 const ACHIEVEMENTS = [
   { id: "first10", name: "First Steps", desc: "10 answers", need: 10, key: "total" },
@@ -1274,14 +1278,14 @@ export default function LearningCenterPage() {
   return (
     <div dir="rtl">
       {/* ── Header ── */}
-      <div className="panel p-5 mb-3">
+      <div className="panel p-3 sm:p-5 mb-3">
         <div className="flex justify-between items-start">
           <div>
-            <div className="font-heading text-xl font-bold text-[#D4A843]">מרכז למידה</div>
+            <div className="font-heading text-lg sm:text-xl font-bold text-[#D4A843]">מרכז למידה</div>
             <div className="font-label text-[10px] text-[#555] mt-0.5">שיעורים, תרגילים וכלים מוזיקליים</div>
           </div>
           <div className="text-left">
-            <div className="font-readout text-2xl font-bold text-[#D4A843]">LV.{ls.level}</div>
+            <div className="font-readout text-xl sm:text-2xl font-bold text-[#D4A843]">LV.{ls.level}</div>
             <div className="font-readout text-[10px] text-[#555]">{ls.xp} XP</div>
           </div>
         </div>
@@ -1296,7 +1300,7 @@ export default function LearningCenterPage() {
       <div className="flex gap-1 mb-3">
         {([["lessons","שיעורים"],["exercises","תרגילים"],["tools","כלים"]] as [MainTab,string][]).map(([k,lbl]) => (
           <button key={k} onClick={() => setMainTab(k)}
-            className={`font-label text-[11px] px-4 py-2 rounded-sm cursor-pointer transition-all flex-1 ${mainTab === k ? "bg-[#D4A843] text-[#0A0A0A]" : "text-[#555] border border-[#222]"}`}>{lbl}</button>
+            className={`font-label text-[11px] px-3 sm:px-4 py-2.5 sm:py-2 rounded-sm cursor-pointer transition-all flex-1 min-h-[36px] ${mainTab === k ? "bg-[#D4A843] text-[#0A0A0A]" : "text-[#555] border border-[#222]"}`}>{lbl}</button>
         ))}
       </div>
 
@@ -1308,7 +1312,7 @@ export default function LearningCenterPage() {
         <div className="flex gap-1 mb-3 flex-wrap">
           {LESSON_CATS.map(cat => (
             <button key={cat} onClick={() => { setLessonCat(cat); setOpenLesson(null); }}
-              className={`font-label text-[10px] px-3 py-1.5 rounded-sm cursor-pointer transition-all ${lessonCat === cat ? "bg-[#D4A843] text-[#0A0A0A]" : "text-[#555] border border-[#222]"}`}>{cat}</button>
+              className={`font-label text-[10px] px-3 py-2 sm:py-1.5 rounded-sm cursor-pointer transition-all min-h-[36px] ${lessonCat === cat ? "bg-[#D4A843] text-[#0A0A0A]" : "text-[#555] border border-[#222]"}`}>{cat}</button>
           ))}
         </div>
 
@@ -1319,7 +1323,7 @@ export default function LearningCenterPage() {
               const done = ls.lessonsCompleted.includes(l.id);
               return (
                 <div key={l.id} onClick={() => { setOpenLesson(l.id); setQuizPicked(null); setCurrentStep(0); }}
-                  className={`panel p-4 cursor-pointer hover:border-[#333] transition-all ${done ? "border-[#D4A843]/20" : ""}`}>
+                  className={`panel p-3 sm:p-4 cursor-pointer hover:border-[#333] transition-all ${done ? "border-[#D4A843]/20" : ""}`}>
                   <div className="flex items-center gap-3">
                     <div className={`led ${done ? "led-gold" : "led-off"}`} />
                     <div className="flex-1">
@@ -1336,9 +1340,9 @@ export default function LearningCenterPage() {
           /* Single lesson view */
           <div>
             <button onClick={() => setOpenLesson(null)} className="btn-ghost !text-[10px] !px-3 mb-3">חזרה לרשימה</button>
-            <div className="panel p-5 mb-3">
-              <div className="font-heading text-lg font-bold text-[#D4A843] mb-1">{activeLessonObj.title}</div>
-              <div className="font-label text-[10px] text-[#555] mb-4">{activeLessonObj.desc}</div>
+            <div className="panel p-3 sm:p-5 mb-3">
+              <div className="font-heading text-base sm:text-lg font-bold text-[#D4A843] mb-1">{activeLessonObj.title}</div>
+              <div className="font-label text-[10px] text-[#555] mb-3 sm:mb-4">{activeLessonObj.desc}</div>
               {activeLessonObj.content.map((block, i) => (
                 <p key={i} className="text-[12px] text-[#bbb] mb-3 leading-relaxed">{block}</p>
               ))}
@@ -1364,11 +1368,11 @@ export default function LearningCenterPage() {
               const rootNote = NOTES[rootMidi % 12];
               const vis = activeLessonObj.visual || "fretboard";
               return (
-                <div className="panel p-5 mb-3">
+                <div className="panel p-3 sm:p-5 mb-3">
                   <div className="font-label text-[10px] text-[#D4A843] mb-3">למידה אינטראקטיבית — שלב {currentStep + 1} / {steps.length}</div>
 
                   {/* Visualization area */}
-                  <div className="bg-[#0d0d0d] border border-[#1a1a1a] rounded-sm p-3 mb-3">
+                  <div className="bg-[#0d0d0d] border border-[#1a1a1a] rounded-sm p-2 sm:p-3 mb-3 overflow-x-auto">
                     {step.label && (
                       <div className="text-center font-readout text-[13px] text-[#D4A843] mb-2">{step.label}</div>
                     )}
@@ -1383,11 +1387,11 @@ export default function LearningCenterPage() {
                   <div className="text-[12px] text-[#ccc] leading-relaxed mb-4 min-h-[40px]">{step.text}</div>
 
                   {/* Navigation buttons */}
-                  <div className="flex gap-2 items-center mb-4">
+                  <div className="flex gap-2 items-center mb-4 flex-wrap">
                     <button
                       onClick={() => setCurrentStep(Math.max(0, currentStep - 1))}
                       disabled={currentStep === 0}
-                      className={`font-label text-[10px] px-4 py-2 rounded-sm border transition-all ${currentStep === 0 ? "border-[#1a1a1a] text-[#333] cursor-not-allowed" : "border-[#333] text-[#aaa] cursor-pointer hover:border-[#D4A843] hover:text-[#D4A843]"}`}>
+                      className={`font-label text-[10px] px-3 sm:px-4 py-2.5 sm:py-2 rounded-sm border transition-all min-h-[36px] ${currentStep === 0 ? "border-[#1a1a1a] text-[#333] cursor-not-allowed" : "border-[#333] text-[#aaa] cursor-pointer hover:border-[#D4A843] hover:text-[#D4A843]"}`}>
                       הקודם
                     </button>
                     <button
@@ -1396,13 +1400,13 @@ export default function LearningCenterPage() {
                           step.highlight.forEach((midi, i) => playNote(midi, i * 0.12));
                         }
                       }}
-                      className="font-label text-[10px] px-4 py-2 rounded-sm bg-[#D4A843] text-[#0A0A0A] cursor-pointer hover:bg-[#e5b84a] transition-all">
+                      className="font-label text-[10px] px-3 sm:px-4 py-2.5 sm:py-2 rounded-sm bg-[#D4A843] text-[#0A0A0A] cursor-pointer hover:bg-[#e5b84a] transition-all min-h-[36px]">
                       &#9654; נגן
                     </button>
                     <button
                       onClick={() => setCurrentStep(Math.min(steps.length - 1, currentStep + 1))}
                       disabled={currentStep === steps.length - 1}
-                      className={`font-label text-[10px] px-4 py-2 rounded-sm border transition-all ${currentStep === steps.length - 1 ? "border-[#1a1a1a] text-[#333] cursor-not-allowed" : "border-[#333] text-[#aaa] cursor-pointer hover:border-[#D4A843] hover:text-[#D4A843]"}`}>
+                      className={`font-label text-[10px] px-3 sm:px-4 py-2.5 sm:py-2 rounded-sm border transition-all min-h-[36px] ${currentStep === steps.length - 1 ? "border-[#1a1a1a] text-[#333] cursor-not-allowed" : "border-[#333] text-[#aaa] cursor-pointer hover:border-[#D4A843] hover:text-[#D4A843]"}`}>
                       הבא
                     </button>
                     <div className="flex-1" />
@@ -1434,16 +1438,16 @@ export default function LearningCenterPage() {
 
             {/* Quiz */}
             {activeLessonObj.quiz && (
-              <div className="panel p-5 mb-3">
+              <div className="panel p-3 sm:p-5 mb-3">
                 <div className="font-label text-[10px] text-[#D4A843] mb-3">בחן את עצמך</div>
                 <div className="text-[12px] text-[#ccc] mb-3">{activeLessonObj.quiz.q}</div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {activeLessonObj.quiz.opts.map((opt, i) => {
                     const isCorrect = i === activeLessonObj.quiz!.ans;
                     const isPicked = quizPicked === i;
                     return (
                       <button key={i} onClick={() => setQuizPicked(i)}
-                        className="py-2.5 px-3 rounded-sm text-[11px] border cursor-pointer transition-all"
+                        className="py-3 sm:py-2.5 px-3 rounded-sm text-[11px] border cursor-pointer transition-all min-h-[40px]"
                         style={quizPicked !== null
                           ? (isCorrect ? { background: "#22c55e", borderColor: "#22c55e", color: "#0A0A0A" }
                             : isPicked ? { background: "#C41E3A", borderColor: "#C41E3A", color: "#fff" }
@@ -1489,7 +1493,7 @@ export default function LearningCenterPage() {
             ["kb-notes","KB Notes"],["kb-intervals","KB Intervals"],["kb-scales","KB Scales"],["kb-chords","KB Chords"],["kb-ear","KB Ear"],
           ] as [ExMode,string][]).map(([m,lbl]) => (
             <button key={m} onClick={() => { setExMode(m); setRevealed(false); setAnswer(null); setFbTarget(null); setFbExAnswer(null); setFbExRevealed(false); }}
-              className={`font-label text-[10px] px-3 py-1.5 rounded-sm cursor-pointer transition-all ${exMode === m ? "bg-[#D4A843] text-[#0A0A0A]" : "text-[#555] border border-[#222]"}`}>{lbl}</button>
+              className={`font-label text-[10px] px-3 py-2 sm:py-1.5 rounded-sm cursor-pointer transition-all min-h-[36px] ${exMode === m ? "bg-[#D4A843] text-[#0A0A0A]" : "text-[#555] border border-[#222]"}`}>{lbl}</button>
           ))}
         </div>
 
@@ -1498,7 +1502,7 @@ export default function LearningCenterPage() {
           <div className="flex gap-1 mb-3">
             {([["exercise","Exercise"],["achievements","Achievements"],["reference","Reference"]] as [SubTab,string][]).map(([t,lbl]) => (
               <button key={t} onClick={() => setSubTab(t)}
-                className={`font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border flex-1 transition-all ${subTab === t ? "border-[#D4A843] text-[#D4A843]" : "border-[#222] text-[#444]"}`}>{lbl}</button>
+                className={`font-label text-[10px] px-3 py-2 sm:py-1 rounded-sm cursor-pointer border flex-1 transition-all min-h-[36px] ${subTab === t ? "border-[#D4A843] text-[#D4A843]" : "border-[#222] text-[#444]"}`}>{lbl}</button>
             ))}
           </div>
         )}
@@ -1506,9 +1510,9 @@ export default function LearningCenterPage() {
         {/* ── Construction Mode (expanded with sub-modes) ── */}
         {isConstructionMode && (
           <div>
-            <div className="panel p-4 mb-3">
+            <div className="panel p-3 sm:p-4 mb-3">
               <div className="font-label text-[10px] text-[#D4A843] mb-3">בנייה — בחר מצב</div>
-              <div className="flex gap-1 mb-4">
+              <div className="flex gap-1 mb-4 flex-wrap">
                 {(["scale","interval","chord"] as ConSubMode[]).map(m => (
                   <button key={m} onClick={() => { setConSubMode(m); setConSelected(new Set()); setConRevealed(false); }}
                     className={`font-label text-[10px] px-3 py-1.5 rounded-sm cursor-pointer border ${conSubMode === m ? "border-[#D4A843] text-[#D4A843] bg-[#D4A843]/8" : "border-[#222] text-[#555]"}`}>
@@ -1673,7 +1677,7 @@ export default function LearningCenterPage() {
               </div>
             </div>
 
-            <div className="panel p-4 mb-3">
+            <div className="panel p-3 sm:p-4 mb-3">
               <div className="flex justify-between items-center mb-4">
                 <div className="font-label text-[10px] text-[#555]">
                   {exMode === "fb-intervals" ? "מה האינטרוול בין שתי הנקודות?" :
@@ -2105,7 +2109,7 @@ export default function LearningCenterPage() {
 
           {/* Settings */}
           {showSettings && (
-            <div className="panel p-4 mb-3">
+            <div className="panel p-3 sm:p-4 mb-3">
               <div className="font-label text-[10px] text-[#D4A843] mb-3">Exercise Settings</div>
               {exMode === "intervals" && (<>
                 <div className="mb-3"><div className="font-label text-[9px] text-[#555] mb-1">Direction</div>
@@ -2200,7 +2204,7 @@ export default function LearningCenterPage() {
             </div>
           </div>
 
-          <div className="panel p-4 mb-3">
+          <div className="panel p-3 sm:p-4 mb-3">
             <div className="flex justify-between items-center mb-4">
               <div>
                 {fbTarget
@@ -2245,7 +2249,7 @@ export default function LearningCenterPage() {
 
         {/* Achievements */}
         {hasSubTabs && subTab === "achievements" && (
-          <div className="panel p-5">
+          <div className="panel p-3 sm:p-5">
             <div className="font-label text-[11px] text-[#D4A843] mb-4">Achievements ({ls.unlocked.length}/{ACHIEVEMENTS.length})</div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {ACHIEVEMENTS.map(a => {
@@ -2265,7 +2269,7 @@ export default function LearningCenterPage() {
 
         {/* Reference */}
         {hasSubTabs && subTab === "reference" && (
-          <div className="panel p-4">
+          <div className="panel p-3 sm:p-4">
             {exMode === "intervals" && (
               <div>
                 <div className="font-label text-[10px] text-[#D4A843] mb-3">Interval Reference — Click to hear</div>
@@ -2358,7 +2362,7 @@ export default function LearningCenterPage() {
               ))}
             </div>
           </div>
-          <div className="panel p-5 mb-3">
+          <div className="panel p-3 sm:p-5 mb-3">
             <div className="flex justify-between items-start mb-3">
               <div>
                 <div className="font-heading text-lg font-bold text-[#D4A843]">{root} {selScale}</div>
@@ -2383,7 +2387,7 @@ export default function LearningCenterPage() {
               ))}
             </div>
           </div>
-          <div className="panel p-4">
+          <div className="panel p-3 sm:p-4">
             <LCFretboard highlightNotes={scNotes} rootNote={root} showIntervals={showIv} />
           </div>
         </div>)}
@@ -2398,7 +2402,7 @@ export default function LearningCenterPage() {
               ))}
             </div>
           </div>
-          <div className="panel p-5">
+          <div className="panel p-3 sm:p-5">
             <div className="font-heading text-lg font-bold text-[#D4A843] mb-1">{root}{selChord === "major" ? "" : " " + selChord}</div>
             {chordLoading && <div className="font-label text-[10px] text-[#444] py-4">Loading...</div>}
             {chordData?.positions && (
@@ -2437,7 +2441,7 @@ export default function LearningCenterPage() {
               </div>
             )}
           </div>
-          <div className="panel p-4">
+          <div className="panel p-3 sm:p-4">
             <div className="font-label text-[9px] text-[#555] mb-2">
               {fbMode === "notes" ? `All notes — ${root} highlighted — click to hear` :
                fbMode === "scale" ? `${root} ${fbScale} — click to hear` :
@@ -2453,7 +2457,7 @@ export default function LearningCenterPage() {
 
         {/* ── Progressions Tool ── */}
         {toolTab === "progressions" && (<div>
-          <div className="panel p-5 mb-3">
+          <div className="panel p-3 sm:p-5 mb-3">
             <div className="font-label text-[11px] text-[#D4A843] mb-3">Chord Progression Builder</div>
             <div className="flex gap-2 flex-wrap mb-3">
               {progChords.map((ch, i) => (
@@ -2481,7 +2485,7 @@ export default function LearningCenterPage() {
               </label>
             </div>
           </div>
-          <div className="panel p-5">
+          <div className="panel p-3 sm:p-5">
             <div className="font-label text-[11px] text-[#D4A843] mb-3">Presets — click to load</div>
             {PROG_PRESETS.map(p => (
               <div key={p.g} className="flex items-center gap-3 py-2.5 border-b border-[#111] last:border-0 cursor-pointer hover:bg-[#0d0d0d] rounded-sm px-2 -mx-2 transition-all"
@@ -2496,7 +2500,7 @@ export default function LearningCenterPage() {
 
         {/* ── Circle of Fifths ── */}
         {toolTab === "circle" && (<div>
-          <div className="panel p-5 mb-3">
+          <div className="panel p-3 sm:p-5 mb-3">
             <div className="font-label text-[11px] text-[#D4A843] mb-4">Circle of Fifths</div>
             <div className="flex justify-center">
               <svg viewBox="0 0 340 340" className="w-72 h-72">
@@ -2533,7 +2537,7 @@ export default function LearningCenterPage() {
 
         {/* ── Intervals Tool ── */}
         {toolTab === "intervals" && (<div>
-          <div className="panel p-5">
+          <div className="panel p-3 sm:p-5">
             <div className="font-label text-[11px] text-[#D4A843] mb-3">Intervals from {root} — click to hear</div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
               {[
@@ -2559,7 +2563,7 @@ export default function LearningCenterPage() {
 
         {/* ── Tempo Tapper Tool ── */}
         {toolTab === "tempo" && (<div>
-          <div className="panel p-5">
+          <div className="panel p-3 sm:p-5">
             <div className="font-label text-[11px] text-[#D4A843] mb-4">Tempo Tapper</div>
             <div className="text-center mb-4">
               <div className="text-[11px] text-[#666] mb-3">הקש על הכפתור בקצב שאתה רוצה למדוד</div>
@@ -2587,7 +2591,7 @@ export default function LearningCenterPage() {
 
         {/* ── Interval Calculator Tool ── */}
         {toolTab === "iv-calc" && (<div>
-          <div className="panel p-5">
+          <div className="panel p-3 sm:p-5">
             <div className="font-label text-[11px] text-[#D4A843] mb-4">Interval Calculator</div>
             <div className="text-[11px] text-[#666] mb-3">בחר תו התחלה ואינטרוול — רואה ושומע את התוצאה</div>
 
@@ -2630,7 +2634,7 @@ export default function LearningCenterPage() {
 
         {/* ── Piano Tool ── */}
         {toolTab === "piano" && (<div>
-          <div className="panel p-5 mb-3">
+          <div className="panel p-3 sm:p-5 mb-3">
             <div className="font-heading text-lg font-bold text-[#D4A843] mb-3">Piano</div>
             <div className="text-[11px] text-[#555] mb-4">לחצו על מקשים כדי לנגן. בחרו שורש + סקאלה להדגשה.</div>
 

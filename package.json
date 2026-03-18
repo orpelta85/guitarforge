@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:edge": "start msedge http://localhost:3000 && next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
@@ -13,19 +14,12 @@
     "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.99.1",
     "@tombatossals/chords-db": "^0.5.1",
-    "@tonaljs/chord": "^6.1.2",
-    "@tonaljs/interval": "^5.1.0",
-    "@tonaljs/key": "^4.11.2",
-    "@tonaljs/note": "^4.12.1",
-    "@tonaljs/scale": "^4.13.4",
     "lamejs": "^1.2.1",
     "next": "16.1.6",
-    "pitchy": "^4.1.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-youtube": "^10.1.0",
     "recharts": "^3.8.0",
-    "tonal": "^6.4.3",
     "tone": "^15.1.22",
     "wavesurfer.js": "^7.12.2"
   },

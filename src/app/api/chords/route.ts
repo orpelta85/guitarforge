@@ -15,7 +15,8 @@ export async function GET(req: NextRequest) {
     "A": "A", "A#": "Bb", "Bb": "Bb", "B": "B",
   };
 
-  const folder = keyMap[key] || key;
+  if (!keyMap[key]) return NextResponse.json({ error: "Invalid key" }, { status: 400 });
+  const folder = keyMap[key];
 
   try {
     const chordFile = path.join(

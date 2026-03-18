@@ -289,6 +289,69 @@ const DRUM_INSTRUMENTS = [
 ] as const;
 const DRUM_STEPS = 16;
 
+const DRUM_PRESETS: { name: string; pattern: boolean[][] }[] = [
+  { name: "Basic Rock", pattern: [
+    [true,false,false,false,true,false,false,false,true,false,false,false,true,false,false,false], // Kick
+    [false,false,false,false,true,false,false,false,false,false,false,false,true,false,false,false], // Snare
+    [true,false,true,false,true,false,true,false,true,false,true,false,true,false,true,false], // HHC
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // HHO
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Clap
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Ride
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Tom Low
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Tom High
+  ]},
+  { name: "Metal Double Bass", pattern: [
+    [true,false,true,false,true,false,true,false,true,false,true,false,true,false,true,false], // Kick
+    [false,false,false,false,true,false,false,false,false,false,false,false,true,false,false,false], // Snare
+    [true,false,true,false,true,false,true,false,true,false,true,false,true,false,true,false], // HHC
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // HHO
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Clap
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Ride
+    [false,false,false,false,false,false,false,false,false,false,false,true,false,false,false,false], // Tom Low
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,true,false], // Tom High
+  ]},
+  { name: "Blast Beat", pattern: [
+    [true,false,true,false,true,false,true,false,true,false,true,false,true,false,true,false], // Kick
+    [false,true,false,true,false,true,false,true,false,true,false,true,false,true,false,true], // Snare
+    [true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true], // HHC
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // HHO
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Clap
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Ride
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Tom Low
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Tom High
+  ]},
+  { name: "Half-Time", pattern: [
+    [true,false,false,false,false,false,false,false,true,false,false,false,false,false,false,false], // Kick
+    [false,false,false,false,false,false,false,false,true,false,false,false,false,false,false,false], // Snare
+    [true,false,true,false,true,false,true,false,true,false,true,false,true,false,true,false], // HHC
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // HHO
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Clap
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Ride
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Tom Low
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Tom High
+  ]},
+  { name: "Shuffle", pattern: [
+    [true,false,false,false,false,false,true,false,true,false,false,false,false,false,true,false], // Kick
+    [false,false,false,false,true,false,false,false,false,false,false,false,true,false,false,false], // Snare
+    [true,false,false,true,false,false,true,false,false,true,false,false,true,false,false,true], // HHC
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // HHO
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Clap
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Ride
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Tom Low
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Tom High
+  ]},
+  { name: "Punk Fast", pattern: [
+    [true,false,false,false,true,false,false,false,true,false,false,false,true,false,false,false], // Kick
+    [false,false,true,false,false,false,true,false,false,false,true,false,false,false,true,false], // Snare
+    [true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true], // HHC
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // HHO
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Clap
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Ride
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Tom Low
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Tom High
+  ]},
+];
+
 function createEmptyDrumPattern(): boolean[][] {
   return DRUM_INSTRUMENTS.map(() => Array(DRUM_STEPS).fill(false));
 }
@@ -1265,6 +1328,66 @@ export default function StudioPage() {
     setExportProgress(0);
   }, [tracks, masterVol, ensureTone, projectName]);
 
+  // ── Export MP3 ──
+  const exportMp3 = useCallback(async () => {
+    if (tracks.length === 0) return;
+    setExporting(true);
+    setExportProgress(10);
+    const Tone = await ensureTone();
+    const maxDur = Math.max(...tracks.map((t) => {
+      const ws = wsRef.current[t.id];
+      return ws ? ws.getDuration() : 0;
+    }), 1);
+    try {
+      setExportProgress(20);
+      const buffer = await Tone.Offline(async ({ transport }) => {
+        const offGain = new Tone.Gain(masterVol / 100).toDestination();
+        for (const track of tracks) {
+          if (!track.audioUrl) continue;
+          const hasSolo = tracks.some((t) => t.solo);
+          const audible = hasSolo ? track.solo : !track.muted;
+          if (!audible) continue;
+          const player = new Tone.Player(track.audioUrl);
+          const eq = new Tone.EQ3(
+            track.effects.eq.enabled ? track.effects.eq.low : 0,
+            track.effects.eq.enabled ? track.effects.eq.mid : 0,
+            track.effects.eq.enabled ? track.effects.eq.high : 0,
+          );
+          const dist = new Tone.Distortion(track.effects.distortion.amount);
+          dist.wet.value = track.effects.distortion.enabled ? track.effects.distortion.wet : 0;
+          const ch = new Tone.Chorus(track.effects.chorus.frequency, track.effects.chorus.depth, 0);
+          ch.wet.value = track.effects.chorus.enabled ? track.effects.chorus.wet : 0;
+          const del = new Tone.FeedbackDelay(track.effects.delay.time, track.effects.delay.feedback);
+          del.wet.value = track.effects.delay.enabled ? track.effects.delay.wet : 0;
+          const rev = new Tone.Reverb(Math.max(0.1, track.effects.reverb.decay));
+          rev.wet.value = track.effects.reverb.enabled ? track.effects.reverb.wet : 0;
+          const chan = new Tone.Channel(
+            track.volume > 0 ? 20 * Math.log10(track.volume / 100) : -Infinity,
+            track.pan / 100,
+          );
+          player.chain(eq, dist, ch, del, rev, chan, offGain);
+          await Tone.loaded();
+          player.start(0);
+        }
+        transport.start(0);
+      }, maxDur, 2, 44100);
+      setExportProgress(60);
+      const mp3Blob = await audioBufferToMp3(buffer);
+      setExportProgress(90);
+      const url = URL.createObjectURL(mp3Blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${projectName.replace(/\s+/g, "-")}-${Date.now()}.mp3`;
+      a.click();
+      setExportProgress(100);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    } catch (err) {
+      alert("Export MP3 failed: " + (err instanceof Error ? err.message : String(err)));
+    }
+    setExporting(false);
+    setExportProgress(0);
+  }, [tracks, masterVol, ensureTone, projectName]);
+
   // ── WAV encoder ──
   function audioBufferToWav(buffer: { numberOfChannels: number; sampleRate: number; length: number; getChannelData: (ch: number) => Float32Array }): Blob {
     const numCh = buffer.numberOfChannels;
@@ -1302,6 +1425,35 @@ export default function StudioPage() {
       }
     }
     return new Blob([arrayBuf], { type: "audio/wav" });
+  }
+
+  // ── MP3 encoder (lamejs) ──
+  async function audioBufferToMp3(buffer: { numberOfChannels: number; sampleRate: number; length: number; getChannelData: (ch: number) => Float32Array }): Promise<Blob> {
+    const lamejs = await import("lamejs");
+    const Mp3Encoder = (lamejs as unknown as { Mp3Encoder: new (channels: number, sampleRate: number, kbps: number) => { encodeBuffer: (left: Int16Array, right?: Int16Array) => Int8Array; flush: () => Int8Array } }).Mp3Encoder;
+    const numCh = Math.min(buffer.numberOfChannels, 2);
+    const sampleRate = buffer.sampleRate;
+    const kbps = 192;
+    const encoder = new Mp3Encoder(numCh, sampleRate, kbps);
+    const left = new Int16Array(buffer.length);
+    const right = numCh === 2 ? new Int16Array(buffer.length) : left;
+    const leftF = buffer.getChannelData(0);
+    const rightF = numCh === 2 ? buffer.getChannelData(1) : leftF;
+    for (let i = 0; i < buffer.length; i++) {
+      left[i] = Math.max(-32768, Math.min(32767, Math.round(leftF[i] * 32767)));
+      right[i] = Math.max(-32768, Math.min(32767, Math.round(rightF[i] * 32767)));
+    }
+    const chunks: Int8Array[] = [];
+    const blockSize = 1152;
+    for (let i = 0; i < buffer.length; i += blockSize) {
+      const leftChunk = left.subarray(i, i + blockSize);
+      const rightChunk = numCh === 2 ? right.subarray(i, i + blockSize) : undefined;
+      const mp3buf = encoder.encodeBuffer(leftChunk, rightChunk);
+      if (mp3buf.length > 0) chunks.push(mp3buf);
+    }
+    const end = encoder.flush();
+    if (end.length > 0) chunks.push(end);
+    return new Blob(chunks as unknown as BlobPart[], { type: "audio/mp3" });
   }
 
   // ── Load saved recordings on mount ──
@@ -1739,9 +1891,9 @@ export default function StudioPage() {
   return (
     <div className="flex flex-col h-screen overflow-hidden select-none" style={{ background: "#0a0a0a", fontFamily: "'Inter', system-ui, sans-serif" }} dir="ltr">
       {/* ═══════════════════ TOP BAR ═══════════════════ */}
-      <div className="flex items-center h-11 px-3 gap-2 border-b flex-shrink-0" style={{ background: "#111111", borderColor: "#1e1e1e" }}>
+      <div className="flex items-center min-h-[44px] h-auto sm:h-11 px-1 sm:px-3 gap-1 sm:gap-2 border-b flex-shrink-0 flex-wrap py-1 sm:py-0" style={{ background: "#111111", borderColor: "#1e1e1e" }}>
         {/* Left: Project Name */}
-        <div className="flex items-center gap-2 min-w-[140px]">
+        <div className="flex items-center gap-2 min-w-0 sm:min-w-[140px]">
           {editingProjectName ? (
             <input autoFocus value={projectName}
               onChange={(e) => setProjectName(e.target.value)}
@@ -1750,7 +1902,7 @@ export default function StudioPage() {
               className="bg-[#1a1a1a] border border-[#f59e0b] rounded px-2 py-0.5 text-xs text-[#eee] outline-none w-32"
             />
           ) : (
-            <span className="text-xs text-[#ccc] font-medium cursor-pointer hover:text-[#f59e0b] transition-colors truncate max-w-[160px]"
+            <span className="text-xs text-[#ccc] font-medium cursor-pointer hover:text-[#f59e0b] transition-colors truncate max-w-[100px] sm:max-w-[160px]"
               onClick={() => setEditingProjectName(true)}>
               {projectName}
             </span>
@@ -1763,7 +1915,7 @@ export default function StudioPage() {
           <div className="relative">
             <button onClick={async () => { await setupMetronome(); setMetronomeOn(!metronomeOn); }}
               title="Metronome (M)"
-              className={`w-7 h-7 rounded flex items-center justify-center transition-all cursor-pointer ${metronomeOn ? "text-[#f59e0b] bg-[#f59e0b15]" : "text-[#555] hover:text-[#888]"}`}>
+              className={`w-8 h-8 sm:w-7 sm:h-7 rounded flex items-center justify-center transition-all cursor-pointer ${metronomeOn ? "text-[#f59e0b] bg-[#f59e0b15]" : "text-[#555] hover:text-[#888]"}`}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L8 22h8L12 2z"/><path d="M12 8l6-3"/></svg>
             </button>
             <button onClick={() => setShowMetronomeSettings(!showMetronomeSettings)}
@@ -1771,8 +1923,8 @@ export default function StudioPage() {
               &#9662;
             </button>
             {showMetronomeSettings && (
-              <div className="absolute top-9 left-0 z-50 bg-[#1a1a1a] border border-[#333] rounded-lg shadow-xl p-3 min-w-[160px]" onClick={(e) => e.stopPropagation()}>
-                <div className="text-[9px] text-[#888] mb-2 font-medium">Metronome Settings</div>
+              <div className="absolute top-9 left-0 z-50 bg-[#1a1a1a] border border-[#333] rounded-lg shadow-xl p-3 min-w-[160px] max-w-[90vw]" onClick={(e) => e.stopPropagation()}>
+                <div className="text-[10px] sm:text-[9px] text-[#888] mb-2 font-medium">Metronome Settings</div>
                 <label className="flex items-center gap-2 text-[9px] text-[#666]">
                   Volume
                   <input type="range" min={0} max={100} value={metronomeVol}
@@ -1827,8 +1979,8 @@ export default function StudioPage() {
               <span>{projectKey}</span>
             </button>
             {showKeyPicker && (
-              <div className="absolute top-8 left-0 z-50 bg-[#1a1a1a] border border-[#333] rounded-lg shadow-xl p-2 min-w-[140px]">
-                <div className="text-[8px] text-[#555] mb-1.5 font-medium uppercase tracking-wider">Project Key</div>
+              <div className="absolute top-8 left-0 z-50 bg-[#1a1a1a] border border-[#333] rounded-lg shadow-xl p-2 min-w-[140px] max-w-[90vw]">
+                <div className="text-[10px] sm:text-[8px] text-[#555] mb-1.5 font-medium uppercase tracking-wider">Project Key</div>
                 <div className="grid grid-cols-4 gap-0.5 mb-2">
                   {MUSICAL_KEYS.map((k) => (
                     <button key={k} onClick={() => { setProjectKey(k + (projectKey.includes("m") ? "m" : "")); }}
@@ -1847,9 +1999,9 @@ export default function StudioPage() {
         </div>
 
         {/* Center: Transport Controls */}
-        <div className="flex-1 flex items-center justify-center gap-1.5">
+        <div className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 flex-wrap">
           {/* Rewind */}
-          <button onClick={rewindToStart} title={`Rewind (${SHORTCUT_HINTS.rewind})`}
+          <button onClick={rewindToStart} title={`Rewind (${SHORTCUT_HINTS.rewind})`} aria-label="Rewind"
             className="w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer group hover:shadow-[0_0_10px_rgba(255,255,255,0.06)]"
             style={{ background: "linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%)", border: "1px solid #333", boxShadow: "0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)" }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-[#888] group-hover:text-[#ccc] transition-colors">
@@ -1858,7 +2010,7 @@ export default function StudioPage() {
           </button>
 
           {/* Stop */}
-          <button onClick={stopAll} title="Stop"
+          <button onClick={stopAll} title="Stop" aria-label="Stop"
             className="w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer group hover:shadow-[0_0_10px_rgba(255,255,255,0.06)]"
             style={{ background: "linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%)", border: "1px solid #333", boxShadow: "0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)" }}>
             <div className="w-3 h-3 rounded-[2px] bg-[#888] group-hover:bg-[#ccc] transition-colors" />
@@ -1866,7 +2018,7 @@ export default function StudioPage() {
 
           {/* Play */}
           {!playing ? (
-            <button onClick={playAll} title={`Play (${SHORTCUT_HINTS.play})`}
+            <button onClick={playAll} title={`Play (${SHORTCUT_HINTS.play})`} aria-label="Play"
               className="w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer group hover:shadow-[0_0_14px_rgba(34,197,94,0.25)]"
               disabled={tracks.length === 0}
               style={{
@@ -1879,7 +2031,7 @@ export default function StudioPage() {
               </svg>
             </button>
           ) : (
-            <button onClick={stopAll} title={`Pause (${SHORTCUT_HINTS.play})`}
+            <button onClick={stopAll} title={`Pause (${SHORTCUT_HINTS.play})`} aria-label="Pause"
               className="w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer hover:shadow-[0_0_14px_rgba(34,197,94,0.3)]"
               style={{
                 background: "linear-gradient(180deg, #2a8a2a 0%, #1a6a1a 100%)",
@@ -1894,7 +2046,7 @@ export default function StudioPage() {
 
           {/* Record */}
           {!isRec ? (
-            <button onClick={startRec} title={`Record (${SHORTCUT_HINTS.record})`}
+            <button onClick={startRec} title={`Record (${SHORTCUT_HINTS.record})`} aria-label="Record"
               className="w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer group hover:shadow-[0_0_12px_rgba(196,30,58,0.3)]"
               style={{
                 background: "linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%)",
@@ -1904,7 +2056,7 @@ export default function StudioPage() {
               <div className="w-3.5 h-3.5 rounded-full group-hover:brightness-125 transition-all" style={{ background: "radial-gradient(circle at 40% 35%, #ff4466 0%, #C41E3A 50%, #8a1525 100%)" }} />
             </button>
           ) : (
-            <button onClick={stopRec} title="Stop Recording"
+            <button onClick={stopRec} title="Stop Recording" aria-label="Stop Recording"
               className="w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer"
               style={{
                 background: "linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%)",
@@ -1917,7 +2069,7 @@ export default function StudioPage() {
           )}
 
           {/* Loop */}
-          <button onClick={() => setLooping(!looping)} title={`Loop (${SHORTCUT_HINTS.loop})`}
+          <button onClick={() => setLooping(!looping)} title={`Loop (${SHORTCUT_HINTS.loop})`} aria-label="Loop"
             className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer hover:shadow-[0_0_10px_rgba(245,158,11,0.15)] ${looping ? "shadow-[0_0_10px_rgba(245,158,11,0.25)]" : ""}`}
             style={{
               background: looping ? "linear-gradient(180deg, #3a3020 0%, #2a2010 100%)" : "linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%)",
@@ -1931,7 +2083,7 @@ export default function StudioPage() {
           <div className="w-px h-6 bg-[#222] mx-1" />
 
           {/* Time Display — segment-display style */}
-          <div className="px-3 py-1 rounded font-mono text-sm flex items-center min-w-[120px] justify-center relative overflow-hidden"
+          <div className="px-2 sm:px-3 py-1 rounded font-mono text-sm flex items-center min-w-[100px] sm:min-w-[120px] justify-center relative overflow-hidden"
             style={{ background: "#050505", border: "1px solid #1a1a1a", boxShadow: "inset 0 1px 4px rgba(0,0,0,0.5)" }}>
             <span className="text-[#f59e0b33] absolute tracking-[2px]" style={{ fontFamily: "'Courier New', monospace", fontSize: "15px" }}>88:88.8</span>
             <span className="text-[#f59e0b] relative tracking-[2px]" style={{ fontFamily: "'Courier New', monospace", fontSize: "15px", textShadow: "0 0 8px rgba(245,158,11,0.4), 0 0 2px rgba(245,158,11,0.6)" }}>{fmtTime(currentTime)}</span>
@@ -1947,9 +2099,9 @@ export default function StudioPage() {
         </div>
 
         {/* Right: Master volume + Export */}
-        <div className="flex items-center gap-3 min-w-[260px] justify-end">
+        <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 sm:min-w-[260px] justify-end">
           {/* Master volume */}
-          <div className="flex items-center gap-1.5">
+          <div className="hidden sm:flex items-center gap-1.5">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" className="flex-shrink-0">
               <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/>
             </svg>
@@ -1976,7 +2128,7 @@ export default function StudioPage() {
               <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
             </button>
             {showExportMenu && (
-              <div className="absolute top-9 right-0 z-50 bg-[#1e1e1e] border border-[#333] rounded-lg shadow-2xl py-1 min-w-[180px]"
+              <div className="absolute top-9 right-0 z-50 bg-[#1e1e1e] border border-[#333] rounded-lg shadow-2xl py-1 min-w-[180px] max-w-[90vw]"
                 onClick={(e) => e.stopPropagation()}>
                 <button onClick={() => { saveToLibrary(); }}
                   disabled={savingToLibrary}
@@ -1993,12 +2145,21 @@ export default function StudioPage() {
                   <span className="text-[14px]">{exporting ? "\u23F3" : "\uD83D\uDCE5"}</span>
                   <div className="flex-1">
                     <div className="font-medium">{exporting ? "Exporting..." : "Download WAV"}</div>
-                    <div className="text-[8px] text-[#666]">{exporting ? `${exportProgress}%` : "Export and download file"}</div>
+                    <div className="text-[8px] text-[#666]">{exporting ? `${exportProgress}%` : "Lossless audio file"}</div>
                     {exporting && (
                       <div className="w-full h-[3px] bg-[#222] rounded-full mt-1 overflow-hidden">
                         <div className="h-full bg-[#f59e0b] rounded-full transition-all duration-300" style={{ width: `${exportProgress}%` }} />
                       </div>
                     )}
+                  </div>
+                </button>
+                <button onClick={() => { exportMp3(); setShowExportMenu(false); }}
+                  disabled={exporting}
+                  className="w-full text-left text-[10px] text-[#ccc] hover:bg-[#2a2a2a] px-3 py-2 cursor-pointer transition-colors flex items-center gap-2 disabled:opacity-50">
+                  <span className="text-[14px]">{exporting ? "\u23F3" : "\uD83C\uDFB5"}</span>
+                  <div className="flex-1">
+                    <div className="font-medium">{exporting ? "Exporting..." : "Download MP3"}</div>
+                    <div className="text-[8px] text-[#666]">{exporting ? `${exportProgress}%` : "Compressed 192kbps"}</div>
                   </div>
                 </button>
               </div>
@@ -2007,7 +2168,7 @@ export default function StudioPage() {
 
           {/* Recordings panel toggle */}
           <button onClick={() => { setShowRecordingsPanel(!showRecordingsPanel); if (!showRecordingsPanel) setShowRightPanel(false); }}
-            className={`w-7 h-7 rounded flex items-center justify-center cursor-pointer transition-colors relative ${showRecordingsPanel ? "text-[#f59e0b] bg-[#f59e0b11]" : "text-[#555] hover:text-[#888]"}`}
+            className={`w-8 h-8 sm:w-7 sm:h-7 rounded flex items-center justify-center cursor-pointer transition-colors relative ${showRecordingsPanel ? "text-[#f59e0b] bg-[#f59e0b11]" : "text-[#555] hover:text-[#888]"}`}
             title="My Recordings">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/>
@@ -2019,7 +2180,7 @@ export default function StudioPage() {
 
           {/* Right panel toggle */}
           <button onClick={() => { setShowRightPanel(!showRightPanel); if (!showRightPanel) setShowRecordingsPanel(false); }}
-            className={`w-7 h-7 rounded flex items-center justify-center cursor-pointer transition-colors ${showRightPanel ? "text-[#f59e0b] bg-[#f59e0b11]" : "text-[#555] hover:text-[#888]"}`}
+            className={`w-8 h-8 sm:w-7 sm:h-7 rounded flex items-center justify-center cursor-pointer transition-colors ${showRightPanel ? "text-[#f59e0b] bg-[#f59e0b11]" : "text-[#555] hover:text-[#888]"}`}
             title="Import Sources">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18"/>
@@ -2031,7 +2192,7 @@ export default function StudioPage() {
       {/* ═══════════════════ MAIN LAYOUT ═══════════════════ */}
       <div className="flex flex-1 overflow-hidden">
         {/* ═══════════════════ LEFT SIDEBAR: Track List ═══════════════════ */}
-        <div className="flex-shrink-0 flex flex-col overflow-hidden" style={{ width: sidebarWidth, background: "#141414", borderRight: "1px solid #1e1e1e" }}>
+        <div className="flex-shrink-0 flex flex-col overflow-hidden" style={{ width: typeof window !== "undefined" && window.innerWidth < 640 ? Math.min(sidebarWidth, 160) : sidebarWidth, background: "#141414", borderRight: "1px solid #1e1e1e" }}>
           {/* Sidebar header with Add Track */}
           <div className="flex items-center h-[26px] px-2 gap-1 flex-shrink-0" style={{ background: "#181818", borderBottom: "1px solid #1e1e1e" }}>
             <div className="relative">
@@ -2842,6 +3003,23 @@ export default function StudioPage() {
                       <button onClick={() => {
                         setTracks((prev) => prev.map((t) => t.id === fxTrack.id ? { ...t, drumPattern: createEmptyDrumPattern() } : t));
                       }} className="text-[9px] text-[#555] hover:text-[#ef4444] cursor-pointer transition-colors">Clear</button>
+                      <select
+                        title="Drum preset"
+                        onChange={(e) => {
+                          const idx = Number(e.target.value);
+                          if (idx >= 0 && idx < DRUM_PRESETS.length) {
+                            setTracks((prev) => prev.map((t) => t.id === fxTrack.id ? { ...t, drumPattern: DRUM_PRESETS[idx].pattern.map(r => [...r]) } : t));
+                          }
+                          e.target.value = "";
+                        }}
+                        defaultValue=""
+                        className="bg-[#1a1a1a] text-[9px] text-[#888] border border-[#333] rounded px-2 py-0.5 cursor-pointer"
+                      >
+                        <option value="" disabled>Presets...</option>
+                        {DRUM_PRESETS.map((p, i) => (
+                          <option key={p.name} value={i}>{p.name}</option>
+                        ))}
+                      </select>
                     </div>
                     {/* Step numbers */}
                     <div className="flex items-center mb-1" style={{ paddingLeft: 72 }}>

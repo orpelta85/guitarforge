@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <rect width="192" height="192" rx="29" fill="#0a0a0a"/>
+  <rect x="29" y="29" width="134" height="134" rx="15" fill="none" stroke="#D4A843" stroke-width="4"/>
+  <text x="96" y="90.3" text-anchor="middle" dominant-baseline="central" font-family="Georgia, serif" font-weight="900" font-size="67" fill="#D4A843" font-style="italic">GF</text>
+  <text x="96" y="136.2" text-anchor="middle" font-family="Arial, sans-serif" font-weight="600" font-size="19" fill="#D4A84380" letter-spacing="4">PRACTICE</text>
+</svg>

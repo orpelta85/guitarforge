@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import type { Exercise } from "@/lib/types";
 import { COL } from "@/lib/constants";
+import { EXERCISES } from "@/lib/exercises";
 import { ytSearch, ssSearch } from "@/lib/helpers";
 import TimerBox from "./TimerBox";
 import MetronomeBox from "./MetronomeBox";
@@ -122,11 +123,18 @@ export default function ExerciseModal({ exercise: ex, mode, scale, style, week, 
 
   return (
     <div onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-      className="fixed inset-0 bg-black/93 z-[999] flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-[#111] border border-[#2a2a2a] rounded-sm max-w-[760px] w-full max-h-[94vh] overflow-auto">
+      className="exercise-modal-overlay">
+      <div className="exercise-modal-content">
+
+        {/* Close button — prominent fixed at top-right (Task 2) */}
+        <button type="button" onClick={onClose}
+          className="sticky top-3 float-left ml-3 z-10 w-9 h-9 rounded-full bg-[#222] border border-[#333] flex items-center justify-center text-[#888] text-lg cursor-pointer hover:bg-[#333] hover:text-white transition-colors"
+          aria-label="Close">
+          ×
+        </button>
 
         {/* Header */}
-        <div className="faceplate px-5 py-4 flex justify-between items-start">
+        <div className="faceplate px-3 sm:px-5 py-3 sm:py-4 flex justify-between items-start">
           <div className="flex-1">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="tag" style={{ border: `1px solid ${cc}60`, color: cc, background: cc + "15" }}>{ex.c}</span>
@@ -137,8 +145,8 @@ export default function ExerciseModal({ exercise: ex, mode, scale, style, week, 
             <div className="font-label text-[9px] text-[#1A1714]/40 mt-1">{ex.f}</div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0 ml-3">
-            {onDone && <button onClick={onDone} className="font-label text-[10px] px-3 py-1.5 rounded-sm bg-[#33CC33] text-[#0A0A0A] cursor-pointer">Done</button>}
-            <button onClick={onClose} className="w-7 h-7 rounded-full border border-[#1A1714]/20 flex items-center justify-center text-[#1A1714]/40 text-sm cursor-pointer hover:text-[#1A1714]/70">×</button>
+            {/* Task 5: Done button uses amber system instead of green */}
+            {onDone && <button type="button" onClick={onDone} className="btn-gold !text-[10px] !px-4 !py-1.5">Done ✓</button>}
           </div>
         </div>
 
@@ -156,7 +164,7 @@ export default function ExerciseModal({ exercise: ex, mode, scale, style, week, 
           ))}
         </div>
 
-        <div className="p-5">
+        <div className="p-3 sm:p-5">
 
           {/* ═══ PRACTICE TAB ═══ */}
           {tab === "practice" && (
@@ -220,7 +228,7 @@ export default function ExerciseModal({ exercise: ex, mode, scale, style, week, 
                 <div className="font-label text-[10px] text-[#D4A843] mb-2 flex items-center gap-2">
                   <div className="led led-gold" /> Guitar Pro Tab
                 </div>
-                <GpFileUploader exerciseId={String(ex.id)} />
+                <GpFileUploader exerciseId={String(ex.id)} tex={ex.tex || EXERCISES.find(e => e.id === ex.id)?.tex} />
                 <div className="flex gap-1 flex-wrap mt-2">
                   <a href={`https://guitarprotabs.org/search.php?search=${encodeURIComponent(ex.songName || ex.n)}`} target="_blank" rel="noopener noreferrer"
                     className="btn-ghost no-underline !text-[9px] !px-2 !py-1">Download tabs</a>

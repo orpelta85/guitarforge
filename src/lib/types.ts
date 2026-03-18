@@ -11,6 +11,7 @@ export interface Exercise {
   t: string;       // tips
   f: string;       // focus areas
   bt: boolean;     // needs backing track
+  tex?: string;    // AlphaTex notation for built-in tab display
   styles?: string[]; // applicable music styles
   ss?: boolean;    // needs Songsterr
   songId?: number;
@@ -60,7 +61,7 @@ export interface SongProgressMap {
 }
 
 export interface ExEditMap {
-  [id: number]: Partial<Exercise> & { notes?: string; ytUrl?: string; gpFileName?: string };
+  [id: string]: Partial<Exercise> & { notes?: string; ytUrl?: string; gpFileName?: string };
 }
 
 export interface SavedRecording {

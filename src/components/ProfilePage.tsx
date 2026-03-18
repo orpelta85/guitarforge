@@ -53,13 +53,13 @@ export default function ProfilePage() {
 
   return (
     <div>
-      <div className="panel p-5 mb-4">
+      <div className="panel p-3 sm:p-5 mb-4">
         <div className="font-heading text-xl font-bold text-[#D4A843]">Profile &amp; Settings</div>
         <div className="font-label text-[10px] text-[#555] mt-1">Personal info for AI-powered practice plans</div>
       </div>
 
       {/* Personal info */}
-      <div className="panel p-5 mb-3">
+      <div className="panel p-3 sm:p-5 mb-3">
         <div className="font-label text-[11px] text-[#D4A843] mb-4 flex items-center gap-2">
           <div className="led led-gold" /> Personal
         </div>
@@ -102,7 +102,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Genres */}
-      <div className="panel p-5 mb-3">
+      <div className="panel p-3 sm:p-5 mb-3">
         <div className="font-label text-[11px] text-[#D4A843] mb-3 flex items-center gap-2">
           <div className="led led-gold" /> Preferred Genres
         </div>
@@ -119,7 +119,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Goals & Artists */}
-      <div className="panel p-5 mb-3">
+      <div className="panel p-3 sm:p-5 mb-3">
         <div className="font-label text-[11px] text-[#D4A843] mb-3 flex items-center gap-2">
           <div className="led led-gold" /> Goals &amp; Inspiration
         </div>
@@ -137,9 +137,9 @@ export default function ProfilePage() {
       </div>
 
       {/* Save */}
-      <div className="flex gap-3 items-center">
-        <button onClick={save} className="btn-gold">Save Profile</button>
+      <div className="flex gap-3 items-center justify-end">
         {saved && <span className="font-label text-[11px] text-[#33CC33]">Saved</span>}
+        <button onClick={save} className="btn-gold w-full sm:w-auto">Save Profile</button>
       </div>
     </div>
   );

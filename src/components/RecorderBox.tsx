@@ -4,22 +4,149 @@ import type { SavedRecording } from "@/lib/types";
 
 interface RecorderBoxProps { storageKey: string; }
 
+const IDB_NAME = "gf-recorder";
+const IDB_STORE = "recordings";
+
+function openRecorderDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function idbSaveRecording(key: string, list: SavedRecording[], blobs: Map<number, Blob>): Promise<void> {
+  const db = await openRecorderDB();
+  const metaList = list.map((r, i) => ({ dt: r.dt, idx: i }));
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, "readwrite");
+    const store = tx.objectStore(IDB_STORE);
+    // Save metadata list
+    store.put(JSON.stringify(metaList), `meta-${key}`);
+    // Save each blob
+    for (const [idx, blob] of blobs.entries()) {
+      store.put(blob, `blob-${key}-${idx}`);
+    }
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function idbLoadRecordings(key: string): Promise<{ list: SavedRecording[]; blobs: Map<number, Blob> }> {
+  const db = await openRecorderDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, "readonly");
+    const store = tx.objectStore(IDB_STORE);
+    const metaReq = store.get(`meta-${key}`);
+    metaReq.onsuccess = () => {
+      if (!metaReq.result) {
+        resolve({ list: [], blobs: new Map() });
+        return;
+      }
+      const metaList: { dt: string; idx: number }[] = JSON.parse(metaReq.result);
+      const blobs = new Map<number, Blob>();
+      const list: SavedRecording[] = [];
+      let loaded = 0;
+      if (metaList.length === 0) { resolve({ list, blobs }); return; }
+      for (const meta of metaList) {
+        const blobReq = store.get(`blob-${key}-${meta.idx}`);
+        blobReq.onsuccess = () => {
+          if (blobReq.result instanceof Blob) {
+            blobs.set(meta.idx, blobReq.result);
+            list.push({ dt: meta.dt, d: URL.createObjectURL(blobReq.result) });
+          }
+          loaded++;
+          if (loaded === metaList.length) resolve({ list, blobs });
+        };
+        blobReq.onerror = () => { loaded++; if (loaded === metaList.length) resolve({ list, blobs }); };
+      }
+    };
+    metaReq.onerror = () => reject(metaReq.error);
+  });
+}
+
+async function idbDeleteRecording(key: string, idx: number, totalCount: number): Promise<void> {
+  const db = await openRecorderDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, "readwrite");
+    const store = tx.objectStore(IDB_STORE);
+    store.delete(`blob-${key}-${idx}`);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function migrateFromLocalStorage(key: string): Promise<SavedRecording[] | null> {
+  try {
+    const raw = localStorage.getItem("rec-" + key);
+    if (!raw) return null;
+    const oldList: SavedRecording[] = JSON.parse(raw);
+    if (!oldList.length) return null;
+
+    // Migrate: convert base64 data URLs to blobs in IndexedDB
+    const db = await openRecorderDB();
+    const metaList: { dt: string; idx: number }[] = [];
+    const tx = db.transaction(IDB_STORE, "readwrite");
+    const store = tx.objectStore(IDB_STORE);
+
+    for (let i = 0; i < oldList.length; i++) {
+      const item = oldList[i];
+      metaList.push({ dt: item.dt, idx: i });
+      // Convert base64 data URL to blob
+      try {
+        const resp = await fetch(item.d);
+        const blob = await resp.blob();
+        store.put(blob, `blob-${key}-${i}`);
+      } catch {
+        // If conversion fails, skip this recording
+      }
+    }
+    store.put(JSON.stringify(metaList), `meta-${key}`);
+
+    await new Promise<void>((resolve, reject) => {
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+
+    // Remove old localStorage data after successful migration
+    localStorage.removeItem("rec-" + key);
+    return oldList;
+  } catch {
+    return null;
+  }
+}
+
 export default function RecorderBox({ storageKey }: RecorderBoxProps) {
   const [isRec, setIsRec] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [savedList, setSavedList] = useState<SavedRecording[]>([]);
   const [micError, setMicError] = useState("");
-  const [storageWarning, setStorageWarning] = useState("");
   const [recTime, setRecTime] = useState(0);
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const blobMapRef = useRef<Map<number, Blob>>(new Map());
+  const nextIdxRef = useRef(0);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("rec-" + storageKey);
-      if (raw) setSavedList(JSON.parse(raw));
-    } catch { /* ok */ }
+    let cancelled = false;
+    (async () => {
+      // Try migration from localStorage first
+      const migrated = await migrateFromLocalStorage(storageKey);
+      if (cancelled) return;
+
+      // Load from IndexedDB
+      const { list, blobs } = await idbLoadRecordings(storageKey);
+      if (cancelled) return;
+      setSavedList(list);
+      blobMapRef.current = blobs;
+      nextIdxRef.current = Math.max(0, ...Array.from(blobs.keys())) + 1;
+    })();
+    return () => { cancelled = true; };
   }, [storageKey]);
 
   function startRecording() {
@@ -35,30 +162,20 @@ export default function RecorderBox({ storageKey }: RecorderBoxProps) {
       mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
       mr.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: mr.mimeType });
-        setAudioUrl(URL.createObjectURL(blob));
+        const url = URL.createObjectURL(blob);
+        setAudioUrl(url);
         stream.getTracks().forEach((t) => t.stop());
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const newItem: SavedRecording = { dt: new Date().toLocaleString("he-IL"), d: reader.result as string };
-          setSavedList((prev) => {
-            const next = [newItem, ...prev].slice(0, 10);
-            try {
-              localStorage.setItem("rec-" + storageKey, JSON.stringify(next));
-              // Check localStorage usage
-              let total = 0;
-              for (let i = 0; i < localStorage.length; i++) {
-                const k = localStorage.key(i);
-                if (k) total += (localStorage.getItem(k) || "").length;
-              }
-              if (total > 4 * 1024 * 1024) setStorageWarning("Storage is almost full. Old recordings may be lost.");
-              else setStorageWarning("");
-            } catch {
-              setStorageWarning("Storage is full! Cannot save more recordings.");
-            }
-            return next;
-          });
-        };
-        reader.readAsDataURL(blob);
+
+        const idx = nextIdxRef.current++;
+        const newItem: SavedRecording = { dt: new Date().toLocaleString("he-IL"), d: url };
+        setSavedList((prev) => {
+          const next = [newItem, ...prev].slice(0, 10);
+          blobMapRef.current.set(idx, blob);
+          // Save to IndexedDB
+          const metaList = next.map((r, i) => ({ dt: r.dt, idx: i === 0 ? idx : Array.from(blobMapRef.current.keys())[i] || i }));
+          idbSaveRecording(storageKey, next, blobMapRef.current).catch(() => {});
+          return next;
+        });
       };
       mr.start();
       mediaRef.current = mr;
@@ -107,7 +224,6 @@ export default function RecorderBox({ storageKey }: RecorderBoxProps) {
       </div>
 
       {micError && <div className="font-label text-[10px] text-[#C41E3A] mb-2">{micError}</div>}
-      {storageWarning && <div className="font-label text-[10px] text-[#D4A843] mb-2">{storageWarning}</div>}
 
       {audioUrl && (
         /* eslint-disable-next-line jsx-a11y/media-has-caption */

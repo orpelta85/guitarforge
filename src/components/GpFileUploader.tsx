@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 interface TrackInfo { index: number; name: string; volume: number; isMuted: boolean; isSolo: boolean }
 interface Bookmark { name: string; startBar: number; endBar: number }
 
-export default function GpFileUploader({ exerciseId }: { exerciseId?: string }) {
+export default function GpFileUploader({ exerciseId, tex }: { exerciseId?: string; tex?: string }) {
   const [fileData, setFileData] = useState<Uint8Array | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [savedIndicator, setSavedIndicator] = useState(false);
@@ -47,6 +47,8 @@ export default function GpFileUploader({ exerciseId }: { exerciseId?: string }) 
   const [showFretboard, setShowFretboard] = useState(false);
   const [activeNotes, setActiveNotes] = useState<{ fret: number; string: number }[]>([]);
   const [currentBeatInfo, setCurrentBeatInfo] = useState<string>("");
+  const [transpose, setTranspose] = useState(0);
+  const [texLoaded, setTexLoaded] = useState(false);
 
   const mainRef = useRef<HTMLDivElement>(null);
   const apiRef = useRef<any>(null);
@@ -88,7 +90,14 @@ export default function GpFileUploader({ exerciseId }: { exerciseId?: string }) 
     } catch {}
   }
 
+  // Auto-load AlphaTex if provided and no file uploaded
+  useEffect(() => {
+    if (!tex || fileData) return;
+    setTexLoaded(true);
+  }, [tex, fileData]);
+
   function handleFile(file: File) {
+    setTexLoaded(false);
     setFileName(file.name);
     setError(null); setReady(false); setLoading(true);
     setSongInfo(null); setPlayerReady(false); setCurrentBar(0); setTotalBars(0);
@@ -109,8 +118,11 @@ export default function GpFileUploader({ exerciseId }: { exerciseId?: string }) 
   }
 
   useEffect(() => {
-    if (!fileData || !mainRef.current) return;
+    if ((!fileData && !texLoaded) || !mainRef.current) return;
     let dead = false;
+    setLoading(true); setError(null); setReady(false);
+    setSongInfo(null); setPlayerReady(false); setCurrentBar(0); setTotalBars(0);
+    setActiveNotes([]); setCurrentBeatInfo("");
 
     (async () => {
       try {
@@ -209,7 +221,11 @@ export default function GpFileUploader({ exerciseId }: { exerciseId?: string }) 
           setLoading(false);
         });
 
-        api.load(fileData);
+        if (fileData) {
+          api.load(fileData);
+        } else if (tex) {
+          api.tex(tex);
+        }
       } catch (err) {
         if (!dead) { setError("Init: " + String(err)); setLoading(false); }
       }
@@ -224,7 +240,7 @@ export default function GpFileUploader({ exerciseId }: { exerciseId?: string }) 
       apiRef.current = null;
       if (workerBlobUrlRef.current) { URL.revokeObjectURL(workerBlobUrlRef.current); workerBlobUrlRef.current = null; }
     };
-  }, [fileData]);
+  }, [fileData, texLoaded]);
 
   const applyLoopRange = useCallback((start: number, end: number) => {
     const api = apiRef.current;
@@ -302,6 +318,19 @@ export default function GpFileUploader({ exerciseId }: { exerciseId?: string }) 
     const api = apiRef.current;
     if (api?.score?.tracks?.[i]) { api.renderTracks([api.score.tracks[i]]); setActiveTrack(i); }
   }
+  function doTranspose(delta: number) {
+    const api = apiRef.current;
+    if (!api?.score) return;
+    const newVal = transpose + delta;
+    for (const track of api.score.tracks) {
+      for (const staff of track.staves) {
+        staff.transpositionPitch = newVal;
+      }
+    }
+    api.render();
+    setTranspose(newVal);
+  }
+
   function setMasterVol(v: number) { if (apiRef.current) apiRef.current.masterVolume = v; setMasterVolume(v); }
   function setMetVol(v: number) { if (apiRef.current) apiRef.current.metronomeVolume = v; setMetronomeVolume(v); }
   function setCountIn(v: number) { if (apiRef.current) apiRef.current.countInVolume = v; setCountInVolume(v); }
@@ -397,7 +426,7 @@ export default function GpFileUploader({ exerciseId }: { exerciseId?: string }) 
 
   return (
     <div>
-      {!fileData ? (
+      {!fileData && !texLoaded ? (
         <div onDragOver={e => e.preventDefault()}
           onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f && /\.(gp[345x]?|gpx?)$/i.test(f.name)) handleFile(f); }}
           className="panel p-6 text-center cursor-pointer border-dashed !border-[#333] hover:!border-[#D4A843]/40 transition-all"
@@ -530,6 +559,14 @@ export default function GpFileUploader({ exerciseId }: { exerciseId?: string }) 
                     {tracks.map(t => <option key={t.index} value={t.index}>{t.name}</option>)}
                   </select>
                 )}
+
+                <div className="flex items-center gap-1">
+                  <span className="font-label text-[8px] text-[#555]">Transpose</span>
+                  <button onClick={() => doTranspose(-1)} className="font-readout text-[9px] px-1.5 py-0.5 rounded cursor-pointer border border-[#222] text-[#555] hover:text-[#D4A843]">-</button>
+                  <span className={`font-readout text-[9px] min-w-[20px] text-center ${transpose !== 0 ? "text-[#D4A843]" : "text-[#555]"}`}>{transpose > 0 ? `+${transpose}` : transpose}</span>
+                  <button onClick={() => doTranspose(1)} className="font-readout text-[9px] px-1.5 py-0.5 rounded cursor-pointer border border-[#222] text-[#555] hover:text-[#D4A843]">+</button>
+                  {transpose !== 0 && <button onClick={() => { setTranspose(0); doTranspose(-transpose); }} className="font-label text-[8px] text-[#555] hover:text-[#C41E3A] cursor-pointer">Reset</button>}
+                </div>
 
                 <div className="flex gap-1 ml-auto">
                   <button onClick={() => setShowFretboard(!showFretboard)}

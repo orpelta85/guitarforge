@@ -128,103 +128,163 @@ body::after {
   border-radius: 2px;
 }
 
-/* ── Gold Button (Primary — Footswitch feel) ── */
+/* ══════════════════════════════════════════════════════════════
+   GOLD BUTTON — Amp Footswitch Style
+   Beveled, metallic, with real pressed state
+   ══════════════════════════════════════════════════════════════ */
 .btn-gold {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   padding: 8px 20px;
-  background: var(--gold);
-  color: #0A0A0A;
+  background: linear-gradient(180deg, #E0BD5E 0%, #D4A843 40%, #B8922E 100%);
+  color: #1A1408;
   border: none;
-  border-bottom: 2px solid #8A7020;
-  border-radius: 2px;
+  border-top: 1px solid rgba(255,220,120,0.4);
+  border-radius: 3px;
   font-family: 'Barlow Condensed', sans-serif;
   font-weight: 700;
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.15);
   cursor: pointer;
-  transition: all 0.1s;
+  transition: all 0.08s ease;
   box-shadow:
-    0 2px 0 #8A7020,
-    0 3px 6px rgba(0,0,0,0.4);
+    0 1px 0 #8A7020,
+    0 2px 0 #6B5518,
+    0 3px 6px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.2),
+    inset 0 -1px 0 rgba(0,0,0,0.15);
+  position: relative;
 }
-.btn-gold:hover { background: var(--gold-light); }
+.btn-gold:hover {
+  background: linear-gradient(180deg, #EDCF72 0%, #DFBD69 40%, #C4A03A 100%);
+  box-shadow:
+    0 1px 0 #8A7020,
+    0 2px 0 #6B5518,
+    0 3px 8px rgba(0,0,0,0.5),
+    0 0 12px rgba(212,168,67,0.15),
+    inset 0 1px 0 rgba(255,255,255,0.25),
+    inset 0 -1px 0 rgba(0,0,0,0.15);
+}
 .btn-gold:active {
-  background: var(--gold-dark);
-  box-shadow: 0 0px 0 #8A7020;
+  background: linear-gradient(180deg, #B8922E 0%, #A6821E 40%, #8A7020 100%);
+  box-shadow:
+    0 0 0 transparent,
+    inset 0 2px 4px rgba(0,0,0,0.4),
+    inset 0 0 2px rgba(0,0,0,0.2);
   transform: translateY(2px);
-  border-bottom-width: 0;
+  border-top-color: transparent;
+  text-shadow: none;
 }
 
-/* ── Ghost Button (Secondary — Recessed panel button) ── */
+/* ══════════════════════════════════════════════════════════════
+   GHOST BUTTON — Brushed Metal Panel Button
+   ══════════════════════════════════════════════════════════════ */
 .btn-ghost {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   padding: 8px 20px;
-  background: transparent;
+  background: linear-gradient(180deg, #1E1C18 0%, #161412 50%, #121110 100%);
   color: var(--text-secondary);
-  border: 1px solid var(--gray-warm-100);
-  border-radius: 2px;
+  border: 1px solid #2A2824;
+  border-radius: 3px;
   font-family: 'Barlow Condensed', sans-serif;
   font-weight: 600;
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   cursor: pointer;
-  transition: all 0.15s;
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
-  border-color: #2A2824;
+  transition: all 0.12s ease;
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.04),
+    inset 0 -1px 0 rgba(0,0,0,0.2);
+  position: relative;
 }
 .btn-ghost:hover {
-  border-color: #5C5850;
-  color: #fff;
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.2), 0 0 8px rgba(212,168,67,0.08);
+  border-color: #3D3A34;
+  color: #ddd;
+  background: linear-gradient(180deg, #252320 0%, #1C1A16 50%, #161412 100%);
+  box-shadow:
+    0 1px 3px rgba(0,0,0,0.4),
+    0 0 8px rgba(212,168,67,0.06),
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    inset 0 -1px 0 rgba(0,0,0,0.2);
+}
+.btn-ghost:active {
+  background: linear-gradient(180deg, #0E0D0C 0%, #141210 100%);
+  box-shadow:
+    inset 0 2px 4px rgba(0,0,0,0.5);
+  transform: translateY(1px);
 }
 .btn-ghost.active {
   border-color: var(--gold);
   color: var(--gold);
+  box-shadow:
+    0 0 8px rgba(212,168,67,0.1),
+    inset 0 1px 0 rgba(255,255,255,0.04);
 }
 
-/* ── Danger Button ── */
+/* ══════════════════════════════════════════════════════════════
+   DANGER BUTTON — Red Alert Footswitch
+   ══════════════════════════════════════════════════════════════ */
 .btn-danger {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   padding: 8px 20px;
-  background: var(--crimson);
+  background: linear-gradient(180deg, #D42040 0%, #C41E3A 40%, #9A1830 100%);
   color: #fff;
   border: none;
-  border-bottom: 2px solid var(--crimson-dark);
-  border-radius: 2px;
+  border-top: 1px solid rgba(255,100,100,0.2);
+  border-radius: 3px;
   font-family: 'Barlow Condensed', sans-serif;
   font-weight: 700;
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   cursor: pointer;
-  transition: all 0.15s;
-  box-shadow: 0 2px 0 var(--crimson-dark), 0 3px 6px rgba(0,0,0,0.4);
+  transition: all 0.08s ease;
+  box-shadow:
+    0 1px 0 #7A1020,
+    0 2px 0 #5A0818,
+    0 3px 6px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.1);
 }
-.btn-danger:hover { background: #d62040; }
+.btn-danger:hover {
+  background: linear-gradient(180deg, #E42848 0%, #D62040 40%, #AA1830 100%);
+  box-shadow:
+    0 1px 0 #7A1020,
+    0 2px 0 #5A0818,
+    0 3px 8px rgba(0,0,0,0.5),
+    0 0 10px rgba(196,30,58,0.15),
+    inset 0 1px 0 rgba(255,255,255,0.12);
+}
 .btn-danger:active {
+  background: linear-gradient(180deg, #9A1830 0%, #8A1028 100%);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
   transform: translateY(2px);
-  box-shadow: none;
-  border-bottom-width: 0;
+  border-top-color: transparent;
 }
 
-/* ── Tag / Chip ── */
+/* ── Tag / Chip — more prominent ── */
 .tag {
-  display: inline-block;
-  padding: 2px 10px;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
   border-radius: 2px;
   font-family: 'Barlow Condensed', sans-serif;
   font-weight: 600;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  background: rgba(255,255,255,0.02);
 }
 
 /* ── LED Indicator (with bezel) ── */
@@ -291,54 +351,72 @@ body::after {
   );
 }
 
-/* ── Input (Recessed / jack-input style) ── */
+/* ══════════════════════════════════════════════════════════════
+   INPUT — Amp Jack Input Style (recessed, dark ring)
+   ══════════════════════════════════════════════════════════════ */
 .input {
   width: 100%;
-  background: #070707;
+  background: #050505;
   border: 1px solid #1A1A1A;
   color: var(--text-primary);
   padding: 8px 12px;
-  border-radius: 3px;
+  border-radius: 4px;
   font-family: 'Inter', sans-serif;
   font-size: 14px;
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+  box-shadow:
+    inset 0 2px 6px rgba(0,0,0,0.6),
+    inset 0 0 0 1px rgba(0,0,0,0.3),
+    0 1px 0 rgba(255,255,255,0.02);
 }
 .input:focus {
-  border-color: #8A7020;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.5), 0 0 0 1px rgba(212,168,67,0.15);
+  border-color: #6B5518;
+  box-shadow:
+    inset 0 2px 6px rgba(0,0,0,0.6),
+    inset 0 0 0 1px rgba(0,0,0,0.3),
+    0 0 0 2px rgba(212,168,67,0.12),
+    0 0 8px rgba(212,168,67,0.06);
 }
-.input::placeholder { color: #444; }
+.input::placeholder { color: #3a3a3a; }
 .input-gold { color: var(--gold); font-family: 'JetBrains Mono', monospace; }
 
 /* ── Select ── */
 select {
   appearance: auto;
-  background: #070707;
+  background: #050505;
   border: 1px solid #1A1A1A;
   color: var(--text-primary);
   padding: 8px 12px;
-  border-radius: 3px;
+  border-radius: 4px;
   font-size: 14px;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+  box-shadow:
+    inset 0 2px 6px rgba(0,0,0,0.6),
+    0 1px 0 rgba(255,255,255,0.02);
 }
 select:focus {
-  border-color: #8A7020;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.5), 0 0 0 1px rgba(212,168,67,0.15);
+  border-color: #6B5518;
+  box-shadow:
+    inset 0 2px 6px rgba(0,0,0,0.6),
+    0 0 0 2px rgba(212,168,67,0.12);
   outline: none;
 }
 option { background: var(--bg-secondary); color: #e5e5e5; }
 optgroup { background: var(--bg-primary); color: var(--gray-warm-400); }
 
-/* ── Toggle Switch ── */
+/* ══════════════════════════════════════════════════════════════
+   TOGGLE SWITCH — Amp Toggle Style (heavy metal lever)
+   ══════════════════════════════════════════════════════════════ */
 .toggle-switch {
-  width: 40px;
-  height: 20px;
-  background: #0A0A0A;
-  border: 1px solid #2A2824;
-  border-radius: 3px;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+  width: 42px;
+  height: 22px;
+  background: #060606;
+  border: 1px solid #222;
+  border-radius: 4px;
+  box-shadow:
+    inset 0 2px 6px rgba(0,0,0,0.7),
+    inset 0 0 0 1px rgba(0,0,0,0.4),
+    0 1px 0 rgba(255,255,255,0.03);
   position: relative;
   cursor: pointer;
   transition: all 0.15s;
@@ -348,19 +426,32 @@ optgroup { background: var(--bg-primary); color: var(--gray-warm-400); }
   position: absolute;
   top: 2px;
   left: 2px;
-  width: 16px;
-  height: 14px;
-  background: linear-gradient(180deg, #3D3A34, #2A2824);
-  border-radius: 2px;
+  width: 17px;
+  height: 16px;
+  background: linear-gradient(180deg, #4A4640 0%, #3D3A34 30%, #2A2824 100%);
+  border: 1px solid #1A1A1A;
+  border-top-color: #5C5850;
+  border-radius: 3px;
   transition: transform 0.15s;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  box-shadow:
+    0 1px 3px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.08);
 }
 .toggle-switch.on::after {
   transform: translateX(18px);
-  background: linear-gradient(180deg, #D4A843, #B8922F);
+  background: linear-gradient(180deg, #E0BD5E 0%, #D4A843 30%, #B8922F 100%);
+  border-color: #8A7020;
+  border-top-color: rgba(255,220,120,0.4);
+  box-shadow:
+    0 1px 3px rgba(0,0,0,0.4),
+    0 0 6px rgba(212,168,67,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.15);
 }
 .toggle-switch.on {
-  border-color: #8A7020;
+  border-color: #6B5518;
+  box-shadow:
+    inset 0 2px 6px rgba(0,0,0,0.7),
+    0 0 8px rgba(212,168,67,0.08);
 }
 
 /* ── Gold Divider ── */
@@ -376,6 +467,10 @@ optgroup { background: var(--bg-primary); color: var(--gray-warm-400); }
 ::-webkit-scrollbar-thumb { background: var(--gray-warm-100); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--gold-dark); }
 
+/* ── Scrollbar hide utility ── */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
 /* ── Audio ── */
 audio { filter: invert(1) sepia(0.3) hue-rotate(-15deg); }
 audio::-webkit-media-controls-panel { background: #1a1a1a; }
@@ -384,7 +479,9 @@ audio::-webkit-media-controls-panel { background: #1a1a1a; }
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button { opacity: 0.3; }
 
-/* ── Studio DAW ── */
+/* ══════════════════════════════════════════════════════════════
+   STUDIO DAW
+   ══════════════════════════════════════════════════════════════ */
 .studio-track {
   display: flex;
   border: 1px solid var(--gray-warm-100);
@@ -511,4 +608,295 @@ input[type="number"]::-webkit-outer-spin-button { opacity: 0.3; }
   border-radius: 2px;
   cursor: pointer;
   border: none;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MOBILE RESPONSIVENESS (375px+)
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 639px) {
+  body {
+    font-size: 14px;
+  }
+
+  .font-label {
+    font-size: 11px;
+  }
+
+  .panel {
+    border-radius: 2px;
+  }
+
+  .panel-header {
+    padding: 8px 12px;
+    font-size: 10px;
+  }
+
+  .segment-display {
+    font-size: 14px;
+    padding: 4px 10px;
+  }
+
+  /* Smaller buttons on mobile */
+  .btn-gold,
+  .btn-ghost,
+  .btn-danger {
+    padding: 6px 14px;
+    font-size: 11px;
+  }
+
+  /* Tags slightly smaller */
+  .tag {
+    font-size: 10px;
+    padding: 2px 7px;
+  }
+
+  /* Inputs */
+  .input {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+  select {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+
+  /* Studio track label narrower on mobile */
+  .studio-track-label {
+    width: 100px;
+    min-width: 100px;
+    padding: 6px;
+  }
+
+  /* Studio transport tighter */
+  .studio-transport {
+    gap: 4px;
+  }
+  .studio-btn-rec {
+    width: 30px;
+    height: 30px;
+  }
+  .studio-btn-rec::after {
+    width: 12px;
+    height: 12px;
+  }
+
+  /* FX panel tighter */
+  .studio-fx-panel {
+    padding: 10px;
+  }
+
+  /* Ensure selects don't overflow on small screens */
+  select {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* ── Line clamp utility ── */
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PANEL ELEVATION SYSTEM — Task 7
+   ══════════════════════════════════════════════════════════════ */
+.panel-primary {
+  background: #161616;
+  border: 1px solid #3D3A34;
+  border-radius: 3px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.04),
+    inset 0 -1px 0 rgba(0,0,0,0.3),
+    0 2px 12px rgba(0,0,0,0.5),
+    0 0 20px rgba(212,168,67,0.04);
+}
+.panel-secondary {
+  background: #131313;
+  border: 1px solid #222;
+  border-radius: 3px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.02),
+    inset 0 -1px 0 rgba(0,0,0,0.2),
+    0 1px 4px rgba(0,0,0,0.3);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MICRO-INTERACTIONS — Task 10
+   ══════════════════════════════════════════════════════════════ */
+
+/* Button hover scale */
+.btn-gold,
+.btn-ghost,
+.btn-danger {
+  transition: all 0.15s ease;
+}
+.btn-gold:hover {
+  transform: scale(1.02);
+}
+.btn-ghost:hover {
+  transform: scale(1.02);
+}
+
+/* Card hover: border brightens */
+.panel:hover,
+.panel-primary:hover,
+.panel-secondary:hover {
+  border-color: #3D3A34;
+  transition: border-color 0.15s ease;
+}
+
+/* Page fade-in animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Progress glow effect — Task 3 */
+.progress-glow {
+  text-shadow: 0 0 12px rgba(212,168,67,0.5), 0 0 24px rgba(212,168,67,0.2);
+}
+.progress-glow-green {
+  text-shadow: 0 0 12px rgba(51,204,51,0.5), 0 0 24px rgba(51,204,51,0.2);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   BOTTOM TAB BAR — Task 1 (mobile only)
+   ══════════════════════════════════════════════════════════════ */
+.bottom-tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: #0d0d0d;
+  border-top: 1px solid #1a1a1a;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 4px 0 env(safe-area-inset-bottom, 6px);
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.6);
+}
+.bottom-tab-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 4px 4px;
+  min-width: 56px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: #555;
+  transition: color 0.15s ease;
+}
+.bottom-tab-item.active {
+  color: #D4A843;
+}
+.bottom-tab-item .tab-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* More sheet overlay */
+.more-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 49;
+  background: rgba(0,0,0,0.7);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+.more-sheet {
+  position: fixed;
+  bottom: 60px;
+  left: 8px;
+  right: 8px;
+  z-index: 51;
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 12px 8px;
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.6);
+}
+
+/* Mobile body padding for bottom bar */
+@media (max-width: 639px) {
+  .main-content-area {
+    padding-bottom: 72px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   EXERCISE MODAL FULL OVERLAY — Task 2
+   ══════════════════════════════════════════════════════════════ */
+.exercise-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: rgba(0,0,0,0.92);
+  overflow-y: auto;
+}
+.exercise-modal-content {
+  background: #111;
+  border: 1px solid #2a2a2a;
+  border-radius: 3px;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+@media (min-width: 640px) {
+  .exercise-modal-content {
+    min-height: 0;
+    margin: 16px auto;
+    border-radius: 6px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PRACTICE PROGRESS BAR — Task 4
+   ══════════════════════════════════════════════════════════════ */
+.practice-progress-bar {
+  height: 6px;
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.practice-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #B8922E, #D4A843, #DFBD69);
+  transition: width 0.4s ease;
+  border-radius: 3px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MOBILE ACTION ROW — Task 6
+   ══════════════════════════════════════════════════════════════ */
+.mobile-action-row {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+@media (min-width: 640px) {
+  .mobile-action-row {
+    display: none;
+  }
 }

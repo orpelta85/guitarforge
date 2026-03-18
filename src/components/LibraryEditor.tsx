@@ -118,12 +118,12 @@ export default function LibraryEditor({ ex, exEdits, setExEdits }: Props) {
       {/* Guitar Pro Tab */}
       <div className="panel p-3 mb-3">
         <div className="font-label text-[10px] text-[#D4A843] mb-2 flex items-center gap-2">
-          <div className="led led-off" /> Guitar Pro Tab
+          <div className={`led ${ex.tex ? "led-on" : "led-off"}`} /> Guitar Pro Tab
         </div>
-        {!showGp ? (
+        {!showGp && !ex.tex ? (
           <button onClick={() => setShowGp(true)} className="btn-ghost !text-[10px] w-full justify-center">Upload GP File</button>
         ) : (
-          <GpFileUploader />
+          <GpFileUploader exerciseId={String(ex.id)} tex={ex.tex} />
         )}
         <a href={`https://guitarprotabs.org/search.php?search=${encodeURIComponent(ex.songName || ex.n)}`} target="_blank" rel="noopener noreferrer"
           className="btn-ghost no-underline !text-[9px] w-full justify-center mt-2 block text-center">Download from guitarprotabs.org</a>

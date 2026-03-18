@@ -39,7 +39,8 @@ export const COL: Record<string, string> = {
 export const MODES = [
   "Aeolian", "Dorian", "Phrygian", "Lydian", "Mixolydian",
   "Ionian", "Locrian", "Harmonic Minor", "Phrygian Dominant",
-  "Minor Pentatonic", "Minor Blues", "Whole Tone"
+  "Minor Pentatonic", "Minor Blues", "Whole Tone",
+  "Melodic Minor", "Major Pentatonic", "Lydian Dominant", "Hungarian Minor"
 ];
 
 export const SCALES = [
@@ -51,7 +52,8 @@ export const SCALES = [
 export const STYLES = [
   "Metal", "Hard Rock", "Classic Rock", "Blues", "Jazz",
   "Grunge", "Stoner Rock", "Punk Rock", "Neo-Classical",
-  "Funk", "Country", "Flamenco", "Acoustic"
+  "Funk", "Country", "Flamenco", "Acoustic",
+  "Progressive Metal", "Djent", "Death Metal", "Fusion"
 ];
 
 export const CAT_GROUPS: Record<string, string[]> = {

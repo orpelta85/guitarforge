@@ -18,11 +18,11 @@ export async function GET(req: NextRequest) {
       );
       if (res.ok) {
         const data = await res.json();
-        const items = (data.items || []).map((item: any) => ({
-          videoId: item.id?.videoId,
-          title: item.snippet?.title,
-          channel: item.snippet?.channelTitle,
-          thumbnail: item.snippet?.thumbnails?.medium?.url || "",
+        const items = (data.items || []).map((item: Record<string, Record<string, unknown>>) => ({
+          videoId: (item.id as Record<string, unknown>)?.videoId,
+          title: (item.snippet as Record<string, unknown>)?.title,
+          channel: (item.snippet as Record<string, unknown>)?.channelTitle,
+          thumbnail: ((item.snippet as Record<string, Record<string, Record<string, string>>>)?.thumbnails?.medium?.url) || "",
         }));
         return NextResponse.json({ items, fallback: false });
       }

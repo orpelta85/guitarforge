@@ -92,7 +92,7 @@ export default function AiCoachPage() {
 
   return (
     <div>
-      <div className="panel p-5 mb-3">
+      <div className="panel p-3 sm:p-5 mb-3">
         <div className="font-heading text-xl font-bold text-[#D4A843]">AI Practice Coach</div>
         <div className="font-label text-[10px] text-[#555] mt-1">Personalized practice plans based on your goals</div>
       </div>
@@ -125,7 +125,7 @@ export default function AiCoachPage() {
 
       {/* Active plan */}
       {activePlan && (
-        <div className="panel p-5 mb-3" style={{ borderColor: "#33CC3333" }}>
+        <div className="panel p-3 sm:p-5 mb-3" style={{ borderColor: "#33CC3333" }}>
           <div className="font-label text-[11px] text-[#33CC33] mb-3 flex items-center gap-2"><div className="led led-on" /> Active Plan</div>
           <div className="font-heading text-lg text-[#D4A843]">{activePlan.name}</div>
           <div className="font-readout text-[10px] text-[#555] mb-3">{activePlan.weeks} weeks</div>
@@ -155,7 +155,7 @@ export default function AiCoachPage() {
       )}
 
       {/* Plan selector */}
-      <div className="panel p-5">
+      <div className="panel p-3 sm:p-5">
         <div className="font-label text-[11px] text-[#D4A843] mb-3">Available Plans</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {Object.entries(PLAN_TEMPLATES).map(([key, plan]) => (
@@ -166,7 +166,7 @@ export default function AiCoachPage() {
                 <span className="font-heading text-sm font-bold text-[#D4A843]">{plan.name}</span>
                 {key === suggested && <span className="font-label text-[8px] text-[#33CC33] border border-[#33CC33]/30 px-1.5 py-0.5 rounded-sm">Recommended</span>}
               </div>
-              <div className="font-readout text-[10px] text-[#555] mb-2">{plan.weeks} weeks · {plan.phases.length} phases</div>
+              <div className="font-readout text-[10px] text-[#555] mb-2" dir="ltr" style={{ textAlign: "right" }}>{plan.weeks} weeks · {plan.phases.length} phases</div>
               <div className="flex gap-1 flex-wrap">
                 {plan.phases.map((p, i) => (
                   <span key={i} className="font-label text-[8px] text-[#444] border border-[#1a1a1a] px-1.5 py-0.5 rounded-sm">{p.name}</span>
