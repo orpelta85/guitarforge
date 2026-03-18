@@ -5,6 +5,7 @@ import { DAYS, CATS, COL, MODES, SCALES, STYLES, STAGES, DEFAULT_DAY_CATS, DEFAU
 import { EXERCISES } from "@/lib/exercises";
 import { autoFill, makeSongItem, ytSearch } from "@/lib/helpers";
 import ExerciseModal from "./ExerciseModal";
+import SongModal from "./SongModal";
 import Navbar from "./Navbar";
 import type { View } from "./Navbar";
 import LearningCenterPage from "./LearningCenterPage";
@@ -15,6 +16,8 @@ import ProfilePage from "./ProfilePage";
 import AiCoachPage from "./AiCoachPage";
 import LibraryEditor from "./LibraryEditor";
 import ErrorBoundary from "./ErrorBoundary";
+import { SONG_LIBRARY } from "@/lib/songs-data";
+import type { SongEntry } from "@/lib/types";
 
 export default function GuitarForgeApp() {
   const [view, setView] = useState<View>("dash");
@@ -41,7 +44,14 @@ export default function GuitarForgeApp() {
   const [exEdits, setExEdits] = useState<ExEditMap>({});
   const [editingId, setEditingId] = useState<number | null>(null);
   const [libSearch, setLibSearch] = useState("");
-  const [libTab, setLibTab] = useState<"exercises" | "styles" | "songs">("exercises");
+  const [libTab, setLibTab] = useState<"exercises" | "styles" | "songs" | "songlib">("exercises");
+  const [songModal, setSongModal] = useState<SongEntry | null>(null);
+  const [customSongs, setCustomSongs] = useState<SongEntry[]>([]);
+  const [songLibSearch, setSongLibSearch] = useState("");
+  const [songLibFilter, setSongLibFilter] = useState<"all" | "Beginner" | "Intermediate" | "Advanced">("all");
+  const [showAddSong, setShowAddSong] = useState(false);
+  const [newSongTitle, setNewSongTitle] = useState("");
+  const [newSongArtist, setNewSongArtist] = useState("");
 
   useEffect(() => {
     try {
@@ -55,6 +65,7 @@ export default function GuitarForgeApp() {
         if (d.bpmLog) setBpmLog(d.bpmLog); if (d.noteLog) setNoteLog(d.noteLog);
         if (d.songs) setSongs(d.songs); if (d.songProgress) setSongProgress(d.songProgress);
         if (d.exEdits) setExEdits(d.exEdits);
+        if (d.customSongs) setCustomSongs(d.customSongs);
       }
     } catch { /* first time */ }
     setReady(true);
@@ -63,11 +74,11 @@ export default function GuitarForgeApp() {
   useEffect(() => {
     if (!ready) return;
     const timer = setTimeout(() => {
-      const data = { view, week, mode, scale, style, dayCats, dayHrs, dayExMap, doneMap, bpmLog, noteLog, songs, songProgress, exEdits };
+      const data = { view, week, mode, scale, style, dayCats, dayHrs, dayExMap, doneMap, bpmLog, noteLog, songs, songProgress, exEdits, customSongs };
       try { localStorage.setItem("gf30", JSON.stringify(data)); } catch { /* quota */ }
     }, 500);
     return () => clearTimeout(timer);
-  }, [ready, view, week, mode, scale, style, dayCats, dayHrs, dayExMap, doneMap, bpmLog, noteLog, songs, songProgress, exEdits]);
+  }, [ready, view, week, mode, scale, style, dayCats, dayHrs, dayExMap, doneMap, bpmLog, noteLog, songs, songProgress, exEdits, customSongs]);
 
   function getEditedEx(ex: Exercise): Exercise { return exEdits[ex.id] ? { ...ex, ...exEdits[ex.id] } : ex; }
 
@@ -409,10 +420,10 @@ export default function GuitarForgeApp() {
         {/* ══ LIBRARY ══ */}
         {view === "lib" && (<div className="animate-fade-in">
           {/* Sub-tabs */}
-          <div className="flex gap-1 mb-4">
-            {([["exercises", "תרגילים"], ["styles", "סגנונות"], ["songs", "שירים"]] as const).map(([key, label]) => (
+          <div className="flex gap-1 mb-4 overflow-x-auto scrollbar-hide">
+            {([["exercises", "תרגילים"], ["styles", "סגנונות"], ["songs", "שירים"], ["songlib", "ספריית שירים +"]] as const).map(([key, label]) => (
               <button key={key} onClick={() => setLibTab(key)}
-                className={`font-label text-[11px] px-4 py-1.5 rounded-sm cursor-pointer border transition-all ${libTab === key ? "bg-[#D4A843] text-[#0A0A0A] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>{label}</button>
+                className={`font-label text-[11px] px-4 py-1.5 rounded-sm cursor-pointer border transition-all flex-shrink-0 ${libTab === key ? "bg-[#D4A843] text-[#0A0A0A] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>{label}</button>
             ))}
           </div>
 
@@ -474,7 +485,6 @@ export default function GuitarForgeApp() {
           {/* Songs tab */}
           {libTab === "songs" && (
             <div>
-              {/* Task 8: Better empty state for songs */}
               {songs.length === 0 && <div className="panel p-8 sm:p-12 text-center">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#33CC33" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-4 opacity-30">
                   <path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z"/>
@@ -506,6 +516,95 @@ export default function GuitarForgeApp() {
               })}
             </div>
           )}
+
+          {/* Song Library tab */}
+          {libTab === "songlib" && (() => {
+            const allSongs = [...SONG_LIBRARY, ...customSongs];
+            const genres = [...new Set(allSongs.map(s => s.genre).filter(Boolean))];
+            const artists = [...new Set(allSongs.map(s => s.artist).filter(Boolean))];
+            const filtered = allSongs.filter(s => {
+              if (songLibFilter !== "all" && s.difficulty !== songLibFilter) return false;
+              if (songLibSearch.trim()) {
+                const q = songLibSearch.trim().toLowerCase();
+                return s.title.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q) || (s.genre || "").toLowerCase().includes(q) || (s.album || "").toLowerCase().includes(q);
+              }
+              return true;
+            });
+            const diffCounts = { all: allSongs.length, Beginner: allSongs.filter(s => s.difficulty === "Beginner").length, Intermediate: allSongs.filter(s => s.difficulty === "Intermediate").length, Advanced: allSongs.filter(s => s.difficulty === "Advanced").length };
+            return (
+              <div>
+                {/* Search */}
+                <input type="text" placeholder="חיפוש שיר, אמן, ז'אנר..." className="input w-full mb-3"
+                  value={songLibSearch} onChange={e => setSongLibSearch(e.target.value)} />
+
+                {/* Difficulty filter */}
+                <div className="flex gap-1 flex-wrap mb-4">
+                  {([["all", "All", "#D4A843"], ["Beginner", "Beginner", "#22c55e"], ["Intermediate", "Intermediate", "#f59e0b"], ["Advanced", "Advanced", "#ef4444"]] as const).map(([key, label, color]) => (
+                    <button key={key} onClick={() => setSongLibFilter(key as typeof songLibFilter)}
+                      className="font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border transition-all"
+                      style={songLibFilter === key ? { background: color, borderColor: color, color: "#0A0A0A" } : { borderColor: color + "40", color: color + "99" }}>
+                      {label} ({diffCounts[key as keyof typeof diffCounts]})
+                    </button>
+                  ))}
+                </div>
+
+                {/* Add custom song */}
+                <div className="mb-4">
+                  <button onClick={() => setShowAddSong(!showAddSong)} className="btn-ghost !text-[10px] mb-2">
+                    {showAddSong ? "סגור" : "+ הוסף שיר"}
+                  </button>
+                  {showAddSong && (
+                    <div className="panel p-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2">
+                        <input placeholder="Song title..." value={newSongTitle} onChange={e => setNewSongTitle(e.target.value)} className="input min-w-0" />
+                        <input placeholder="Artist..." value={newSongArtist} onChange={e => setNewSongArtist(e.target.value)} className="input min-w-0" />
+                        <button onClick={() => {
+                          if (!newSongTitle.trim() || !newSongArtist.trim()) return;
+                          setCustomSongs(p => [...p, { id: Date.now(), title: newSongTitle.trim(), artist: newSongArtist.trim() }]);
+                          setNewSongTitle(""); setNewSongArtist("");
+                        }} className="btn-gold">Add</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Song cards */}
+                {filtered.length === 0 && (
+                  <div className="panel p-8 text-center">
+                    <div className="font-label text-sm text-[#444]">לא נמצאו שירים</div>
+                  </div>
+                )}
+                {filtered.map(song => {
+                  const dc = song.difficulty ? ({ Beginner: "#22c55e", Intermediate: "#f59e0b", Advanced: "#ef4444" }[song.difficulty] || "#888") : "#888";
+                  const isCustom = song.id >= 1000000000;
+                  return (
+                    <div key={song.id} onClick={() => setSongModal(song)}
+                      className="panel p-4 mb-1.5 cursor-pointer hover:border-[#D4A843]/30 transition-all">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[13px] font-medium">{song.title}</span>
+                            {song.difficulty && <span className="tag" style={{ border: `1px solid ${dc}60`, color: dc, background: dc + "15" }}>{song.difficulty}</span>}
+                          </div>
+                          <div className="font-readout text-[11px] text-[#666] mt-1">{song.artist}</div>
+                          <div className="flex gap-2 mt-1 flex-wrap">
+                            {song.genre && <span className="font-readout text-[9px] text-[#555]">{song.genre}</span>}
+                            {song.key && <span className="font-readout text-[9px] text-[#555]">Key: {song.key}</span>}
+                            {song.tempo && <span className="font-readout text-[9px] text-[#555]">{song.tempo} BPM</span>}
+                            {song.tuning && song.tuning !== "Standard" && <span className="font-readout text-[9px] text-[#555]">{song.tuning}</span>}
+                          </div>
+                        </div>
+                        {isCustom && (
+                          <button onClick={(e) => { e.stopPropagation(); setCustomSongs(p => p.filter(s => s.id !== song.id)); }}
+                            className="btn-ghost !px-2 !py-1 !text-[9px] !text-[#C41E3A] !border-[#333] flex-shrink-0 mr-2">Remove</button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>)}
 
         {/* ══ REPORT ══ */}
@@ -565,6 +664,7 @@ export default function GuitarForgeApp() {
         onNoteChange={(v) => setNoteLog((p) => ({ ...p, [week + "-" + selDay + "-" + modal.id]: v }))}
         onClose={() => setModal(null)}
         onDone={() => { const k = week + "-" + selDay + "-" + modal.id; setDoneMap(p => ({ ...p, [k]: true })); setModal(null); }} />}
+      {songModal && <SongModal song={songModal} onClose={() => setSongModal(null)} />}
     </div>
     </ErrorBoundary>
   );

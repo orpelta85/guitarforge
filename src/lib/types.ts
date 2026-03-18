@@ -26,6 +26,22 @@ export interface Song {
   url: string;
 }
 
+export interface SongEntry {
+  id: number;
+  title: string;
+  artist: string;
+  album?: string;
+  year?: number;
+  genre?: string;
+  difficulty?: "Beginner" | "Intermediate" | "Advanced";
+  tuning?: string;
+  tempo?: number;
+  key?: string;
+  songsterrUrl?: string;
+  gpFileName?: string;
+  ytTutorial?: string;
+}
+
 export interface Stage {
   name: string;
   m: number;       // minutes
