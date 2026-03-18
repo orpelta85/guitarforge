@@ -1889,7 +1889,7 @@ export default function StudioPage() {
   const pxPerSec = 20 + (zoom / 100) * 300;
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden select-none" style={{ background: "#0a0a0a", fontFamily: "'Inter', system-ui, sans-serif" }} dir="ltr">
+    <div className="flex flex-col overflow-hidden select-none" style={{ background: "#0a0a0a", fontFamily: "'Inter', system-ui, sans-serif", height: "calc(100vh - 90px)" }} dir="ltr">
       {/* ═══════════════════ TOP BAR ═══════════════════ */}
       <div className="flex items-center min-h-[44px] h-auto sm:h-11 px-1 sm:px-3 gap-1 sm:gap-2 border-b flex-shrink-0 flex-wrap py-1 sm:py-0" style={{ background: "#111111", borderColor: "#1e1e1e" }}>
         {/* Left: Project Name */}
@@ -2192,7 +2192,7 @@ export default function StudioPage() {
       {/* ═══════════════════ MAIN LAYOUT ═══════════════════ */}
       <div className="flex flex-1 overflow-hidden">
         {/* ═══════════════════ LEFT SIDEBAR: Track List ═══════════════════ */}
-        <div className="flex-shrink-0 flex flex-col overflow-hidden" style={{ width: typeof window !== "undefined" && window.innerWidth < 640 ? Math.min(sidebarWidth, 160) : sidebarWidth, background: "#141414", borderRight: "1px solid #1e1e1e" }}>
+        <div className="flex-shrink-0 flex flex-col overflow-hidden max-w-[160px] sm:max-w-none" style={{ width: sidebarWidth, background: "#141414", borderRight: "1px solid #1e1e1e" }}>
           {/* Sidebar header with Add Track */}
           <div className="flex items-center h-[26px] px-2 gap-1 flex-shrink-0" style={{ background: "#181818", borderBottom: "1px solid #1e1e1e" }}>
             <div className="relative">
@@ -3022,6 +3022,7 @@ export default function StudioPage() {
                       </select>
                     </div>
                     {/* Step numbers */}
+                    <div className="inline-block" style={{ minWidth: "fit-content" }}>
                     <div className="flex items-center mb-1" style={{ paddingLeft: 72 }}>
                       {Array.from({ length: DRUM_STEPS }, (_, i) => (
                         <div key={i} className={`w-6 h-4 flex items-center justify-center text-[7px] font-mono ${
@@ -3053,6 +3054,7 @@ export default function StudioPage() {
                         ))}
                       </div>
                     ))}
+                    </div>
                   </div>
                 )}
                 {bottomTab === "editor" && fxTrack && fxTrack.type !== "drum" && (
