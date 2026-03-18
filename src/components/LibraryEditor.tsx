@@ -125,8 +125,14 @@ export default function LibraryEditor({ ex, exEdits, setExEdits }: Props) {
         ) : (
           <GpFileUploader exerciseId={String(ex.id)} tex={ex.tex} />
         )}
-        <a href={`https://guitarprotabs.org/search.php?search=${encodeURIComponent(ex.songName || ex.n)}`} target="_blank" rel="noopener noreferrer"
-          className="btn-ghost no-underline !text-[9px] w-full justify-center mt-2 block text-center">Download from guitarprotabs.org</a>
+        <button onClick={async () => {
+          try {
+            const r = await fetch(`/api/gptabs?q=${encodeURIComponent(ex.songName || ex.n)}`);
+            const data = await r.json();
+            if (data.length > 0) window.open(data[0].downloadUrl, "_blank");
+            else window.open(`https://guitarprotabs.org/search.php?search=${encodeURIComponent(ex.songName || ex.n)}`, "_blank");
+          } catch { window.open(`https://guitarprotabs.org/search.php?search=${encodeURIComponent(ex.songName || ex.n)}`, "_blank"); }
+        }} className="btn-ghost !text-[9px] w-full justify-center mt-2">Download from guitarprotabs.org</button>
       </div>
 
       {/* Notes */}

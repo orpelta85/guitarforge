@@ -230,8 +230,14 @@ export default function ExerciseModal({ exercise: ex, mode, scale, style, week, 
                 </div>
                 <GpFileUploader exerciseId={String(ex.id)} tex={ex.tex || EXERCISES.find(e => e.id === ex.id)?.tex} />
                 <div className="flex gap-1 flex-wrap mt-2">
-                  <a href={`https://guitarprotabs.org/search.php?search=${encodeURIComponent(ex.songName || ex.n)}`} target="_blank" rel="noopener noreferrer"
-                    className="btn-ghost no-underline !text-[9px] !px-2 !py-1">Download tabs</a>
+                  <button type="button" onClick={async () => {
+                    try {
+                      const r = await fetch(`/api/gptabs?q=${encodeURIComponent(ex.songName || ex.n)}`);
+                      const data = await r.json();
+                      if (data.length > 0) window.open(data[0].downloadUrl, "_blank");
+                      else window.open(`https://guitarprotabs.org/search.php?search=${encodeURIComponent(ex.songName || ex.n)}`, "_blank");
+                    } catch { window.open(`https://guitarprotabs.org/search.php?search=${encodeURIComponent(ex.songName || ex.n)}`, "_blank"); }
+                  }} className="btn-ghost !text-[9px] !px-2 !py-1">Download tabs</button>
                   {(ex.ss || ex.songUrl) && <a href={ex.songUrl || ssSearch(ex.songName || ex.n)} target="_blank" rel="noopener noreferrer"
                     className="btn-ghost no-underline !text-[9px] !px-2 !py-1">Songsterr</a>}
                 </div>
