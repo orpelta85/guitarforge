@@ -151,7 +151,7 @@ export default function GpFileUploader({ exerciseId, tex, songName }: { exercise
         s.player.enablePlayer = true;
         s.player.enableCursor = true;
         s.player.enableUserInteraction = true;
-        s.player.soundFont = base + "/alphatab/soundfont/sonivox.sf2";
+        s.player.soundFont = base + "/alphatab/soundfont/MuseScore_General.sf3";
         s.display.layoutMode = 0;
         s.display.staveProfile = 4;
 
