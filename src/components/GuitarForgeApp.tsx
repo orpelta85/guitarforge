@@ -126,7 +126,7 @@ export default function GuitarForgeApp() {
     <div className="min-h-screen text-white" style={{ background: "#0A0A0A" }} dir="ltr">
       <Navbar view={view} onViewChange={setView} />
       {view === "studio" && <StudioPage />}
-      <div className="px-2 sm:px-5 py-3 sm:py-5 max-w-[960px] mx-auto overflow-x-hidden">
+      <div className="px-2 sm:px-5 py-3 sm:py-5 pb-16 sm:pb-5 max-w-[960px] lg:max-w-[1100px] xl:max-w-[1280px] mx-auto overflow-x-hidden">
 
         {view === "learn" && <LearningCenterPage />}
         {view === "profile" && <ProfilePage />}
@@ -218,7 +218,7 @@ export default function GuitarForgeApp() {
             <div className="panel-header flex items-center gap-2">
               <div className="led led-gold" /> CHANNEL SETTINGS
             </div>
-            <div className="p-3 sm:p-5 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+            <div className="p-3 sm:p-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
               {[
                 { l: "Week", v: <div className="segment-display text-center mt-1"><input type="number" value={week} min={1} onChange={(e) => setWeek(Number(e.target.value))} className="bg-transparent border-none outline-none text-center w-full font-mono font-bold text-[#D4A843]" style={{ boxShadow: 'none' }} /></div> },
                 { l: "Mode", v: <select value={mode} onChange={(e) => setMode(e.target.value)} className="input w-full text-[12px] sm:text-[14px]">{MODES.map((m) => <option key={m}>{m}</option>)}</select> },
@@ -267,19 +267,19 @@ export default function GuitarForgeApp() {
             <div className="vu"><div className="vu-fill" style={{ width: wPct + "%" }} /></div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mt-4 text-center">
               <div>
-                <div className="font-readout text-xl sm:text-2xl font-bold text-[#D4A843]">{wDn}</div>
+                <div className="font-stat text-xl sm:text-2xl text-[#D4A843]">{wDn}</div>
                 <div className="font-label text-[9px] text-[#555]">Done</div>
               </div>
               <div>
-                <div className="font-readout text-xl sm:text-2xl font-bold text-[#888]">{wTot}</div>
+                <div className="font-stat text-xl sm:text-2xl text-[#888]">{wTot}</div>
                 <div className="font-label text-[9px] text-[#555]">Total</div>
               </div>
               <div>
-                <div className="font-readout text-xl sm:text-2xl font-bold text-[#D4A843]">{wMin}</div>
+                <div className="font-stat text-xl sm:text-2xl text-[#D4A843]">{wMin}</div>
                 <div className="font-label text-[9px] text-[#555]">Minutes</div>
               </div>
               <div>
-                <div className="font-readout text-xl sm:text-2xl font-bold text-[#D4A843]">
+                <div className="font-stat text-xl sm:text-2xl text-[#D4A843]">
                   {DAYS.filter(d => (dayExMap[d] || []).some(e => doneMap[week + "-" + d + "-" + e.id])).length}
                 </div>
                 <div className="font-label text-[9px] text-[#555]">Days Active</div>
@@ -353,7 +353,9 @@ export default function GuitarForgeApp() {
                 return (
                   <div key={day} onClick={() => { setSelDay(day); setView("daily"); }}
                     className={`rounded-sm p-2 cursor-pointer text-center transition-all ${off ? "bg-[#0A0A0A] border border-[#1a1a1a]" : "panel hover:border-[#D4A843]/30"} ${selDay === day ? "!border-[#D4A843] ring-1 ring-[#D4A843]/30 !bg-[#1a1708]" : ""}`}>
-                    <div className={`font-label text-[10px] ${off ? "text-[#444]" : selDay === day ? "text-[#D4A843]" : "text-[#bbb]"}`}>{day}</div>
+                    <div className={`font-label text-[10px] ${off ? "text-[#444]" : selDay === day ? "text-[#D4A843]" : "text-[#bbb]"}`}>
+                      <span className="sm:hidden">{day.slice(0, 3)}</span><span className="hidden sm:inline">{day}</span>
+                    </div>
                     <div className="font-readout text-[9px] text-[#555]">{hrs}h</div>
                     {exs.length > 0 && <>
                       <div className="vu mt-1 !h-[3px]"><div className="vu-fill" style={{ width: pct + "%" }} /></div>
@@ -402,7 +404,7 @@ export default function GuitarForgeApp() {
               <button key={day} onClick={() => setSelDay(day)}
                 className={`font-label text-[11px] px-3 py-1.5 rounded-sm cursor-pointer transition-all flex-shrink-0 ${
                   selDay === day ? "bg-[#D4A843] text-[#0A0A0A]" : "text-[#555] hover:text-[#aaa]"
-                }`}>{day}</button>
+                }`}><span className="sm:hidden">{day.slice(0, 3)}</span><span className="hidden sm:inline">{day}</span></button>
             ))}
           </div>
 
@@ -462,7 +464,7 @@ export default function GuitarForgeApp() {
                 <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setModal(ex)}>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="tag flex-shrink-0" style={{ border: `1px solid ${cc}40`, color: cc }}>{ex.c}</span>
-                    <span className="text-[13px] sm:text-sm font-medium leading-snug">{ex.n}</span>
+                    <span className="font-heading text-[13px] sm:text-sm !font-medium !normal-case !tracking-normal leading-snug">{ex.n}</span>
                   </div>
                   <div className="font-readout text-[10px] text-[#444] mt-1 line-clamp-1">{ex.m}min {ex.b ? "· " + ex.b + " BPM" : ""} · {ex.f}</div>
                 </div>
@@ -535,7 +537,7 @@ export default function GuitarForgeApp() {
                   <div onClick={() => setEditingId(isEd ? null : ex.id)} className="flex items-center gap-3 px-4 py-3 cursor-pointer">
                     <span className="tag min-w-[48px] text-center" style={{ border: `1px solid ${c}40`, color: c }}>{ex.c}</span>
                     <div className="flex-1">
-                      <div className="text-[13px] font-medium">{ex.n}</div>
+                      <div className="font-heading text-[13px] !font-medium !normal-case !tracking-normal">{ex.n}</div>
                       <div className="font-readout text-[10px] text-[#444]">{ex.f} · {ex.m}min {ex.b ? "· " + ex.b : ""}</div>
                     </div>
                     <span className="text-[10px] text-[#333]">{isEd ? "−" : "+"}</span>

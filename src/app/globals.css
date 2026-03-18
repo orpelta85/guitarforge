@@ -154,7 +154,7 @@ body::after {
 
 /* ── Panel Header (brushed metal strip) ── */
 .panel-header {
-  background: linear-gradient(180deg, #1E1C18 0%, #161412 100%);
+  background: linear-gradient(180deg, #23211D 0%, #1A1816 100%);
   border-bottom: 1px solid var(--border-panel);
   padding: 10px 16px;
   font-family: 'Oswald', sans-serif;
@@ -328,6 +328,7 @@ body::after {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   background: rgba(255,255,255,0.02);
+  transition: all 0.15s ease;
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -698,18 +699,25 @@ input[type="number"]::-webkit-outer-spin-button { opacity: 0.3; }
     padding: 4px 10px;
   }
 
-  /* Smaller buttons on mobile */
+  /* Touch target: minimum 44px height on mobile */
   .btn-gold,
   .btn-ghost,
   .btn-danger {
-    padding: 6px 14px;
+    padding: 10px 14px;
     font-size: 11px;
+    min-height: 44px;
   }
 
-  /* Tags slightly smaller */
+  /* Tags: larger touch targets on mobile */
   .tag {
     font-size: 10px;
-    padding: 2px 7px;
+    padding: 6px 10px;
+    min-height: 36px;
+  }
+
+  /* Nav buttons touch target */
+  .nav-btn {
+    min-height: 48px;
   }
 
   /* Inputs */
@@ -773,15 +781,15 @@ input[type="number"]::-webkit-outer-spin-button { opacity: 0.3; }
    PANEL ELEVATION SYSTEM
    ══════════════════════════════════════════════════════════════ */
 .panel-primary {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-accent);
+  background: var(--bg-tertiary);
+  border: 1px solid rgba(212,168,67,0.15);
   border-radius: 3px;
   position: relative;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.04),
+    inset 0 1px 0 rgba(255,255,255,0.06),
     inset 0 -1px 0 rgba(0,0,0,0.3),
     0 4px 16px rgba(0,0,0,0.5),
-    0 0 24px rgba(212,168,67,0.04);
+    0 0 24px rgba(212,168,67,0.06);
 }
 .panel-secondary {
   background: var(--bg-panel);
@@ -881,7 +889,7 @@ input[type="number"]::-webkit-outer-spin-button { opacity: 0.3; }
 .practice-progress-fill {
   height: 100%;
   background: linear-gradient(90deg, #B8922E, #D4A843, #DFBD69);
-  transition: width 0.4s ease;
+  transition: width 0.5s ease;
   border-radius: 3px;
 }
 
@@ -985,4 +993,58 @@ input[type="number"]::-webkit-outer-spin-button { opacity: 0.3; }
 /* Logo glow */
 .logo-glow {
   filter: drop-shadow(0 0 6px rgba(212,168,67,0.15));
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MOBILE BOTTOM TAB BAR
+   ══════════════════════════════════════════════════════════════ */
+.mobile-tab-bar {
+  background: linear-gradient(180deg, #111110 0%, #0a0a09 100%);
+  border-top: 1px solid var(--border-subtle);
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
+  height: 56px;
+}
+.mobile-tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 48px;
+  padding: 4px 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-family: 'Oswald', sans-serif;
+  font-size: 9px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transition: color 0.15s ease;
+}
+.mobile-tab-item--active {
+  color: var(--gold);
+  text-shadow: 0 0 8px rgba(212,168,67,0.3);
+}
+.mobile-tab-item:not(.mobile-tab-item--active):active {
+  color: var(--text-secondary);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   OSWALD STAT NUMBERS (Fix 7)
+   ══════════════════════════════════════════════════════════════ */
+.font-stat {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 600;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MOBILE BODY PADDING (prevent content behind bottom nav)
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 639px) {
+  body {
+    padding-bottom: 0;
+  }
 }

@@ -1,28 +1,77 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 120">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 120">
+  <defs>
+    <!-- Subtle radial glow behind the spark -->
+    <radialGradient id="sparkGlow" cx="50%" cy="92%" r="25%" fx="50%" fy="88%">
+      <stop offset="0%" stop-color="#D4A843" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#D4A843" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Gold gradient for the badge border — aged amp panel feel -->
+    <linearGradient id="goldEdge" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#E8C96A"/>
+      <stop offset="50%" stop-color="#D4A843"/>
+      <stop offset="100%" stop-color="#9A7730"/>
+    </linearGradient>
+    <!-- Spark flame gradient -->
+    <linearGradient id="sparkFlame" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#D4A843"/>
+      <stop offset="60%" stop-color="#F0D060"/>
+      <stop offset="100%" stop-color="#FFFBE6"/>
+    </linearGradient>
+  </defs>
 
-  <!-- Pick interior — aged cream -->
-  <path d="M60 26C80 26,92 42,90 58C88 73,72 87,60 95C48 87,32 73,30 58C28 42,40 26,60 26Z"
-        fill="#F0EAE0"/>
+  <!-- === BADGE === -->
+  <!-- Outer badge — dark zinc with gold border (Marshall tolex feel) -->
+  <rect x="14" y="14" width="92" height="92" rx="10"
+        fill="#131313" stroke="url(#goldEdge)" stroke-width="2"/>
 
-  <!-- Forge spark — amber diamond at pick tip -->
-  <path d="M60 95L57 87L60 82L63 87Z" fill="#D4852A"/>
+  <!-- Inner bevel line — amp panel detail -->
+  <rect x="19" y="19" width="82" height="82" rx="7"
+        fill="none" stroke="#D4A843" stroke-width="0.4" stroke-opacity="0.35"/>
 
-  <!-- Dark badge with pick cutout -->
-  <path fill-rule="evenodd" fill="#18181B"
-        d="M28 16 L92 16 Q104 16 104 28 L104 92 Q104 104 92 104 L28 104 Q16 104 16 92 L16 28 Q16 16 28 16Z
-           M60 26C80 26,92 42,90 58C88 73,72 87,60 95C48 87,32 73,30 58C28 42,40 26,60 26Z"/>
+  <!-- Spark glow behind pick -->
+  <circle cx="60" cy="95" r="18" fill="url(#sparkGlow)"/>
 
-  <!-- Amber ring — makes the badge visible on dark backgrounds -->
-  <rect x="16" y="16" width="88" height="88" rx="12"
-        fill="none" stroke="#D4852A" stroke-width="1.5"/>
+  <!-- Dark badge with pick as negative-space cutout -->
+  <path fill-rule="evenodd" fill="#131313"
+        d="M26 22 L94 22 Q100 22 100 28 L100 92 Q100 100 94 100 L26 100 Q22 100 22 92 L22 28 Q22 22 26 22Z
+           M60 28C78 28,89 42,87 56C85 70,72 83,60 92C48 83,35 70,33 56C31 42,42 28,60 28Z"/>
 
-  <!-- Wordmark — light variant -->
-  <text x="126" y="45"
-    font-family="system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif"
-    font-size="12" font-weight="400" fill="#A1A1AA" letter-spacing="9">GUITAR</text>
+  <!-- Pick outline — thin gold stroke for definition -->
+  <path d="M60 28C78 28,89 42,87 56C85 70,72 83,60 92C48 83,35 70,33 56C31 42,42 28,60 28Z"
+        fill="none" stroke="#D4A843" stroke-width="0.8" stroke-opacity="0.5"/>
 
-  <text x="123" y="98"
-    font-family="system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif"
-    font-size="54" font-weight="900" fill="#FFFFFF" letter-spacing="-1">FORGE</text>
+  <!-- Forge spark at pick tip — diamond + small sparks -->
+  <path d="M60 92L56.5 84L60 78L63.5 84Z" fill="url(#sparkFlame)"/>
+  <!-- Tiny spark particles -->
+  <circle cx="54" cy="80" r="0.8" fill="#F0D060" opacity="0.7"/>
+  <circle cx="66.5" cy="81" r="0.6" fill="#F0D060" opacity="0.5"/>
+  <circle cx="57" cy="76" r="0.5" fill="#FFFBE6" opacity="0.4"/>
+  <circle cx="64" cy="77" r="0.5" fill="#FFFBE6" opacity="0.35"/>
+
+  <!-- Corner rivets — amp hardware detail -->
+  <circle cx="22" cy="22" r="1.8" fill="#2A2A2A" stroke="#D4A843" stroke-width="0.5" stroke-opacity="0.4"/>
+  <circle cx="98" cy="22" r="1.8" fill="#2A2A2A" stroke="#D4A843" stroke-width="0.5" stroke-opacity="0.4"/>
+  <circle cx="22" cy="98" r="1.8" fill="#2A2A2A" stroke="#D4A843" stroke-width="0.5" stroke-opacity="0.4"/>
+  <circle cx="98" cy="98" r="1.8" fill="#2A2A2A" stroke="#D4A843" stroke-width="0.5" stroke-opacity="0.4"/>
+
+  <!-- === WORDMARK === -->
+
+  <!-- "GUITAR" — tracked caps, lighter weight, gold -->
+  <text x="126" y="44"
+    font-family="Oswald,Impact,'Arial Narrow',sans-serif"
+    font-size="15" font-weight="400" fill="#D4A843" letter-spacing="10"
+    text-rendering="geometricPrecision">GUITAR</text>
+
+  <!-- Decorative line under GUITAR — amp panel stripe -->
+  <line x1="126" y1="52" x2="340" y2="52" stroke="#D4A843" stroke-width="0.6" stroke-opacity="0.3"/>
+
+  <!-- "FORGE" — ultra-bold, white, dominant -->
+  <text x="123" y="96"
+    font-family="Oswald,Impact,'Arial Narrow',sans-serif"
+    font-size="56" font-weight="700" fill="#FFFFFF" letter-spacing="2"
+    text-rendering="geometricPrecision">FORGE</text>
+
+  <!-- Subtle underline accent beneath FORGE -->
+  <line x1="126" y1="102" x2="280" y2="102" stroke="#D4A843" stroke-width="1.2" stroke-opacity="0.5"/>
 
 </svg>
