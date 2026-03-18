@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "guitarforge": {
+      "command": "npx",
+      "args": ["tsx", "c:/Users/User/guitarforge/mcp-server/src/index.ts"]
+    }
+  }
+}
