@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import type { Exercise, Song, DayCats, DayHrs, DayExMap, BoolMap, StringMap, SongProgressMap, ExEditMap } from "@/lib/types";
 import { DAYS, CATS, COL, MODES, SCALES, STYLES, STAGES, DEFAULT_DAY_CATS, DEFAULT_DAY_HRS, CAT_GROUPS } from "@/lib/constants";
 import { EXERCISES } from "@/lib/exercises";
@@ -58,8 +58,17 @@ export default function GuitarForgeApp() {
   const [libShowAll, setLibShowAll] = useState(false);
   const [songLibShowAll, setSongLibShowAll] = useState(false);
 
+  // ── Phase 1 Engagement features ──
+  const [streak, setStreak] = useState<{ currentStreak: number; longestStreak: number; lastPracticeDate: string; totalDays: number }>({ currentStreak: 0, longestStreak: 0, lastPracticeDate: "", totalDays: 0 });
+  const [calendarData, setCalendarData] = useState<Record<string, { exercisesDone: number; minutesPracticed: number }>>({});
+  const [focusEx, setFocusEx] = useState<{ ex: Exercise; idx: number } | null>(null);
+  const [focusTimer, setFocusTimer] = useState(0);
+  const [focusRunning, setFocusRunning] = useState(false);
+  const focusIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [viewKey, setViewKey] = useState(0);
+
   // Fix #1: view stored in sessionStorage (per-tab) instead of localStorage
-  const setView = (v: View) => { setViewRaw(v); try { sessionStorage.setItem("gf-view", v); } catch {} };
+  const setView = (v: View) => { setViewRaw(v); setViewKey(k => k + 1); try { sessionStorage.setItem("gf-view", v); } catch {} };
 
   useEffect(() => {
     try {
@@ -79,6 +88,13 @@ export default function GuitarForgeApp() {
         if (d.customSongs) setCustomSongs(d.customSongs);
       }
     } catch { /* first time */ }
+    // Load streak + calendar
+    try {
+      const sr = localStorage.getItem("gf-streak");
+      if (sr) setStreak(JSON.parse(sr));
+      const cr = localStorage.getItem("gf-calendar");
+      if (cr) setCalendarData(JSON.parse(cr));
+    } catch {}
     setReady(true);
   }, []);
 
@@ -90,6 +106,149 @@ export default function GuitarForgeApp() {
     }, 500);
     return () => clearTimeout(timer);
   }, [ready, week, mode, scale, style, dayCats, dayHrs, dayExMap, doneMap, bpmLog, noteLog, songs, songProgress, exEdits, customSongs]);
+
+  // ── Streak & Calendar update when exercise is marked done ──
+  const updateStreakAndCalendar = useCallback((newDoneMap: BoolMap) => {
+    if (!ready) return;
+    const today = new Date().toISOString().slice(0, 10);
+
+    // Count how many exercises done today (across all days in current week view)
+    let todayDone = 0;
+    DAYS.forEach(d => {
+      (dayExMap[d] || []).forEach(e => {
+        if (newDoneMap[week + "-" + d + "-" + e.id]) todayDone++;
+      });
+    });
+
+    // Update calendar
+    const totalMin = DAYS.reduce((sum, d) => {
+      return sum + (dayExMap[d] || []).filter(e => newDoneMap[week + "-" + d + "-" + e.id]).reduce((s, e) => s + e.m, 0);
+    }, 0);
+    setCalendarData(prev => {
+      const next = { ...prev, [today]: { exercisesDone: todayDone, minutesPracticed: totalMin } };
+      try { localStorage.setItem("gf-calendar", JSON.stringify(next)); } catch {}
+      return next;
+    });
+
+    // Update streak
+    if (todayDone > 0) {
+      setStreak(prev => {
+        const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+        let newCurrent = prev.currentStreak;
+        let newTotal = prev.totalDays;
+        if (prev.lastPracticeDate !== today) {
+          newTotal = prev.totalDays + 1;
+          if (prev.lastPracticeDate === yesterday) {
+            newCurrent = prev.currentStreak + 1;
+          } else if (prev.lastPracticeDate !== today) {
+            newCurrent = 1;
+          }
+        }
+        const newLongest = Math.max(prev.longestStreak, newCurrent);
+        const next = { currentStreak: newCurrent, longestStreak: newLongest, lastPracticeDate: today, totalDays: newTotal };
+        try { localStorage.setItem("gf-streak", JSON.stringify(next)); } catch {}
+        return next;
+      });
+    }
+  }, [ready, week, dayExMap]);
+
+  // ── Focus mode timer ──
+  useEffect(() => {
+    if (focusRunning) {
+      focusIntervalRef.current = setInterval(() => setFocusTimer(t => t + 1), 1000);
+    } else {
+      if (focusIntervalRef.current) clearInterval(focusIntervalRef.current);
+    }
+    return () => { if (focusIntervalRef.current) clearInterval(focusIntervalRef.current); };
+  }, [focusRunning]);
+
+  // Auto-start timer when focus opens
+  useEffect(() => {
+    if (focusEx) { setFocusTimer(0); setFocusRunning(true); }
+    else { setFocusRunning(false); setFocusTimer(0); }
+  }, [focusEx]);
+
+  // ── Smart suggestions generator ──
+  const getSuggestions = useCallback(() => {
+    const suggestions: { icon: string; text: string }[] = [];
+    const today = new Date().toISOString().slice(0, 10);
+
+    // 1. Find least-practiced category
+    const catCount: Record<string, number> = {};
+    const catLastDate: Record<string, string> = {};
+    CATS.forEach(c => { catCount[c] = 0; catLastDate[c] = ""; });
+    Object.entries(calendarData).forEach(([date]) => {
+      DAYS.forEach(d => {
+        (dayExMap[d] || []).forEach(e => {
+          if (doneMap[week + "-" + d + "-" + e.id]) {
+            catCount[e.c] = (catCount[e.c] || 0) + 1;
+            if (!catLastDate[e.c] || date > catLastDate[e.c]) catLastDate[e.c] = date;
+          }
+        });
+      });
+    });
+    const activeCats = Object.keys(catCount).filter(c => c !== "Songs" && CATS.includes(c));
+    const leastCat = activeCats.sort((a, b) => catCount[a] - catCount[b])[0];
+    if (leastCat && catCount[leastCat] === 0) {
+      suggestions.push({ icon: "📋", text: `You haven't practiced ${leastCat} yet — consider adding it to your routine.` });
+    } else if (leastCat) {
+      const daysSince = catLastDate[leastCat] ? Math.floor((new Date(today).getTime() - new Date(catLastDate[leastCat]).getTime()) / 86400000) : 0;
+      if (daysSince > 3) suggestions.push({ icon: "📋", text: `You haven't practiced ${leastCat} in ${daysSince} days.` });
+    }
+
+    // 2. BPM plateau detection
+    const bpmEntries = Object.entries(bpmLog).filter(([, v]) => v);
+    if (bpmEntries.length > 3) {
+      const lastBpm = bpmEntries[bpmEntries.length - 1];
+      const prevBpms = bpmEntries.slice(-4, -1).map(([, v]) => parseInt(v));
+      const lastVal = parseInt(lastBpm[1]);
+      if (prevBpms.every(b => Math.abs(b - lastVal) <= 2)) {
+        const exId = parseInt(lastBpm[0].split("-").pop() || "0");
+        const ex = EXERCISES.find(e => e.id === exId);
+        if (ex) suggestions.push({ icon: "⚡", text: `Your "${ex.n}" BPM has been stuck at ${lastVal} — try burst picking or slow-fast-slow to break through.` });
+      }
+    }
+
+    // 3. Streak encouragement
+    if (streak.currentStreak > 0 && streak.longestStreak > streak.currentStreak) {
+      const diff = streak.longestStreak - streak.currentStreak;
+      suggestions.push({ icon: "🔥", text: `Great streak! Keep it up for ${diff} more day${diff > 1 ? "s" : ""} to beat your record of ${streak.longestStreak}.` });
+    } else if (streak.currentStreak === 0 && streak.longestStreak > 0) {
+      suggestions.push({ icon: "💪", text: `Your best streak was ${streak.longestStreak} days — start a new one today!` });
+    }
+
+    // 4. New exercise suggestion
+    const usedIds = new Set<number>();
+    DAYS.forEach(d => (dayExMap[d] || []).forEach(e => usedIds.add(e.id)));
+    const unused = EXERCISES.filter(e => !usedIds.has(e.id) && e.c !== "Songs");
+    if (unused.length > 0) {
+      const pick = unused[Math.floor(Math.random() * unused.length)];
+      suggestions.push({ icon: "🎯", text: `Try adding "${pick.n}" (${pick.c}) — it complements your current routine.` });
+    }
+
+    // 5. Rest day reminder
+    if (streak.currentStreak >= 6) {
+      suggestions.push({ icon: "😴", text: `${streak.currentStreak} day streak — remember rest is part of progress too.` });
+    }
+
+    return suggestions.slice(0, 5);
+  }, [calendarData, dayExMap, doneMap, week, bpmLog, streak]);
+
+  // Wrapper for marking exercises done — updates streak + calendar
+  function markDone(key: string, val: boolean) {
+    setDoneMap(p => {
+      const next = { ...p, [key]: val };
+      setTimeout(() => updateStreakAndCalendar(next), 0);
+      return next;
+    });
+  }
+  function toggleDone(key: string) {
+    setDoneMap(p => {
+      const next = { ...p, [key]: !p[key] };
+      setTimeout(() => updateStreakAndCalendar(next), 0);
+      return next;
+    });
+  }
 
   function getEditedEx(ex: Exercise): Exercise { return exEdits[ex.id] ? { ...ex, ...exEdits[ex.id] } : ex; }
 
@@ -137,7 +296,7 @@ export default function GuitarForgeApp() {
     <div className="min-h-screen text-white" style={{ background: "#0A0A0A" }} dir="ltr">
       <Navbar view={view} onViewChange={setView} />
       {view === "studio" && <StudioPage />}
-      <div className="px-2 sm:px-5 py-3 sm:py-5 pb-16 sm:pb-5 max-w-[960px] lg:max-w-[1100px] xl:max-w-[1280px] mx-auto overflow-x-hidden">
+      <div key={viewKey} className="view-transition px-2 sm:px-5 py-3 sm:py-5 pb-16 sm:pb-5 max-w-[960px] lg:max-w-[1100px] xl:max-w-[1280px] mx-auto overflow-x-hidden">
 
         {view === "learn" && <LearningCenterPage />}
         {view === "profile" && <ProfilePage />}
@@ -264,6 +423,103 @@ export default function GuitarForgeApp() {
               </div>
             </div>
           </div>
+
+          {/* ── Streak + Calendar Row ── */}
+          <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-4 mb-4">
+            {/* Streak counter */}
+            <div className="panel p-4 flex items-center gap-3 sm:min-w-[200px]">
+              <span className="text-3xl">🔥</span>
+              <div>
+                <div className="font-stat text-2xl text-[#D4A843]">{streak.currentStreak}</div>
+                <div className="font-label text-[9px] text-[#555]">Day Streak</div>
+              </div>
+              <div className="ml-auto text-right">
+                <div className="font-readout text-[11px] text-[#666]">Best: {streak.longestStreak}</div>
+                <div className="font-readout text-[10px] text-[#444]">{streak.totalDays} total days</div>
+              </div>
+            </div>
+
+            {/* Practice Calendar Heatmap — last 12 weeks */}
+            <div className="panel p-4 overflow-hidden">
+              <div className="font-label text-[10px] text-[#555] mb-2 flex items-center gap-2">
+                <div className="led led-on" style={{ width: 6, height: 6 }} /> Practice Activity
+              </div>
+              <div className="flex gap-1" style={{ direction: "ltr" }}>
+                {/* Day labels */}
+                <div className="flex flex-col gap-[2px] text-[8px] text-[#444] font-readout pt-0" style={{ width: "20px" }}>
+                  <div style={{ height: "12px" }}></div>
+                  <div style={{ height: "12px", lineHeight: "12px" }}>Mon</div>
+                  <div style={{ height: "12px" }}></div>
+                  <div style={{ height: "12px", lineHeight: "12px" }}>Wed</div>
+                  <div style={{ height: "12px" }}></div>
+                  <div style={{ height: "12px", lineHeight: "12px" }}>Fri</div>
+                  <div style={{ height: "12px" }}></div>
+                </div>
+                {/* Grid */}
+                <div className="flex gap-[2px] flex-1 overflow-hidden justify-end">
+                  {(() => {
+                    const weeks: { date: string; count: number }[][] = [];
+                    const today = new Date();
+                    // Go back 83 days (12 weeks)
+                    const start = new Date(today);
+                    start.setDate(start.getDate() - 83);
+                    // Align to Sunday
+                    start.setDate(start.getDate() - start.getDay());
+                    let cur = new Date(start);
+                    let curWeek: { date: string; count: number }[] = [];
+                    while (cur <= today) {
+                      const ds = cur.toISOString().slice(0, 10);
+                      const cd = calendarData[ds];
+                      curWeek.push({ date: ds, count: cd?.exercisesDone || 0 });
+                      if (curWeek.length === 7) { weeks.push(curWeek); curWeek = []; }
+                      cur.setDate(cur.getDate() + 1);
+                    }
+                    if (curWeek.length > 0) weeks.push(curWeek);
+                    return weeks.map((wk, wi) => (
+                      <div key={wi} className="flex flex-col gap-[2px]">
+                        {wk.map((day, di) => {
+                          const bg = day.count === 0 ? "#111" : day.count <= 3 ? "#1a4a1a" : day.count <= 8 ? "#2d8a2d" : "#33CC33";
+                          return (
+                            <div key={di} title={`${day.date}: ${day.count} exercises`}
+                              className="cal-cell rounded-[2px]"
+                              style={{ width: "12px", height: "12px", background: bg }} />
+                          );
+                        })}
+                      </div>
+                    ));
+                  })()}
+                </div>
+              </div>
+              <div className="flex items-center gap-1 mt-2 justify-end">
+                <span className="font-readout text-[8px] text-[#444]">Less</span>
+                {["#111", "#1a4a1a", "#2d8a2d", "#33CC33"].map((c, i) => (
+                  <div key={i} className="rounded-[2px]" style={{ width: 10, height: 10, background: c }} />
+                ))}
+                <span className="font-readout text-[8px] text-[#444]">More</span>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Smart Suggestions ── */}
+          {(() => {
+            const suggestions = getSuggestions();
+            if (suggestions.length === 0) return null;
+            return (
+              <div className="panel-secondary p-4 mb-4">
+                <div className="font-label text-[10px] text-[#666] mb-2 flex items-center gap-2">
+                  💡 Suggestions
+                </div>
+                <div className="flex flex-col gap-2">
+                  {suggestions.map((s, i) => (
+                    <div key={i} className="flex items-start gap-2 text-[12px] text-[#888]">
+                      <span className="flex-shrink-0">{s.icon}</span>
+                      <span>{s.text}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Schedule — Task 7: primary panel */}
           <div className="panel-primary p-4 sm:p-5 mb-4">
@@ -405,6 +661,13 @@ export default function GuitarForgeApp() {
 
         {/* ══ PRACTICE ══ */}
         {view === "daily" && (<div className="animate-fade-in">
+          {/* Streak in practice header */}
+          {streak.currentStreak > 0 && (
+            <div className="flex items-center gap-2 mb-3 text-[12px] text-[#888]">
+              <span>🔥</span>
+              <span className="font-stat text-[#D4A843]">{streak.currentStreak} Day Streak!</span>
+            </div>
+          )}
           {/* Task 4: Practice progress bar */}
           {curExList.length > 0 && (
             <div className="mb-4">
@@ -526,7 +789,7 @@ export default function GuitarForgeApp() {
             return (
               <div key={String(ex.id) + "-" + idx} className={`flex items-start gap-2 sm:gap-3 px-2 sm:px-4 py-2.5 sm:py-3 mb-2 rounded-sm transition-all ${isSong ? "bg-[#0a110a] border border-[#1a3a2a]" : "panel"}`} style={{ opacity: done ? 0.4 : 1 }}>
                 <button type="button" aria-label={done ? "Mark undone" : "Mark done"} onClick={() => {
-                  const k = week + "-" + selDay + "-" + ex.id; setDoneMap((p) => ({ ...p, [k]: !p[k] }));
+                  const k = week + "-" + selDay + "-" + ex.id; toggleDone(k);
                   if (isSong && ex.songId !== undefined && ex.stageIdx !== undefined) setSongProgress((p) => ({ ...p, [week + "-" + ex.songId + "-" + ex.stageIdx]: { ...p[week + "-" + ex.songId + "-" + ex.stageIdx], done: !done } }));
                 }} className="cursor-pointer mt-1.5 flex-shrink-0 bg-transparent border-none p-0">
                   <div className={`led ${done ? "led-on" : "led-off"}`} style={{ width: 10, height: 10 }} />
@@ -546,6 +809,7 @@ export default function GuitarForgeApp() {
                       className="btn-ghost !px-1.5 !py-0.5 !text-[9px]" style={{ opacity: idx >= curExList.length - 1 ? 0.2 : 1 }}>DN</button>
                   </div>
                   <div className="flex gap-0.5">
+                    <button type="button" onClick={() => setFocusEx({ ex, idx })} className="btn-ghost !px-1.5 !py-0.5 !text-[9px]">Focus</button>
                     {!isSong && <button onClick={() => { const pool = EXERCISES.filter((e) => e.c === ex.c && e.id !== ex.id); if (!pool.length) return; setDayExMap((p) => { const l = (p[selDay] || []).slice(); l[idx] = pool[Math.floor(Math.random() * pool.length)]; return { ...p, [selDay]: l }; }); }}
                       className="btn-ghost !px-1.5 !py-0.5 !text-[9px]">Swap</button>}
                     <button type="button" onClick={() => setDayExMap((p) => { const l = (p[selDay] || []).slice(); l.splice(idx, 1); return { ...p, [selDay]: l }; })}
@@ -554,6 +818,10 @@ export default function GuitarForgeApp() {
                 </div>
                 {/* Task 6: Mobile compact action row */}
                 <div className="mobile-action-row flex-shrink-0 mt-1">
+                  <button type="button" onClick={(e) => { e.stopPropagation(); setFocusEx({ ex, idx }); }}
+                    className="btn-ghost !px-2 !py-1 !text-[9px]" aria-label="Focus">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
                   {!isSong && <button type="button" onClick={(e) => { e.stopPropagation(); const pool = EXERCISES.filter((x) => x.c === ex.c && x.id !== ex.id); if (!pool.length) return; setDayExMap((p) => { const l = (p[selDay] || []).slice(); l[idx] = pool[Math.floor(Math.random() * pool.length)]; return { ...p, [selDay]: l }; }); }}
                     className="btn-ghost !px-2 !py-1 !text-[9px]" aria-label="Swap">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
@@ -828,6 +1096,29 @@ export default function GuitarForgeApp() {
             <div className="font-readout text-[11px] text-[#555] mt-2">{wDn}/{wTot} ({wPct}%)</div>
           </div>
 
+          {/* Streak stats in report */}
+          <div className="panel p-4 mb-4">
+            <div className="font-label text-[10px] text-[#555] mb-2 flex items-center gap-2">🔥 Practice Streak</div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+              <div>
+                <div className="font-stat text-xl text-[#D4A843]">{streak.currentStreak}</div>
+                <div className="font-label text-[9px] text-[#555]">Current Streak</div>
+              </div>
+              <div>
+                <div className="font-stat text-xl text-[#D4A843]">{streak.longestStreak}</div>
+                <div className="font-label text-[9px] text-[#555]">Longest Streak</div>
+              </div>
+              <div>
+                <div className="font-stat text-xl text-[#D4A843]">{streak.totalDays}</div>
+                <div className="font-label text-[9px] text-[#555]">Total Days</div>
+              </div>
+              <div>
+                <div className="font-readout text-sm text-[#666] mt-1">{streak.lastPracticeDate || "—"}</div>
+                <div className="font-label text-[9px] text-[#555]">Last Practice</div>
+              </div>
+            </div>
+          </div>
+
           <WeeklyCharts week={week} dayExMap={dayExMap} doneMap={doneMap} bpmLog={bpmLog} />
 
           {songs.length > 0 && (
@@ -875,8 +1166,67 @@ export default function GuitarForgeApp() {
         onBpmChange={(v) => setBpmLog((p) => ({ ...p, [week + "-" + selDay + "-" + modal.id]: v }))}
         onNoteChange={(v) => setNoteLog((p) => ({ ...p, [week + "-" + selDay + "-" + modal.id]: v }))}
         onClose={() => setModal(null)}
-        onDone={() => { const k = week + "-" + selDay + "-" + modal.id; setDoneMap(p => ({ ...p, [k]: true })); setModal(null); }} />}
+        onDone={() => { const k = week + "-" + selDay + "-" + modal.id; markDone(k, true); setModal(null); }} />}
       {songModal && <SongModal song={songModal} onClose={() => setSongModal(null)} />}
+
+      {/* ══ FOCUS MODE OVERLAY ══ */}
+      {focusEx && (() => {
+        const ex = focusEx.ex;
+        const mins = Math.floor(focusTimer / 60);
+        const secs = focusTimer % 60;
+        return (
+          <div className="focus-overlay">
+            <button type="button" className="focus-close" onClick={() => setFocusEx(null)} aria-label="Close focus mode" title="Close">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+
+            <div className="text-center px-6 max-w-[600px] w-full">
+              {/* Exercise name */}
+              <div className="font-label text-[10px] text-[#555] mb-2">{ex.c}</div>
+              <div className="font-heading text-3xl sm:text-5xl font-bold text-[#D4A843] mb-8">{ex.n}</div>
+
+              {/* Timer */}
+              <div className="font-readout text-7xl sm:text-8xl font-bold text-white mb-4" style={{ fontVariantNumeric: "tabular-nums" }}>
+                {String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
+              </div>
+
+              {/* Timer controls */}
+              <div className="flex gap-4 justify-center mb-8">
+                <button type="button" onClick={() => setFocusRunning(!focusRunning)} className="btn-gold !px-8">
+                  {focusRunning ? "Pause" : "Resume"}
+                </button>
+                <button type="button" onClick={() => { setFocusTimer(0); setFocusRunning(true); }} className="btn-ghost">
+                  Reset
+                </button>
+              </div>
+
+              {/* BPM if available */}
+              {ex.b && (
+                <div className="mb-6">
+                  <div className="font-label text-[10px] text-[#555] mb-1">BPM Range</div>
+                  <div className="font-readout text-2xl text-[#D4A843]">{ex.b}</div>
+                </div>
+              )}
+
+              {/* Target time */}
+              <div className="font-readout text-[12px] text-[#444]">
+                Target: {ex.m} min
+              </div>
+
+              {/* Mark done button */}
+              <div className="mt-8">
+                <button type="button" onClick={() => {
+                  const k = week + "-" + selDay + "-" + ex.id;
+                  markDone(k, true);
+                  setFocusEx(null);
+                }} className="btn-gold !px-10">
+                  Mark Done
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
     </ErrorBoundary>
   );

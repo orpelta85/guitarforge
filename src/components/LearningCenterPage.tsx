@@ -450,7 +450,7 @@ type ExMode = "intervals" | "chords" | "scales" | "fretboard" | "progressions" |
   | "kb-notes" | "kb-intervals" | "kb-scales" | "kb-chords" | "kb-ear";
 type Direction = "ascending" | "descending" | "harmonic";
 type SubTab = "exercise" | "achievements" | "reference";
-type ToolTab = "scales" | "chords" | "fretboard" | "progressions" | "circle" | "intervals" | "tempo" | "iv-calc" | "piano";
+type ToolTab = "scales" | "chords" | "fretboard" | "progressions" | "circle" | "intervals" | "tempo" | "iv-calc" | "piano" | "tuner";
 type ConSubMode = "scale" | "interval" | "chord";
 
 interface LearnState {
@@ -637,6 +637,178 @@ function PianoKeyboard({ highlighted, onClick, disabled }: {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CHROMATIC TUNER (Web Audio API)
+   ═══════════════════════════════════════════════════════════ */
+const TUNER_NOTES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const STD_TUNING_REF = [
+  { note: "E", octave: 2, freq: 82.41 },
+  { note: "A", octave: 2, freq: 110.00 },
+  { note: "D", octave: 3, freq: 146.83 },
+  { note: "G", octave: 3, freq: 196.00 },
+  { note: "B", octave: 3, freq: 246.94 },
+  { note: "E", octave: 4, freq: 329.63 },
+];
+
+function autoCorrelate(buf: Float32Array, sampleRate: number): number {
+  let SIZE = buf.length;
+  let rms = 0;
+  for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
+  rms = Math.sqrt(rms / SIZE);
+  if (rms < 0.01) return -1;
+
+  let r1 = 0, r2 = SIZE - 1;
+  const thres = 0.2;
+  for (let i = 0; i < SIZE / 2; i++) { if (Math.abs(buf[i]) < thres) { r1 = i; break; } }
+  for (let i = 1; i < SIZE / 2; i++) { if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; } }
+
+  const trimmed = buf.slice(r1, r2);
+  SIZE = trimmed.length;
+  const c = new Float32Array(SIZE);
+  for (let i = 0; i < SIZE; i++) {
+    let sum = 0;
+    for (let j = 0; j < SIZE - i; j++) sum += trimmed[j] * trimmed[j + i];
+    c[i] = sum;
+  }
+
+  let d = 0;
+  while (c[d] > c[d + 1]) d++;
+
+  let maxVal = -1, maxPos = -1;
+  for (let i = d; i < SIZE; i++) {
+    if (c[i] > maxVal) { maxVal = c[i]; maxPos = i; }
+  }
+
+  let T0 = maxPos;
+  const x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
+  const a = (x1 + x3 - 2 * x2) / 2;
+  const b = (x3 - x1) / 2;
+  if (a) T0 = T0 - b / (2 * a);
+
+  return sampleRate / T0;
+}
+
+function freqToNote(freq: number): { note: string; octave: number; cents: number } {
+  const noteNum = 12 * (Math.log2(freq / 440));
+  const noteIdx = Math.round(noteNum) + 69;
+  const cents = Math.round((noteNum - Math.round(noteNum)) * 100);
+  const note = TUNER_NOTES[((noteIdx % 12) + 12) % 12];
+  const octave = Math.floor(noteIdx / 12) - 1;
+  return { note, octave, cents };
+}
+
+function ChromaticTuner() {
+  const [listening, setListening] = useState(false);
+  const [detected, setDetected] = useState<{ note: string; octave: number; cents: number; freq: number } | null>(null);
+  const ctxRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const rafRef = useRef<number>(0);
+
+  const startTuner = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      const ctx = new AudioContext();
+      ctxRef.current = ctx;
+      const src = ctx.createMediaStreamSource(stream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 4096;
+      src.connect(analyser);
+      analyserRef.current = analyser;
+      setListening(true);
+
+      const buf = new Float32Array(analyser.fftSize);
+      const tick = () => {
+        analyser.getFloatTimeDomainData(buf);
+        const freq = autoCorrelate(buf, ctx.sampleRate);
+        if (freq > 50 && freq < 1500) {
+          const info = freqToNote(freq);
+          setDetected({ ...info, freq: Math.round(freq * 10) / 10 });
+        }
+        rafRef.current = requestAnimationFrame(tick);
+      };
+      tick();
+    } catch {
+      // mic permission denied
+    }
+  };
+
+  const stopTuner = () => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+    if (ctxRef.current) ctxRef.current.close();
+    setListening(false);
+    setDetected(null);
+  };
+
+  useEffect(() => { return () => { stopTuner(); }; }, []);
+
+  const cents = detected?.cents ?? 0;
+  const absCents = Math.abs(cents);
+  const tuneClass = absCents <= 5 ? "tuner-in-tune" : absCents <= 15 ? "tuner-close" : "tuner-off";
+  const tuneColor = absCents <= 5 ? "#33CC33" : absCents <= 15 ? "#FFAA00" : "#FF3333";
+  const needleLeft = detected ? 50 + (cents / 50) * 50 : 50;
+
+  return (
+    <div className="panel p-3 sm:p-5 mb-3">
+      <div className="font-heading text-lg font-bold text-[#D4A843] mb-3">Chromatic Tuner</div>
+      <div className="text-[11px] text-[#555] mb-4">Use your microphone for real-time pitch detection.</div>
+
+      <div className="flex justify-center mb-6">
+        <button onClick={listening ? stopTuner : startTuner} className={listening ? "btn-danger" : "btn-gold"}>
+          {listening ? "Stop" : "Start Tuner"}
+        </button>
+      </div>
+
+      {listening && (
+        <div className="flex flex-col items-center gap-4">
+          {/* Note display */}
+          <div className="text-center">
+            <div className="font-heading text-6xl font-bold" style={{ color: detected ? tuneColor : "#333" }}>
+              {detected ? detected.note : "--"}
+            </div>
+            <div className="font-readout text-lg text-[#888] mt-1">
+              {detected ? `${detected.octave} · ${detected.freq} Hz` : "Waiting..."}
+            </div>
+          </div>
+
+          {/* Cents display */}
+          <div className="font-readout text-2xl font-bold" style={{ color: detected ? tuneColor : "#333" }}>
+            {detected ? (cents > 0 ? "+" : "") + cents + " cents" : ""}
+          </div>
+
+          {/* Visual meter */}
+          <div className="tuner-meter">
+            <div className="tuner-meter-center" />
+            <div className={`tuner-needle ${detected ? tuneClass : ""}`} style={{ left: `calc(${needleLeft}% - 2px)` }} />
+          </div>
+          <div className="flex justify-between w-full max-w-[320px] font-readout text-[9px] text-[#444]">
+            <span>-50</span><span>0</span><span>+50</span>
+          </div>
+
+          {/* Standard tuning reference */}
+          <div className="w-full mt-4">
+            <div className="font-label text-[10px] text-[#555] mb-2">Standard Tuning Reference</div>
+            <div className="grid grid-cols-6 gap-2">
+              {STD_TUNING_REF.map((ref, i) => {
+                const isMatch = detected && detected.note === ref.note && detected.octave === ref.octave;
+                return (
+                  <div key={i} className="text-center panel p-2" style={isMatch ? { borderColor: tuneColor + "60" } : {}}>
+                    <div className="font-heading text-lg" style={{ color: isMatch ? tuneColor : "#888" }}>{ref.note}{ref.octave}</div>
+                    <div className="font-readout text-[9px] text-[#555]">{ref.freq} Hz</div>
+                    <div className="font-readout text-[8px] text-[#444] mt-0.5">String {6 - i}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -2333,14 +2505,14 @@ export default function LearningCenterPage() {
       {mainTab === "tools" && (<>
         {/* Tool selector */}
         <div className="flex gap-1 mb-3 flex-wrap">
-          {([["scales","Scales"],["chords","Chords"],["fretboard","Fretboard"],["progressions","Progressions"],["circle","Circle of 5ths"],["intervals","Intervals"],["tempo","Tempo Tap"],["iv-calc","IV Calc"],["piano","Piano"]] as [ToolTab,string][]).map(([t,lbl]) => (
+          {([["scales","Scales"],["chords","Chords"],["fretboard","Fretboard"],["progressions","Progressions"],["circle","Circle of 5ths"],["intervals","Intervals"],["tempo","Tempo Tap"],["iv-calc","IV Calc"],["piano","Piano"],["tuner","Tuner"]] as [ToolTab,string][]).map(([t,lbl]) => (
             <button key={t} onClick={() => setToolTab(t)}
               className={`font-label text-[10px] px-3 py-1.5 rounded-sm cursor-pointer transition-all ${toolTab === t ? "bg-[#D4A843] text-[#0A0A0A]" : "text-[#555] border border-[#222]"}`}>{lbl}</button>
           ))}
         </div>
 
         {/* Root selector (not for tempo tapper) */}
-        {toolTab !== "tempo" && toolTab !== "piano" && (
+        {toolTab !== "tempo" && toolTab !== "piano" && toolTab !== "tuner" && (
           <div className="panel p-3 mb-3">
             <div className="font-label text-[9px] text-[#555] mb-1.5">Root Note</div>
             <div className="flex gap-1 flex-wrap">
@@ -2633,6 +2805,10 @@ export default function LearningCenterPage() {
         </div>)}
 
         {/* ── Piano Tool ── */}
+        {toolTab === "tuner" && (<div>
+          <ChromaticTuner />
+        </div>)}
+
         {toolTab === "piano" && (<div>
           <div className="panel p-3 sm:p-5 mb-3">
             <div className="font-heading text-lg font-bold text-[#D4A843] mb-3">Piano</div>
