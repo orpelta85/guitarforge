@@ -4,6 +4,8 @@ import { EXERCISES } from "@/lib/exercises";
 import { CATS, COL } from "@/lib/constants";
 import { SONG_LIBRARY } from "@/lib/songs-data";
 import type { SongEntry } from "@/lib/types";
+import { buildStyle, recordUsage, saveToLibrary } from "@/lib/suno";
+import type { LibraryTrack } from "@/lib/suno";
 
 // ── Types ──
 
@@ -183,6 +185,27 @@ function getDemoResponse(input: string): { content: string; actions?: MessageAct
   const profile = getProfile();
   const name = profile?.name || "גיטריסט";
 
+  // Backing track / jam
+  if (/backing|track|jam|play along|תרגול עם/.test(lower)) {
+    let currentScale = "Am";
+    let currentMode = "Aeolian";
+    let currentStyle = "Metal";
+    try {
+      const raw = localStorage.getItem("gf30");
+      if (raw) {
+        const d = JSON.parse(raw);
+        if (d.scale) currentScale = d.scale;
+        if (d.mode) currentMode = d.mode;
+        if (d.style) currentStyle = d.style;
+      }
+    } catch {}
+    const stylePreview = buildStyle(currentScale, currentMode, currentStyle, 120);
+    return {
+      content: `אני יכול ליצור backing track מותאם להגדרות שלך!\n\n**Current Settings:**\n- Scale: ${currentScale}\n- Mode: ${currentMode}\n- Style: ${currentStyle}\n\n**Style prompt:** ${stylePreview}\n\nלחץ על הכפתור למטה כדי לייצר backing track.`,
+      actions: [{ label: "Generate Backing Track", type: "quick-action" as const, data: { scale: currentScale, mode: currentMode, style: currentStyle, bpm: 120 } }],
+    };
+  }
+
   // Routine / plan
   if (/routine|plan|schedule|תוכנית|לוח|תרגול יומי/.test(lower)) {
     return {
@@ -301,6 +324,7 @@ const QUICK_ACTIONS = [
   { label: "המלץ שירים", query: "Recommend songs for me" },
   { label: "נתח התקדמות", query: "Analyze my progress and stats" },
   { label: "עזרה עם תאוריה", query: "Help me with music theory" },
+  { label: "Generate backing track", query: "Generate a backing track for my current settings" },
 ];
 
 // ── Markdown-lite renderer ──
@@ -350,6 +374,8 @@ export default function AiCoachPage() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [apiKey, setApiKey] = useState("");
+  const [coachTrackUrl, setCoachTrackUrl] = useState<string | null>(null);
+  const [coachTrackLoading, setCoachTrackLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const initRef = useRef(false);
@@ -479,6 +505,83 @@ export default function AiCoachPage() {
     }
   }
 
+  async function handleGenerateBacking(actionData: { scale: string; mode: string; style: string; bpm: number }) {
+    if (coachTrackLoading) return;
+    setCoachTrackLoading(true);
+    setCoachTrackUrl(null);
+
+    const genMsg: CoachMessage = {
+      id: `a-gen-${Date.now()}`,
+      role: "assistant",
+      content: `Generating backing track: **${actionData.scale} ${actionData.mode} ${actionData.style}** at ${actionData.bpm} BPM...\n\nThis may take up to 2 minutes.`,
+      timestamp: Date.now(),
+    };
+    setMessages(prev => [...prev, genMsg]);
+
+    try {
+      const res = await fetch("/api/suno", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scale: actionData.scale,
+          mode: actionData.mode,
+          style: actionData.style,
+          bpm: actionData.bpm,
+          title: `${actionData.scale} ${actionData.mode} ${actionData.style} Backing Track`,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Unknown error" }));
+        throw new Error(err.error || `API error ${res.status}`);
+      }
+
+      const data = await res.json();
+      if (data.tracks && data.tracks.length > 0) {
+        const track = data.tracks[0];
+        setCoachTrackUrl(track.audioUrl || track.streamAudioUrl);
+        recordUsage(10);
+
+        // Save to library
+        try {
+          const libTrack: LibraryTrack = {
+            id: track.id || `coach-${Date.now()}`,
+            audioBlob: new Blob(),
+            audioUrl: track.audioUrl || track.streamAudioUrl,
+            title: track.title || `${actionData.scale} ${actionData.mode} Backing`,
+            style: actionData.style,
+            params: actionData,
+            duration: track.duration || 0,
+            createdAt: Date.now(),
+            source: "generate",
+            favorite: false,
+          };
+          await saveToLibrary(libTrack);
+        } catch {}
+
+        const doneMsg: CoachMessage = {
+          id: `a-done-${Date.now()}`,
+          role: "assistant",
+          content: `Backing track ready! **${track.title || "Backing Track"}** (${Math.round((track.duration || 0))}s)\n\nThe track has been saved to your library. Use the player above to jam along!`,
+          timestamp: Date.now(),
+        };
+        setMessages(prev => [...prev, doneMsg]);
+      } else {
+        throw new Error("No tracks returned — generation may still be processing");
+      }
+    } catch (err) {
+      const errMsg: CoachMessage = {
+        id: `a-err-${Date.now()}`,
+        role: "assistant",
+        content: `Could not generate backing track: ${err instanceof Error ? err.message : "Unknown error"}.\n\nMake sure SUNO_API_KEY is configured in your environment.`,
+        timestamp: Date.now(),
+      };
+      setMessages(prev => [...prev, errMsg]);
+    } finally {
+      setCoachTrackLoading(false);
+    }
+  }
+
   const isDemo = !apiKey || !apiKey.startsWith("sk-");
 
   return (
@@ -533,6 +636,39 @@ export default function AiCoachPage() {
                 style={{ direction: "rtl", textAlign: "right" }}>
                 {renderContent(msg.content)}
               </div>
+              {/* Action buttons (e.g., Generate Backing Track) */}
+              {msg.actions && msg.actions.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2" style={{ direction: "ltr" }}>
+                  {msg.actions.map((action, ai) => (
+                    <button key={ai}
+                      onClick={() => {
+                        if (action.data && typeof action.data === "object" && "scale" in action.data) {
+                          handleGenerateBacking(action.data as { scale: string; mode: string; style: string; bpm: number });
+                        }
+                      }}
+                      disabled={coachTrackLoading}
+                      className="font-label text-[10px] text-[#D4A843] border border-[#D4A843]/30 hover:border-[#D4A843]/60 hover:bg-[#D4A843]/10 px-3 py-1.5 rounded-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5">
+                      {coachTrackLoading ? (
+                        <>
+                          <svg className="animate-spin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2"><circle cx="12" cy="12" r="10" strokeDasharray="60" strokeDashoffset="20" /></svg>
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="5.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="15.5" r="2.5"/><path d="M8 17V5l12-2v12"/></svg>
+                          {action.label}
+                        </>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {/* Inline audio player for generated backing track */}
+              {coachTrackUrl && msg.id.startsWith("a-done-") && (
+                <div className="mt-2 p-2 bg-[#0a0a0a] border border-[#222] rounded-sm" style={{ direction: "ltr" }}>
+                  <audio controls src={coachTrackUrl} className="w-full" style={{ height: 32 }} />
+                </div>
+              )}
               <div className="font-readout text-[8px] text-[#333] mt-1.5" style={{ direction: "ltr", textAlign: msg.role === "user" ? "right" : "left" }}>
                 {new Date(msg.timestamp).toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })}
               </div>

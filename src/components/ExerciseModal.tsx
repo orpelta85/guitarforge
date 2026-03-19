@@ -160,9 +160,9 @@ export default function ExerciseModal({ exercise: ex, mode, scale, style, week, 
       });
       if (!res.ok) throw new Error(`Server error: ${res.status}`);
       const data = await res.json();
-      if (!data.tracks?.length) throw new Error("No tracks returned");
+      if (data.error) throw new Error(data.error);
+      if (!data.tracks?.length) throw new Error("No tracks returned — try again");
       const track = data.tracks[0];
-      if (track.status !== "complete") throw new Error("Generation timed out — try again");
       const cacheKey = buildCacheKey(ex.id, sunoStyle, scale, mode, sunoBpm);
       const cached = await downloadAndCache(
         cacheKey, track.id, track.audioUrl,

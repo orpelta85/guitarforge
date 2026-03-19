@@ -1449,22 +1449,18 @@ export default function LearningCenterPage() {
      ═══════════════════════════════════════════════════════════ */
   return (
     <div>
-      {/* ── Header ── */}
-      <div className="panel p-3 sm:p-5 mb-3">
-        <div className="flex justify-between items-start">
-          <div>
-            <div className="font-heading text-lg sm:text-xl font-bold text-[#D4A843]">Learning Center</div>
-            <div className="font-label text-[10px] text-[#555] mt-0.5">Lessons, exercises & music tools</div>
+      {/* ── Header (compact) ── */}
+      <div className="panel p-3 sm:px-5 sm:py-3 mb-3">
+        <div className="flex items-center gap-3">
+          <div className="font-heading text-base sm:text-lg font-bold text-[#D4A843] flex-shrink-0">Learning Center</div>
+          <div className="flex-1 min-w-0">
+            <div className="vu !h-[3px]"><div className="vu-fill" style={{ width: (ls.xp % 100) + "%" }} /></div>
           </div>
-          <div className="text-right">
-            <div className="font-readout text-xl sm:text-2xl font-bold text-[#D4A843]">LV.{ls.level}</div>
-            <div className="font-readout text-[10px] text-[#555]">{ls.xp} XP</div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <span className="font-readout text-[11px] font-bold text-[#D4A843]">LV.{ls.level}</span>
+            <span className="font-readout text-[10px] text-[#555]">{ls.xp} XP</span>
+            {ls.bestStreak > 0 && <span className="font-readout text-[9px] text-[#444]">Streak: {ls.bestStreak}</span>}
           </div>
-        </div>
-        <div className="vu !h-[4px] mt-2"><div className="vu-fill" style={{ width: (ls.xp % 100) + "%" }} /></div>
-        <div className="flex justify-between mt-1">
-          <span className="font-readout text-[9px] text-[#444]">{100 - ls.xp % 100} XP to next</span>
-          <span className="font-readout text-[9px] text-[#444]">Best streak: {ls.bestStreak}</span>
         </div>
       </div>
 

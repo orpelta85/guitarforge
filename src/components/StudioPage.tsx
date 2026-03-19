@@ -1,6 +1,8 @@
 "use client";
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { SCALES, MODES, STYLES } from "@/lib/constants";
+import { buildStyle, saveToLibrary as saveSunoToLibrary, getAllLibraryTracks, deleteFromLibrary, updateLibraryTrack, getLibraryStats, getDailyUsage, recordUsage } from "@/lib/suno";
+import type { LibraryTrack } from "@/lib/suno";
 
 // ── Types ──
 interface TrackEffects {
@@ -576,6 +578,16 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
   const [sunoCredits, setSunoCredits] = useState<number | null>(null);
   const [sunoCreditsLoading, setSunoCreditsLoading] = useState(false);
   const [sunoConfirm, setSunoConfirm] = useState(false);
+  const [sunoTab, setSunoTab] = useState<"generate" | "library" | "credits">("generate");
+  const [sunoCustomPrompt, setSunoCustomPrompt] = useState(false);
+  const [sunoPromptText, setSunoPromptText] = useState("");
+  const [sunoGeneratedTracks, setSunoGeneratedTracks] = useState<{ id: string; title: string; audioUrl: string; duration: number }[]>([]);
+  const [sunoLibrary, setSunoLibrary] = useState<LibraryTrack[]>([]);
+  const [sunoLibSearch, setSunoLibSearch] = useState("");
+  const [sunoLibStats, setSunoLibStats] = useState<{ count: number; totalBytes: number }>({ count: 0, totalBytes: 0 });
+  const [sunoPlayingId, setSunoPlayingId] = useState<string | null>(null);
+  const [sunoDailyUsage, setSunoDailyUsage] = useState({ date: "", used: 0, generations: 0 });
+  const sunoAudioRef = useRef<HTMLAudioElement | null>(null);
   const [selectedTrackId, setSelectedTrackId] = useState<number | null>(null);
   const [editingTrackName, setEditingTrackName] = useState<number | null>(null);
   const [sidebarWidth, setSidebarWidth] = useState(220);
@@ -1291,37 +1303,119 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
     setSunoCreditsLoading(false);
   }, []);
 
-  // Fetch credits when suno panel opens
+  const loadSunoLibrary = useCallback(async () => {
+    const tracks = await getAllLibraryTracks();
+    setSunoLibrary(tracks);
+    const stats = await getLibraryStats();
+    setSunoLibStats(stats);
+  }, []);
+
+  // Fetch credits + library when suno panel opens
   useEffect(() => {
-    if (showPanel === "suno") fetchSunoCredits();
-  }, [showPanel, fetchSunoCredits]);
+    if (showPanel === "suno") {
+      fetchSunoCredits();
+      loadSunoLibrary();
+      setSunoDailyUsage(getDailyUsage());
+    }
+  }, [showPanel, fetchSunoCredits, loadSunoLibrary]);
+
+  // Refresh daily usage when credits tab is active
+  useEffect(() => {
+    if (sunoTab === "credits") setSunoDailyUsage(getDailyUsage());
+  }, [sunoTab]);
+
+  const sunoStylePreview = useMemo(() => {
+    if (sunoCustomPrompt) return sunoPromptText;
+    return buildStyle(sunoScale, sunoMode, sunoStyle, sunoBpm);
+  }, [sunoScale, sunoMode, sunoStyle, sunoBpm, sunoCustomPrompt, sunoPromptText]);
 
   const generateSuno = useCallback(async () => {
     setSunoLoading(true);
     setSunoError("");
     setSunoConfirm(false);
+    setSunoGeneratedTracks([]);
     try {
+      const stylePayload = sunoCustomPrompt ? sunoPromptText : undefined;
       const res = await fetch("/api/suno", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scale: sunoScale, mode: sunoMode, style: sunoStyle, bpm: sunoBpm }),
+        body: JSON.stringify({
+          scale: sunoScale, mode: sunoMode, style: sunoStyle, bpm: sunoBpm,
+          title: `${sunoScale} ${sunoMode} ${sunoStyle} ${sunoBpm}bpm`,
+          ...(stylePayload ? { customStyle: stylePayload } : {}),
+        }),
       });
       if (!res.ok) throw new Error(`Server error: ${res.status}`);
       const data = await res.json();
-      if (data.tracks) {
-        data.tracks.forEach((t: { title: string; audioUrl: string }) =>
-          addTrack(t.title || "AI Track", t.audioUrl, "suno")
-        );
+      if (data.tracks && data.tracks.length > 0) {
+        const generated = data.tracks.map((t: { id: string; title: string; audioUrl: string; duration: number }) => ({
+          id: t.id || crypto.randomUUID(),
+          title: t.title || "AI Track",
+          audioUrl: t.audioUrl,
+          duration: t.duration || 0,
+        }));
+        setSunoGeneratedTracks(generated);
+        recordUsage(10);
+        // Save each track to library
+        for (const t of generated) {
+          try {
+            const audioRes = await fetch(t.audioUrl);
+            const blob = await audioRes.blob();
+            await saveSunoToLibrary({
+              id: t.id,
+              audioBlob: blob,
+              audioUrl: t.audioUrl,
+              title: t.title,
+              style: sunoCustomPrompt ? sunoPromptText : buildStyle(sunoScale, sunoMode, sunoStyle, sunoBpm),
+              params: { scale: sunoScale, mode: sunoMode, style: sunoStyle, bpm: sunoBpm },
+              duration: t.duration,
+              createdAt: Date.now(),
+              source: "generate",
+              favorite: false,
+            });
+          } catch { /* save failure non-critical */ }
+        }
+        loadSunoLibrary();
+        fetchSunoCredits();
+        setSunoDailyUsage(getDailyUsage());
       } else {
         throw new Error("No tracks returned");
       }
-      setShowPanel("none");
-      fetchSunoCredits();
     } catch (err) {
       setSunoError(err instanceof Error ? err.message : "Failed to generate track");
     }
     setSunoLoading(false);
-  }, [sunoScale, sunoMode, sunoStyle, sunoBpm, addTrack, fetchSunoCredits]);
+  }, [sunoScale, sunoMode, sunoStyle, sunoBpm, sunoCustomPrompt, sunoPromptText, fetchSunoCredits, loadSunoLibrary]);
+
+  const sunoPlayTrack = useCallback((url: string, id: string) => {
+    if (sunoAudioRef.current) {
+      sunoAudioRef.current.pause();
+      sunoAudioRef.current = null;
+    }
+    if (sunoPlayingId === id) {
+      setSunoPlayingId(null);
+      return;
+    }
+    const audio = new Audio(url);
+    audio.onended = () => setSunoPlayingId(null);
+    audio.play();
+    sunoAudioRef.current = audio;
+    setSunoPlayingId(id);
+  }, [sunoPlayingId]);
+
+  const sunoDeleteTrack = useCallback(async (id: string) => {
+    await deleteFromLibrary(id);
+    loadSunoLibrary();
+  }, [loadSunoLibrary]);
+
+  const sunoToggleFavorite = useCallback(async (id: string, current: boolean) => {
+    await updateLibraryTrack(id, { favorite: !current });
+    loadSunoLibrary();
+  }, [loadSunoLibrary]);
+
+  const sunoAddToDaw = useCallback((title: string, url: string) => {
+    addTrack(title || "AI Track", url, "suno");
+  }, [addTrack]);
 
   // ── Export/Mixdown ──
   const exportMix = useCallback(async () => {
@@ -3273,69 +3367,334 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                 </div>
               </div>
 
-              {/* Suno AI */}
-              <div className="rounded-lg p-3" style={{ background: "#1a1a1a", border: "1px solid #222" }}>
-                <div className="flex items-center justify-between mb-2">
+              {/* ═══ Suno AI — Tabbed Panel ═══ */}
+              <div className="rounded-lg overflow-hidden" style={{ background: "#1a1a1a", border: "1px solid #222" }}>
+                {/* Header */}
+                <div className="flex items-center justify-between px-3 py-2" style={{ background: "#151515", borderBottom: "1px solid #222" }}>
                   <div className="flex items-center gap-2">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                    <span className="text-[10px] text-[#aaa] font-medium">AI Track (Suno)</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    <span className="text-[10px] text-[#ccc] font-medium" style={{ fontFamily: "Oswald, sans-serif", letterSpacing: "0.05em" }}>SUNO AI</span>
                   </div>
                   {sunoCredits !== null && (
-                    <span className={`text-[8px] font-medium px-1.5 py-0.5 rounded ${sunoCredits <= 10 ? "text-[#ef4444] bg-[#ef444415]" : "text-[#22c55e] bg-[#22c55e15]"}`}>
+                    <span className={`text-[8px] font-medium px-1.5 py-0.5 rounded ${sunoCredits <= 10 ? "text-[#ef4444] bg-[#ef444415]" : "text-[#D4A843] bg-[#D4A84315]"}`}>
                       {sunoCreditsLoading ? "..." : `${sunoCredits} credits`}
                     </span>
                   )}
                 </div>
-                <div className="space-y-1.5">
-                  <div className="flex gap-1.5">
-                    <label className="flex-1">
-                      <span className="text-[7px] text-[#444] block">Key</span>
-                      <select value={sunoScale} onChange={(e) => setSunoScale(e.target.value)}
-                        className="w-full bg-[#0e0e0e] border border-[#2a2a2a] rounded px-1 py-0.5 text-[9px] text-[#aaa] outline-none focus:border-[#8b5cf6] cursor-pointer">
-                        {SCALES.map((s) => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                    </label>
-                    <label className="flex-1">
-                      <span className="text-[7px] text-[#444] block">Mode</span>
-                      <select value={sunoMode} onChange={(e) => setSunoMode(e.target.value)}
-                        className="w-full bg-[#0e0e0e] border border-[#2a2a2a] rounded px-1 py-0.5 text-[9px] text-[#aaa] outline-none focus:border-[#8b5cf6] cursor-pointer">
-                        {MODES.map((m) => <option key={m} value={m}>{m}</option>)}
-                      </select>
-                    </label>
-                  </div>
-                  <label className="block">
-                    <span className="text-[7px] text-[#444] block">Style</span>
-                    <select value={sunoStyle} onChange={(e) => setSunoStyle(e.target.value)}
-                      className="w-full bg-[#0e0e0e] border border-[#2a2a2a] rounded px-1 py-0.5 text-[9px] text-[#aaa] outline-none focus:border-[#8b5cf6] cursor-pointer">
-                      {STYLES.map((s) => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </label>
-                  <label className="block">
-                    <span className="text-[7px] text-[#444] block">BPM</span>
-                    <input type="number" value={sunoBpm} onChange={(e) => setSunoBpm(Number(e.target.value))}
-                      className="w-20 bg-[#0e0e0e] border border-[#2a2a2a] rounded px-1.5 py-0.5 text-[9px] text-[#f59e0b] outline-none focus:border-[#f59e0b]" />
-                  </label>
-                  {!sunoConfirm ? (
-                    <button onClick={() => setSunoConfirm(true)} disabled={sunoLoading}
-                      className="w-full text-[9px] py-1.5 rounded-md bg-[#8b5cf6] text-white hover:brightness-110 disabled:opacity-50 cursor-pointer transition-all font-medium">
-                      {sunoLoading ? "Generating..." : "Generate Track"}
+
+                {/* Tab Bar */}
+                <div className="flex" style={{ borderBottom: "1px solid #222" }}>
+                  {(["generate", "library", "credits"] as const).map((tab) => (
+                    <button key={tab} onClick={() => setSunoTab(tab)}
+                      className="flex-1 text-[9px] py-1.5 font-medium transition-all cursor-pointer"
+                      style={{
+                        color: sunoTab === tab ? "#D4A843" : "#555",
+                        background: sunoTab === tab ? "#1e1e1e" : "transparent",
+                        borderBottom: sunoTab === tab ? "2px solid #D4A843" : "2px solid transparent",
+                        fontFamily: "Oswald, sans-serif",
+                        letterSpacing: "0.04em",
+                      }}>
+                      {tab === "generate" ? "GENERATE" : tab === "library" ? "LIBRARY" : "CREDITS"}
                     </button>
-                  ) : (
-                    <div className="bg-[#111] border border-[#8b5cf620] rounded p-2 space-y-1.5">
-                      <div className="text-[8px] text-[#aaa]">This will use ~10 credits.{sunoCredits !== null && ` You have ${sunoCredits} remaining.`}</div>
-                      <div className="flex gap-1.5">
-                        <button onClick={generateSuno} disabled={sunoLoading}
-                          className="flex-1 text-[9px] py-1 rounded bg-[#8b5cf6] text-white hover:brightness-110 disabled:opacity-50 cursor-pointer transition-all font-medium">
-                          {sunoLoading ? "Generating..." : "Confirm"}
+                  ))}
+                </div>
+
+                {/* Tab Content */}
+                <div className="p-3">
+
+                  {/* ── TAB: Generate ── */}
+                  {sunoTab === "generate" && (
+                    <div className="space-y-2">
+                      {/* Custom prompt toggle */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-[8px] text-[#555]">Prompt mode</span>
+                        <button onClick={() => { setSunoCustomPrompt(!sunoCustomPrompt); setSunoGeneratedTracks([]); }}
+                          className="text-[8px] px-2 py-0.5 rounded cursor-pointer transition-all"
+                          style={{ background: sunoCustomPrompt ? "#D4A84320" : "#222", color: sunoCustomPrompt ? "#D4A843" : "#666", border: `1px solid ${sunoCustomPrompt ? "#D4A84340" : "#333"}` }}>
+                          {sunoCustomPrompt ? "Custom" : "Builder"}
                         </button>
-                        <button onClick={() => setSunoConfirm(false)}
-                          className="flex-1 text-[9px] py-1 rounded bg-[#222] text-[#888] hover:bg-[#333] cursor-pointer transition-all">
-                          Cancel
+                      </div>
+
+                      {!sunoCustomPrompt ? (
+                        <>
+                          {/* Scale + Mode */}
+                          <div className="flex gap-1.5">
+                            <label className="flex-1">
+                              <span className="text-[7px] text-[#555] block mb-0.5" style={{ fontFamily: "Oswald, sans-serif" }}>KEY</span>
+                              <select value={sunoScale} onChange={(e) => setSunoScale(e.target.value)}
+                                className="w-full bg-[#0e0e0e] border border-[#2a2a2a] rounded px-1.5 py-1 text-[9px] text-[#aaa] outline-none focus:border-[#D4A843] cursor-pointer">
+                                {SCALES.map((s) => <option key={s} value={s}>{s}</option>)}
+                              </select>
+                            </label>
+                            <label className="flex-1">
+                              <span className="text-[7px] text-[#555] block mb-0.5" style={{ fontFamily: "Oswald, sans-serif" }}>MODE</span>
+                              <select value={sunoMode} onChange={(e) => setSunoMode(e.target.value)}
+                                className="w-full bg-[#0e0e0e] border border-[#2a2a2a] rounded px-1.5 py-1 text-[9px] text-[#aaa] outline-none focus:border-[#D4A843] cursor-pointer">
+                                {MODES.map((m) => <option key={m} value={m}>{m}</option>)}
+                              </select>
+                            </label>
+                          </div>
+                          {/* Style */}
+                          <label className="block">
+                            <span className="text-[7px] text-[#555] block mb-0.5" style={{ fontFamily: "Oswald, sans-serif" }}>STYLE</span>
+                            <select value={sunoStyle} onChange={(e) => setSunoStyle(e.target.value)}
+                              className="w-full bg-[#0e0e0e] border border-[#2a2a2a] rounded px-1.5 py-1 text-[9px] text-[#aaa] outline-none focus:border-[#D4A843] cursor-pointer">
+                              {STYLES.map((s) => <option key={s} value={s}>{s}</option>)}
+                            </select>
+                          </label>
+                          {/* BPM */}
+                          <label className="block">
+                            <span className="text-[7px] text-[#555] block mb-0.5" style={{ fontFamily: "Oswald, sans-serif" }}>BPM</span>
+                            <input type="number" value={sunoBpm} min={40} max={300}
+                              onChange={(e) => setSunoBpm(Math.min(300, Math.max(40, Number(e.target.value))))}
+                              className="w-24 bg-[#0e0e0e] border border-[#2a2a2a] rounded px-1.5 py-1 text-[9px] outline-none focus:border-[#D4A843]"
+                              style={{ color: "#D4A843", fontFamily: "JetBrains Mono, monospace" }} />
+                          </label>
+                        </>
+                      ) : (
+                        <div>
+                          <span className="text-[7px] text-[#555] block mb-0.5" style={{ fontFamily: "Oswald, sans-serif" }}>CUSTOM PROMPT</span>
+                          <textarea value={sunoPromptText}
+                            onChange={(e) => setSunoPromptText(e.target.value.slice(0, 200))}
+                            placeholder="e.g. heavy metal, E minor, 140 BPM, aggressive rhythm guitar..."
+                            rows={3}
+                            className="w-full bg-[#0e0e0e] border border-[#2a2a2a] rounded px-2 py-1.5 text-[9px] text-[#aaa] outline-none focus:border-[#D4A843] resize-none placeholder:text-[#333]" />
+                          <div className="text-[7px] text-right mt-0.5" style={{ color: sunoPromptText.length > 180 ? "#ef4444" : "#444", fontFamily: "JetBrains Mono, monospace" }}>
+                            {sunoPromptText.length}/200
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Prompt Preview */}
+                      <div className="rounded p-2" style={{ background: "#0e0e0e", border: "1px solid #1e1e1e" }}>
+                        <span className="text-[7px] text-[#444] block mb-1" style={{ fontFamily: "Oswald, sans-serif" }}>PROMPT PREVIEW</span>
+                        <div className="text-[8px] text-[#777] leading-relaxed" style={{ fontFamily: "JetBrains Mono, monospace" }}>
+                          {sunoStylePreview || <span className="text-[#333] italic">Enter a prompt...</span>}
+                        </div>
+                      </div>
+
+                      {/* Generate / Confirm */}
+                      {!sunoConfirm ? (
+                        <button onClick={() => setSunoConfirm(true)} disabled={sunoLoading || (sunoCustomPrompt && !sunoPromptText.trim())}
+                          className="w-full text-[9px] py-2 rounded-md text-white hover:brightness-110 disabled:opacity-40 cursor-pointer transition-all font-medium"
+                          style={{ background: "linear-gradient(135deg, #D4A843, #B8922E)", fontFamily: "Oswald, sans-serif", letterSpacing: "0.05em" }}>
+                          {sunoLoading ? (
+                            <span className="flex items-center justify-center gap-2">
+                              <svg className="animate-spin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" opacity="0.3"/><path d="M12 2a10 10 0 019.95 9"/></svg>
+                              GENERATING...
+                            </span>
+                          ) : "GENERATE BACKING TRACK"}
                         </button>
+                      ) : (
+                        <div className="rounded p-2.5 space-y-2" style={{ background: "#111", border: "1px solid #D4A84320" }}>
+                          <div className="flex items-center gap-2">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            <span className="text-[9px] text-[#aaa]">This will use <strong className="text-[#D4A843]">~10 credits</strong></span>
+                          </div>
+                          {sunoCredits !== null && (
+                            <div className="text-[8px] text-[#555]">You have {sunoCredits} credits remaining.</div>
+                          )}
+                          <div className="flex gap-1.5">
+                            <button onClick={generateSuno} disabled={sunoLoading}
+                              className="flex-1 text-[9px] py-1.5 rounded text-white hover:brightness-110 disabled:opacity-50 cursor-pointer transition-all font-medium"
+                              style={{ background: "#D4A843", fontFamily: "Oswald, sans-serif" }}>
+                              {sunoLoading ? "GENERATING..." : "CONFIRM"}
+                            </button>
+                            <button onClick={() => setSunoConfirm(false)}
+                              className="flex-1 text-[9px] py-1.5 rounded bg-[#222] text-[#888] hover:bg-[#333] cursor-pointer transition-all">
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {sunoError && (
+                        <div className="flex items-center gap-1.5 text-[9px] text-[#ef4444] bg-[#ef444410] rounded p-2">
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                          {sunoError}
+                        </div>
+                      )}
+
+                      {/* Generated Tracks */}
+                      {sunoGeneratedTracks.length > 0 && (
+                        <div className="space-y-1.5">
+                          <span className="text-[7px] text-[#555] block" style={{ fontFamily: "Oswald, sans-serif" }}>GENERATED TRACKS</span>
+                          {sunoGeneratedTracks.map((t) => (
+                            <div key={t.id} className="flex items-center gap-2 rounded p-2" style={{ background: "#111", border: "1px solid #1e1e1e" }}>
+                              <button onClick={() => sunoPlayTrack(t.audioUrl, t.id)}
+                                className="w-6 h-6 rounded-full flex items-center justify-center cursor-pointer transition-all shrink-0"
+                                style={{ background: sunoPlayingId === t.id ? "#D4A843" : "#222", border: `1px solid ${sunoPlayingId === t.id ? "#D4A843" : "#333"}` }}>
+                                {sunoPlayingId === t.id ? (
+                                  <svg width="8" height="8" viewBox="0 0 24 24" fill="white"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                                ) : (
+                                  <svg width="8" height="8" viewBox="0 0 24 24" fill="#aaa"><polygon points="5,3 19,12 5,21"/></svg>
+                                )}
+                              </button>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-[9px] text-[#ccc] truncate">{t.title}</div>
+                                {t.duration > 0 && <div className="text-[7px] text-[#444]" style={{ fontFamily: "JetBrains Mono, monospace" }}>{Math.floor(t.duration / 60)}:{String(Math.floor(t.duration % 60)).padStart(2, "0")}</div>}
+                              </div>
+                              <button onClick={() => sunoAddToDaw(t.title, t.audioUrl)}
+                                className="text-[8px] px-2 py-1 rounded cursor-pointer transition-all hover:brightness-125"
+                                style={{ background: "#D4A84320", color: "#D4A843", border: "1px solid #D4A84330" }}>
+                                + DAW
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ── TAB: Library ── */}
+                  {sunoTab === "library" && (
+                    <div className="space-y-2">
+                      {/* Search */}
+                      <div className="relative">
+                        <svg className="absolute left-2 top-1/2 -translate-y-1/2" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#444" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input value={sunoLibSearch} onChange={(e) => setSunoLibSearch(e.target.value)}
+                          placeholder="Search tracks..."
+                          className="w-full bg-[#0e0e0e] border border-[#2a2a2a] rounded pl-7 pr-2 py-1.5 text-[9px] text-[#aaa] outline-none focus:border-[#D4A843] placeholder:text-[#333]" />
+                      </div>
+
+                      {/* Track List */}
+                      <div className="space-y-1 max-h-[280px] overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "#333 transparent" }}>
+                        {(() => {
+                          const filtered = sunoLibrary.filter((t) => !sunoLibSearch || t.title.toLowerCase().includes(sunoLibSearch.toLowerCase()));
+                          const favs = filtered.filter((t) => t.favorite);
+                          const rest = filtered.filter((t) => !t.favorite);
+                          const sorted = [...favs, ...rest];
+                          if (sorted.length === 0) return (
+                            <div className="text-center py-6">
+                              <svg className="mx-auto mb-2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="1.5"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                              <div className="text-[9px] text-[#444]">No tracks yet</div>
+                              <div className="text-[7px] text-[#333]">Generate your first backing track</div>
+                            </div>
+                          );
+                          return sorted.map((t) => (
+                            <div key={t.id} className="rounded p-2 group" style={{ background: "#111", border: "1px solid #1e1e1e" }}>
+                              <div className="flex items-center gap-2">
+                                {/* Play button */}
+                                <button onClick={() => sunoPlayTrack(t.audioUrl, t.id)}
+                                  className="w-6 h-6 rounded-full flex items-center justify-center cursor-pointer transition-all shrink-0"
+                                  style={{ background: sunoPlayingId === t.id ? "#D4A843" : "#1a1a1a", border: `1px solid ${sunoPlayingId === t.id ? "#D4A843" : "#2a2a2a"}` }}>
+                                  {sunoPlayingId === t.id ? (
+                                    <svg width="8" height="8" viewBox="0 0 24 24" fill="white"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                                  ) : (
+                                    <svg width="8" height="8" viewBox="0 0 24 24" fill="#666"><polygon points="5,3 19,12 5,21"/></svg>
+                                  )}
+                                </button>
+                                {/* Info */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-[9px] text-[#ccc] truncate">{t.title}</div>
+                                  <div className="flex items-center gap-2 text-[7px] text-[#444]" style={{ fontFamily: "JetBrains Mono, monospace" }}>
+                                    {t.params && <span>{t.params.scale} {t.params.mode}</span>}
+                                    {t.params?.bpm && <span>{t.params.bpm}bpm</span>}
+                                    {t.duration > 0 && <span>{Math.floor(t.duration / 60)}:{String(Math.floor(t.duration % 60)).padStart(2, "0")}</span>}
+                                  </div>
+                                  <div className="text-[7px] text-[#333]">{new Date(t.createdAt).toLocaleDateString()}</div>
+                                </div>
+                                {/* Actions */}
+                                <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                                  <button onClick={() => sunoToggleFavorite(t.id, t.favorite)} title={t.favorite ? "Unfavorite" : "Favorite"}
+                                    className="w-5 h-5 flex items-center justify-center rounded cursor-pointer hover:bg-[#222] transition-colors">
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill={t.favorite ? "#D4A843" : "none"} stroke={t.favorite ? "#D4A843" : "#555"} strokeWidth="2">
+                                      <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
+                                    </svg>
+                                  </button>
+                                  <button onClick={() => sunoAddToDaw(t.title, t.audioUrl)} title="Add to DAW"
+                                    className="w-5 h-5 flex items-center justify-center rounded cursor-pointer hover:bg-[#222] transition-colors">
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                  </button>
+                                  <button onClick={() => sunoDeleteTrack(t.id)} title="Delete"
+                                    className="w-5 h-5 flex items-center justify-center rounded cursor-pointer hover:bg-[#ef444420] transition-colors">
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2"><polyline points="3,6 5,6 21,6"/><path d="M19,6v14a2,2,0,01-2,2H7a2,2,0,01-2-2V6m3,0V4a2,2,0,012-2h4a2,2,0,012,2v2"/></svg>
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ));
+                        })()}
+                      </div>
+
+                      {/* Stats */}
+                      <div className="flex items-center justify-center gap-3 pt-1" style={{ borderTop: "1px solid #1e1e1e" }}>
+                        <span className="text-[8px] text-[#444]" style={{ fontFamily: "JetBrains Mono, monospace" }}>
+                          {sunoLibStats.count} track{sunoLibStats.count !== 1 ? "s" : ""}
+                        </span>
+                        <span className="text-[8px] text-[#333]">|</span>
+                        <span className="text-[8px] text-[#444]" style={{ fontFamily: "JetBrains Mono, monospace" }}>
+                          {sunoLibStats.totalBytes < 1024 * 1024
+                            ? `${Math.round(sunoLibStats.totalBytes / 1024)} KB`
+                            : `${(sunoLibStats.totalBytes / (1024 * 1024)).toFixed(1)} MB`} stored
+                        </span>
                       </div>
                     </div>
                   )}
-                  {sunoError && <div className="text-[9px] text-[#C41E3A]">{sunoError}</div>}
+
+                  {/* ── TAB: Credits ── */}
+                  {sunoTab === "credits" && (
+                    <div className="space-y-3">
+                      {/* Credits Remaining */}
+                      <div className="text-center py-2">
+                        <div className="text-[28px] font-bold" style={{ color: "#D4A843", fontFamily: "Oswald, sans-serif" }}>
+                          {sunoCreditsLoading ? "..." : (sunoCredits ?? "--")}
+                        </div>
+                        <div className="text-[9px] text-[#555]">credits remaining</div>
+                      </div>
+
+                      {/* Daily Usage */}
+                      <div className="rounded p-2.5 space-y-2" style={{ background: "#111", border: "1px solid #1e1e1e" }}>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[8px] text-[#555]" style={{ fontFamily: "Oswald, sans-serif" }}>DAILY USAGE</span>
+                          <span className="text-[8px] text-[#444]" style={{ fontFamily: "JetBrains Mono, monospace" }}>{sunoDailyUsage.date || "today"}</span>
+                        </div>
+                        {/* Usage bar */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[8px] text-[#666]" style={{ fontFamily: "JetBrains Mono, monospace" }}>{sunoDailyUsage.used} / 50 credits</span>
+                            <span className="text-[8px] text-[#555]">{sunoDailyUsage.generations} gen{sunoDailyUsage.generations !== 1 ? "s" : ""}</span>
+                          </div>
+                          <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: "#1a1a1a" }}>
+                            <div className="h-full rounded-full transition-all duration-500"
+                              style={{
+                                width: `${Math.min(100, (sunoDailyUsage.used / 50) * 100)}%`,
+                                background: sunoDailyUsage.used >= 40 ? "linear-gradient(90deg, #D4A843, #ef4444)" : "linear-gradient(90deg, #D4A843, #B8922E)",
+                              }} />
+                          </div>
+                        </div>
+                        {/* Per-generation cost */}
+                        <div className="flex items-center gap-2 text-[8px] text-[#444]">
+                          <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                          ~10 credits per generation (2 tracks)
+                        </div>
+                      </div>
+
+                      {/* Tips */}
+                      <div className="rounded p-2.5 space-y-1.5" style={{ background: "#0e0e0e", border: "1px solid #1a1a1a" }}>
+                        <span className="text-[8px] text-[#555] block" style={{ fontFamily: "Oswald, sans-serif" }}>TIPS</span>
+                        <div className="flex items-start gap-1.5 text-[8px] text-[#444]">
+                          <span className="text-[#D4A843] mt-px shrink-0">*</span>
+                          <span>Cache-first strategy saves credits -- tracks are stored locally after generation</span>
+                        </div>
+                        <div className="flex items-start gap-1.5 text-[8px] text-[#444]">
+                          <span className="text-[#D4A843] mt-px shrink-0">*</span>
+                          <span>Each generation produces 2 tracks. Pick the one you like, favorite it for quick access</span>
+                        </div>
+                        <div className="flex items-start gap-1.5 text-[8px] text-[#444]">
+                          <span className="text-[#D4A843] mt-px shrink-0">*</span>
+                          <span>Check Library tab -- your track might already be there from a previous session</span>
+                        </div>
+                      </div>
+
+                      {/* Refresh button */}
+                      <button onClick={fetchSunoCredits} disabled={sunoCreditsLoading}
+                        className="w-full text-[8px] py-1.5 rounded cursor-pointer transition-all disabled:opacity-50"
+                        style={{ background: "#1a1a1a", color: "#666", border: "1px solid #222" }}>
+                        {sunoCreditsLoading ? "Refreshing..." : "Refresh Credits"}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

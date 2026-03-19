@@ -16,8 +16,12 @@ import ProfilePage from "./ProfilePage";
 import AiCoachPage from "./AiCoachPage";
 import LibraryEditor from "./LibraryEditor";
 import ErrorBoundary from "./ErrorBoundary";
+import SkillTreePage from "./SkillTreePage";
+import JamModePage from "./JamModePage";
 import { SONG_LIBRARY } from "@/lib/songs-data";
 import type { SongEntry } from "@/lib/types";
+import { buildStyle, recordUsage, saveToLibrary } from "@/lib/suno";
+import type { LibraryTrack } from "@/lib/suno";
 
 export default function GuitarForgeApp() {
   const [view, setViewRaw] = useState<View>("dash");
@@ -50,6 +54,7 @@ export default function GuitarForgeApp() {
   const [songLibSearch, setSongLibSearch] = useState("");
   const [songLibFilter, setSongLibFilter] = useState<"all" | "Beginner" | "Intermediate" | "Advanced">("all");
   const [showAddSong, setShowAddSong] = useState(false);
+  const [songLibProgress, setSongLibProgress] = useState<Record<number, number>>({}); // songId → stagesCompleted (0-6)
   const [newSongTitle, setNewSongTitle] = useState("");
   const [newSongArtist, setNewSongArtist] = useState("");
   const [exPickerOpen, setExPickerOpen] = useState(false);
@@ -57,6 +62,16 @@ export default function GuitarForgeApp() {
   const [exPickerCat, setExPickerCat] = useState("All");
   const [libShowAll, setLibShowAll] = useState(false);
   const [songLibShowAll, setSongLibShowAll] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [sunoSuggestUrl, setSunoSuggestUrl] = useState<string | null>(null);
+  const [sunoSuggestLoading, setSunoSuggestLoading] = useState(false);
+  const [sunoSuggestDismissed, setSunoSuggestDismissed] = useState(false);
+
+  // ── Song backing track generation ──
+  const [songBackingTracks, setSongBackingTracks] = useState<Record<number, string>>({});
+  const [songBackingLoading, setSongBackingLoading] = useState<Record<number, boolean>>({});
+  const [songBackingPlaying, setSongBackingPlaying] = useState<number | null>(null);
+  const songAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // ── Phase 1 Engagement features ──
   const [streak, setStreak] = useState<{ currentStreak: number; longestStreak: number; lastPracticeDate: string; totalDays: number }>({ currentStreak: 0, longestStreak: 0, lastPracticeDate: "", totalDays: 0 });
@@ -67,14 +82,27 @@ export default function GuitarForgeApp() {
   const focusIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [viewKey, setViewKey] = useState(0);
 
-  // Fix #1: view stored in sessionStorage (per-tab) instead of localStorage
-  const setView = (v: View) => { setViewRaw(v); setViewKey(k => k + 1); try { sessionStorage.setItem("gf-view", v); } catch {} };
+  // Hash-based routing: #studio, #practice, etc.
+  const VALID_VIEWS = new Set<View>(["dash", "daily", "lib", "songs", "learn", "studio", "log", "profile", "coach"]);
+  const hashToView = (hash: string): View | null => {
+    const map: Record<string, View> = { "#dashboard": "dash", "#dash": "dash", "#practice": "daily", "#daily": "daily", "#library": "lib", "#lib": "lib", "#songs": "songs", "#learn": "learn", "#learning": "learn", "#studio": "studio", "#report": "log", "#log": "log", "#profile": "profile", "#coach": "coach" };
+    const v = map[hash.toLowerCase()] || hash.replace("#", "") as View;
+    return VALID_VIEWS.has(v) ? v : null;
+  };
+  const setView = (v: View) => { setViewRaw(v); setViewKey(k => k + 1); history.pushState(null, "", `#${v}`); };
+
+  // Listen for browser back/forward
+  useEffect(() => {
+    const onPop = () => { const v = hashToView(window.location.hash); if (v) setViewRaw(v); };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
 
   useEffect(() => {
     try {
-      // Restore view from sessionStorage (per-tab)
-      const sv = sessionStorage.getItem("gf-view");
-      if (sv) setViewRaw(sv as View);
+      // Restore view from URL hash
+      const hv = hashToView(window.location.hash);
+      if (hv) setViewRaw(hv);
       const raw = localStorage.getItem("gf30");
       if (raw) {
         const d = JSON.parse(raw);
@@ -94,6 +122,8 @@ export default function GuitarForgeApp() {
       if (sr) setStreak(JSON.parse(sr));
       const cr = localStorage.getItem("gf-calendar");
       if (cr) setCalendarData(JSON.parse(cr));
+      const slp = localStorage.getItem("gf-songlib-progress");
+      if (slp) setSongLibProgress(JSON.parse(slp));
     } catch {}
     setReady(true);
   }, []);
@@ -103,9 +133,10 @@ export default function GuitarForgeApp() {
     const timer = setTimeout(() => {
       const data = { week, mode, scale, style, dayCats, dayHrs, dayExMap, doneMap, bpmLog, noteLog, songs, songProgress, exEdits, customSongs };
       try { localStorage.setItem("gf30", JSON.stringify(data)); } catch { /* quota */ }
+      try { localStorage.setItem("gf-songlib-progress", JSON.stringify(songLibProgress)); } catch {}
     }, 500);
     return () => clearTimeout(timer);
-  }, [ready, week, mode, scale, style, dayCats, dayHrs, dayExMap, doneMap, bpmLog, noteLog, songs, songProgress, exEdits, customSongs]);
+  }, [ready, week, mode, scale, style, dayCats, dayHrs, dayExMap, doneMap, bpmLog, noteLog, songs, songProgress, exEdits, customSongs, songLibProgress]);
 
   // ── Streak & Calendar update when exercise is marked done ──
   const updateStreakAndCalendar = useCallback((newDoneMap: BoolMap) => {
@@ -266,6 +297,86 @@ export default function GuitarForgeApp() {
     setDayExMap((p) => ({ ...p, [day]: autoFill(cats, mins, cats.includes("Songs") ? getSongItems() : [], style) }));
   }
 
+  async function generateSongBacking(song: SongEntry) {
+    if (songBackingLoading[song.id]) return;
+    setSongBackingLoading(prev => ({ ...prev, [song.id]: true }));
+
+    const songKey = song.key || "Am";
+    const isMinor = songKey.endsWith("m");
+    const songScale = songKey;
+    const songMode = isMinor ? "Aeolian" : "Ionian";
+    const songStyle = song.genre || "Metal";
+    const songBpm = song.tempo || 120;
+
+    try {
+      const res = await fetch("/api/suno", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scale: songScale,
+          mode: songMode,
+          style: songStyle,
+          bpm: songBpm,
+          title: `${song.title} - ${song.artist} Style Backing`,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Unknown error" }));
+        throw new Error(err.error || `API error ${res.status}`);
+      }
+
+      const data = await res.json();
+      if (data.tracks && data.tracks.length > 0) {
+        const track = data.tracks[0];
+        const audioUrl = track.audioUrl || track.streamAudioUrl;
+        setSongBackingTracks(prev => ({ ...prev, [song.id]: audioUrl }));
+        recordUsage(10);
+
+        // Save to library
+        try {
+          const libTrack: LibraryTrack = {
+            id: track.id || `song-${song.id}-${Date.now()}`,
+            audioBlob: new Blob(),
+            audioUrl,
+            title: `${song.title} - ${song.artist} Backing`,
+            style: songStyle,
+            params: { scale: songScale, mode: songMode, style: songStyle, bpm: songBpm },
+            duration: track.duration || 0,
+            createdAt: Date.now(),
+            source: "generate",
+            favorite: false,
+          };
+          await saveToLibrary(libTrack);
+        } catch {}
+      }
+    } catch (err) {
+      console.error("Song backing generation failed:", err);
+    } finally {
+      setSongBackingLoading(prev => ({ ...prev, [song.id]: false }));
+    }
+  }
+
+  function toggleSongBackingPlay(songId: number) {
+    const url = songBackingTracks[songId];
+    if (!url) return;
+
+    if (songBackingPlaying === songId && songAudioRef.current) {
+      songAudioRef.current.pause();
+      setSongBackingPlaying(null);
+      return;
+    }
+
+    if (songAudioRef.current) {
+      songAudioRef.current.pause();
+    }
+    const audio = new Audio(url);
+    audio.onended = () => setSongBackingPlaying(null);
+    audio.play();
+    songAudioRef.current = audio;
+    setSongBackingPlaying(songId);
+  }
+
   function buildAll() {
     const nd: DayExMap = {};
     DAYS.forEach((day) => {
@@ -296,11 +407,13 @@ export default function GuitarForgeApp() {
     <div className="min-h-screen text-white" style={{ background: "#0A0A0A" }} dir="ltr">
       <Navbar view={view} onViewChange={setView} />
       {view === "studio" && <StudioPage channelScale={scale} channelMode={mode} channelStyle={style} />}
+      {view === "jam" && <JamModePage />}
       <div key={viewKey} className="view-transition px-2 sm:px-5 py-3 sm:py-5 pb-16 sm:pb-5 max-w-[960px] lg:max-w-[1100px] xl:max-w-[1280px] mx-auto overflow-x-hidden">
 
         {view === "learn" && <LearningCenterPage />}
         {view === "profile" && <ProfilePage />}
         {view === "coach" && <AiCoachPage />}
+        {view === "skills" && <SkillTreePage />}
         {view === "songs" && (() => {
           const allSongs = [...SONG_LIBRARY, ...customSongs];
           const filtered = allSongs.filter(s => {
@@ -361,21 +474,67 @@ export default function GuitarForgeApp() {
                         <div className="flex justify-between items-start">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-[13px] font-medium">{song.title}</span>
+                              <span className="font-heading text-[13px] !font-medium !normal-case !tracking-normal">{song.title}</span>
                               {song.difficulty && <span className="tag" style={{ border: `1px solid ${dc}60`, color: dc, background: dc + "15" }}>{song.difficulty}</span>}
                             </div>
                             <div className="font-readout text-[11px] text-[#666] mt-1">{song.artist}</div>
-                            <div className="flex gap-2 mt-1 flex-wrap">
+                            <div className="flex gap-2 mt-1 flex-wrap items-center">
                               {song.genre && <span className="font-readout text-[9px] text-[#555]">{song.genre}</span>}
                               {song.key && <span className="font-readout text-[9px] text-[#555]">Key: {song.key}</span>}
                               {song.tempo && <span className="font-readout text-[9px] text-[#555]">{song.tempo} BPM</span>}
                               {song.tuning && song.tuning !== "Standard" && <span className="font-readout text-[9px] text-[#555]">{song.tuning}</span>}
                             </div>
                           </div>
-                          {isCustom && (
-                            <button onClick={(e) => { e.stopPropagation(); setCustomSongs(p => p.filter(s => s.id !== song.id)); }}
-                              className="btn-ghost !px-2 !py-1 !text-[9px] !text-[#C41E3A] !border-[#333] flex-shrink-0 mr-2">Remove</button>
-                          )}
+                          <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                            {isCustom && (
+                              <button onClick={(e) => { e.stopPropagation(); setCustomSongs(p => p.filter(s => s.id !== song.id)); }}
+                                className="btn-ghost !px-2 !py-1 !text-[9px] !text-[#C41E3A] !border-[#333]">Remove</button>
+                            )}
+                            {/* Generate / Play backing track */}
+                            {songBackingTracks[song.id] ? (
+                              <button type="button" onClick={(e) => { e.stopPropagation(); toggleSongBackingPlay(song.id); }}
+                                className="btn-ghost !px-2 !py-1 !text-[9px] flex items-center gap-1"
+                                style={{ borderColor: songBackingPlaying === song.id ? "#D4A843" : undefined }}>
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill={songBackingPlaying === song.id ? "#D4A843" : "none"} stroke="#D4A843" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  {songBackingPlaying === song.id
+                                    ? <><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></>
+                                    : <polygon points="5 3 19 12 5 21 5 3"/>}
+                                </svg>
+                                {songBackingPlaying === song.id ? "Pause" : "Play"}
+                              </button>
+                            ) : (
+                              <button type="button" onClick={(e) => { e.stopPropagation(); generateSongBacking(song); }}
+                                disabled={songBackingLoading[song.id]}
+                                className="btn-ghost !px-2 !py-1 !text-[9px] flex items-center gap-1 disabled:opacity-50">
+                                {songBackingLoading[song.id] ? (
+                                  <>
+                                    <svg className="animate-spin" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2"><circle cx="12" cy="12" r="10" strokeDasharray="60" strokeDashoffset="20"/></svg>
+                                    Generating...
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="5.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="15.5" r="2.5"/><path d="M8 17V5l12-2v12"/></svg>
+                                    Backing
+                                  </>
+                                )}
+                              </button>
+                            )}
+                            {/* 6-stage progress bar */}
+                            {(() => {
+                              const stages = songLibProgress[song.id] || 0;
+                              return (
+                                <div className="flex items-center gap-1">
+                                  <div className="flex gap-[2px]">
+                                    {[0,1,2,3,4,5].map(i => (
+                                      <div key={i} className="rounded-[1px]" style={{ width: 8, height: 4, background: i < stages ? "#D4A843" : "#1a1a1a" }}
+                                        onClick={(e) => { e.stopPropagation(); setSongLibProgress(p => ({ ...p, [song.id]: i < stages ? i : i + 1 })); }} />
+                                    ))}
+                                  </div>
+                                  <span className="font-readout text-[8px] text-[#444]">{stages}/6</span>
+                                </div>
+                              );
+                            })()}
+                          </div>
                         </div>
                       </div>
                     );
@@ -643,19 +802,63 @@ export default function GuitarForgeApp() {
             }} />
           </div>
 
-          {/* 4. Channel Settings (least frequent) */}
+          {/* Suno backing track suggestion */}
+          {!sunoSuggestDismissed && !sunoSuggestUrl && (
+            <div className="panel-secondary p-3 mb-4 flex items-center gap-3">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2" className="flex-shrink-0">
+                <path d="M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 19V5l12-4v14m0 0c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" />
+              </svg>
+              <div className="flex-1">
+                <div className="font-label text-[10px] text-[#D4A843]">AI Backing Track</div>
+                <div className="font-readout text-[9px] text-[#555]">{scale} {mode} · {style} · Generate a practice track with Suno AI</div>
+              </div>
+              <button type="button" onClick={async () => {
+                setSunoSuggestLoading(true);
+                try {
+                  const res = await fetch("/api/suno", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scale, mode, style, bpm: 120, title: `${scale} ${mode} ${style} Practice` }) });
+                  const data = await res.json();
+                  if (data.tracks?.[0]?.audioUrl) setSunoSuggestUrl(data.tracks[0].audioUrl);
+                } catch {} finally { setSunoSuggestLoading(false); }
+              }} className="btn-gold !text-[9px] !px-3 flex-shrink-0" disabled={sunoSuggestLoading}>
+                {sunoSuggestLoading ? "Generating..." : "Generate"}
+              </button>
+              <button type="button" aria-label="Dismiss" title="Dismiss" onClick={() => setSunoSuggestDismissed(true)} className="text-[#333] hover:text-[#666] flex-shrink-0">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+              </button>
+            </div>
+          )}
+          {sunoSuggestUrl && (
+            <div className="panel-secondary p-3 mb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="font-label text-[10px] text-[#D4A843]">AI Backing Track</div>
+                <span className="font-readout text-[9px] text-[#555]">{scale} {mode} · {style}</span>
+              </div>
+              <audio src={sunoSuggestUrl} controls loop className="w-full" style={{ height: 32 }} />
+            </div>
+          )}
+
+          {/* 4. Channel Settings (collapsible) */}
           <div className="panel-secondary mb-4">
-            <div className="panel-header flex items-center gap-2">
-              <div className="led led-gold" /> CHANNEL SETTINGS
-            </div>
-            <div className="p-3 sm:p-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
-              {[
-                { l: "Week", v: <div className="segment-display text-center mt-1"><input type="number" value={week} min={1} onChange={(e) => setWeek(Number(e.target.value))} className="bg-transparent border-none outline-none text-center w-full font-mono font-bold text-[#D4A843]" style={{ boxShadow: 'none' }} /></div> },
-                { l: "Mode", v: <select value={mode} onChange={(e) => setMode(e.target.value)} className="input w-full text-[12px] sm:text-[14px]">{MODES.map((m) => <option key={m}>{m}</option>)}</select> },
-                { l: "Key", v: <select value={scale} onChange={(e) => setScale(e.target.value)} className="input w-full">{SCALES.map((s) => <option key={s}>{s}</option>)}</select> },
-                { l: "Style", v: <select value={style} onChange={(e) => setStyle(e.target.value)} className="input w-full text-[12px] sm:text-[14px]">{STYLES.map((s) => <option key={s}>{s}</option>)}</select> },
-              ].map(({ l, v }) => <label key={l} className="font-label text-[11px] text-[#666]">{l}<div className="mt-1">{v}</div></label>)}
-            </div>
+            <button onClick={() => setSettingsOpen(p => !p)} className="panel-header flex items-center gap-2 w-full cursor-pointer bg-transparent border-0 text-left">
+              <div className="led led-gold" />
+              <span className="flex-1">CHANNEL SETTINGS</span>
+              <span className="font-readout text-[10px] text-[#555]">
+                {!settingsOpen && `W${week} · ${mode} · ${scale} · ${style}`}
+              </span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" className={`transition-transform ${settingsOpen ? "rotate-180" : ""}`}>
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+            {settingsOpen && (
+              <div className="p-3 sm:p-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+                {[
+                  { l: "Week", v: <div className="segment-display text-center mt-1"><input type="number" value={week} min={1} onChange={(e) => setWeek(Number(e.target.value))} className="bg-transparent border-none outline-none text-center w-full font-mono font-bold text-[#D4A843]" style={{ boxShadow: 'none' }} /></div> },
+                  { l: "Mode", v: <select value={mode} onChange={(e) => setMode(e.target.value)} className="input w-full text-[12px] sm:text-[14px]">{MODES.map((m) => <option key={m}>{m}</option>)}</select> },
+                  { l: "Key", v: <select value={scale} onChange={(e) => setScale(e.target.value)} className="input w-full">{SCALES.map((s) => <option key={s}>{s}</option>)}</select> },
+                  { l: "Style", v: <select value={style} onChange={(e) => setStyle(e.target.value)} className="input w-full text-[12px] sm:text-[14px]">{STYLES.map((s) => <option key={s}>{s}</option>)}</select> },
+                ].map(({ l, v }) => <label key={l} className="font-label text-[11px] text-[#666]">{l}<div className="mt-1">{v}</div></label>)}
+              </div>
+            )}
           </div>
         </div>)}
 
@@ -1056,7 +1259,7 @@ export default function GuitarForgeApp() {
                           <div className="flex justify-between items-start">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-[13px] font-medium">{song.title}</span>
+                                <span className="font-heading text-[13px] !font-medium !normal-case !tracking-normal">{song.title}</span>
                                 {song.difficulty && <span className="tag" style={{ border: `1px solid ${dc}60`, color: dc, background: dc + "15" }}>{song.difficulty}</span>}
                               </div>
                               <div className="font-readout text-[11px] text-[#666] mt-1">{song.artist}</div>

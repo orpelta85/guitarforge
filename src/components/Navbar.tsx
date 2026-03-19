@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 
-type View = "dash" | "daily" | "lib" | "songs" | "learn" | "studio" | "log" | "profile" | "coach";
+type View = "dash" | "daily" | "lib" | "songs" | "learn" | "studio" | "jam" | "log" | "profile" | "coach" | "skills";
 
 interface NavbarProps {
   view: View;
@@ -16,8 +16,10 @@ const ALL_NAV: { id: View; label: string }[] = [
   { id: "lib", label: "Library" },
   { id: "songs", label: "Songs" },
   { id: "studio", label: "Studio" },
+  { id: "jam", label: "Jam" },
   { id: "learn", label: "Learning" },
   { id: "coach", label: "Coach" },
+  { id: "skills", label: "Skills" },
   { id: "log", label: "Report" },
   { id: "profile", label: "Profile" },
 ];
@@ -34,6 +36,8 @@ const MORE_ITEMS: { id: View; label: string; icon: string }[] = [
   { id: "dash", label: "Dashboard", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4" },
   { id: "learn", label: "Learning", icon: "M12 14l9-5-9-5-9 5 9 5zm0 0v6m-3-3l3 3 3-3" },
   { id: "coach", label: "Coach", icon: "M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" },
+  { id: "jam", label: "Jam Mode", icon: "M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM15 10l-3 3m0-3l3 3" },
+  { id: "skills", label: "Skill Tree", icon: "M12 3v2m0 14v2m-7-7H3m18 0h-2M7.05 7.05L5.636 5.636m12.728 12.728L16.95 16.95M7.05 16.95l-1.414 1.414M18.364 5.636L16.95 7.05M12 8a4 4 0 100 8 4 4 0 000-8z" },
   { id: "log", label: "Report", icon: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" },
   { id: "profile", label: "Profile", icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" },
 ];
