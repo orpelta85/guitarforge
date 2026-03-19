@@ -77,10 +77,10 @@ export default function WeeklyCharts({ week, dayExMap, doneMap, bpmLog }: Props)
       {/* Practice time bar chart */}
       <div className="panel p-4 mb-3">
         <div className="font-label text-[9px] text-[#555] mb-3">Daily Practice (minutes)</div>
-        <ResponsiveContainer width="100%" height={160}>
-          <BarChart data={barData} barSize={16}>
-            <XAxis dataKey="name" tick={{ fill: "#555", fontSize: 9, fontFamily: "'Barlow Condensed'" }} axisLine={{ stroke: "#222" }} tickLine={false} />
-            <YAxis tick={{ fill: "#444", fontSize: 9 }} axisLine={false} tickLine={false} width={28} />
+        <ResponsiveContainer width="100%" height={220}>
+          <BarChart data={barData} barSize={20}>
+            <XAxis dataKey="name" tick={{ fill: "#777", fontSize: 10, fontFamily: "'JetBrains Mono'" }} axisLine={{ stroke: "#222" }} tickLine={false} />
+            <YAxis tick={{ fill: "#555", fontSize: 10, fontFamily: "'JetBrains Mono'" }} axisLine={false} tickLine={false} width={32} />
             <Tooltip contentStyle={{ background: "#141414", border: "1px solid #333", borderRadius: 2, fontSize: 11, fontFamily: "'JetBrains Mono'" }} cursor={{ fill: "rgba(212,168,67,0.05)" }} />
             <Bar dataKey="planned" fill="#2a2a2a" radius={[2, 2, 0, 0]} name="Planned" />
             <Bar dataKey="done" fill="#D4A843" radius={[2, 2, 0, 0]} name="Done" />
@@ -94,9 +94,9 @@ export default function WeeklyCharts({ week, dayExMap, doneMap, bpmLog }: Props)
           <div className="panel p-4">
             <div className="font-label text-[9px] text-[#555] mb-2">By Category</div>
             <div className="flex items-center">
-              <ResponsiveContainer width={120} height={120}>
+              <ResponsiveContainer width={150} height={150}>
                 <PieChart>
-                  <Pie data={pieData} dataKey="value" cx="50%" cy="50%" innerRadius={30} outerRadius={50} paddingAngle={2} strokeWidth={0}>
+                  <Pie data={pieData} dataKey="value" cx="50%" cy="50%" innerRadius={35} outerRadius={60} paddingAngle={2} strokeWidth={0}>
                     {pieData.map((e, i) => <Cell key={i} fill={e.color} />)}
                   </Pie>
                 </PieChart>
@@ -117,10 +117,10 @@ export default function WeeklyCharts({ week, dayExMap, doneMap, bpmLog }: Props)
         {bpmData.length > 0 && (
           <div className="panel p-4">
             <div className="font-label text-[9px] text-[#555] mb-2">BPM Log</div>
-            <ResponsiveContainer width="100%" height={120}>
+            <ResponsiveContainer width="100%" height={160}>
               <LineChart data={bpmData}>
-                <XAxis dataKey="name" tick={{ fill: "#444", fontSize: 8 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: "#444", fontSize: 9 }} axisLine={false} tickLine={false} width={30} />
+                <XAxis dataKey="name" tick={{ fill: "#666", fontSize: 9, fontFamily: "'JetBrains Mono'" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: "#555", fontSize: 10, fontFamily: "'JetBrains Mono'" }} axisLine={false} tickLine={false} width={34} />
                 <Tooltip contentStyle={{ background: "#141414", border: "1px solid #333", borderRadius: 2, fontSize: 10 }} />
                 <Line type="monotone" dataKey="bpm" stroke="#D4A843" strokeWidth={2} dot={{ r: 3, fill: "#D4A843" }} />
               </LineChart>

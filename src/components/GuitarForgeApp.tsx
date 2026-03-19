@@ -784,7 +784,7 @@ export default function GuitarForgeApp() {
               return (
                 <div key={song.id} className="flex items-center gap-3 px-3 py-2.5 bg-[#0A0A0A] border border-[#1a1a1a] rounded-sm mb-1.5">
                   <div className="flex-1">
-                    <div className="text-sm font-medium">{song.name}</div>
+                    <div className="font-heading text-sm !font-medium !normal-case !tracking-normal">{song.name}</div>
                     <div className="font-readout text-[10px] text-[#555]">{dn}/6</div>
                   </div>
                   {song.url && <a href={song.url} target="_blank" rel="noopener noreferrer" className="font-label text-[9px] text-[#D4A843] no-underline hover:text-[#DFBD69]">Tab</a>}
@@ -1172,7 +1172,7 @@ export default function GuitarForgeApp() {
                   <div key={song.id} className="panel p-4 mb-1.5">
                     <div className="flex justify-between items-center">
                       <div>
-                        <div className="text-sm font-medium">{song.name}</div>
+                        <div className="font-heading text-sm !font-medium !normal-case !tracking-normal">{song.name}</div>
                         <div className="font-readout text-[10px] text-[#555] mt-1">Stage {dn + 1} of {STAGES.length}</div>
                       </div>
                       <div className="font-readout text-lg font-bold text-[#D4A843]">{dn}/{STAGES.length}</div>

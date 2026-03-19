@@ -2339,9 +2339,9 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
       </div>
 
       {/* ═══════════════════ MAIN LAYOUT ═══════════════════ */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden overflow-x-auto">
         {/* ═══════════════════ LEFT SIDEBAR: Track List ═══════════════════ */}
-        <div className="flex-shrink-0 flex flex-col overflow-hidden max-w-[160px] sm:max-w-none" style={{ width: sidebarWidth, background: "#141414", borderRight: "1px solid #1e1e1e" }}>
+        <div className="flex-shrink-0 flex flex-col overflow-hidden max-w-[120px] sm:max-w-none" style={{ width: sidebarWidth, background: "#141414", borderRight: "1px solid #1e1e1e" }}>
           {/* Sidebar header with Add Track */}
           <div className="flex items-center h-[26px] px-2 gap-1 flex-shrink-0" style={{ background: "#181818", borderBottom: "1px solid #1e1e1e" }}>
             <div className="relative">

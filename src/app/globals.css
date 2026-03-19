@@ -842,6 +842,11 @@ input[type="number"]::-webkit-outer-spin-button { opacity: 0.3; }
 
 /* View transition wrapper */
 @keyframes viewFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+/* override above — keep original for reference */
+@keyframes viewFadeInOriginal {
   from { opacity: 0; }
   to { opacity: 1; }
 }
