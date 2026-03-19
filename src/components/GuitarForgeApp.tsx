@@ -20,7 +20,7 @@ import { SONG_LIBRARY } from "@/lib/songs-data";
 import type { SongEntry } from "@/lib/types";
 
 export default function GuitarForgeApp() {
-  const [view, setView] = useState<View>("dash");
+  const [view, setViewRaw] = useState<View>("dash");
   const [week, setWeek] = useState(1);
   const [mode, setMode] = useState("Aeolian");
   const [scale, setScale] = useState("Am");
@@ -52,13 +52,24 @@ export default function GuitarForgeApp() {
   const [showAddSong, setShowAddSong] = useState(false);
   const [newSongTitle, setNewSongTitle] = useState("");
   const [newSongArtist, setNewSongArtist] = useState("");
+  const [exPickerOpen, setExPickerOpen] = useState(false);
+  const [exPickerSearch, setExPickerSearch] = useState("");
+  const [exPickerCat, setExPickerCat] = useState("All");
+  const [libShowAll, setLibShowAll] = useState(false);
+  const [songLibShowAll, setSongLibShowAll] = useState(false);
+
+  // Fix #1: view stored in sessionStorage (per-tab) instead of localStorage
+  const setView = (v: View) => { setViewRaw(v); try { sessionStorage.setItem("gf-view", v); } catch {} };
 
   useEffect(() => {
     try {
+      // Restore view from sessionStorage (per-tab)
+      const sv = sessionStorage.getItem("gf-view");
+      if (sv) setViewRaw(sv as View);
       const raw = localStorage.getItem("gf30");
       if (raw) {
         const d = JSON.parse(raw);
-        if (d.view) setView(d.view);
+        // Do NOT restore d.view — it now lives in sessionStorage
         if (d.week) setWeek(d.week); if (d.mode) setMode(d.mode); if (d.scale) setScale(d.scale);
         if (d.style && STYLES.includes(d.style)) setStyle(d.style); else if (d.style) setStyle("Metal"); if (d.dayCats) setDayCats(d.dayCats); if (d.dayHrs) setDayHrs(d.dayHrs);
         if (d.dayExMap) setDayExMap(d.dayExMap); if (d.doneMap) setDoneMap(d.doneMap);
@@ -74,11 +85,11 @@ export default function GuitarForgeApp() {
   useEffect(() => {
     if (!ready) return;
     const timer = setTimeout(() => {
-      const data = { view, week, mode, scale, style, dayCats, dayHrs, dayExMap, doneMap, bpmLog, noteLog, songs, songProgress, exEdits, customSongs };
+      const data = { week, mode, scale, style, dayCats, dayHrs, dayExMap, doneMap, bpmLog, noteLog, songs, songProgress, exEdits, customSongs };
       try { localStorage.setItem("gf30", JSON.stringify(data)); } catch { /* quota */ }
     }, 500);
     return () => clearTimeout(timer);
-  }, [ready, view, week, mode, scale, style, dayCats, dayHrs, dayExMap, doneMap, bpmLog, noteLog, songs, songProgress, exEdits, customSongs]);
+  }, [ready, week, mode, scale, style, dayCats, dayHrs, dayExMap, doneMap, bpmLog, noteLog, songs, songProgress, exEdits, customSongs]);
 
   function getEditedEx(ex: Exercise): Exercise { return exEdits[ex.id] ? { ...ex, ...exEdits[ex.id] } : ex; }
 
@@ -179,84 +190,51 @@ export default function GuitarForgeApp() {
                   <div className="font-label text-sm text-[#444]">No songs found</div>
                 </div>
               )}
-              {filtered.map(song => {
-                const dc = song.difficulty ? ({ Beginner: "#22c55e", Intermediate: "#f59e0b", Advanced: "#ef4444" }[song.difficulty] || "#888") : "#888";
-                const isCustom = song.id >= 1000000000;
-                return (
-                  <div key={song.id} onClick={() => setSongModal(song)}
-                    className="panel p-4 mb-1.5 cursor-pointer hover:border-[#D4A843]/30 transition-all">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-[13px] font-medium">{song.title}</span>
-                          {song.difficulty && <span className="tag" style={{ border: `1px solid ${dc}60`, color: dc, background: dc + "15" }}>{song.difficulty}</span>}
-                        </div>
-                        <div className="font-readout text-[11px] text-[#666] mt-1">{song.artist}</div>
-                        <div className="flex gap-2 mt-1 flex-wrap">
-                          {song.genre && <span className="font-readout text-[9px] text-[#555]">{song.genre}</span>}
-                          {song.key && <span className="font-readout text-[9px] text-[#555]">Key: {song.key}</span>}
-                          {song.tempo && <span className="font-readout text-[9px] text-[#555]">{song.tempo} BPM</span>}
-                          {song.tuning && song.tuning !== "Standard" && <span className="font-readout text-[9px] text-[#555]">{song.tuning}</span>}
+              {(() => {
+                const limited = songLibShowAll ? filtered : filtered.slice(0, 50);
+                return (<>
+                  {limited.map(song => {
+                    const dc = song.difficulty ? ({ Beginner: "#22c55e", Intermediate: "#f59e0b", Advanced: "#ef4444" }[song.difficulty] || "#888") : "#888";
+                    const isCustom = song.id >= 1000000000;
+                    return (
+                      <div key={song.id} onClick={() => setSongModal(song)}
+                        className="panel p-4 mb-1.5 cursor-pointer hover:border-[#D4A843]/30 transition-all">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-[13px] font-medium">{song.title}</span>
+                              {song.difficulty && <span className="tag" style={{ border: `1px solid ${dc}60`, color: dc, background: dc + "15" }}>{song.difficulty}</span>}
+                            </div>
+                            <div className="font-readout text-[11px] text-[#666] mt-1">{song.artist}</div>
+                            <div className="flex gap-2 mt-1 flex-wrap">
+                              {song.genre && <span className="font-readout text-[9px] text-[#555]">{song.genre}</span>}
+                              {song.key && <span className="font-readout text-[9px] text-[#555]">Key: {song.key}</span>}
+                              {song.tempo && <span className="font-readout text-[9px] text-[#555]">{song.tempo} BPM</span>}
+                              {song.tuning && song.tuning !== "Standard" && <span className="font-readout text-[9px] text-[#555]">{song.tuning}</span>}
+                            </div>
+                          </div>
+                          {isCustom && (
+                            <button onClick={(e) => { e.stopPropagation(); setCustomSongs(p => p.filter(s => s.id !== song.id)); }}
+                              className="btn-ghost !px-2 !py-1 !text-[9px] !text-[#C41E3A] !border-[#333] flex-shrink-0 mr-2">Remove</button>
+                          )}
                         </div>
                       </div>
-                      {isCustom && (
-                        <button onClick={(e) => { e.stopPropagation(); setCustomSongs(p => p.filter(s => s.id !== song.id)); }}
-                          className="btn-ghost !px-2 !py-1 !text-[9px] !text-[#C41E3A] !border-[#333] flex-shrink-0 mr-2">Remove</button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+                    );
+                  })}
+                  {!songLibShowAll && filtered.length > 50 && (
+                    <button type="button" onClick={() => setSongLibShowAll(true)} className="btn-ghost w-full mt-2 !text-[11px]">
+                      Show all {filtered.length} songs
+                    </button>
+                  )}
+                </>);
+              })()}
             </div>
           );
         })()}
 
         {/* ══ DASHBOARD ══ */}
         {view === "dash" && (<div className="animate-fade-in">
-          {/* Settings — Task 7: secondary panel */}
-          <div className="panel-secondary mb-4">
-            <div className="panel-header flex items-center gap-2">
-              <div className="led led-gold" /> CHANNEL SETTINGS
-            </div>
-            <div className="p-3 sm:p-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
-              {[
-                { l: "Week", v: <div className="segment-display text-center mt-1"><input type="number" value={week} min={1} onChange={(e) => setWeek(Number(e.target.value))} className="bg-transparent border-none outline-none text-center w-full font-mono font-bold text-[#D4A843]" style={{ boxShadow: 'none' }} /></div> },
-                { l: "Mode", v: <select value={mode} onChange={(e) => setMode(e.target.value)} className="input w-full text-[12px] sm:text-[14px]">{MODES.map((m) => <option key={m}>{m}</option>)}</select> },
-                { l: "Key", v: <select value={scale} onChange={(e) => setScale(e.target.value)} className="input w-full">{SCALES.map((s) => <option key={s}>{s}</option>)}</select> },
-                { l: "Style", v: <select value={style} onChange={(e) => setStyle(e.target.value)} className="input w-full text-[12px] sm:text-[14px]">{STYLES.map((s) => <option key={s}>{s}</option>)}</select> },
-              ].map(({ l, v }) => <label key={l} className="font-label text-[11px] text-[#666]">{l}<div className="mt-1">{v}</div></label>)}
-            </div>
-          </div>
-
-          {/* Songs */}
-          <div className="panel p-3 sm:p-5 mb-4" style={{ borderColor: "#1a3a2a" }}>
-            <div className="font-label text-[11px] text-[#33CC33] mb-3 flex items-center gap-2">
-              <div className="led led-on" /> Setlist
-            </div>
-            {songs.map((song) => {
-              const dn = STAGES.filter((_, si) => songProgress[week + "-" + song.id + "-" + si]?.done).length;
-              return (
-                <div key={song.id} className="flex items-center gap-3 px-3 py-2.5 bg-[#0A0A0A] border border-[#1a1a1a] rounded-sm mb-1.5">
-                  <div className="flex-1">
-                    <div className="text-sm font-medium">{song.name}</div>
-                    <div className="font-readout text-[10px] text-[#555]">{dn}/6</div>
-                  </div>
-                  {song.url && <a href={song.url} target="_blank" rel="noopener noreferrer" className="font-label text-[9px] text-[#D4A843] no-underline hover:text-[#DFBD69]">Tab</a>}
-                  <button onClick={() => setSongs((p) => p.filter((s) => s.id !== song.id))} className="btn-ghost !px-2 !py-1 !text-[10px] !text-[#C41E3A] !border-[#333]">Remove</button>
-                </div>
-              );
-            })}
-            <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2 mt-3">
-              <input placeholder="Song name..." value={newSongName} onChange={(e) => setNewSongName(e.target.value)} className="input min-w-0" />
-              <input placeholder="Tab URL..." value={newSongUrl} onChange={(e) => setNewSongUrl(e.target.value)} className="input min-w-0" />
-              <button onClick={() => { if (!newSongName.trim()) return; setSongs((p) => [...p, { name: newSongName.trim(), url: newSongUrl.trim(), id: Date.now() }]); setNewSongName(""); setNewSongUrl(""); }} className="btn-gold">Add</button>
-            </div>
-            <SongsterrSearch onSelect={(name, url) => {
-              setSongs((p) => [...p, { name, url, id: Date.now() }]);
-            }} />
-          </div>
-
-          {/* Progress + Streak — Task 3: visual prominence + glow */}
+          {/* 1. Week Progress (most important) */}
           <div className="panel-primary p-4 sm:p-5 mb-4">
             <div className="flex justify-between items-center mb-3">
               <span className="font-label text-[11px] text-[#D4A843] flex items-center gap-2">
@@ -367,7 +345,7 @@ export default function GuitarForgeApp() {
             </div>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 mb-4">
             <button onClick={() => {
               // Archive current week data before moving on
               try {
@@ -379,6 +357,49 @@ export default function GuitarForgeApp() {
             }} className="btn-gold !text-[10px]">Finish Week &amp; Archive</button>
             <button onClick={() => { setWeek(week + 1); setDoneMap({}); setBpmLog({}); setDayExMap({}); }}
               className="btn-ghost !text-[10px] !text-[#C41E3A] !border-[#C41E3A]/30">Reset All</button>
+          </div>
+
+          {/* 3. Setlist */}
+          <div className="panel p-3 sm:p-5 mb-4" style={{ borderColor: "#1a3a2a" }}>
+            <div className="font-label text-[11px] text-[#33CC33] mb-3 flex items-center gap-2">
+              <div className="led led-on" /> Setlist
+            </div>
+            {songs.map((song) => {
+              const dn = STAGES.filter((_, si) => songProgress[week + "-" + song.id + "-" + si]?.done).length;
+              return (
+                <div key={song.id} className="flex items-center gap-3 px-3 py-2.5 bg-[#0A0A0A] border border-[#1a1a1a] rounded-sm mb-1.5">
+                  <div className="flex-1">
+                    <div className="text-sm font-medium">{song.name}</div>
+                    <div className="font-readout text-[10px] text-[#555]">{dn}/6</div>
+                  </div>
+                  {song.url && <a href={song.url} target="_blank" rel="noopener noreferrer" className="font-label text-[9px] text-[#D4A843] no-underline hover:text-[#DFBD69]">Tab</a>}
+                  <button onClick={() => setSongs((p) => p.filter((s) => s.id !== song.id))} className="btn-ghost !px-2 !py-1 !text-[10px] !text-[#C41E3A] !border-[#333]">Remove</button>
+                </div>
+              );
+            })}
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2 mt-3">
+              <input placeholder="Song name..." value={newSongName} onChange={(e) => setNewSongName(e.target.value)} className="input min-w-0" />
+              <input placeholder="Tab URL..." value={newSongUrl} onChange={(e) => setNewSongUrl(e.target.value)} className="input min-w-0" />
+              <button onClick={() => { if (!newSongName.trim()) return; setSongs((p) => [...p, { name: newSongName.trim(), url: newSongUrl.trim(), id: Date.now() }]); setNewSongName(""); setNewSongUrl(""); }} className="btn-gold">Add</button>
+            </div>
+            <SongsterrSearch onSelect={(name, url) => {
+              setSongs((p) => [...p, { name, url, id: Date.now() }]);
+            }} />
+          </div>
+
+          {/* 4. Channel Settings (least frequent) */}
+          <div className="panel-secondary mb-4">
+            <div className="panel-header flex items-center gap-2">
+              <div className="led led-gold" /> CHANNEL SETTINGS
+            </div>
+            <div className="p-3 sm:p-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+              {[
+                { l: "Week", v: <div className="segment-display text-center mt-1"><input type="number" value={week} min={1} onChange={(e) => setWeek(Number(e.target.value))} className="bg-transparent border-none outline-none text-center w-full font-mono font-bold text-[#D4A843]" style={{ boxShadow: 'none' }} /></div> },
+                { l: "Mode", v: <select value={mode} onChange={(e) => setMode(e.target.value)} className="input w-full text-[12px] sm:text-[14px]">{MODES.map((m) => <option key={m}>{m}</option>)}</select> },
+                { l: "Key", v: <select value={scale} onChange={(e) => setScale(e.target.value)} className="input w-full">{SCALES.map((s) => <option key={s}>{s}</option>)}</select> },
+                { l: "Style", v: <select value={style} onChange={(e) => setStyle(e.target.value)} className="input w-full text-[12px] sm:text-[14px]">{STYLES.map((s) => <option key={s}>{s}</option>)}</select> },
+              ].map(({ l, v }) => <label key={l} className="font-label text-[11px] text-[#666]">{l}<div className="mt-1">{v}</div></label>)}
+            </div>
           </div>
         </div>)}
 
@@ -426,28 +447,77 @@ export default function GuitarForgeApp() {
               </div>
               <div className="flex gap-2 flex-wrap">
                 <button onClick={() => buildDay(selDay)} className="btn-ghost">Auto Fill</button>
-                <select title="Add exercise" onChange={(e) => { if (!e.target.value) return; const ex = EXERCISES.find((x) => x.id === Number(e.target.value)); if (ex) setDayExMap((p) => ({ ...p, [selDay]: [...(p[selDay] || []), ex] })); e.target.value = ""; }} className="input w-full sm:!w-auto !py-1.5 text-[11px]" defaultValue="">
-                  <option value="" disabled>+ Exercise</option>
-                  {CATS.filter((c) => c !== "Songs").map((cat) => <optgroup key={cat} label={cat}>{EXERCISES.filter((e) => e.c === cat).map((e) => <option key={e.id} value={e.id}>{e.n} ({e.m}m)</option>)}</optgroup>)}
-                </select>
+                <button type="button" onClick={() => { setExPickerOpen(true); setExPickerSearch(""); setExPickerCat("All"); }} className="btn-ghost">+ Exercise</button>
                 {songs.length > 0 && (
-                  <select title="Add song" onChange={(e) => { if (!e.target.value) return; const [sid, sidx] = e.target.value.split("x").map(Number); const song = songs.find((s) => s.id === sid); if (song) setDayExMap((p) => ({ ...p, [selDay]: [...(p[selDay] || []), makeSongItem(song, sidx)] })); e.target.value = ""; }} className="input w-full sm:!w-auto !py-1.5 text-[11px]" style={{ borderColor: "#1a3a2a" }} defaultValue="">
+                  <select title="Add song stage" onChange={(e) => { if (!e.target.value) return; const [sid, sidx] = e.target.value.split("x").map(Number); const song = songs.find((s) => s.id === sid); if (song) setDayExMap((p) => ({ ...p, [selDay]: [...(p[selDay] || []), makeSongItem(song, sidx)] })); e.target.value = ""; }} className="input w-full sm:!w-auto !py-1.5 text-[11px]" style={{ borderColor: "#1a3a2a" }} defaultValue="">
                     <option value="" disabled>+ Song</option>
-                    {songs.map((song) => <optgroup key={song.id} label={song.name}>{STAGES.map((st, si) => <option key={si} value={song.id + "x" + si}>{songProgress[week + "-" + song.id + "-" + si]?.done ? "✓ " : ""}{st.name} ({st.m}m)</option>)}</optgroup>)}
+                    {songs.map((song) => <optgroup key={song.id} label={song.name}>{STAGES.map((st, si) => <option key={si} value={song.id + "x" + si}>{songProgress[week + "-" + song.id + "-" + si]?.done ? "✓ " : ""}{song.name} - {st.name} ({st.m}m)</option>)}</optgroup>)}
                   </select>
                 )}
               </div>
+              {/* Fix #3: Searchable exercise picker */}
+              {exPickerOpen && (
+                <div className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh]" onClick={() => setExPickerOpen(false)}>
+                  <div className="absolute inset-0 bg-black/60" />
+                  <div className="relative w-full max-w-[520px] mx-2 rounded-sm overflow-hidden" style={{ background: "#111", border: "1px solid #333", maxHeight: "70vh", display: "flex", flexDirection: "column" }} onClick={e => e.stopPropagation()}>
+                    <div className="p-3 border-b border-[#222]">
+                      <input type="text" placeholder="Search exercises..." className="input w-full mb-2" autoFocus
+                        value={exPickerSearch} onChange={e => setExPickerSearch(e.target.value)} />
+                      <div className="flex gap-1 flex-wrap">
+                        <button type="button" onClick={() => setExPickerCat("All")}
+                          className={`font-label text-[9px] px-2 py-0.5 rounded-sm border transition-all ${exPickerCat === "All" ? "bg-[#D4A843] text-[#0A0A0A] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>All</button>
+                        {CATS.filter(c => c !== "Songs").map(cat => (
+                          <button type="button" key={cat} onClick={() => setExPickerCat(cat)}
+                            className="font-label text-[9px] px-2 py-0.5 rounded-sm border transition-all"
+                            style={exPickerCat === cat ? { background: COL[cat], borderColor: COL[cat], color: "#0A0A0A" } : { borderColor: (COL[cat] || "#888") + "40", color: (COL[cat] || "#888") + "99" }}>{cat}</button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="overflow-y-auto flex-1" style={{ maxHeight: "50vh" }}>
+                      {EXERCISES.filter(e => {
+                        if (exPickerCat !== "All" && e.c !== exPickerCat) return false;
+                        if (exPickerSearch.trim()) {
+                          const q = exPickerSearch.trim().toLowerCase();
+                          return e.n.toLowerCase().includes(q) || e.d.toLowerCase().includes(q) || e.c.toLowerCase().includes(q);
+                        }
+                        return true;
+                      }).map(ex => (
+                        <button type="button" key={ex.id} onClick={() => {
+                          setDayExMap(p => ({ ...p, [selDay]: [...(p[selDay] || []), ex] }));
+                          setExPickerOpen(false);
+                        }} className="w-full text-left px-3 py-2 border-b border-[#1a1a1a] hover:bg-[#1a1a1a] transition-colors flex items-center gap-2">
+                          <span className="tag flex-shrink-0 !text-[8px]" style={{ border: `1px solid ${COL[ex.c] || "#888"}40`, color: COL[ex.c] || "#888" }}>{ex.c}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[12px] text-[#ccc] truncate">{ex.n}</div>
+                            <div className="font-readout text-[9px] text-[#555]">{ex.m}min {ex.b ? "· " + ex.b : ""}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="p-2 border-t border-[#222] text-center">
+                      <button type="button" onClick={() => setExPickerOpen(false)} className="btn-ghost !text-[10px]">Close</button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Task 8: Better empty state for Practice */}
+          {/* Fix #2: Improved empty state */}
           {!curExList.length && <div className="panel p-8 sm:p-12 text-center">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-4 opacity-30">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="0.8" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-5 opacity-40">
               <path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z"/>
             </svg>
-            <div className="font-heading text-lg text-[#D4A843] mb-2">Start Practicing!</div>
-            <div className="font-readout text-[11px] text-[#444] mb-4">Select categories in the schedule and click Auto Fill</div>
-            <button onClick={() => buildDay(selDay)} className="btn-gold">Auto Fill</button>
+            <div className="font-heading text-xl text-[#D4A843] mb-2">Ready to Practice?</div>
+            <div className="font-readout text-[12px] text-[#555] mb-5 max-w-[320px] mx-auto">
+              {curCats.length > 0
+                ? "Hit Auto Fill to generate today's routine based on your selected categories."
+                : "Go to Dashboard > Schedule to set categories for this day, then come back and Auto Fill."}
+            </div>
+            <div className="flex gap-2 justify-center">
+              <button onClick={() => buildDay(selDay)} className="btn-gold">Auto Fill</button>
+              <button type="button" onClick={() => { setExPickerOpen(true); setExPickerSearch(""); setExPickerCat("All"); }} className="btn-ghost">+ Add Exercise</button>
+            </div>
           </div>}
 
           {curExList.map((rawEx, idx) => {
@@ -496,6 +566,46 @@ export default function GuitarForgeApp() {
               </div>
             );
           })}
+
+          {/* Fix #2: Quick Stats + Suggested Exercises when few exercises */}
+          {curExList.length > 0 && curExList.length <= 4 && (() => {
+            const todayBpms = curExList.map(e => bpmLog[week + "-" + selDay + "-" + e.id]).filter(Boolean);
+            const curIds = new Set(curExList.map(e => e.id));
+            const suggested = EXERCISES.filter(e => curCats.includes(e.c) && !curIds.has(e.id)).slice(0, 5);
+            return (<>
+              <div className="panel p-4 mb-3 mt-3">
+                <div className="font-label text-[10px] text-[#D4A843] mb-2">Quick Stats</div>
+                <div className="grid grid-cols-3 gap-3 text-center">
+                  <div>
+                    <div className="font-stat text-lg text-[#D4A843]">{curDone}/{curExList.length}</div>
+                    <div className="font-label text-[9px] text-[#555]">Done Today</div>
+                  </div>
+                  <div>
+                    <div className="font-stat text-lg text-[#D4A843]">{curMin}m</div>
+                    <div className="font-label text-[9px] text-[#555]">Total Time</div>
+                  </div>
+                  <div>
+                    <div className="font-stat text-lg text-[#D4A843]">{todayBpms.length > 0 ? todayBpms[todayBpms.length - 1] : "--"}</div>
+                    <div className="font-label text-[9px] text-[#555]">Last BPM</div>
+                  </div>
+                </div>
+              </div>
+              {suggested.length > 0 && (
+                <div className="panel p-4 mb-3">
+                  <div className="font-label text-[10px] text-[#666] mb-2">Suggested Exercises</div>
+                  {suggested.map(ex => (
+                    <button type="button" key={ex.id} onClick={() => setDayExMap(p => ({ ...p, [selDay]: [...(p[selDay] || []), ex] }))}
+                      className="w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-[#1a1a1a] transition-colors">
+                      <span className="tag !text-[8px]" style={{ border: `1px solid ${COL[ex.c] || "#888"}40`, color: COL[ex.c] || "#888" }}>{ex.c}</span>
+                      <span className="text-[11px] text-[#888] flex-1 truncate">{ex.n}</span>
+                      <span className="font-readout text-[9px] text-[#444]">{ex.m}m</span>
+                      <span className="text-[10px] text-[#D4A843]">+</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>);
+          })()}
         </div>)}
 
         {/* ══ LIBRARY ══ */}
@@ -523,29 +633,40 @@ export default function GuitarForgeApp() {
               })}
             </div>
 
-            {EXERCISES.filter((e) => {
-              if (libFilter !== "All" && e.c !== libFilter) return false;
-              if (libSearch.trim()) {
-                const q = libSearch.trim().toLowerCase();
-                return e.n.toLowerCase().includes(q) || e.d.toLowerCase().includes(q) || e.f.toLowerCase().includes(q);
-              }
-              return true;
-            }).map((rawEx) => {
-              const ex = getEditedEx(rawEx), c = COL[ex.c], isEd = editingId === ex.id;
-              return (
-                <div key={ex.id} className={`panel mb-1.5 overflow-hidden ${isEd ? "!border-[#D4A843]/30" : ""}`}>
-                  <div onClick={() => setEditingId(isEd ? null : ex.id)} className="flex items-center gap-3 px-4 py-3 cursor-pointer">
-                    <span className="tag min-w-[48px] text-center" style={{ border: `1px solid ${c}40`, color: c }}>{ex.c}</span>
-                    <div className="flex-1">
-                      <div className="font-heading text-[13px] !font-medium !normal-case !tracking-normal">{ex.n}</div>
-                      <div className="font-readout text-[10px] text-[#444]">{ex.f} · {ex.m}min {ex.b ? "· " + ex.b : ""}</div>
+            {(() => {
+              const filtered = EXERCISES.filter((e) => {
+                if (libFilter !== "All" && e.c !== libFilter) return false;
+                if (libSearch.trim()) {
+                  const q = libSearch.trim().toLowerCase();
+                  return e.n.toLowerCase().includes(q) || e.d.toLowerCase().includes(q) || e.f.toLowerCase().includes(q);
+                }
+                return true;
+              });
+              const limited = libShowAll ? filtered : filtered.slice(0, 50);
+              return (<>
+                {limited.map((rawEx) => {
+                  const ex = getEditedEx(rawEx), c = COL[ex.c], isEd = editingId === ex.id;
+                  return (
+                    <div key={ex.id} className={`panel mb-1.5 overflow-hidden ${isEd ? "!border-[#D4A843]/30" : ""}`}>
+                      <div onClick={() => setEditingId(isEd ? null : ex.id)} className="flex items-center gap-3 px-4 py-3 cursor-pointer">
+                        <span className="tag min-w-[48px] text-center" style={{ border: `1px solid ${c}40`, color: c }}>{ex.c}</span>
+                        <div className="flex-1">
+                          <div className="font-heading text-[13px] !font-medium !normal-case !tracking-normal">{ex.n}</div>
+                          <div className="font-readout text-[10px] text-[#444]">{ex.f} · {ex.m}min {ex.b ? "· " + ex.b : ""}</div>
+                        </div>
+                        <span className="text-[10px] text-[#333]">{isEd ? "−" : "+"}</span>
+                      </div>
+                      {isEd && <LibraryEditor ex={ex} exEdits={exEdits} setExEdits={setExEdits} />}
                     </div>
-                    <span className="text-[10px] text-[#333]">{isEd ? "−" : "+"}</span>
-                  </div>
-                  {isEd && <LibraryEditor ex={ex} exEdits={exEdits} setExEdits={setExEdits} />}
-                </div>
-              );
-            })}
+                  );
+                })}
+                {!libShowAll && filtered.length > 50 && (
+                  <button type="button" onClick={() => setLibShowAll(true)} className="btn-ghost w-full mt-2 !text-[11px]">
+                    Show all {filtered.length} items
+                  </button>
+                )}
+              </>);
+            })()}
           </>)}
 
           {/* Styles tab */}
@@ -655,34 +776,44 @@ export default function GuitarForgeApp() {
                     <div className="font-label text-sm text-[#444]">No songs found</div>
                   </div>
                 )}
-                {filtered.map(song => {
-                  const dc = song.difficulty ? ({ Beginner: "#22c55e", Intermediate: "#f59e0b", Advanced: "#ef4444" }[song.difficulty] || "#888") : "#888";
-                  const isCustom = song.id >= 1000000000;
-                  return (
-                    <div key={song.id} onClick={() => setSongModal(song)}
-                      className="panel p-4 mb-1.5 cursor-pointer hover:border-[#D4A843]/30 transition-all">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-[13px] font-medium">{song.title}</span>
-                            {song.difficulty && <span className="tag" style={{ border: `1px solid ${dc}60`, color: dc, background: dc + "15" }}>{song.difficulty}</span>}
-                          </div>
-                          <div className="font-readout text-[11px] text-[#666] mt-1">{song.artist}</div>
-                          <div className="flex gap-2 mt-1 flex-wrap">
-                            {song.genre && <span className="font-readout text-[9px] text-[#555]">{song.genre}</span>}
-                            {song.key && <span className="font-readout text-[9px] text-[#555]">Key: {song.key}</span>}
-                            {song.tempo && <span className="font-readout text-[9px] text-[#555]">{song.tempo} BPM</span>}
-                            {song.tuning && song.tuning !== "Standard" && <span className="font-readout text-[9px] text-[#555]">{song.tuning}</span>}
+                {(() => {
+                  const limited = songLibShowAll ? filtered : filtered.slice(0, 50);
+                  return (<>
+                    {limited.map(song => {
+                      const dc = song.difficulty ? ({ Beginner: "#22c55e", Intermediate: "#f59e0b", Advanced: "#ef4444" }[song.difficulty] || "#888") : "#888";
+                      const isCustom = song.id >= 1000000000;
+                      return (
+                        <div key={song.id} onClick={() => setSongModal(song)}
+                          className="panel p-4 mb-1.5 cursor-pointer hover:border-[#D4A843]/30 transition-all">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-[13px] font-medium">{song.title}</span>
+                                {song.difficulty && <span className="tag" style={{ border: `1px solid ${dc}60`, color: dc, background: dc + "15" }}>{song.difficulty}</span>}
+                              </div>
+                              <div className="font-readout text-[11px] text-[#666] mt-1">{song.artist}</div>
+                              <div className="flex gap-2 mt-1 flex-wrap">
+                                {song.genre && <span className="font-readout text-[9px] text-[#555]">{song.genre}</span>}
+                                {song.key && <span className="font-readout text-[9px] text-[#555]">Key: {song.key}</span>}
+                                {song.tempo && <span className="font-readout text-[9px] text-[#555]">{song.tempo} BPM</span>}
+                                {song.tuning && song.tuning !== "Standard" && <span className="font-readout text-[9px] text-[#555]">{song.tuning}</span>}
+                              </div>
+                            </div>
+                            {isCustom && (
+                              <button onClick={(e) => { e.stopPropagation(); setCustomSongs(p => p.filter(s => s.id !== song.id)); }}
+                                className="btn-ghost !px-2 !py-1 !text-[9px] !text-[#C41E3A] !border-[#333] flex-shrink-0 mr-2">Remove</button>
+                            )}
                           </div>
                         </div>
-                        {isCustom && (
-                          <button onClick={(e) => { e.stopPropagation(); setCustomSongs(p => p.filter(s => s.id !== song.id)); }}
-                            className="btn-ghost !px-2 !py-1 !text-[9px] !text-[#C41E3A] !border-[#333] flex-shrink-0 mr-2">Remove</button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+                      );
+                    })}
+                    {!songLibShowAll && filtered.length > 50 && (
+                      <button type="button" onClick={() => setSongLibShowAll(true)} className="btn-ghost w-full mt-2 !text-[11px]">
+                        Show all {filtered.length} songs
+                      </button>
+                    )}
+                  </>);
+                })()}
               </div>
             );
           })()}

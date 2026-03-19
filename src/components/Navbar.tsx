@@ -50,7 +50,7 @@ export default function Navbar({ view, onViewChange }: NavbarProps) {
         {/* Top bar — amp control panel header */}
         <div className="navbar-top px-3 sm:px-5 py-2 flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-3">
-            <Image src="/logo-dark.svg" alt="GuitarForge" width={120} height={44} className="h-[36px] sm:h-[44px] logo-glow" style={{ width: 'auto' }} priority />
+            <Image src="/logo-dark.svg" alt="GuitarForge" width={120} height={44} className="h-[36px] sm:h-[44px] logo-glow" style={{ width: 'auto', height: 'auto' }} priority />
             <div className="flex items-center gap-1.5 ml-2">
               <div className="led led-on" />
             </div>

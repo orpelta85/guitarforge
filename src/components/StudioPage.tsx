@@ -938,6 +938,34 @@ export default function StudioPage() {
     setDrumStep(-1);
   }, []);
 
+  // Fix #9: Save drum patterns to localStorage
+  useEffect(() => {
+    const drumTracks = tracks.filter(t => t.type === "drum" && t.drumPattern);
+    if (drumTracks.length === 0) return;
+    const data = drumTracks.map(t => ({ id: t.id, name: t.name, pattern: t.drumPattern }));
+    try { localStorage.setItem("gf-studio-drums", JSON.stringify(data)); } catch {}
+  }, [tracks]);
+
+  // Fix #9: Restore drum patterns on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("gf-studio-drums");
+      if (!raw) return;
+      const saved = JSON.parse(raw) as { id: number; name: string; pattern: boolean[][] }[];
+      if (!saved.length) return;
+      setTracks(prev => {
+        if (prev.some(t => t.type === "drum")) return prev;
+        return [...prev, ...saved.map(s => ({
+          id: s.id, name: s.name, color: TRACK_COLORS[(s.id - 1) % TRACK_COLORS.length],
+          audioBlob: null, audioUrl: null, volume: 100, pan: 0,
+          muted: false, solo: false, recordArm: false, collapsed: false,
+          type: "drum" as const, effects: JSON.parse(JSON.stringify(DEFAULT_EFFECTS)),
+          drumPattern: s.pattern,
+        }))];
+      });
+    } catch {}
+  }, []);
+
   // ── Add YouTube track placeholder ──
   const addYoutubeTrack = useCallback(() => {
     setShowRightPanel(true);
