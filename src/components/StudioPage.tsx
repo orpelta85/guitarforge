@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { SCALES, MODES, STYLES } from "@/lib/constants";
 
 // ── Types ──
 interface TrackEffects {
@@ -542,7 +543,13 @@ function dbDisplay(vol: number): string {
   return `${db >= 0 ? "+" : ""}${db.toFixed(1)}`;
 }
 
-export default function StudioPage() {
+interface StudioPageProps {
+  channelScale?: string;
+  channelMode?: string;
+  channelStyle?: string;
+}
+
+export default function StudioPage({ channelScale, channelMode, channelStyle }: StudioPageProps = {}) {
   // ── State ──
   const [tracks, setTracks] = useState<StudioTrack[]>([]);
   const [isRec, setIsRec] = useState(false);
@@ -560,12 +567,15 @@ export default function StudioPage() {
   const [fxTrackId, setFxTrackId] = useState<number | null>(null);
   const [ytQuery, setYtQuery] = useState("");
   const [ytVideoId, setYtVideoId] = useState("");
-  const [sunoScale, setSunoScale] = useState("Am");
-  const [sunoMode, setSunoMode] = useState("Aeolian");
-  const [sunoStyle, setSunoStyle] = useState("Blues Rock");
+  const [sunoScale, setSunoScale] = useState(channelScale || "Am");
+  const [sunoMode, setSunoMode] = useState(channelMode || "Aeolian");
+  const [sunoStyle, setSunoStyle] = useState(channelStyle || "Metal");
   const [sunoBpm, setSunoBpm] = useState(120);
   const [sunoLoading, setSunoLoading] = useState(false);
   const [sunoError, setSunoError] = useState("");
+  const [sunoCredits, setSunoCredits] = useState<number | null>(null);
+  const [sunoCreditsLoading, setSunoCreditsLoading] = useState(false);
+  const [sunoConfirm, setSunoConfirm] = useState(false);
   const [selectedTrackId, setSelectedTrackId] = useState<number | null>(null);
   const [editingTrackName, setEditingTrackName] = useState<number | null>(null);
   const [sidebarWidth, setSidebarWidth] = useState(220);
@@ -1271,9 +1281,25 @@ export default function StudioPage() {
   const loadYt = () => { const vid = extractVid(ytQuery); if (vid) setYtVideoId(vid); };
 
   // ── Suno ──
+  const fetchSunoCredits = useCallback(async () => {
+    setSunoCreditsLoading(true);
+    try {
+      const res = await fetch("/api/suno");
+      const data = await res.json();
+      if (typeof data.credits_left === "number") setSunoCredits(data.credits_left);
+    } catch { /* non-critical */ }
+    setSunoCreditsLoading(false);
+  }, []);
+
+  // Fetch credits when suno panel opens
+  useEffect(() => {
+    if (showPanel === "suno") fetchSunoCredits();
+  }, [showPanel, fetchSunoCredits]);
+
   const generateSuno = useCallback(async () => {
     setSunoLoading(true);
     setSunoError("");
+    setSunoConfirm(false);
     try {
       const res = await fetch("/api/suno", {
         method: "POST",
@@ -1290,11 +1316,12 @@ export default function StudioPage() {
         throw new Error("No tracks returned");
       }
       setShowPanel("none");
+      fetchSunoCredits();
     } catch (err) {
       setSunoError(err instanceof Error ? err.message : "Failed to generate track");
     }
     setSunoLoading(false);
-  }, [sunoScale, sunoMode, sunoStyle, sunoBpm, addTrack]);
+  }, [sunoScale, sunoMode, sunoStyle, sunoBpm, addTrack, fetchSunoCredits]);
 
   // ── Export/Mixdown ──
   const exportMix = useCallback(async () => {
@@ -3248,37 +3275,66 @@ export default function StudioPage() {
 
               {/* Suno AI */}
               <div className="rounded-lg p-3" style={{ background: "#1a1a1a", border: "1px solid #222" }}>
-                <div className="flex items-center gap-2 mb-2">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                  <span className="text-[10px] text-[#aaa] font-medium">AI Track (Suno)</span>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    <span className="text-[10px] text-[#aaa] font-medium">AI Track (Suno)</span>
+                  </div>
+                  {sunoCredits !== null && (
+                    <span className={`text-[8px] font-medium px-1.5 py-0.5 rounded ${sunoCredits <= 10 ? "text-[#ef4444] bg-[#ef444415]" : "text-[#22c55e] bg-[#22c55e15]"}`}>
+                      {sunoCreditsLoading ? "..." : `${sunoCredits} credits`}
+                    </span>
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <div className="flex gap-1.5">
                     <label className="flex-1">
                       <span className="text-[7px] text-[#444] block">Key</span>
-                      <input value={sunoScale} onChange={(e) => setSunoScale(e.target.value)}
-                        className="w-full bg-[#0e0e0e] border border-[#2a2a2a] rounded px-1.5 py-0.5 text-[9px] text-[#aaa] outline-none focus:border-[#8b5cf6]" />
+                      <select value={sunoScale} onChange={(e) => setSunoScale(e.target.value)}
+                        className="w-full bg-[#0e0e0e] border border-[#2a2a2a] rounded px-1 py-0.5 text-[9px] text-[#aaa] outline-none focus:border-[#8b5cf6] cursor-pointer">
+                        {SCALES.map((s) => <option key={s} value={s}>{s}</option>)}
+                      </select>
                     </label>
                     <label className="flex-1">
                       <span className="text-[7px] text-[#444] block">Mode</span>
-                      <input value={sunoMode} onChange={(e) => setSunoMode(e.target.value)}
-                        className="w-full bg-[#0e0e0e] border border-[#2a2a2a] rounded px-1.5 py-0.5 text-[9px] text-[#aaa] outline-none focus:border-[#8b5cf6]" />
+                      <select value={sunoMode} onChange={(e) => setSunoMode(e.target.value)}
+                        className="w-full bg-[#0e0e0e] border border-[#2a2a2a] rounded px-1 py-0.5 text-[9px] text-[#aaa] outline-none focus:border-[#8b5cf6] cursor-pointer">
+                        {MODES.map((m) => <option key={m} value={m}>{m}</option>)}
+                      </select>
                     </label>
                   </div>
                   <label className="block">
                     <span className="text-[7px] text-[#444] block">Style</span>
-                    <input value={sunoStyle} onChange={(e) => setSunoStyle(e.target.value)}
-                      className="w-full bg-[#0e0e0e] border border-[#2a2a2a] rounded px-1.5 py-0.5 text-[9px] text-[#aaa] outline-none focus:border-[#8b5cf6]" />
+                    <select value={sunoStyle} onChange={(e) => setSunoStyle(e.target.value)}
+                      className="w-full bg-[#0e0e0e] border border-[#2a2a2a] rounded px-1 py-0.5 text-[9px] text-[#aaa] outline-none focus:border-[#8b5cf6] cursor-pointer">
+                      {STYLES.map((s) => <option key={s} value={s}>{s}</option>)}
+                    </select>
                   </label>
                   <label className="block">
                     <span className="text-[7px] text-[#444] block">BPM</span>
                     <input type="number" value={sunoBpm} onChange={(e) => setSunoBpm(Number(e.target.value))}
                       className="w-20 bg-[#0e0e0e] border border-[#2a2a2a] rounded px-1.5 py-0.5 text-[9px] text-[#f59e0b] outline-none focus:border-[#f59e0b]" />
                   </label>
-                  <button onClick={generateSuno} disabled={sunoLoading}
-                    className="w-full text-[9px] py-1.5 rounded-md bg-[#8b5cf6] text-white hover:brightness-110 disabled:opacity-50 cursor-pointer transition-all font-medium">
-                    {sunoLoading ? "Generating..." : "Generate Track"}
-                  </button>
+                  {!sunoConfirm ? (
+                    <button onClick={() => setSunoConfirm(true)} disabled={sunoLoading}
+                      className="w-full text-[9px] py-1.5 rounded-md bg-[#8b5cf6] text-white hover:brightness-110 disabled:opacity-50 cursor-pointer transition-all font-medium">
+                      {sunoLoading ? "Generating..." : "Generate Track"}
+                    </button>
+                  ) : (
+                    <div className="bg-[#111] border border-[#8b5cf620] rounded p-2 space-y-1.5">
+                      <div className="text-[8px] text-[#aaa]">This will use ~10 credits.{sunoCredits !== null && ` You have ${sunoCredits} remaining.`}</div>
+                      <div className="flex gap-1.5">
+                        <button onClick={generateSuno} disabled={sunoLoading}
+                          className="flex-1 text-[9px] py-1 rounded bg-[#8b5cf6] text-white hover:brightness-110 disabled:opacity-50 cursor-pointer transition-all font-medium">
+                          {sunoLoading ? "Generating..." : "Confirm"}
+                        </button>
+                        <button onClick={() => setSunoConfirm(false)}
+                          className="flex-1 text-[9px] py-1 rounded bg-[#222] text-[#888] hover:bg-[#333] cursor-pointer transition-all">
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   {sunoError && <div className="text-[9px] text-[#C41E3A]">{sunoError}</div>}
                 </div>
               </div>

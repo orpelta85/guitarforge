@@ -26,11 +26,17 @@ export default function ProfilePage() {
     practiceHoursPerDay: 2, favoriteArtists: "", equipment: "",
   });
   const [saved, setSaved] = useState(false);
+  const [coachKey, setCoachKey] = useState("");
+  const [showKey, setShowKey] = useState(false);
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) setProfile(JSON.parse(raw));
+    } catch {}
+    try {
+      const key = localStorage.getItem("gf-coach-apikey") || "";
+      setCoachKey(key);
     } catch {}
   }, []);
 
@@ -134,6 +140,49 @@ export default function ProfilePage() {
           <input value={profile.favoriteArtists} onChange={e => update("favoriteArtists", e.target.value)}
             placeholder="Slash, Hammett, Gilmour, Petrucci..." className="input mt-1" />
         </label>
+      </div>
+
+      {/* AI Coach API Key */}
+      <div className="panel p-3 sm:p-5 mb-3">
+        <div className="font-label text-[11px] text-[#D4A843] mb-3 flex items-center gap-2">
+          <div className="led led-gold" /> AI Coach Settings
+        </div>
+        <label className="font-label text-[10px] text-[#555] block">
+          Claude API Key (optional)
+          <div className="font-label text-[9px] text-[#333] mt-0.5 mb-1">
+            Without an API key the coach works in Demo mode with pre-written responses. Add a key from console.anthropic.com for real AI coaching.
+          </div>
+          <div className="flex gap-2 items-center">
+            <input
+              type={showKey ? "text" : "password"}
+              value={coachKey}
+              onChange={e => setCoachKey(e.target.value)}
+              placeholder="sk-ant-..."
+              className="input mt-1 flex-1"
+            />
+            <button type="button" onClick={() => setShowKey(!showKey)}
+              className="font-label text-[9px] text-[#555] border border-[#222] px-2 py-1.5 rounded-sm mt-1 hover:border-[#333] transition-all">
+              {showKey ? "Hide" : "Show"}
+            </button>
+          </div>
+        </label>
+        <div className="flex items-center gap-2 mt-2">
+          <button type="button" onClick={() => {
+            try { localStorage.setItem("gf-coach-apikey", coachKey); } catch {}
+            setSaved(true); setTimeout(() => setSaved(false), 2000);
+          }} className="font-label text-[10px] text-[#D4A843] border border-[#D4A843]/30 px-3 py-1 rounded-sm hover:bg-[#D4A843]/10 transition-all">
+            Save Key
+          </button>
+          {coachKey && coachKey.startsWith("sk-") && (
+            <span className="font-label text-[9px] text-[#33CC33]">Key configured</span>
+          )}
+          {coachKey && !coachKey.startsWith("sk-") && coachKey.length > 0 && (
+            <span className="font-label text-[9px] text-[#ef4444]">Invalid key format</span>
+          )}
+          {!coachKey && (
+            <span className="font-label text-[9px] text-[#555]">Demo mode active</span>
+          )}
+        </div>
       </div>
 
       {/* Save */}

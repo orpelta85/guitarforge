@@ -295,7 +295,7 @@ export default function GuitarForgeApp() {
     <ErrorBoundary>
     <div className="min-h-screen text-white" style={{ background: "#0A0A0A" }} dir="ltr">
       <Navbar view={view} onViewChange={setView} />
-      {view === "studio" && <StudioPage />}
+      {view === "studio" && <StudioPage channelScale={scale} channelMode={mode} channelStyle={style} />}
       <div key={viewKey} className="view-transition px-2 sm:px-5 py-3 sm:py-5 pb-16 sm:pb-5 max-w-[960px] lg:max-w-[1100px] xl:max-w-[1280px] mx-auto overflow-x-hidden">
 
         {view === "learn" && <LearningCenterPage />}

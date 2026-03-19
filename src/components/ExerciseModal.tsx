@@ -1,9 +1,10 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type { Exercise } from "@/lib/types";
-import { COL } from "@/lib/constants";
+import { COL, STYLES } from "@/lib/constants";
 import { EXERCISES } from "@/lib/exercises";
 import { ytSearch, ssSearch } from "@/lib/helpers";
+import { buildCacheKey, getCachedTrack, downloadAndCache, type CachedTrack } from "@/lib/suno";
 import TimerBox from "./TimerBox";
 import MetronomeBox from "./MetronomeBox";
 import RecorderBox from "./RecorderBox";
@@ -114,6 +115,68 @@ export default function ExerciseModal({ exercise: ex, mode, scale, style, week, 
 
   const needsBacking = ex.bt || BACKING_CATS.includes(ex.c);
 
+  // ── Suno AI Backing Track ──
+  const [sunoTrack, setSunoTrack] = useState<CachedTrack | null>(null);
+  const [sunoLoading, setSunoLoading] = useState(false);
+  const [sunoError, setSunoError] = useState("");
+  const [sunoCredits, setSunoCredits] = useState<number | null>(null);
+  const [sunoConfirm, setSunoConfirm] = useState(false);
+  const [sunoStyle, setSunoStyle] = useState(ex.styles?.[0] || style);
+  const sunoAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Parse BPM midpoint from exercise range like "80-120"
+  const parseBpmMid = (bpmStr: string): number => {
+    const m = bpmStr.match(/(\d+)\s*[-–]\s*(\d+)/);
+    if (m) return Math.round((parseInt(m[1]) + parseInt(m[2])) / 2);
+    const single = parseInt(bpmStr);
+    return isNaN(single) ? 120 : single;
+  };
+  const sunoBpm = parseBpmMid(ex.b);
+
+  // Check cache on mount
+  useEffect(() => {
+    if (!needsBacking) return;
+    const key = buildCacheKey(ex.id, sunoStyle, scale, mode, sunoBpm);
+    getCachedTrack(key).then((cached) => { if (cached) setSunoTrack(cached); });
+  }, [ex.id, sunoStyle, scale, mode, sunoBpm, needsBacking]);
+
+  const fetchCredits = useCallback(async () => {
+    try {
+      const res = await fetch("/api/suno");
+      const data = await res.json();
+      if (typeof data.credits_left === "number") setSunoCredits(data.credits_left);
+    } catch { /* non-critical */ }
+  }, []);
+
+  const generateSunoTrack = useCallback(async () => {
+    setSunoLoading(true);
+    setSunoError("");
+    setSunoConfirm(false);
+    try {
+      const res = await fetch("/api/suno", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scale, mode, style: sunoStyle, bpm: sunoBpm }),
+      });
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+      const data = await res.json();
+      if (!data.tracks?.length) throw new Error("No tracks returned");
+      const track = data.tracks[0];
+      if (track.status !== "complete") throw new Error("Generation timed out — try again");
+      const cacheKey = buildCacheKey(ex.id, sunoStyle, scale, mode, sunoBpm);
+      const cached = await downloadAndCache(
+        cacheKey, track.id, track.audioUrl,
+        { scale, mode, style: sunoStyle, bpm: sunoBpm },
+        track.duration, track.title
+      );
+      setSunoTrack(cached);
+      fetchCredits();
+    } catch (err) {
+      setSunoError(err instanceof Error ? err.message : "Failed to generate");
+    }
+    setSunoLoading(false);
+  }, [ex.id, scale, mode, sunoStyle, sunoBpm, fetchCredits]);
+
   // YouTube: only embed works, not search results page
   // So we provide search links that open in the iframe-compatible embed format
   function searchYouTube(query: string) {
@@ -220,6 +283,87 @@ export default function ExerciseModal({ exercise: ex, mode, scale, style, week, 
                     {ex.songName && <button onClick={() => searchYouTube(`${ex.songName} backing track`)} className="btn-ghost !text-[9px] !px-2 !py-1">{ex.songName}</button>}
                   </div>
                   <div className="font-label text-[8px] text-[#333] mt-1">Copy the URL from YouTube and paste above to play here</div>
+                </div>
+              )}
+
+              {/* ── AI Backing Track (Suno) ── */}
+              {needsBacking && (
+                <div className="mb-4">
+                  <div className="font-label text-[10px] text-[#8b5cf6] mb-2 flex items-center gap-2">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    AI Backing Track
+                  </div>
+
+                  {/* Cached track — show player */}
+                  {sunoTrack && (
+                    <div className="bg-[#111] border border-[#8b5cf620] rounded p-2.5 mb-2">
+                      <div className="text-[9px] text-[#888] mb-1.5">{sunoTrack.title}</div>
+                      <audio ref={sunoAudioRef} src={sunoTrack.audioUrl} controls loop
+                        className="w-full h-8 [&::-webkit-media-controls-panel]:bg-[#1a1a1a]" />
+                      <div className="text-[7px] text-[#444] mt-1">Cached — no credits used</div>
+                    </div>
+                  )}
+
+                  {/* Style selector + generate */}
+                  {!sunoTrack && !sunoLoading && (
+                    <div className="bg-[#111] border border-[#1a1a1a] rounded p-2.5 space-y-2">
+                      <div className="flex gap-2 items-end">
+                        <label className="flex-1">
+                          <span className="text-[7px] text-[#444] block mb-0.5">Style</span>
+                          <select value={sunoStyle} onChange={(e) => setSunoStyle(e.target.value)}
+                            className="w-full bg-[#0e0e0e] border border-[#2a2a2a] rounded px-1.5 py-1 text-[9px] text-[#aaa] outline-none focus:border-[#8b5cf6] cursor-pointer">
+                            {(ex.styles && ex.styles.length > 0 ? ex.styles : STYLES).map((s) => (
+                              <option key={s} value={s}>{s}</option>
+                            ))}
+                          </select>
+                        </label>
+                        <div className="text-[8px] text-[#555] pb-1">{scale} {mode} / {sunoBpm} BPM</div>
+                      </div>
+                      {!sunoConfirm ? (
+                        <button type="button" onClick={() => { fetchCredits(); setSunoConfirm(true); }}
+                          className="w-full text-[9px] py-1.5 rounded bg-[#8b5cf6] text-white hover:brightness-110 cursor-pointer transition-all font-medium">
+                          Generate AI Backing Track
+                        </button>
+                      ) : (
+                        <div className="space-y-1.5">
+                          <div className="text-[8px] text-[#aaa]">
+                            ~10 credits per track.{sunoCredits !== null && ` You have ${sunoCredits} remaining.`}
+                            {sunoCredits !== null && sunoCredits <= 10 && (
+                              <span className="text-[#ef4444] mr-1"> Credits low!</span>
+                            )}
+                          </div>
+                          <div className="flex gap-1.5">
+                            <button type="button" onClick={generateSunoTrack}
+                              className="flex-1 text-[9px] py-1 rounded bg-[#8b5cf6] text-white hover:brightness-110 cursor-pointer font-medium">
+                              Confirm Generate
+                            </button>
+                            <button type="button" onClick={() => setSunoConfirm(false)}
+                              className="flex-1 text-[9px] py-1 rounded bg-[#222] text-[#888] hover:bg-[#333] cursor-pointer">
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      {sunoError && <div className="text-[9px] text-[#ef4444]">{sunoError}</div>}
+                    </div>
+                  )}
+
+                  {/* Loading state */}
+                  {sunoLoading && (
+                    <div className="bg-[#111] border border-[#8b5cf620] rounded p-4 text-center">
+                      <div className="inline-block w-5 h-5 border-2 border-[#8b5cf6] border-t-transparent rounded-full animate-spin mb-2" />
+                      <div className="text-[10px] text-[#8b5cf6]">Generating backing track...</div>
+                      <div className="text-[8px] text-[#444] mt-1">This takes 30-90 seconds</div>
+                    </div>
+                  )}
+
+                  {/* Regenerate button when cached track exists */}
+                  {sunoTrack && !sunoLoading && (
+                    <button type="button" onClick={() => { setSunoTrack(null); setSunoConfirm(false); setSunoError(""); }}
+                      className="text-[8px] text-[#555] hover:text-[#888] cursor-pointer transition-colors">
+                      Generate new track
+                    </button>
+                  )}
                 </div>
               )}
 

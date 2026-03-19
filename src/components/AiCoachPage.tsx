@@ -1,7 +1,25 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { EXERCISES } from "@/lib/exercises";
 import { CATS, COL } from "@/lib/constants";
+import { SONG_LIBRARY } from "@/lib/songs-data";
+import type { SongEntry } from "@/lib/types";
+
+// ── Types ──
+
+interface CoachMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: number;
+  actions?: MessageAction[];
+}
+
+interface MessageAction {
+  label: string;
+  type: "apply-plan" | "add-song" | "quick-action";
+  data?: unknown;
+}
 
 interface UserProfile {
   name: string; instrument: string; level: string; yearsPlaying: number;
@@ -9,178 +27,590 @@ interface UserProfile {
   favoriteArtists: string; equipment: string;
 }
 
-interface PracticePlan {
-  name: string;
-  weeks: number;
-  phases: { name: string; weeks: string; focus: string; categories: string[]; dailyMinutes: number; exercises: number[] }[];
+// ── Context builder ──
+
+function getCoachContext(): string {
+  const parts: string[] = [];
+
+  try {
+    const raw = localStorage.getItem("gf-profile");
+    if (raw) {
+      const p: UserProfile = JSON.parse(raw);
+      parts.push(`Player: ${p.name || "Unknown"}, ${p.level}, ${p.yearsPlaying}y exp, ${p.practiceHoursPerDay}h/day.`);
+      parts.push(`Genres: ${p.genres.join(", ")}. Goals: ${p.goals || "none set"}.`);
+      if (p.favoriteArtists) parts.push(`Fav artists: ${p.favoriteArtists}.`);
+      if (p.equipment) parts.push(`Gear: ${p.equipment}.`);
+    }
+  } catch {}
+
+  try {
+    const raw = localStorage.getItem("gf30");
+    if (raw) {
+      const d = JSON.parse(raw);
+      const doneKeys = Object.keys(d.doneMap || {}).filter(k => d.doneMap[k]);
+      const cats = [...new Set(doneKeys.map(k => {
+        const id = parseInt(k.split("-")[1]);
+        const ex = EXERCISES.find(e => e.id === id);
+        return ex?.c || "Unknown";
+      }))];
+      parts.push(`Week ${d.week || 1}. Mode: ${d.mode || "Aeolian"}, Scale: ${d.scale || "Am"}, Style: ${d.style || "Metal"}.`);
+      parts.push(`Exercises done this week: ${doneKeys.length}. Categories: ${cats.join(", ") || "none"}.`);
+
+      // BPM highlights
+      const bpmLog = d.bpmLog || {};
+      const bpmEntries = Object.entries(bpmLog).slice(0, 5).map(([k, v]) => {
+        const id = parseInt(k.split("-")[1]);
+        const ex = EXERCISES.find(e => e.id === id);
+        return `${ex?.n || "Ex#" + id}: ${v} BPM`;
+      });
+      if (bpmEntries.length) parts.push(`BPM log: ${bpmEntries.join(", ")}.`);
+    }
+  } catch {}
+
+  try {
+    const raw = localStorage.getItem("gf-streak");
+    if (raw) {
+      const s = JSON.parse(raw);
+      parts.push(`Streak: ${s.currentStreak || 0}d (longest: ${s.longestStreak || 0}d, total: ${s.totalDays || 0}d).`);
+    }
+  } catch {}
+
+  try {
+    const raw = localStorage.getItem("gf-learn");
+    if (raw) {
+      const l = JSON.parse(raw);
+      if (l.xp) parts.push(`Learning: ${l.xp} XP, level ${l.level || 1}.`);
+    }
+  } catch {}
+
+  return parts.join(" ") || "No user data available yet. Profile not set up.";
 }
 
-const PLAN_TEMPLATES: Record<string, PracticePlan> = {
-  "Beginner Rock": {
-    name: "Beginner Rock Foundation", weeks: 8,
-    phases: [
-      { name: "Basics", weeks: "1-2", focus: "Warm-up, basic chords, simple riffs", categories: ["Warm-Up", "Rhythm", "Fretboard"], dailyMinutes: 60, exercises: [1, 4, 5, 28, 29, 33, 34] },
-      { name: "Building", weeks: "3-4", focus: "Pentatonic scale, simple solos, bends", categories: ["Warm-Up", "Shred", "Bends", "Fretboard"], dailyMinutes: 75, exercises: [1, 5, 6, 17, 18, 35] },
-      { name: "Expanding", weeks: "5-6", focus: "Full songs, improvisation basics", categories: ["Warm-Up", "Shred", "Improv", "Riffs"], dailyMinutes: 90, exercises: [1, 6, 43, 47, 49, 50] },
-      { name: "Performing", weeks: "7-8", focus: "Song mastery, recording yourself", categories: ["Warm-Up", "Improv", "Composition", "Songs"], dailyMinutes: 90, exercises: [1, 43, 46, 60, 63] },
-    ],
-  },
-  "Shred Builder": {
-    name: "Shred Speed Builder", weeks: 12,
-    phases: [
-      { name: "Foundation", weeks: "1-3", focus: "Alternate picking, synchronization, pentatonic speed", categories: ["Warm-Up", "Shred"], dailyMinutes: 90, exercises: [1, 2, 3, 5, 6, 9] },
-      { name: "Techniques", weeks: "4-6", focus: "Legato, economy picking, string skipping", categories: ["Warm-Up", "Shred", "Legato"], dailyMinutes: 105, exercises: [1, 6, 10, 11, 12, 13] },
-      { name: "Speed Push", weeks: "7-9", focus: "Sextuplets, 3NPS, burst picking", categories: ["Warm-Up", "Shred", "Legato", "Phrasing"], dailyMinutes: 120, exercises: [1, 7, 8, 9, 14, 53, 54] },
-      { name: "Application", weeks: "10-12", focus: "Musical application, solos, improvisation", categories: ["Warm-Up", "Shred", "Improv", "Phrasing"], dailyMinutes: 120, exercises: [1, 7, 8, 43, 44, 48, 55, 56] },
-    ],
-  },
-  "Blues Master": {
-    name: "Blues Guitar Mastery", weeks: 8,
-    phases: [
-      { name: "Blues Basics", weeks: "1-2", focus: "Blues scale, bending, vibrato", categories: ["Warm-Up", "Bends", "Modes"], dailyMinutes: 75, exercises: [1, 3, 17, 18, 19, 58] },
-      { name: "Phrasing", weeks: "3-4", focus: "Call-response, dynamics, space", categories: ["Warm-Up", "Bends", "Improv", "Dynamics"], dailyMinutes: 90, exercises: [1, 19, 20, 46, 47, 65, 67] },
-      { name: "Ear & Feel", weeks: "5-6", focus: "Ear training, chord tones, transcription", categories: ["Warm-Up", "Ear Training", "Improv"], dailyMinutes: 90, exercises: [1, 37, 39, 41, 42, 44] },
-      { name: "Expression", weeks: "7-8", focus: "Full blues performance, recording, creation", categories: ["Warm-Up", "Improv", "Composition", "Dynamics"], dailyMinutes: 90, exercises: [1, 43, 46, 60, 61, 64, 66] },
-    ],
-  },
-  "Metal Technique": {
-    name: "Metal Technique Complete", weeks: 12,
-    phases: [
-      { name: "Rhythm", weeks: "1-3", focus: "Downpicking, palm muting, galloping, odd time", categories: ["Warm-Up", "Rhythm"], dailyMinutes: 90, exercises: [1, 4, 28, 29, 30, 31, 32] },
-      { name: "Lead Basics", weeks: "4-6", focus: "Alternate picking, legato, bends", categories: ["Warm-Up", "Shred", "Legato", "Bends"], dailyMinutes: 105, exercises: [1, 6, 9, 12, 13, 17, 18] },
-      { name: "Advanced", weeks: "7-9", focus: "Sweep, tapping, modes, riff writing", categories: ["Warm-Up", "Tapping", "Sweep", "Modes", "Riffs"], dailyMinutes: 120, exercises: [1, 22, 23, 25, 26, 49, 51, 57] },
-      { name: "Mastery", weeks: "10-12", focus: "Integration, song learning, improvisation", categories: ["Warm-Up", "Shred", "Improv", "Songs", "Composition"], dailyMinutes: 120, exercises: [1, 7, 8, 27, 43, 44, 52, 62] },
-    ],
-  },
-};
+// ── Demo response engine ──
+
+function getProfile(): UserProfile | null {
+  try {
+    const raw = localStorage.getItem("gf-profile");
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function matchSongs(profile: UserProfile | null, count: number = 6): SongEntry[] {
+  if (!profile) return SONG_LIBRARY.slice(0, count);
+  const genres = profile.genres.map(g => g.toLowerCase());
+  const level = profile.level.toLowerCase();
+  let diff: string | null = null;
+  if (level.includes("beginner")) diff = "Beginner";
+  else if (level.includes("intermediate")) diff = "Intermediate";
+  else if (level.includes("advanced") || level.includes("expert")) diff = "Advanced";
+
+  // Score songs by genre match + difficulty match
+  const scored = SONG_LIBRARY.map(s => {
+    let score = 0;
+    const sg = (s.genre || "").toLowerCase();
+    if (genres.some(g => sg.includes(g) || g.includes(sg))) score += 3;
+    if (diff && s.difficulty === diff) score += 2;
+    if (diff === "Advanced" && s.difficulty === "Intermediate") score += 1;
+    if (diff === "Intermediate" && s.difficulty === "Beginner") score += 1;
+    score += Math.random() * 0.5; // slight randomness
+    return { song: s, score };
+  });
+  scored.sort((a, b) => b.score - a.score);
+  return scored.slice(0, count).map(s => s.song);
+}
+
+function generateRoutine(profile: UserProfile | null): string {
+  const hours = profile?.practiceHoursPerDay || 1.5;
+  const totalMin = Math.round(hours * 60);
+  const level = (profile?.level || "").toLowerCase();
+  const genres = profile?.genres || ["Metal"];
+
+  const isAdv = level.includes("advanced") || level.includes("expert");
+  const isBeg = level.includes("beginner");
+
+  // Pick exercises by category
+  const warmUps = EXERCISES.filter(e => e.c === "Warm-Up");
+  const technique = EXERCISES.filter(e => ["Shred", "Legato", "Picking", "Tapping", "Sweep", "Arpeggios"].includes(e.c));
+  const musical = EXERCISES.filter(e => ["Improv", "Phrasing", "Ear Training", "Modes"].includes(e.c));
+  const rhythm = EXERCISES.filter(e => ["Rhythm", "Riffs", "Chords"].includes(e.c));
+  const creative = EXERCISES.filter(e => ["Composition", "Songs", "Bends", "Dynamics"].includes(e.c));
+
+  const pick = (arr: typeof EXERCISES, n: number) => {
+    const shuffled = [...arr].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, n);
+  };
+
+  const DAYS_HEB = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
+
+  let plan = `**תוכנית תרגול שבועית** (${totalMin} דק׳/יום)\n\n`;
+
+  for (let i = 0; i < 7; i++) {
+    const dayExercises: string[] = [];
+    const wu = pick(warmUps, 1)[0];
+    if (wu) dayExercises.push(`- Warm-Up: ${wu.n} (${wu.m} דק׳)`);
+
+    if (i % 2 === 0) {
+      const techs = pick(technique, isAdv ? 2 : 1);
+      techs.forEach(t => dayExercises.push(`- ${t.c}: ${t.n} (${t.m} דק׳)`));
+    } else {
+      const mus = pick(musical, isAdv ? 2 : 1);
+      mus.forEach(m => dayExercises.push(`- ${m.c}: ${m.n} (${m.m} דק׳)`));
+    }
+
+    if (i < 5) {
+      const rhy = pick(rhythm, 1)[0];
+      if (rhy) dayExercises.push(`- ${rhy.c}: ${rhy.n} (${rhy.m} דק׳)`);
+    }
+
+    if (i === 5 || i === 6) {
+      const cr = pick(creative, 1)[0];
+      if (cr) dayExercises.push(`- ${cr.c}: ${cr.n} (${cr.m} דק׳)`);
+    }
+
+    if (!isBeg && i % 3 === 0) {
+      dayExercises.push(`- Songs: תרגול שיר מהספרייה (15 דק׳)`);
+    }
+
+    plan += `**יום ${DAYS_HEB[i]}:**\n${dayExercises.join("\n")}\n\n`;
+  }
+
+  plan += `*התוכנית מותאמת לרמת ${profile?.level || "Intermediate"} ולז׳אנרים ${genres.join(", ")}.*`;
+  return plan;
+}
+
+function getDemoResponse(input: string): { content: string; actions?: MessageAction[] } {
+  const lower = input.toLowerCase();
+  const profile = getProfile();
+  const name = profile?.name || "גיטריסט";
+
+  // Routine / plan
+  if (/routine|plan|schedule|תוכנית|לוח|תרגול יומי/.test(lower)) {
+    return {
+      content: `${name}, הנה תוכנית תרגול מותאמת אישית:\n\n${generateRoutine(profile)}`,
+    };
+  }
+
+  // Song recommendations
+  if (/song|recommend|שיר|המלצ/.test(lower)) {
+    const songs = matchSongs(profile, 6);
+    let resp = `הנה המלצות שירים שמתאימות לרמה ולסגנון שלך:\n\n`;
+    songs.forEach((s, i) => {
+      resp += `**${i + 1}. ${s.title}** — ${s.artist}\n`;
+      resp += `   Difficulty: ${s.difficulty || "?"} · Genre: ${s.genre || "?"} · Tuning: ${s.tuning || "Standard"}\n\n`;
+    });
+    resp += `*רוצה שאמליץ על עוד שירים? ספר לי איזה סגנון בא לך.*`;
+    return { content: resp };
+  }
+
+  // Progress / stats
+  if (/progress|stats|התקדמות|סטטיסטיק/.test(lower)) {
+    const ctx = getCoachContext();
+    let resp = `הנה סיכום ההתקדמות שלך:\n\n`;
+
+    try {
+      const raw = localStorage.getItem("gf-streak");
+      if (raw) {
+        const s = JSON.parse(raw);
+        resp += `**Streak:** ${s.currentStreak || 0} ימים רצופים (שיא: ${s.longestStreak || 0})\n`;
+        resp += `**סה״כ ימי תרגול:** ${s.totalDays || 0}\n\n`;
+      }
+    } catch {}
+
+    try {
+      const raw = localStorage.getItem("gf30");
+      if (raw) {
+        const d = JSON.parse(raw);
+        const done = Object.keys(d.doneMap || {}).filter(k => d.doneMap[k]).length;
+        resp += `**תרגילים שהושלמו השבוע:** ${done}\n`;
+        const bpmEntries = Object.entries(d.bpmLog || {});
+        if (bpmEntries.length > 0) {
+          resp += `**BPM Log:**\n`;
+          bpmEntries.slice(0, 5).forEach(([k, v]) => {
+            const id = parseInt(k.split("-")[1]);
+            const ex = EXERCISES.find(e => e.id === id);
+            resp += `- ${ex?.n || "Exercise"}: ${v} BPM\n`;
+          });
+        }
+      }
+    } catch {}
+
+    resp += `\n*המשך להתאמן בעקביות! כל יום שאתה מתרגל הוא צעד קדימה.*`;
+    return { content: resp };
+  }
+
+  // Theory
+  if (/theory|scale|chord|mode|תאוריה|סולם|אקורד/.test(lower)) {
+    const tips = [
+      `**Minor Pentatonic** הוא הסולם הראשון שכל גיטריסט צריך לשלוט בו. 5 תווים, 5 פוזיציות. בהרבה מקרים זה כל מה שאתה צריך לסולו מעולה.\n\n**טיפ:** תתרגל את הסולם בכל 5 הפוזיציות על פני הצוואר. רוב הגיטריסטים נתקעים בפוזיציה אחת — אל תהיה אחד מהם.\n\nתרגילים רלוונטיים מהספרייה: "Two-Octave Scale Am Pentatonic" ו-"Fretboard Note Names".`,
+      `**Modes — מה הם ולמה זה חשוב:**\n\n- **Aeolian** (Natural Minor) — עצוב, Metal, Rock\n- **Dorian** — Minor עם Maj6, Funk, Jazz\n- **Phrygian** — אפלולי, Flamenco, Metal\n- **Mixolydian** — Major עם b7, Blues, Rock\n- **Lydian** — חולמני, Satriani, Film Music\n\nהתחל עם Aeolian ו-Dorian — הם הכי שימושיים ב-Rock/Metal.`,
+      `**Circle of Fifths — הכלי הכי חשוב בתאוריה:**\n\nכל טונליות נמצאת ב-circle. זזים ימינה = מוסיפים #, זזים שמאלה = מוסיפים b.\n\n**שימוש מעשי:** אם אתה ב-Am, האקורדים הנפוצים יהיו Am, Dm, Em, C, G, F. ה-Circle מסביר למה.\n\nתסתכל על הכלי Circle of 5ths בעמוד Learning!`,
+    ];
+    return { content: tips[Math.floor(Math.random() * tips.length)] };
+  }
+
+  // Technique
+  if (/technique|picking|legato|sweep|tap|shred|טכניק/.test(lower)) {
+    const tips = [
+      `**Alternate Picking — הטכניקה הבסיסית ביותר:**\n\nDown-Up-Down-Up בלי חריגות. גם כשעוברים מיתר.\n\n**3 כללים:**\n1. תנועה קטנה — ככל שהתנועה קטנה יותר, אתה מהיר יותר\n2. תמיד עם מטרונום\n3. 3 טעויות רצופות = הורד 10 BPM\n\nתרגיל מומלץ: "Alternate Picking Full Pentatonic Speed Build"`,
+      `**Legato — הקול הנקי של הגיטרה:**\n\nHammer-ons ו-Pull-offs בווליום שווה. הסוד: Pull-off זה לא רק להרים את האצבע — תמשוך את המיתר קצת הצידה.\n\n**תרגול:** 10 דקות בנייה איטית + 10 דקות זרימה רצופה. כשזה זורם — אתה יודע שזה עובד.\n\nתרגיל: "Basic Legato 2H + 2P Pentatonic"`,
+      `**Sweep Picking — טכניקה מתקדמת שנשמעת מדהים:**\n\nהפיק "נופל" על המיתרים בתנועה אחת רציפה. כל אצבע מרימה את המיתר הקודם.\n\n**טיפ קריטי:** אל תנגן sweep כמו strum! כל תו צריך להישמע בנפרד.\n\nהתחל ב-3 מיתרים לפני שעולה ל-5. תרגיל: "3-String Minor Arpeggio Sweep"`,
+    ];
+    return { content: tips[Math.floor(Math.random() * tips.length)] };
+  }
+
+  // Default — general tips
+  const defaults = [
+    `היי ${name}! יש לי כמה טיפים כלליים:\n\n1. **תמיד התחל עם חימום** — 5-10 דקות של stretching וכרומטיקה\n2. **תנגן עם מטרונום** — בלעדיו אתה רק מתרגל טעויות\n3. **הקלט את עצמך** — זה מפתיע כמה אתה שומע דברים שלא שמת לב אליהם בזמן אמת\n4. **גיוון** — אל תתרגל רק את מה שאתה כבר טוב בו\n\nמה אתה רוצה לעבוד עליו? אני יכול לבנות לך תוכנית, להמליץ על שירים, או לעזור עם תאוריה.`,
+    `שלום ${name}! אני כאן לעזור.\n\n**הנה כמה דברים שאני יכול לעשות:**\n- לבנות תוכנית תרגול שבועית מותאמת אישית\n- להמליץ על שירים מהספרייה שמתאימים לרמה שלך\n- לנתח את ההתקדמות שלך ולתת פידבק\n- לעזור עם תאוריה מוזיקלית, סולמות ואקורדים\n- לתת טיפים לטכניקות ספציפיות\n\nפשוט שאל!`,
+    `טיפ היום: **The 80/20 Rule for Guitar**\n\n80% מההתקדמות שלך מגיעה מ-20% מהתרגול. מה ה-20% הזה?\n\n1. **תרגול איטי ונקי** — יותר חשוב מלנגן מהר עם טעויות\n2. **זיהוי נקודות חולשה** — תתרגל את מה שקשה, לא את מה שקל\n3. **עקביות** — 30 דקות כל יום עדיף על 4 שעות פעם בשבוע\n\nרוצה שאבנה לך תוכנית שמתמקדת ב-20% הנכונים?`,
+  ];
+  return { content: defaults[Math.floor(Math.random() * defaults.length)] };
+}
+
+// ── Welcome message ──
+
+function getWelcomeMessage(): CoachMessage {
+  const profile = getProfile();
+  const name = profile?.name || "גיטריסט";
+  const ctx = getCoachContext();
+
+  let greeting = `היי ${name}! אני ה-Coach של GuitarForge. `;
+
+  if (profile) {
+    greeting += `אני רואה שאתה מנגן ${profile.instrument || "גיטרה"} ברמת ${profile.level}`;
+    if (profile.genres.length > 0) greeting += ` עם דגש על ${profile.genres.slice(0, 3).join(", ")}`;
+    greeting += ".\n\n";
+  } else {
+    greeting += "מומלץ למלא את הפרופיל כדי שאוכל לתת המלצות מותאמות אישית.\n\n";
+  }
+
+  greeting += "אני יכול לעזור עם תוכניות תרגול, המלצות שירים, טיפים לטכניקה ותאוריה מוזיקלית. מה בא לך?";
+
+  return {
+    id: "welcome",
+    role: "assistant",
+    content: greeting,
+    timestamp: Date.now(),
+  };
+}
+
+// ── Quick actions ──
+
+const QUICK_ACTIONS = [
+  { label: "בנה לי תוכנית", query: "Build me a practice routine" },
+  { label: "המלץ שירים", query: "Recommend songs for me" },
+  { label: "נתח התקדמות", query: "Analyze my progress and stats" },
+  { label: "עזרה עם תאוריה", query: "Help me with music theory" },
+];
+
+// ── Markdown-lite renderer ──
+
+function renderContent(text: string): React.ReactNode {
+  const lines = text.split("\n");
+  const elements: React.ReactNode[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i];
+
+    // Bold
+    const parts: React.ReactNode[] = [];
+    let lastIdx = 0;
+    const boldRe = /\*\*(.+?)\*\*/g;
+    let match;
+    while ((match = boldRe.exec(line)) !== null) {
+      if (match.index > lastIdx) parts.push(line.slice(lastIdx, match.index));
+      parts.push(<strong key={`b-${i}-${match.index}`} className="text-[#D4A843]">{match[1]}</strong>);
+      lastIdx = match.index + match[0].length;
+    }
+    if (lastIdx < line.length) parts.push(line.slice(lastIdx));
+    if (parts.length === 0) parts.push(line);
+
+    // List items
+    if (line.startsWith("- ") || line.startsWith("  - ") || /^\d+\.\s/.test(line.trimStart())) {
+      const indent = line.startsWith("  ") ? "mr-4" : "";
+      elements.push(<div key={i} className={`${indent} py-0.5`}>{parts}</div>);
+    } else if (line.trim() === "") {
+      elements.push(<div key={i} className="h-2" />);
+    } else if (line.startsWith("*") && line.endsWith("*") && !line.startsWith("**")) {
+      elements.push(<div key={i} className="text-[#555] italic text-[10px] mt-1">{line.slice(1, -1)}</div>);
+    } else {
+      elements.push(<div key={i}>{parts}</div>);
+    }
+  }
+  return <>{elements}</>;
+}
+
+// ── Main Component ──
+
+const HISTORY_KEY = "gf-coach-history";
+const MAX_MESSAGES = 50;
 
 export default function AiCoachPage() {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-  const [activePlan, setActivePlan] = useState<PracticePlan | null>(null);
+  const [messages, setMessages] = useState<CoachMessage[]>([]);
+  const [input, setInput] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const [apiKey, setApiKey] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const initRef = useRef(false);
 
+  // Load history + API key
+  useEffect(() => {
+    if (initRef.current) return;
+    initRef.current = true;
+
+    try {
+      const saved = localStorage.getItem(HISTORY_KEY);
+      if (saved) {
+        const parsed: CoachMessage[] = JSON.parse(saved);
+        if (parsed.length > 0) {
+          setMessages(parsed);
+          return;
+        }
+      }
+    } catch {}
+
+    // No history — show welcome
+    setMessages([getWelcomeMessage()]);
+  }, []);
+
+  // Save history
+  useEffect(() => {
+    if (messages.length === 0) return;
+    try {
+      const toSave = messages.slice(-MAX_MESSAGES);
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(toSave));
+    } catch {}
+  }, [messages]);
+
+  // Scroll to bottom
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages, isTyping]);
+
+  // Load API key
   useEffect(() => {
     try {
-      const raw = localStorage.getItem("gf-profile");
-      if (raw) setProfile(JSON.parse(raw));
-    } catch {}
-    try {
-      const raw = localStorage.getItem("gf-active-plan");
-      if (raw) setActivePlan(JSON.parse(raw));
+      const key = localStorage.getItem("gf-coach-apikey") || "";
+      setApiKey(key);
     } catch {}
   }, []);
 
-  function adoptPlan(key: string) {
-    const plan = PLAN_TEMPLATES[key];
-    setActivePlan(plan);
-    setSelectedPlan(key);
-    try { localStorage.setItem("gf-active-plan", JSON.stringify(plan)); } catch {}
+  async function sendMessage(text: string) {
+    if (!text.trim()) return;
+
+    const userMsg: CoachMessage = {
+      id: `u-${Date.now()}`,
+      role: "user",
+      content: text.trim(),
+      timestamp: Date.now(),
+    };
+
+    setMessages(prev => [...prev, userMsg]);
+    setInput("");
+    setIsTyping(true);
+
+    // Check if we have a real API key
+    const key = localStorage.getItem("gf-coach-apikey") || "";
+
+    if (key && key.startsWith("sk-")) {
+      // Real API mode
+      try {
+        const history = [...messages, userMsg].slice(-20).map(m => ({
+          role: m.role,
+          content: m.content,
+        }));
+        const context = getCoachContext();
+
+        const res = await fetch("/api/coach", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text.trim(), context, history, apiKey: key }),
+        });
+
+        if (!res.ok) throw new Error(`API error: ${res.status}`);
+
+        const data = await res.json();
+        const assistantMsg: CoachMessage = {
+          id: `a-${Date.now()}`,
+          role: "assistant",
+          content: data.content || "Sorry, I couldn't generate a response.",
+          timestamp: Date.now(),
+        };
+        setMessages(prev => [...prev, assistantMsg]);
+      } catch (err) {
+        const errorMsg: CoachMessage = {
+          id: `a-${Date.now()}`,
+          role: "assistant",
+          content: `שגיאה בחיבור ל-API. חוזר למצב Demo.\n\n${getDemoResponse(text).content}`,
+          timestamp: Date.now(),
+        };
+        setMessages(prev => [...prev, errorMsg]);
+      }
+    } else {
+      // Demo mode — simulate typing delay
+      await new Promise(r => setTimeout(r, 600 + Math.random() * 800));
+      const demo = getDemoResponse(text);
+      const assistantMsg: CoachMessage = {
+        id: `a-${Date.now()}`,
+        role: "assistant",
+        content: demo.content,
+        timestamp: Date.now(),
+        actions: demo.actions,
+      };
+      setMessages(prev => [...prev, assistantMsg]);
+    }
+
+    setIsTyping(false);
   }
 
-  // Suggest plan based on profile
-  function getSuggested(): string {
-    if (!profile) return "Beginner Rock";
-    const level = profile.level.toLowerCase();
-    const genres = profile.genres.map(g => g.toLowerCase());
-    if (genres.some(g => g.includes("blues"))) return "Blues Master";
-    if (genres.some(g => g.includes("thrash") || g.includes("death") || g.includes("metal"))) return "Metal Technique";
-    if (level.includes("advanced") || level.includes("expert")) return "Shred Builder";
-    return "Beginner Rock";
+  function clearChat() {
+    const welcome = getWelcomeMessage();
+    setMessages([welcome]);
+    try { localStorage.removeItem(HISTORY_KEY); } catch {}
   }
 
-  const suggested = getSuggested();
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage(input);
+    }
+  }
+
+  const isDemo = !apiKey || !apiKey.startsWith("sk-");
 
   return (
-    <div>
-      <div className="panel p-3 sm:p-5 mb-3">
-        <div className="font-heading text-xl font-bold text-[#D4A843]">AI Practice Coach</div>
-        <div className="font-label text-[10px] text-[#555] mt-1">Personalized practice plans based on your goals</div>
-      </div>
-
-      {/* Profile summary */}
-      {profile ? (
-        <div className="panel p-4 mb-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="font-label text-[11px] text-[#D4A843] flex items-center gap-2"><div className="led led-gold" /> Player Profile</div>
-              <div className="text-sm text-[#ccc] mt-1">{profile.name || "Guitarist"}</div>
-              <div className="font-readout text-[10px] text-[#555]">{profile.level} · {profile.yearsPlaying}y · {profile.practiceHoursPerDay}h/day</div>
-              <div className="flex gap-1 mt-1 flex-wrap">
-                {profile.genres.slice(0, 4).map(g => (
-                  <span key={g} className="font-label text-[9px] text-[#888] border border-[#222] px-1.5 py-0.5 rounded-sm">{g}</span>
-                ))}
-              </div>
+    <div className="flex flex-col" style={{ height: "calc(100vh - 120px)", minHeight: 400 }}>
+      {/* Header */}
+      <div className="panel p-3 sm:p-4 mb-2 flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {/* Coach icon */}
+            <div className="w-9 h-9 rounded-full bg-[#D4A843]/15 border border-[#D4A843]/30 flex items-center justify-center flex-shrink-0">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2L9 9l-7 2 5 5-1 7 6-3 6 3-1-7 5-5-7-2z" />
+              </svg>
             </div>
-            <div className="font-label text-[10px] text-[#D4A843] px-3 py-1 border border-[#D4A843]/30 rounded-sm">
-              Suggested: {suggested}
+            <div>
+              <div className="font-heading text-lg font-bold text-[#D4A843]">AI Practice Coach</div>
+              <div className="font-label text-[10px] text-[#555]">
+                {isDemo ? "Demo Mode — הגדר API Key בפרופיל לחיבור Claude" : "Connected to Claude API"}
+              </div>
             </div>
           </div>
+          <button onClick={clearChat}
+            className="font-label text-[9px] text-[#555] hover:text-[#888] border border-[#222] hover:border-[#333] px-2 py-1 rounded-sm transition-all">
+            Clear Chat
+          </button>
         </div>
-      ) : (
-        <div className="panel p-4 mb-3 text-center">
-          <div className="font-label text-sm text-[#444]">Set up your profile first for personalized suggestions</div>
-          <div className="font-label text-[10px] text-[#333] mt-1">Go to Profile tab to fill in your details</div>
-        </div>
-      )}
+      </div>
 
-      {/* Active plan */}
-      {activePlan && (
-        <div className="panel p-3 sm:p-5 mb-3" style={{ borderColor: "#33CC3333" }}>
-          <div className="font-label text-[11px] text-[#33CC33] mb-3 flex items-center gap-2"><div className="led led-on" /> Active Plan</div>
-          <div className="font-heading text-lg text-[#D4A843]">{activePlan.name}</div>
-          <div className="font-readout text-[10px] text-[#555] mb-3">{activePlan.weeks} weeks</div>
-          {activePlan.phases.map((phase, i) => (
-            <div key={i} className="bg-[#0A0A0A] border border-[#1a1a1a] rounded-sm p-3 mb-2">
-              <div className="flex justify-between items-center mb-1">
-                <span className="font-label text-[11px] text-[#D4A843]">{phase.name}</span>
-                <span className="font-readout text-[9px] text-[#555]">Weeks {phase.weeks} · {phase.dailyMinutes}min/day</span>
+      {/* Messages area */}
+      <div ref={scrollRef}
+        className="flex-1 overflow-y-auto px-2 sm:px-3 space-y-3 pb-2"
+        style={{ scrollBehavior: "smooth" }}>
+
+        {messages.map(msg => (
+          <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+            <div className={`max-w-[85%] sm:max-w-[75%] ${
+              msg.role === "user"
+                ? "bg-[#D4A843]/15 border border-[#D4A843]/25 rounded-lg rounded-br-sm"
+                : "bg-[#111] border border-[#1a1a1a] rounded-lg rounded-bl-sm"
+            } px-3 py-2.5`}>
+              {msg.role === "assistant" && (
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <div className="w-4 h-4 rounded-full bg-[#D4A843]/20 flex items-center justify-center">
+                    <svg width="8" height="8" viewBox="0 0 24 24" fill="#D4A843" stroke="none">
+                      <path d="M12 2L9 9l-7 2 5 5-1 7 6-3 6 3-1-7 5-5-7-2z" />
+                    </svg>
+                  </div>
+                  <span className="font-label text-[9px] text-[#D4A843]">Coach</span>
+                </div>
+              )}
+              <div className={`text-[12px] leading-relaxed ${msg.role === "user" ? "text-[#ccc]" : "text-[#999]"}`}
+                style={{ direction: "rtl", textAlign: "right" }}>
+                {renderContent(msg.content)}
               </div>
-              <div className="text-[11px] text-[#888] mb-2">{phase.focus}</div>
-              <div className="flex gap-1 flex-wrap mb-2">
-                {phase.categories.map(c => (
-                  <span key={c} className="tag" style={{ border: `1px solid ${(COL[c] || "#888")}40`, color: COL[c] || "#888" }}>{c}</span>
-                ))}
-              </div>
-              <div className="flex gap-1 flex-wrap">
-                {phase.exercises.map(id => {
-                  const ex = EXERCISES.find(e => e.id === id);
-                  return ex ? (
-                    <span key={id} className="font-readout text-[9px] text-[#555] bg-[#111] border border-[#1a1a1a] px-1.5 py-0.5 rounded-sm">{ex.n.substring(0, 30)}</span>
-                  ) : null;
-                })}
+              <div className="font-readout text-[8px] text-[#333] mt-1.5" style={{ direction: "ltr", textAlign: msg.role === "user" ? "right" : "left" }}>
+                {new Date(msg.timestamp).toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })}
               </div>
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        ))}
 
-      {/* Plan selector */}
-      <div className="panel p-3 sm:p-5">
-        <div className="font-label text-[11px] text-[#D4A843] mb-3">Available Plans</div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {Object.entries(PLAN_TEMPLATES).map(([key, plan]) => (
-            <div key={key} className={`bg-[#0A0A0A] border rounded-sm p-4 cursor-pointer transition-all hover:border-[#D4A843]/40 ${
-              selectedPlan === key ? "border-[#D4A843]/60" : "border-[#1a1a1a]"
-            }`} onClick={() => adoptPlan(key)}>
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-heading text-sm font-bold text-[#D4A843]">{plan.name}</span>
-                {key === suggested && <span className="font-label text-[8px] text-[#33CC33] border border-[#33CC33]/30 px-1.5 py-0.5 rounded-sm">Recommended</span>}
+        {/* Typing indicator */}
+        {isTyping && (
+          <div className="flex justify-start">
+            <div className="bg-[#111] border border-[#1a1a1a] rounded-lg rounded-bl-sm px-4 py-3">
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-4 rounded-full bg-[#D4A843]/20 flex items-center justify-center">
+                  <svg width="8" height="8" viewBox="0 0 24 24" fill="#D4A843" stroke="none">
+                    <path d="M12 2L9 9l-7 2 5 5-1 7 6-3 6 3-1-7 5-5-7-2z" />
+                  </svg>
+                </div>
+                <div className="flex gap-1">
+                  <div className="w-1.5 h-1.5 bg-[#D4A843]/50 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                  <div className="w-1.5 h-1.5 bg-[#D4A843]/50 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                  <div className="w-1.5 h-1.5 bg-[#D4A843]/50 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                </div>
               </div>
-              <div className="font-readout text-[10px] text-[#555] mb-2" style={{ textAlign: "left" }}>{plan.weeks} weeks · {plan.phases.length} phases</div>
-              <div className="flex gap-1 flex-wrap">
-                {plan.phases.map((p, i) => (
-                  <span key={i} className="font-label text-[8px] text-[#444] border border-[#1a1a1a] px-1.5 py-0.5 rounded-sm">{p.name}</span>
-                ))}
-              </div>
-              <button onClick={(e) => { e.stopPropagation(); adoptPlan(key); }}
-                className={`mt-3 w-full text-center py-1.5 rounded-sm font-label text-[10px] transition-all ${
-                  activePlan?.name === plan.name ? "bg-[#33CC33] text-[#0A0A0A]" : "btn-gold"
-                }`}>
-                {activePlan?.name === plan.name ? "Active" : "Start This Plan"}
-              </button>
             </div>
-          ))}
+          </div>
+        )}
+
+        {/* Quick actions — show only if few messages */}
+        {messages.length <= 2 && !isTyping && (
+          <div className="pt-2">
+            <div className="font-label text-[9px] text-[#333] text-center mb-2" style={{ direction: "rtl" }}>פעולות מהירות</div>
+            <div className="flex flex-wrap gap-1.5 justify-center">
+              {QUICK_ACTIONS.map(qa => (
+                <button key={qa.label} onClick={() => sendMessage(qa.query)}
+                  className="font-label text-[10px] text-[#D4A843] border border-[#D4A843]/25 hover:border-[#D4A843]/50 hover:bg-[#D4A843]/5 px-3 py-1.5 rounded-full transition-all cursor-pointer">
+                  {qa.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Input bar */}
+      <div className="flex-shrink-0 p-2 sm:p-3 border-t border-[#1a1a1a] bg-[#0a0a0a]">
+        <div className="flex gap-2 items-center">
+          <input
+            ref={inputRef}
+            type="text"
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="שאל את ה-Coach..."
+            className="flex-1 bg-[#111] border border-[#222] focus:border-[#D4A843]/40 rounded-lg px-3 py-2.5 text-[12px] text-[#ccc] placeholder-[#333] outline-none transition-all"
+            style={{ direction: "rtl" }}
+            disabled={isTyping}
+          />
+          <button
+            onClick={() => sendMessage(input)}
+            disabled={!input.trim() || isTyping}
+            title="Send"
+            aria-label="Send message"
+            className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all flex-shrink-0 ${
+              input.trim() && !isTyping
+                ? "bg-[#D4A843] hover:bg-[#D4A843]/80 text-[#0a0a0a]"
+                : "bg-[#1a1a1a] text-[#333] cursor-not-allowed"
+            }`}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13" />
+              <polygon points="22 2 15 22 11 13 2 9 22 2" />
+            </svg>
+          </button>
         </div>
+        {isDemo && (
+          <div className="font-label text-[8px] text-[#333] text-center mt-1.5" style={{ direction: "rtl" }}>
+            Demo Mode — תשובות מוכנות מראש. הגדר Claude API Key בעמוד הפרופיל לתשובות AI אמיתיות.
+          </div>
+        )}
       </div>
     </div>
   );
