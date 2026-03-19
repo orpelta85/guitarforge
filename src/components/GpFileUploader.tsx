@@ -152,6 +152,8 @@ export default function GpFileUploader({ exerciseId, tex, songName }: { exercise
         s.player.enableCursor = true;
         s.player.enableUserInteraction = true;
         s.player.soundFont = base + "/alphatab/soundfont/MuseScore_General.sf3";
+        s.player.scrollElement = mainRef.current;
+        s.player.scrollOffsetY = -10;
         s.display.layoutMode = 0;
         s.display.staveProfile = 4;
 
@@ -764,7 +766,7 @@ export default function GpFileUploader({ exerciseId, tex, songName }: { exercise
           {loading && <div className="p-6 text-center font-label text-sm text-[#444]">Loading tab...</div>}
           {error && <div className="p-4 text-center font-label text-[11px] text-[#C41E3A]">{error}</div>}
 
-          <div ref={mainRef} style={{ minHeight: ready ? 350 : 0, maxHeight: 550, overflow: "auto", background: "#fff" }} dir="ltr" />
+          <div ref={mainRef} style={{ minHeight: ready ? 350 : 0, maxHeight: 550, overflow: "auto", overscrollBehavior: "contain", background: "#fff" }} dir="ltr" />
         </div>
       )}
     </div>
