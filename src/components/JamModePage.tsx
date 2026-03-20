@@ -926,7 +926,7 @@ export default function JamModePage() {
               border: playing
                 ? "2px solid rgba(212,168,67,0.4)"
                 : "2px solid rgba(212,168,67,0.6)",
-              color: playing ? "#D4A843" : "#0a0a0a",
+              color: playing ? "#D4A843" : "#121214",
               boxShadow: !playing ? "0 4px 20px rgba(212,168,67,0.3)" : "none",
             }}
           >

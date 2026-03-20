@@ -34,7 +34,7 @@ export default function SongsterrSearch({ onSelect }: SongsterrSearchProps) {
   }
 
   return (
-    <div className="bg-[#0A0A0A] border border-[#1a1a1a] rounded-sm p-3 mt-2">
+    <div className="bg-[#121214] border border-[#1a1a1a] rounded-sm p-3 mt-2">
       <div className="font-label text-[9px] text-[#555] mb-2">Search Songsterr</div>
       <div className="flex gap-2 mb-2">
         <input value={query} onChange={(e) => setQuery(e.target.value)}

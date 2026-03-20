@@ -367,7 +367,7 @@ export default function MetronomeBox({ startBpm: propBpm, standalone }: Props) {
               <div
                 className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center text-[9px] ${
                   prog
-                    ? "border-[#D4A843] bg-[#D4A843] text-[#0A0A0A]"
+                    ? "border-[#D4A843] bg-[#D4A843] text-[#121214]"
                     : "border-[#444] bg-transparent"
                 }`}
               >
@@ -385,7 +385,7 @@ export default function MetronomeBox({ startBpm: propBpm, standalone }: Props) {
               <div
                 className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center text-[9px] ${
                   countIn
-                    ? "border-[#D4A843] bg-[#D4A843] text-[#0A0A0A]"
+                    ? "border-[#D4A843] bg-[#D4A843] text-[#121214]"
                     : "border-[#444] bg-transparent"
                 }`}
               >

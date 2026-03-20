@@ -114,7 +114,7 @@ export default function FretboardChallenge() {
             <label className="font-label text-[9px] text-[#555]">Include Sharps
               <div className="mt-1">
                 <label className="flex items-center gap-2 cursor-pointer" onClick={() => setShowSharps(!showSharps)}>
-                  <div className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center text-[9px] ${showSharps ? "border-[#D4A843] bg-[#D4A843] text-[#0A0A0A]" : "border-[#444]"}`}>{showSharps ? "✓" : ""}</div>
+                  <div className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center text-[9px] ${showSharps ? "border-[#D4A843] bg-[#D4A843] text-[#121214]" : "border-[#444]"}`}>{showSharps ? "✓" : ""}</div>
                   <span className="font-label text-[10px] text-[#666]">{showSharps ? "Yes" : "No"}</span>
                 </label>
               </div>

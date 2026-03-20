@@ -515,7 +515,7 @@ function LCFretboard({ highlightNotes, rootNote, showIntervals, onClick, maxFret
                     style={{ height: 28, borderRight: f > 0 ? "1px solid #1a1a1a" : "none", borderLeft: isNut ? "3px solid #D4A843" : "none", borderBottom: si < 5 ? `1px solid ${si < 3 ? "#333" : "#444"}` : "1px solid #555", background: isNut ? "#0d0d0d" : "transparent" }}>
                     {inSet && (
                       <div className="rounded-full flex items-center justify-center text-[7px] font-bold"
-                        style={{ width: 20, height: 20, background: isR ? "#D4A843" : "#2a2a2a", color: isR ? "#0A0A0A" : "#ddd", border: isR ? "none" : "1px solid #444" }}>
+                        style={{ width: 20, height: 20, background: isR ? "#D4A843" : "#2a2a2a", color: isR ? "#121214" : "#ddd", border: isR ? "none" : "1px solid #444" }}>
                         {showIntervals ? IV_NAMES[semi] : n}
                       </div>
                     )}
@@ -554,7 +554,7 @@ function ChordDiagram({ pos, onPlay }: { pos: ChordPosition; onPlay: () => void 
   const maxF = playable.length ? Math.max(...playable) : 1;
   const base = maxF <= 5 ? 1 : minF;
   return (
-    <div className="bg-[#0A0A0A] border border-[#1a1a1a] rounded-sm p-3 text-center cursor-pointer hover:border-[#333] transition-all" onClick={onPlay} dir="ltr">
+    <div className="bg-[#121214] border border-[#1a1a1a] rounded-sm p-3 text-center cursor-pointer hover:border-[#333] transition-all" onClick={onPlay} dir="ltr">
       <div className="font-readout text-[9px] text-[#555] mb-1">{base > 1 ? `Fret ${base}` : "Open"}</div>
       <svg viewBox="0 0 110 130" className="w-24 h-28 mx-auto">
         {base === 1 && <rect x="18" y="10" width="74" height="3" fill="#D4A843" rx="1" />}
@@ -576,7 +576,7 @@ function ChordDiagram({ pos, onPlay }: { pos: ChordPosition; onPlay: () => void 
           return (
             <g key={s}>
               <circle cx={18 + s * 14.8} cy={df * 22 + 1} r="6" fill={fingers[s] === 1 ? "#D4A843" : "#ddd"} />
-              {fingers[s] > 0 && <text x={18 + s * 14.8} y={df * 22 + 4.5} textAnchor="middle" fill="#0A0A0A" fontSize="8" fontWeight="bold">{fingers[s]}</text>}
+              {fingers[s] > 0 && <text x={18 + s * 14.8} y={df * 22 + 4.5} textAnchor="middle" fill="#121214" fontSize="8" fontWeight="bold">{fingers[s]}</text>}
             </g>
           );
         })}
@@ -618,7 +618,7 @@ function PianoKeyboard({ highlighted, onClick, disabled }: {
             className={`absolute border border-[#333] rounded-b-sm flex items-end justify-center pb-1 text-[8px] font-bold transition-all ${!disabled && onClick ? "cursor-pointer hover:brightness-110" : ""}`}
             style={{ left: i * 40, top: 0, width: 38, height: 120,
               background: isHl ? "#f59e0b" : "#e8e8e8",
-              color: isHl ? "#0a0a0a" : "#555" }}>
+              color: isHl ? "#121214" : "#555" }}>
             {k.label}
           </div>
         );
@@ -631,7 +631,7 @@ function PianoKeyboard({ highlighted, onClick, disabled }: {
             className={`absolute rounded-b-sm flex items-end justify-center pb-1 text-[7px] font-bold z-10 transition-all ${!disabled && onClick ? "cursor-pointer hover:brightness-125" : ""}`}
             style={{ left: k.leftOffset, top: 0, width: 24, height: 80,
               background: isHl ? "#f59e0b" : "#1a1a1a",
-              color: isHl ? "#0a0a0a" : "#666",
+              color: isHl ? "#121214" : "#666",
               border: isHl ? "1px solid #f59e0b" : "1px solid #333" }}>
             {k.label}
           </div>
@@ -1468,7 +1468,7 @@ export default function LearningCenterPage() {
       <div className="flex gap-1 mb-3">
         {([["lessons","Lessons"],["exercises","Exercises"],["tools","Tools"]] as [MainTab,string][]).map(([k,lbl]) => (
           <button key={k} onClick={() => setMainTab(k)}
-            className={`font-label text-[11px] px-3 sm:px-4 py-2.5 sm:py-2 rounded-sm cursor-pointer transition-all flex-1 min-h-[36px] ${mainTab === k ? "bg-[#D4A843] text-[#0A0A0A]" : "text-[#555] border border-[#222]"}`}>{lbl}</button>
+            className={`font-label text-[11px] px-3 sm:px-4 py-2.5 sm:py-2 rounded-sm cursor-pointer transition-all flex-1 min-h-[36px] ${mainTab === k ? "bg-[#D4A843] text-[#121214]" : "text-[#555] border border-[#222]"}`}>{lbl}</button>
         ))}
       </div>
 
@@ -1480,7 +1480,7 @@ export default function LearningCenterPage() {
         <div className="flex gap-1 mb-3 flex-wrap">
           {LESSON_CATS.map(cat => (
             <button key={cat} onClick={() => { setLessonCat(cat); setOpenLesson(null); }}
-              className={`font-label text-[10px] px-3 py-2 sm:py-1.5 rounded-sm cursor-pointer transition-all min-h-[36px] ${lessonCat === cat ? "bg-[#D4A843] text-[#0A0A0A]" : "text-[#555] border border-[#222]"}`}>{cat}</button>
+              className={`font-label text-[10px] px-3 py-2 sm:py-1.5 rounded-sm cursor-pointer transition-all min-h-[36px] ${lessonCat === cat ? "bg-[#D4A843] text-[#121214]" : "text-[#555] border border-[#222]"}`}>{cat}</button>
           ))}
         </div>
 
@@ -1568,7 +1568,7 @@ export default function LearningCenterPage() {
                           step.highlight.forEach((midi, i) => playNote(midi, i * 0.12));
                         }
                       }}
-                      className="font-label text-[10px] px-3 sm:px-4 py-2.5 sm:py-2 rounded-sm bg-[#D4A843] text-[#0A0A0A] cursor-pointer hover:bg-[#e5b84a] transition-all min-h-[36px]">
+                      className="font-label text-[10px] px-3 sm:px-4 py-2.5 sm:py-2 rounded-sm bg-[#D4A843] text-[#121214] cursor-pointer hover:bg-[#e5b84a] transition-all min-h-[36px]">
                       &#9654; Play
                     </button>
                     <button
@@ -1617,7 +1617,7 @@ export default function LearningCenterPage() {
                       <button key={i} onClick={() => setQuizPicked(i)}
                         className="py-3 sm:py-2.5 px-3 rounded-sm text-[11px] border cursor-pointer transition-all min-h-[40px]"
                         style={quizPicked !== null
-                          ? (isCorrect ? { background: "#22c55e", borderColor: "#22c55e", color: "#0A0A0A" }
+                          ? (isCorrect ? { background: "#22c55e", borderColor: "#22c55e", color: "#121214" }
                             : isPicked ? { background: "#C41E3A", borderColor: "#C41E3A", color: "#fff" }
                             : { background: "#141414", borderColor: "#222", color: "#666" })
                           : { background: "#141414", borderColor: "#222", color: "#aaa" }}>
@@ -1661,7 +1661,7 @@ export default function LearningCenterPage() {
             ["kb-notes","KB Notes"],["kb-intervals","KB Intervals"],["kb-scales","KB Scales"],["kb-chords","KB Chords"],["kb-ear","KB Ear"],
           ] as [ExMode,string][]).map(([m,lbl]) => (
             <button key={m} onClick={() => { setExMode(m); setRevealed(false); setAnswer(null); setFbTarget(null); setFbExAnswer(null); setFbExRevealed(false); }}
-              className={`font-label text-[10px] px-3 py-2 sm:py-1.5 rounded-sm cursor-pointer transition-all min-h-[36px] ${exMode === m ? "bg-[#D4A843] text-[#0A0A0A]" : "text-[#555] border border-[#222]"}`}>{lbl}</button>
+              className={`font-label text-[10px] px-3 py-2 sm:py-1.5 rounded-sm cursor-pointer transition-all min-h-[36px] ${exMode === m ? "bg-[#D4A843] text-[#121214]" : "text-[#555] border border-[#222]"}`}>{lbl}</button>
           ))}
         </div>
 
@@ -1695,7 +1695,7 @@ export default function LearningCenterPage() {
                 <div className="flex gap-1 flex-wrap">
                   {NOTES.map(n => (
                     <button key={n} onClick={() => { setConRoot(n); setConSelected(new Set()); setConRevealed(false); }}
-                      className={`font-readout text-[10px] w-8 h-7 rounded-sm cursor-pointer border flex items-center justify-center ${conRoot === n ? "bg-[#D4A843] text-[#0A0A0A] border-[#D4A843]" : "border-[#222] text-[#888]"}`}>{n}</button>
+                      className={`font-readout text-[10px] w-8 h-7 rounded-sm cursor-pointer border flex items-center justify-center ${conRoot === n ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#222] text-[#888]"}`}>{n}</button>
                   ))}
                 </div>
               </div>
@@ -1767,10 +1767,10 @@ export default function LearningCenterPage() {
                       expected = new Set(ch ? ch.iv.map(s => NOTES[(cri + s) % 12]) : []);
                     }
                     const inScale = expected.has(n);
-                    if (selected && inScale) { bg = "#22c55e"; col = "#0A0A0A"; brd = "#22c55e"; }
+                    if (selected && inScale) { bg = "#22c55e"; col = "#121214"; brd = "#22c55e"; }
                     else if (selected && !inScale) { bg = "#C41E3A"; col = "#fff"; brd = "#C41E3A"; }
                     else if (!selected && inScale) { bg = "#1a1a1a"; col = "#D4A843"; brd = "#D4A843"; }
-                  } else if (selected) { bg = "#D4A843"; col = "#0A0A0A"; brd = "#D4A843"; }
+                  } else if (selected) { bg = "#D4A843"; col = "#121214"; brd = "#D4A843"; }
                   return (
                     <button key={n} onClick={() => { if (conRevealed) return; const ns = new Set(conSelected); if (ns.has(n)) ns.delete(n); else ns.add(n); setConSelected(ns); }}
                       className="w-10 h-10 rounded-sm flex items-center justify-center font-readout text-sm cursor-pointer transition-all border"
@@ -1882,7 +1882,7 @@ export default function LearningCenterPage() {
                     return (
                       <button key={name} onClick={() => handleFbExAnswer(name)} disabled={fbExRevealed}
                         className="py-2.5 rounded-sm text-center transition-all cursor-pointer border"
-                        style={ok ? { background: "#22c55e", borderColor: "#22c55e", color: "#0A0A0A" }
+                        style={ok ? { background: "#22c55e", borderColor: "#22c55e", color: "#121214" }
                           : wrong ? { background: "#C41E3A", borderColor: "#C41E3A", color: "#fff" }
                           : { background: "#141414", borderColor: "#222", color: "#aaa" }}>
                         <div className="font-label text-[11px]">{name}</div>
@@ -1929,7 +1929,7 @@ export default function LearningCenterPage() {
               <div className="flex justify-center gap-3 mb-6">
                 <button onClick={newQ} className="w-16 h-16 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95 flex items-center justify-center"
                   style={{ background: "linear-gradient(145deg, #D4A843, #B8922E)", border: "2px solid #DFBD69", boxShadow: "0 4px 16px rgba(212,168,67,0.25)" }}>
-                  <span className="text-[#0A0A0A] text-xl font-bold ml-0.5">&#9654;</span>
+                  <span className="text-[#121214] text-xl font-bold ml-0.5">&#9654;</span>
                 </button>
                 {answer && <button onClick={replay} className="w-10 h-10 rounded-full cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center mt-3"
                   style={{ background: "#1a1a1a", border: "1px solid #333" }}><span className="text-[#888] text-sm">&#8635;</span></button>}
@@ -1943,7 +1943,7 @@ export default function LearningCenterPage() {
                     return (
                       <button key={n} onClick={() => handleAnswer(n)} disabled={revealed}
                         className="py-3 rounded-sm text-center transition-all cursor-pointer border"
-                        style={ok ? { background: "#22c55e", borderColor: "#22c55e", color: "#0A0A0A" }
+                        style={ok ? { background: "#22c55e", borderColor: "#22c55e", color: "#121214" }
                           : wrong ? { background: "#C41E3A", borderColor: "#C41E3A", color: "#fff" }
                           : { background: "#141414", borderColor: "#222", color: "#aaa" }}>
                         <div className="font-readout text-base font-bold">{n}</div>
@@ -1986,7 +1986,7 @@ export default function LearningCenterPage() {
               <div className="flex justify-center gap-3 mb-4">
                 <button onClick={newQ} className="w-16 h-16 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95 flex items-center justify-center"
                   style={{ background: "linear-gradient(145deg, #D4A843, #B8922E)", border: "2px solid #DFBD69", boxShadow: "0 4px 16px rgba(212,168,67,0.25)" }}>
-                  <span className="text-[#0A0A0A] text-xl font-bold ml-0.5">&#9654;</span>
+                  <span className="text-[#121214] text-xl font-bold ml-0.5">&#9654;</span>
                 </button>
                 {ivConRoot && <button onClick={replay} className="w-10 h-10 rounded-full cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center mt-3"
                   style={{ background: "#1a1a1a", border: "1px solid #333" }}><span className="text-[#888] text-sm">&#8635;</span></button>}
@@ -2015,7 +2015,7 @@ export default function LearningCenterPage() {
                         if (correct) { const rootMidi = 60 + NOTES.indexOf(ivConRoot!); const iv = ALL_INTERVALS.find(i => i.name === ivConInterval); if (iv) { tone(rootMidi, 0.5, 0); tone(rootMidi + iv.st, 0.5, 0.5); } }
                       }} disabled={ivConRevealed}
                         className="py-3 rounded-sm text-center transition-all cursor-pointer border"
-                        style={ok ? { background: "#22c55e", borderColor: "#22c55e", color: "#0A0A0A" }
+                        style={ok ? { background: "#22c55e", borderColor: "#22c55e", color: "#121214" }
                           : wrong ? { background: "#C41E3A", borderColor: "#C41E3A", color: "#fff" }
                           : { background: "#141414", borderColor: "#222", color: "#aaa" }}>
                         <div className="font-readout text-base font-bold">{n}</div>
@@ -2058,7 +2058,7 @@ export default function LearningCenterPage() {
               <div className="flex justify-center gap-3 mb-4">
                 <button onClick={newQ} className="w-16 h-16 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95 flex items-center justify-center"
                   style={{ background: "linear-gradient(145deg, #D4A843, #B8922E)", border: "2px solid #DFBD69", boxShadow: "0 4px 16px rgba(212,168,67,0.25)" }}>
-                  <span className="text-[#0A0A0A] text-xl font-bold ml-0.5">&#9654;</span>
+                  <span className="text-[#121214] text-xl font-bold ml-0.5">&#9654;</span>
                 </button>
                 {chConRoot && <button onClick={replay} className="w-10 h-10 rounded-full cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center mt-3"
                   style={{ background: "#1a1a1a", border: "1px solid #333" }}><span className="text-[#888] text-sm">&#8635;</span></button>}
@@ -2084,10 +2084,10 @@ export default function LearningCenterPage() {
                       let bg = "#141414"; let col = "#888"; let brd = "#222";
                       if (chConRevealed) {
                         const inChord = chConExpected.has(n);
-                        if (selected && inChord) { bg = "#22c55e"; col = "#0A0A0A"; brd = "#22c55e"; }
+                        if (selected && inChord) { bg = "#22c55e"; col = "#121214"; brd = "#22c55e"; }
                         else if (selected && !inChord) { bg = "#C41E3A"; col = "#fff"; brd = "#C41E3A"; }
                         else if (!selected && inChord) { bg = "#1a1a1a"; col = "#D4A843"; brd = "#D4A843"; }
-                      } else if (selected) { bg = "#D4A843"; col = "#0A0A0A"; brd = "#D4A843"; }
+                      } else if (selected) { bg = "#D4A843"; col = "#121214"; brd = "#D4A843"; }
                       return (
                         <button key={n} onClick={() => { if (chConRevealed) return; const ns = new Set(chConSelected); if (ns.has(n)) ns.delete(n); else ns.add(n); setChConSelected(ns); }}
                           className="w-10 h-10 rounded-sm flex items-center justify-center font-readout text-sm cursor-pointer transition-all border"
@@ -2140,7 +2140,7 @@ export default function LearningCenterPage() {
             <div className="flex justify-center gap-3 mb-4">
               <button onClick={newQ} className="w-16 h-16 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95 flex items-center justify-center"
                 style={{ background: "linear-gradient(145deg, #D4A843, #B8922E)", border: "2px solid #DFBD69", boxShadow: "0 4px 16px rgba(212,168,67,0.25)" }}>
-                <span className="text-[#0A0A0A] text-xl font-bold ml-0.5">&#9654;</span>
+                <span className="text-[#121214] text-xl font-bold ml-0.5">&#9654;</span>
               </button>
               {(kbAnswer || kbEarMidi) && <button onClick={replay} className="w-10 h-10 rounded-full cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center mt-3"
                 style={{ background: "#1a1a1a", border: "1px solid #333" }}><span className="text-[#888] text-sm">&#8635;</span></button>}
@@ -2168,7 +2168,7 @@ export default function LearningCenterPage() {
                   return (
                     <button key={n} onClick={() => handleKbAnswer(n)}
                       className="w-11 h-11 rounded-sm flex items-center justify-center font-readout text-sm cursor-pointer transition-all border"
-                      style={isCor ? { background: "#22c55e", borderColor: "#22c55e", color: "#0A0A0A" }
+                      style={isCor ? { background: "#22c55e", borderColor: "#22c55e", color: "#121214" }
                         : isWrong ? { background: "#C41E3A", borderColor: "#C41E3A", color: "#fff" }
                         : kbRevealed ? { background: "#141414", borderColor: "#222", color: "#555" }
                         : { background: "#141414", borderColor: "#222", color: "#888" }}>{n}</button>
@@ -2186,7 +2186,7 @@ export default function LearningCenterPage() {
                   return (
                     <button key={iv.name} onClick={() => handleKbAnswer(iv.name)}
                       className="px-3 py-2 rounded-sm font-label text-[10px] cursor-pointer transition-all border"
-                      style={isCor ? { background: "#22c55e", borderColor: "#22c55e", color: "#0A0A0A" }
+                      style={isCor ? { background: "#22c55e", borderColor: "#22c55e", color: "#121214" }
                         : isWrong ? { background: "#C41E3A", borderColor: "#C41E3A", color: "#fff" }
                         : kbRevealed ? { background: "#141414", borderColor: "#222", color: "#555" }
                         : { background: "#141414", borderColor: "#222", color: "#888" }}>{iv.name}</button>
@@ -2204,7 +2204,7 @@ export default function LearningCenterPage() {
                   return (
                     <button key={sc.name} onClick={() => handleKbAnswer(sc.name)}
                       className="px-3 py-2 rounded-sm font-label text-[10px] cursor-pointer transition-all border"
-                      style={isCor ? { background: "#22c55e", borderColor: "#22c55e", color: "#0A0A0A" }
+                      style={isCor ? { background: "#22c55e", borderColor: "#22c55e", color: "#121214" }
                         : isWrong ? { background: "#C41E3A", borderColor: "#C41E3A", color: "#fff" }
                         : kbRevealed ? { background: "#141414", borderColor: "#222", color: "#555" }
                         : { background: "#141414", borderColor: "#222", color: "#888" }}>{sc.name}</button>
@@ -2222,7 +2222,7 @@ export default function LearningCenterPage() {
                   return (
                     <button key={ch.name} onClick={() => handleKbAnswer(ch.name)}
                       className="px-3 py-2 rounded-sm font-label text-[10px] cursor-pointer transition-all border"
-                      style={isCor ? { background: "#22c55e", borderColor: "#22c55e", color: "#0A0A0A" }
+                      style={isCor ? { background: "#22c55e", borderColor: "#22c55e", color: "#121214" }
                         : isWrong ? { background: "#C41E3A", borderColor: "#C41E3A", color: "#fff" }
                         : kbRevealed ? { background: "#141414", borderColor: "#222", color: "#555" }
                         : { background: "#141414", borderColor: "#222", color: "#888" }}>{ch.name}</button>
@@ -2305,7 +2305,7 @@ export default function LearningCenterPage() {
                 ))}</div></>)}
               <div className="mt-3 pt-3 border-t border-[#1a1a1a]">
                 <label className="flex items-center gap-2 cursor-pointer" onClick={() => setAutoAdvance(!autoAdvance)}>
-                  <div className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center text-[9px] ${autoAdvance ? "border-[#D4A843] bg-[#D4A843] text-[#0A0A0A]" : "border-[#444]"}`}>{autoAdvance ? "✓" : ""}</div>
+                  <div className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center text-[9px] ${autoAdvance ? "border-[#D4A843] bg-[#D4A843] text-[#121214]" : "border-[#444]"}`}>{autoAdvance ? "✓" : ""}</div>
                   <span className="font-label text-[10px] text-[#666]">Auto-advance on correct</span>
                 </label>
               </div>
@@ -2317,7 +2317,7 @@ export default function LearningCenterPage() {
             <div className="flex justify-center gap-3 mb-6">
               <button onClick={newQ} className="w-16 h-16 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95 flex items-center justify-center"
                 style={{ background: "linear-gradient(145deg, #D4A843, #B8922E)", border: "2px solid #DFBD69", boxShadow: "0 4px 16px rgba(212,168,67,0.25)" }}>
-                <span className="text-[#0A0A0A] text-xl font-bold ml-0.5">&#9654;</span>
+                <span className="text-[#121214] text-xl font-bold ml-0.5">&#9654;</span>
               </button>
               {answer && <button onClick={replay} className="w-10 h-10 rounded-full cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center mt-3"
                 style={{ background: "#1a1a1a", border: "1px solid #333" }}><span className="text-[#888] text-sm">&#8635;</span></button>}
@@ -2332,7 +2332,7 @@ export default function LearningCenterPage() {
                   return (
                     <button key={n} onClick={() => handleAnswer(n)} disabled={revealed}
                       className="py-3 rounded-sm text-center transition-all cursor-pointer border relative overflow-hidden"
-                      style={ok ? { background: "#22c55e", borderColor: "#22c55e", color: "#0A0A0A" }
+                      style={ok ? { background: "#22c55e", borderColor: "#22c55e", color: "#121214" }
                         : wrong ? { background: "#C41E3A", borderColor: "#C41E3A", color: "#fff" }
                         : { background: "#141414", borderColor: "#222", color: "#aaa" }}>
                       {!revealed && "color" in item && <div className="absolute bottom-0 left-0 h-[2px] w-full" style={{ background: (item as { color: string }).color }} />}
@@ -2503,7 +2503,7 @@ export default function LearningCenterPage() {
         <div className="flex gap-1 mb-3 flex-wrap">
           {([["scales","Scales"],["chords","Chords"],["fretboard","Fretboard"],["progressions","Progressions"],["circle","Circle of 5ths"],["intervals","Intervals"],["tempo","Tempo Tap"],["iv-calc","IV Calc"],["piano","Piano"],["tuner","Tuner"]] as [ToolTab,string][]).map(([t,lbl]) => (
             <button key={t} onClick={() => setToolTab(t)}
-              className={`font-label text-[10px] px-3 py-1.5 rounded-sm cursor-pointer transition-all ${toolTab === t ? "bg-[#D4A843] text-[#0A0A0A]" : "text-[#555] border border-[#222]"}`}>{lbl}</button>
+              className={`font-label text-[10px] px-3 py-1.5 rounded-sm cursor-pointer transition-all ${toolTab === t ? "bg-[#D4A843] text-[#121214]" : "text-[#555] border border-[#222]"}`}>{lbl}</button>
           ))}
         </div>
 
@@ -2514,7 +2514,7 @@ export default function LearningCenterPage() {
             <div className="flex gap-1 flex-wrap">
               {NOTES.map(n => (
                 <button key={n} onClick={() => setRoot(n)}
-                  className={`font-readout text-[11px] w-9 h-8 rounded-sm cursor-pointer border flex items-center justify-center transition-all ${root === n ? "bg-[#D4A843] text-[#0A0A0A] border-[#D4A843]" : "border-[#222] text-[#888]"}`}>{n}</button>
+                  className={`font-readout text-[11px] w-9 h-8 rounded-sm cursor-pointer border flex items-center justify-center transition-all ${root === n ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#222] text-[#888]"}`}>{n}</button>
               ))}
             </div>
           </div>
@@ -2540,14 +2540,14 @@ export default function LearningCenterPage() {
               <button onClick={() => scInfo.formula.forEach((s, i) => playNote(57 + ri + s, i * 0.18))} className="btn-gold">Play</button>
             </div>
             <label className="flex items-center gap-2 cursor-pointer mb-3" onClick={() => setShowIv(!showIv)}>
-              <div className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center text-[9px] ${showIv ? "border-[#D4A843] bg-[#D4A843] text-[#0A0A0A]" : "border-[#444]"}`}>{showIv ? "✓" : ""}</div>
+              <div className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center text-[9px] ${showIv ? "border-[#D4A843] bg-[#D4A843] text-[#121214]" : "border-[#444]"}`}>{showIv ? "✓" : ""}</div>
               <span className="font-label text-[10px] text-[#666]">Show intervals</span>
             </label>
             <div className="flex gap-1.5 flex-wrap mb-3">
               {scInfo.formula.map((s, i) => (
                 <div key={i} className="text-center cursor-pointer hover:scale-105 transition-all" onClick={() => playNote(57 + ri + s)}>
                   <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold"
-                    style={{ background: s === 0 ? "#D4A843" : "#1a1a1a", color: s === 0 ? "#0A0A0A" : "#ccc", border: `1px solid ${s === 0 ? "#D4A843" : "#333"}` }}>
+                    style={{ background: s === 0 ? "#D4A843" : "#1a1a1a", color: s === 0 ? "#121214" : "#ccc", border: `1px solid ${s === 0 ? "#D4A843" : "#333"}` }}>
                     {scNotes[i]}
                   </div>
                   <div className="font-readout text-[8px] text-[#555] mt-0.5">{IV_NAMES[s]}</div>
@@ -2629,7 +2629,7 @@ export default function LearningCenterPage() {
             <div className="font-label text-[11px] text-[#D4A843] mb-3">Chord Progression Builder</div>
             <div className="flex gap-2 flex-wrap mb-3">
               {progChords.map((ch, i) => (
-                <div key={i} className="bg-[#0A0A0A] border border-[#222] rounded-sm px-3 py-2 cursor-pointer hover:border-[#444] transition-all"
+                <div key={i} className="bg-[#121214] border border-[#222] rounded-sm px-3 py-2 cursor-pointer hover:border-[#444] transition-all"
                   onClick={() => playChordByName(ch)}>
                   <span className="font-heading text-base text-[#D4A843]">{ch}</span>
                   <button onClick={(e) => { e.stopPropagation(); setProgChords(p => p.filter((_, j) => j !== i)); }}
@@ -2648,7 +2648,7 @@ export default function LearningCenterPage() {
                 {progPlaying ? "Stop" : "Play Progression"}
               </button>
               <label className="flex items-center gap-2 cursor-pointer" onClick={() => setProgLoop(!progLoop)}>
-                <div className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center text-[9px] ${progLoop ? "border-[#D4A843] bg-[#D4A843] text-[#0A0A0A]" : "border-[#444]"}`}>{progLoop ? "✓" : ""}</div>
+                <div className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center text-[9px] ${progLoop ? "border-[#D4A843] bg-[#D4A843] text-[#121214]" : "border-[#444]"}`}>{progLoop ? "✓" : ""}</div>
                 <span className="font-label text-[10px] text-[#666]">Loop</span>
               </label>
             </div>
@@ -2680,7 +2680,7 @@ export default function LearningCenterPage() {
                   return (
                     <g key={i} onClick={() => setRoot(NOTES[FIFTH_ORDER[i]])} className="cursor-pointer">
                       <circle cx={x} cy={y} r={sel ? 22 : 18} fill={sel ? "#D4A843" : "#1a1a1a"} stroke={sel ? "#DFBD69" : "#333"} strokeWidth="1.5" />
-                      <text x={x} y={y + 1} textAnchor="middle" dominantBaseline="middle" fill={sel ? "#0A0A0A" : "#ccc"} fontSize={sel ? "11" : "10"} fontWeight="bold" fontFamily="monospace">{k}</text>
+                      <text x={x} y={y + 1} textAnchor="middle" dominantBaseline="middle" fill={sel ? "#121214" : "#ccc"} fontSize={sel ? "11" : "10"} fontWeight="bold" fontFamily="monospace">{k}</text>
                     </g>
                   );
                 })}
@@ -2716,7 +2716,7 @@ export default function LearningCenterPage() {
                 { n: "M6", st: 9, f: "Sweet" },{ n: "m7", st: 10, f: "Bluesy" },
                 { n: "M7", st: 11, f: "Dreamy" },{ n: "P8", st: 12, f: "Octave" },
               ].map(i => (
-                <div key={i.n} className="bg-[#0A0A0A] border border-[#1a1a1a] rounded-sm p-2.5 cursor-pointer hover:border-[#333] transition-all"
+                <div key={i.n} className="bg-[#121214] border border-[#1a1a1a] rounded-sm p-2.5 cursor-pointer hover:border-[#333] transition-all"
                   onClick={() => { playNote(57 + ri); playNote(57 + ri + i.st, 0.5); }}>
                   <div className="flex justify-between items-center">
                     <span className="font-readout font-bold text-[#D4A843]">{i.n}</span>
@@ -2738,7 +2738,7 @@ export default function LearningCenterPage() {
               <button onClick={handleTap}
                 className="w-32 h-32 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95 flex items-center justify-center mx-auto"
                 style={{ background: "linear-gradient(145deg, #D4A843, #B8922E)", border: "3px solid #DFBD69", boxShadow: "0 6px 24px rgba(212,168,67,0.3)" }}>
-                <span className="text-[#0A0A0A] text-2xl font-bold">TAP</span>
+                <span className="text-[#121214] text-2xl font-bold">TAP</span>
               </button>
             </div>
             <div className="text-center">
@@ -2768,7 +2768,7 @@ export default function LearningCenterPage() {
               <div className="flex gap-1 flex-wrap">
                 {NOTES.map(n => (
                   <button key={n} onClick={() => setCalcNote(n)}
-                    className={`font-readout text-[11px] w-9 h-8 rounded-sm cursor-pointer border flex items-center justify-center ${calcNote === n ? "bg-[#D4A843] text-[#0A0A0A] border-[#D4A843]" : "border-[#222] text-[#888]"}`}>{n}</button>
+                    className={`font-readout text-[11px] w-9 h-8 rounded-sm cursor-pointer border flex items-center justify-center ${calcNote === n ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#222] text-[#888]"}`}>{n}</button>
                 ))}
               </div>
             </div>
@@ -2816,7 +2816,7 @@ export default function LearningCenterPage() {
               <div className="flex gap-1 flex-wrap">
                 {NOTES.map(n => (
                   <button key={n} onClick={() => { setPianoRoot(n); }}
-                    className={`font-readout text-[10px] w-8 h-7 rounded-sm cursor-pointer border flex items-center justify-center ${pianoRoot === n ? "bg-[#D4A843] text-[#0A0A0A] border-[#D4A843]" : "border-[#222] text-[#888]"}`}>{n}</button>
+                    className={`font-readout text-[10px] w-8 h-7 rounded-sm cursor-pointer border flex items-center justify-center ${pianoRoot === n ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#222] text-[#888]"}`}>{n}</button>
                 ))}
               </div>
             </div>

@@ -2038,7 +2038,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
   const pxPerSec = 20 + (zoom / 100) * 300;
 
   return (
-    <div className="flex flex-col overflow-hidden select-none" style={{ background: "#0a0a0a", fontFamily: "'Inter', system-ui, sans-serif", height: "calc(100vh - 90px)" }} dir="ltr">
+    <div className="flex flex-col overflow-hidden select-none" style={{ background: "#121214", fontFamily: "'Inter', system-ui, sans-serif", height: "calc(100vh - 90px)" }} dir="ltr">
       {/* ═══════════════════ TOP BAR ═══════════════════ */}
       <div className="flex items-center min-h-[44px] h-auto sm:h-11 px-1 sm:px-3 gap-1 sm:gap-2 border-b flex-shrink-0 flex-wrap py-1 sm:py-0" style={{ background: "#111111", borderColor: "#1e1e1e" }}>
         {/* Left: Project Name */}
@@ -2425,7 +2425,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                       <input autoFocus defaultValue={tr.name}
                         onBlur={(e) => { renameTrack(tr.id, e.target.value || tr.name); setEditingTrackName(null); }}
                         onKeyDown={(e) => { if (e.key === "Enter") { renameTrack(tr.id, (e.target as HTMLInputElement).value || tr.name); setEditingTrackName(null); } }}
-                        className="flex-1 bg-[#0a0a0a] border border-[#f59e0b] rounded px-1 py-0 text-[10px] text-[#ccc] outline-none min-w-0"
+                        className="flex-1 bg-[#121214] border border-[#f59e0b] rounded px-1 py-0 text-[10px] text-[#ccc] outline-none min-w-0"
                         onClick={(e) => e.stopPropagation()}
                       />
                     ) : (
@@ -2766,7 +2766,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                       <span className="text-[8px] text-[#444]">{tr.name}</span>
                     </div>
                   ) : (
-                    <div className="relative min-h-[56px]" style={{ background: isSelected ? "#0e0e0a" : "#0a0a0a" }}>
+                    <div className="relative min-h-[56px]" style={{ background: isSelected ? "#0e0e0a" : "#121214" }}>
                       {/* Hidden wavesurfer container (still needed for audio seek/interaction) */}
                       <div
                         ref={(el) => { if (el) trackContainersRef.current[tr.id] = el; }}
@@ -2836,7 +2836,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                             />
                             {/* Region label */}
                             <div className="absolute top-0.5 left-1 z-[5] pointer-events-none">
-                              <span className="text-[8px] font-medium px-1 py-px rounded" style={{ color: tr.color, background: "#0a0a0acc" }}>{tr.name}</span>
+                              <span className="text-[8px] font-medium px-1 py-px rounded" style={{ color: tr.color, background: "#121214cc" }}>{tr.name}</span>
                             </div>
                             {/* Trim edge indicators */}
                             <div className="absolute top-0 bottom-0 left-0 w-[3px] rounded-l" style={{ background: tr.color + '44' }} />
@@ -2847,7 +2847,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                       {/* Track name label (shown when no regions) */}
                       {!hasRegions && (
                         <div className="absolute top-0.5 left-1 z-[5] pointer-events-none">
-                          <span className="text-[8px] font-medium px-1 py-px rounded" style={{ color: tr.color, background: "#0a0a0acc" }}>{tr.name}</span>
+                          <span className="text-[8px] font-medium px-1 py-px rounded" style={{ color: tr.color, background: "#121214cc" }}>{tr.name}</span>
                         </div>
                       )}
                       {/* Recording indicator for armed tracks */}
@@ -3818,7 +3818,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                             onBlur={(e) => renameRecordingItem(rec.id, e.target.value || rec.name)}
                             onKeyDown={(e) => { if (e.key === "Enter") renameRecordingItem(rec.id, (e.target as HTMLInputElement).value || rec.name); if (e.key === "Escape") setEditingRecId(null); }}
                             onClick={(e) => e.stopPropagation()}
-                            className="w-full bg-[#0a0a0a] border border-[#f59e0b] rounded px-1 py-0 text-[9px] text-[#ccc] outline-none"
+                            className="w-full bg-[#121214] border border-[#f59e0b] rounded px-1 py-0 text-[9px] text-[#ccc] outline-none"
                           />
                         ) : (
                           <div className="text-[9px] text-[#ccc] font-medium truncate">{rec.name}</div>
@@ -3923,7 +3923,7 @@ function EffectSection({ title, enabled, onToggle, children }: {
 }) {
   return (
     <div className={`rounded-lg transition-all ${enabled ? "opacity-100" : "opacity-50 hover:opacity-70"}`}
-      style={{ background: enabled ? "#0e0e0c" : "#0a0a0a", border: `1px solid ${enabled ? "#2a2a28" : "#1a1a1a"}`, boxShadow: enabled ? "0 1px 4px rgba(0,0,0,0.2)" : "none" }}>
+      style={{ background: enabled ? "#0e0e0c" : "#121214", border: `1px solid ${enabled ? "#2a2a28" : "#1a1a1a"}`, boxShadow: enabled ? "0 1px 4px rgba(0,0,0,0.2)" : "none" }}>
       {/* Card header */}
       <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-t-lg" style={{ background: enabled ? "#151512" : "#0e0e0e", borderBottom: `1px solid ${enabled ? "#222" : "#1a1a1a"}` }}>
         <button onClick={onToggle}

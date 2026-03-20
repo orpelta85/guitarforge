@@ -479,13 +479,13 @@ export default function GpFileUploader({ exerciseId, tex, songName }: { exercise
 
           {/* ── Transport ── */}
           {ready && (
-            <div className="px-4 py-2 border-b border-[#1a1a1a] bg-[#0a0a0a] space-y-2">
+            <div className="px-4 py-2 border-b border-[#1a1a1a] bg-[#121214] space-y-2">
               {/* Row 1: Play, position, speed */}
               <div className="flex items-center gap-2 flex-wrap">
                 <button onClick={togglePlay}
                   className="w-8 h-8 rounded-full cursor-pointer flex items-center justify-center shrink-0"
                   style={{ background: playing ? "#C41E3A" : playerReady ? "#33CC33" : "#555", border: "2px solid #555", opacity: playerReady ? 1 : 0.5 }}>
-                  {playing ? <div className="w-2.5 h-2.5 bg-white rounded-sm" /> : <span className="text-[#0A0A0A] text-xs ml-0.5">&#9654;</span>}
+                  {playing ? <div className="w-2.5 h-2.5 bg-white rounded-sm" /> : <span className="text-[#121214] text-xs ml-0.5">&#9654;</span>}
                 </button>
                 {playing && <button onClick={doStop} className="btn-ghost !text-[9px] !px-2 !py-1">Stop</button>}
 
@@ -626,7 +626,7 @@ export default function GpFileUploader({ exerciseId, tex, songName }: { exercise
                           <div key={fi}
                             className="relative border-r border-[#333] flex items-center justify-center"
                             style={{ width: Math.max(16, 32 - fi * 0.4), height: 20, background: isActive ? "#D4A843" : "transparent" }}>
-                            {isActive && <span className="font-readout text-[7px] text-[#0A0A0A] font-bold">{fi}</span>}
+                            {isActive && <span className="font-readout text-[7px] text-[#121214] font-bold">{fi}</span>}
                             {isDot && !isActive && <div className="absolute w-1 h-1 rounded-full bg-[#333]" />}
                             {isDoubleDot && !isActive && <div className="absolute w-1 h-1 rounded-full bg-[#333]" />}
                           </div>

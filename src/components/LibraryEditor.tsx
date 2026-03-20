@@ -43,7 +43,7 @@ export default function LibraryEditor({ ex, exEdits, setExEdits }: Props) {
   const displayVid = savedVid || autoVideoId;
 
   return (
-    <div className="px-4 py-4 border-t border-[#1a1a1a] bg-[#0A0A0A]">
+    <div className="px-4 py-4 border-t border-[#1a1a1a] bg-[#121214]">
       {/* Basic info */}
       <div className="grid grid-cols-2 gap-3 mb-3">
         <label className="font-label text-[10px] text-[#555]">Name

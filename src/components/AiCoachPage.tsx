@@ -665,7 +665,7 @@ export default function AiCoachPage() {
               )}
               {/* Inline audio player for generated backing track */}
               {coachTrackUrl && msg.id.startsWith("a-done-") && (
-                <div className="mt-2 p-2 bg-[#0a0a0a] border border-[#222] rounded-sm" style={{ direction: "ltr" }}>
+                <div className="mt-2 p-2 bg-[#121214] border border-[#222] rounded-sm" style={{ direction: "ltr" }}>
                   <audio controls src={coachTrackUrl} className="w-full" style={{ height: 32 }} />
                 </div>
               )}
@@ -713,7 +713,7 @@ export default function AiCoachPage() {
       </div>
 
       {/* Input bar */}
-      <div className="flex-shrink-0 p-2 sm:p-3 border-t border-[#1a1a1a] bg-[#0a0a0a]">
+      <div className="flex-shrink-0 p-2 sm:p-3 border-t border-[#1a1a1a] bg-[#121214]">
         <div className="flex gap-2 items-center">
           <input
             ref={inputRef}
@@ -733,7 +733,7 @@ export default function AiCoachPage() {
             aria-label="Send message"
             className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all flex-shrink-0 ${
               input.trim() && !isTyping
-                ? "bg-[#D4A843] hover:bg-[#D4A843]/80 text-[#0a0a0a]"
+                ? "bg-[#D4A843] hover:bg-[#D4A843]/80 text-[#121214]"
                 : "bg-[#1a1a1a] text-[#333] cursor-not-allowed"
             }`}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

@@ -61,11 +61,21 @@ export default function GuitarForgeApp() {
   const [exPickerSearch, setExPickerSearch] = useState("");
   const [exPickerCat, setExPickerCat] = useState("All");
   const [libShowAll, setLibShowAll] = useState(false);
-  const [songLibShowAll, setSongLibShowAll] = useState(false);
+  const [libCollapsed, setLibCollapsed] = useState<Record<string, boolean>>(() => Object.fromEntries(Object.keys(CAT_GROUPS).map(g => [g, true])));
+  const [songLibGenre, setSongLibGenre] = useState("all");
+  const [songLibLimit, setSongLibLimit] = useState(20);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [sunoSuggestUrl, setSunoSuggestUrl] = useState<string | null>(null);
   const [sunoSuggestLoading, setSunoSuggestLoading] = useState(false);
   const [sunoSuggestDismissed, setSunoSuggestDismissed] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
+
+  // ── Onboarding wizard ──
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [wizardStep, setWizardStep] = useState(0);
+  const [wizardLevel, setWizardLevel] = useState<string>("");
+  const [wizardStyles, setWizardStyles] = useState<string[]>([]);
+  const [wizardTime, setWizardTime] = useState<number>(0);
 
   // ── Song backing track generation ──
   const [songBackingTracks, setSongBackingTracks] = useState<Record<number, string>>({});
@@ -90,6 +100,23 @@ export default function GuitarForgeApp() {
     return VALID_VIEWS.has(v) ? v : null;
   };
   const setView = (v: View) => { setViewRaw(v); setViewKey(k => k + 1); history.pushState(null, "", `#${v}`); };
+
+  // Global keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
+      switch (e.key) {
+        case '1': setView('dash'); break;
+        case '2': setView('daily'); break;
+        case '3': setView('learn'); break;
+        case '4': setView('studio'); break;
+        case '5': setView('lib'); break;
+        case 'Escape': setModal(null); setSongModal(null); break;
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
   // Listen for browser back/forward
   useEffect(() => {
@@ -126,6 +153,10 @@ export default function GuitarForgeApp() {
       if (slp) setSongLibProgress(JSON.parse(slp));
     } catch {}
     setReady(true);
+    // Show onboarding wizard for first-time users
+    if (!localStorage.getItem("gf30") && !localStorage.getItem("gf-onboarded")) {
+      setShowWelcome(true);
+    }
   }, []);
 
   useEffect(() => {
@@ -396,19 +427,207 @@ export default function GuitarForgeApp() {
   const wPct = wTot > 0 ? Math.round((wDn / wTot) * 100) : 0;
 
   if (!ready) return (
-    <div className="h-screen flex flex-col items-center justify-center gap-3" style={{ background: "#0A0A0A" }}>
+    <div className="h-screen flex flex-col items-center justify-center gap-3" style={{ background: "#121214" }}>
       <div className="font-heading text-3xl font-black text-[#D4A843]">GuitarForge</div>
       <div className="font-label text-[10px] text-[#555]">Loading...</div>
     </div>
   );
 
+  // ── Onboarding Wizard completion ──
+  const finishWizard = () => {
+    if (wizardStyles.length > 0) setStyle(wizardStyles[0]);
+    const hrs = wizardTime || 1;
+    const newDayHrs: DayHrs = {};
+    DAYS.forEach(d => { newDayHrs[d] = d === "Saturday" ? 0 : hrs; });
+    setDayHrs(newDayHrs);
+    const begCats: Record<string, string[]> = {
+      Sunday: ["Warm-Up", "Chords", "Rhythm"], Monday: ["Warm-Up", "Fretboard", "Ear Training"],
+      Tuesday: ["Warm-Up", "Picking", "Dynamics"], Wednesday: ["Warm-Up", "Modes", "Improv"],
+      Thursday: ["Warm-Up", "Songs"], Friday: ["Warm-Up", "Rhythm", "Phrasing"], Saturday: [],
+    };
+    const intCats: Record<string, string[]> = {
+      Sunday: ["Warm-Up", "Shred", "Riffs"], Monday: ["Warm-Up", "Ear Training", "Modes", "Improv"],
+      Tuesday: ["Warm-Up", "Legato", "Bends", "Phrasing"], Wednesday: ["Warm-Up", "Fretboard", "Improv", "Modes"],
+      Thursday: ["Warm-Up", "Shred", "Songs"], Friday: ["Warm-Up", "Rhythm", "Dynamics", "Composition"], Saturday: [],
+    };
+    const advCats: Record<string, string[]> = {
+      Sunday: ["Warm-Up", "Shred", "Sweep", "Arpeggios"], Monday: ["Warm-Up", "Tapping", "Legato", "Harmonics"],
+      Tuesday: ["Warm-Up", "Modes", "Improv", "Phrasing"], Wednesday: ["Warm-Up", "Fretboard", "Composition", "Riffs"],
+      Thursday: ["Warm-Up", "Shred", "Songs", "Dynamics"], Friday: ["Warm-Up", "Rhythm", "Bends", "Picking"], Saturday: [],
+    };
+    const cats = wizardLevel === "Beginner" ? begCats : wizardLevel === "Advanced" ? advCats : intCats;
+    setDayCats(cats);
+    setTimeout(() => {
+      const nd: DayExMap = {};
+      const s = wizardStyles.length > 0 ? wizardStyles[0] : "Metal";
+      DAYS.forEach(day => {
+        const c = cats[day] || [], m = (newDayHrs[day] || 0) * 60;
+        if (c.length > 0 && m > 0) nd[day] = autoFill(c, m, [], s);
+      });
+      setDayExMap(nd);
+    }, 50);
+    localStorage.setItem("gf-onboarded", "true");
+    setShowWelcome(false);
+  };
+
+  const WIZARD_STYLES = ["Metal", "Hard Rock", "Blues", "Classic Rock", "Jazz", "Punk Rock", "Acoustic", "Progressive Metal"];
+
+  if (showWelcome) return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ background: "#121214" }}>
+      <div className="w-full max-w-[500px]">
+        {/* Logo */}
+        <div className="text-center mb-6">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" className="mx-auto mb-3 opacity-60">
+            <path d="M12 2L9 7H4l3 5-3 5h5l3 5 3-5h5l-3-5 3-5h-5L12 2z" fill="#D4A843" opacity="0.3"/>
+            <path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" stroke="#D4A843" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <div className="font-heading text-2xl font-black text-[#D4A843]">GuitarForge</div>
+        </div>
+
+        {/* Step dots */}
+        <div className="flex justify-center gap-2 mb-6">
+          {[0, 1, 2].map(i => (
+            <div key={i} className="rounded-full transition-all duration-300" style={{
+              width: i === wizardStep ? 24 : 8, height: 8,
+              background: i <= wizardStep ? "#D4A843" : "#333",
+              opacity: i <= wizardStep ? 1 : 0.4,
+            }} />
+          ))}
+        </div>
+
+        {/* Card */}
+        <div className="rounded-lg p-6 sm:p-8" style={{ background: "#1a1a1e", border: "1px solid #2a2a2e" }}>
+
+          {/* Step 1: Level */}
+          {wizardStep === 0 && (
+            <div className="animate-fade-in">
+              <h2 className="font-heading text-xl sm:text-2xl text-[#D4A843] mb-1 text-center">Welcome to GuitarForge</h2>
+              <p className="font-label text-[13px] text-[#888] mb-6 text-center">Let&apos;s set up your practice routine</p>
+              <div className="space-y-3">
+                {([
+                  { level: "Beginner", desc: "Just starting out. Focus on fundamentals.", icon: "M12 20V4M8 8l4-4 4 4" },
+                  { level: "Intermediate", desc: "1-3 years. Ready for speed and technique.", icon: "M13 10V3L4 14h7v7l9-11h-7z" },
+                  { level: "Advanced", desc: "3+ years. Shred, sweep, and master the fretboard.", icon: "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" },
+                ] as const).map(({ level, desc, icon }) => (
+                  <button key={level} type="button" onClick={() => setWizardLevel(level)}
+                    className="w-full flex items-center gap-4 p-4 rounded-lg border transition-all text-left"
+                    style={{
+                      background: wizardLevel === level ? "rgba(212,168,67,0.1)" : "rgba(255,255,255,0.02)",
+                      borderColor: wizardLevel === level ? "#D4A843" : "#2a2a2e",
+                    }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={wizardLevel === level ? "#D4A843" : "#555"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                      <path d={icon}/>
+                    </svg>
+                    <div>
+                      <div className="font-heading text-[15px]" style={{ color: wizardLevel === level ? "#D4A843" : "#ccc" }}>{level}</div>
+                      <div className="font-label text-[11px] text-[#666]">{desc}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Step 2: Styles */}
+          {wizardStep === 1 && (
+            <div className="animate-fade-in">
+              <h2 className="font-heading text-xl sm:text-2xl text-[#D4A843] mb-1 text-center">What&apos;s your style?</h2>
+              <p className="font-label text-[13px] text-[#888] mb-6 text-center">Select 1-3 styles you want to focus on</p>
+              <div className="grid grid-cols-2 gap-2.5">
+                {WIZARD_STYLES.map(s => {
+                  const sel = wizardStyles.includes(s);
+                  return (
+                    <button key={s} type="button" onClick={() => {
+                      setWizardStyles(prev => sel ? prev.filter(x => x !== s) : prev.length < 3 ? [...prev, s] : prev);
+                    }}
+                      className="p-3.5 rounded-lg border transition-all text-center"
+                      style={{
+                        background: sel ? "rgba(212,168,67,0.1)" : "rgba(255,255,255,0.02)",
+                        borderColor: sel ? "#D4A843" : "#2a2a2e",
+                      }}>
+                      <div className="font-heading text-[13px]" style={{ color: sel ? "#D4A843" : "#999" }}>{s}</div>
+                    </button>
+                  );
+                })}
+              </div>
+              {wizardStyles.length > 0 && (
+                <div className="mt-4 text-center">
+                  <span className="font-label text-[11px] text-[#D4A843]">{wizardStyles.join(", ")}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Step 3: Time */}
+          {wizardStep === 2 && (
+            <div className="animate-fade-in">
+              <h2 className="font-heading text-xl sm:text-2xl text-[#D4A843] mb-1 text-center">How much time?</h2>
+              <p className="font-label text-[13px] text-[#888] mb-6 text-center">Daily practice commitment</p>
+              <div className="space-y-3">
+                {([
+                  { hrs: 0.5, label: "30 min", desc: "Quick focused session. Great for busy days.", icon: "M12 2v10l4.24 4.24" },
+                  { hrs: 1, label: "1 hour", desc: "Solid practice. Best for steady progress.", icon: "M12 2a10 10 0 100 20 10 10 0 000-20zM12 6v6l4 2" },
+                  { hrs: 2, label: "2 hours", desc: "Deep dive. Maximum skill building.", icon: "M13 10V3L4 14h7v7l9-11h-7z" },
+                ] as const).map(({ hrs, label, desc, icon }) => (
+                  <button key={hrs} type="button" onClick={() => setWizardTime(hrs)}
+                    className="w-full flex items-center gap-4 p-4 rounded-lg border transition-all text-left"
+                    style={{
+                      background: wizardTime === hrs ? "rgba(212,168,67,0.1)" : "rgba(255,255,255,0.02)",
+                      borderColor: wizardTime === hrs ? "#D4A843" : "#2a2a2e",
+                    }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={wizardTime === hrs ? "#D4A843" : "#555"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                      <path d={icon}/>
+                    </svg>
+                    <div>
+                      <div className="font-heading text-[15px]" style={{ color: wizardTime === hrs ? "#D4A843" : "#ccc" }}>{label}</div>
+                      <div className="font-label text-[11px] text-[#666]">{desc}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Navigation */}
+          <div className="flex justify-between items-center mt-8">
+            {wizardStep > 0 ? (
+              <button type="button" onClick={() => setWizardStep(s => s - 1)} className="btn-ghost">Back</button>
+            ) : <div />}
+            {wizardStep < 2 ? (
+              <button type="button" onClick={() => setWizardStep(s => s + 1)}
+                disabled={(wizardStep === 0 && !wizardLevel) || (wizardStep === 1 && wizardStyles.length === 0)}
+                className="btn-gold disabled:opacity-30 disabled:cursor-not-allowed">
+                Next
+              </button>
+            ) : (
+              <button type="button" onClick={finishWizard}
+                disabled={!wizardTime}
+                className="btn-gold disabled:opacity-30 disabled:cursor-not-allowed">
+                Start Practicing
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Skip */}
+        <div className="text-center mt-4">
+          <button type="button" onClick={() => { localStorage.setItem("gf-onboarded", "true"); setShowWelcome(false); }}
+            className="font-label text-[11px] text-[#555] hover:text-[#888] bg-transparent border-none cursor-pointer transition-colors">
+            Skip setup
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <ErrorBoundary>
-    <div className="min-h-screen text-white" style={{ background: "#0A0A0A" }} dir="ltr">
+    <div className="flex h-screen text-white" style={{ background: "#121214" }} dir="ltr">
       <Navbar view={view} onViewChange={setView} />
+      <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden">
       {view === "studio" && <StudioPage channelScale={scale} channelMode={mode} channelStyle={style} />}
       {view === "jam" && <JamModePage />}
-      <div key={viewKey} className="view-transition px-2 sm:px-5 py-3 sm:py-5 pb-16 sm:pb-5 max-w-[960px] lg:max-w-[1100px] xl:max-w-[1280px] mx-auto overflow-x-hidden">
+      <div key={viewKey} className="view-transition px-2 sm:px-5 py-3 sm:py-5 pb-16 md:pb-5 max-w-[960px] lg:max-w-[1100px] xl:max-w-[1280px] mx-auto w-full">
 
         {view === "learn" && <LearningCenterPage />}
         {view === "profile" && <ProfilePage />}
@@ -416,7 +635,9 @@ export default function GuitarForgeApp() {
         {view === "skills" && <SkillTreePage />}
         {view === "songs" && (() => {
           const allSongs = [...SONG_LIBRARY, ...customSongs];
-          const filtered = allSongs.filter(s => {
+          const genres = [...new Set(allSongs.map(s => s.genre).filter((g): g is string => !!g))].sort();
+          const genreFiltered = songLibGenre === "all" ? allSongs : allSongs.filter(s => s.genre === songLibGenre);
+          const filtered = genreFiltered.filter(s => {
             if (songLibFilter !== "all" && s.difficulty !== songLibFilter) return false;
             if (songLibSearch.trim()) {
               const q = songLibSearch.trim().toLowerCase();
@@ -424,17 +645,37 @@ export default function GuitarForgeApp() {
             }
             return true;
           });
-          const diffCounts = { all: allSongs.length, Beginner: allSongs.filter(s => s.difficulty === "Beginner").length, Intermediate: allSongs.filter(s => s.difficulty === "Intermediate").length, Advanced: allSongs.filter(s => s.difficulty === "Advanced").length };
+          const diffCounts = { all: genreFiltered.length, Beginner: genreFiltered.filter(s => s.difficulty === "Beginner").length, Intermediate: genreFiltered.filter(s => s.difficulty === "Intermediate").length, Advanced: genreFiltered.filter(s => s.difficulty === "Advanced").length };
           return (
             <div className="animate-fade-in">
               <div className="font-heading text-xl font-bold text-[#D4A843] mb-4">Song Library</div>
+
+              {/* Genre tabs */}
+              <div className="flex gap-1 flex-wrap mb-3 overflow-x-auto scrollbar-hide">
+                <button onClick={() => { setSongLibGenre("all"); setSongLibLimit(20); }}
+                  className={`font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border transition-all flex-shrink-0 ${songLibGenre === "all" ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>
+                  All ({allSongs.length})
+                </button>
+                {genres.map(g => {
+                  const cnt = allSongs.filter(s => s.genre === g).length;
+                  return (
+                    <button key={g} onClick={() => { setSongLibGenre(g); setSongLibLimit(20); }}
+                      className={`font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border transition-all flex-shrink-0 ${songLibGenre === g ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>
+                      {g} ({cnt})
+                    </button>
+                  );
+                })}
+              </div>
+
               <input type="text" placeholder="Search song, artist, genre..." className="input w-full mb-3"
-                value={songLibSearch} onChange={e => setSongLibSearch(e.target.value)} />
+                value={songLibSearch} onChange={e => { setSongLibSearch(e.target.value); setSongLibLimit(20); }} />
+
+              {/* Difficulty filter */}
               <div className="flex gap-1 flex-wrap mb-4">
                 {([["all", "All", "#D4A843"], ["Beginner", "Beginner", "#22c55e"], ["Intermediate", "Intermediate", "#f59e0b"], ["Advanced", "Advanced", "#ef4444"]] as const).map(([key, label, color]) => (
-                  <button key={key} onClick={() => setSongLibFilter(key as typeof songLibFilter)}
+                  <button key={key} onClick={() => { setSongLibFilter(key as typeof songLibFilter); setSongLibLimit(20); }}
                     className="font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border transition-all"
-                    style={songLibFilter === key ? { background: color, borderColor: color, color: "#0A0A0A" } : { borderColor: color + "40", color: color + "99" }}>
+                    style={songLibFilter === key ? { background: color, borderColor: color, color: "#121214" } : { borderColor: color + "40", color: color + "99" }}>
                     {label} ({diffCounts[key as keyof typeof diffCounts]})
                   </button>
                 ))}
@@ -457,13 +698,23 @@ export default function GuitarForgeApp() {
                   </div>
                 )}
               </div>
+
+              {/* Showing count */}
+              <div className="font-readout text-[10px] text-[#555] mb-2">
+                Showing {Math.min(songLibLimit, filtered.length)} of {filtered.length} songs
+              </div>
+
               {filtered.length === 0 && (
-                <div className="panel p-8 text-center">
-                  <div className="font-label text-sm text-[#444]">No songs found</div>
+                <div className="panel p-8 sm:p-10 text-center">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="0.8" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-4 opacity-30">
+                    <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+                  </svg>
+                  <div className="font-heading text-base text-[#D4A843] mb-1.5">No songs match your search</div>
+                  <div className="font-label text-[11px] text-[#555]">Try a different term or clear your filters.</div>
                 </div>
               )}
               {(() => {
-                const limited = songLibShowAll ? filtered : filtered.slice(0, 50);
+                const limited = filtered.slice(0, songLibLimit);
                 return (<>
                   {limited.map(song => {
                     const dc = song.difficulty ? ({ Beginner: "#22c55e", Intermediate: "#f59e0b", Advanced: "#ef4444" }[song.difficulty] || "#888") : "#888";
@@ -490,7 +741,6 @@ export default function GuitarForgeApp() {
                               <button onClick={(e) => { e.stopPropagation(); setCustomSongs(p => p.filter(s => s.id !== song.id)); }}
                                 className="btn-ghost !px-2 !py-1 !text-[9px] !text-[#C41E3A] !border-[#333]">Remove</button>
                             )}
-                            {/* Generate / Play backing track */}
                             {songBackingTracks[song.id] ? (
                               <button type="button" onClick={(e) => { e.stopPropagation(); toggleSongBackingPlay(song.id); }}
                                 className="btn-ghost !px-2 !py-1 !text-[9px] flex items-center gap-1"
@@ -519,7 +769,6 @@ export default function GuitarForgeApp() {
                                 )}
                               </button>
                             )}
-                            {/* 6-stage progress bar */}
                             {(() => {
                               const stages = songLibProgress[song.id] || 0;
                               return (
@@ -539,9 +788,9 @@ export default function GuitarForgeApp() {
                       </div>
                     );
                   })}
-                  {!songLibShowAll && filtered.length > 50 && (
-                    <button type="button" onClick={() => setSongLibShowAll(true)} className="btn-ghost w-full mt-2 !text-[11px]">
-                      Show all {filtered.length} songs
+                  {songLibLimit < filtered.length && (
+                    <button type="button" onClick={() => setSongLibLimit(p => p + 20)} className="btn-ghost w-full mt-2 !text-[11px]">
+                      Load more ({filtered.length - songLibLimit} remaining)
                     </button>
                   )}
                 </>);
@@ -552,146 +801,73 @@ export default function GuitarForgeApp() {
 
         {/* ══ DASHBOARD ══ */}
         {view === "dash" && (<div className="animate-fade-in">
-          {/* 1. Week Progress (most important) */}
-          <div className="panel-primary p-4 sm:p-5 mb-4">
-            <div className="flex justify-between items-center mb-3">
-              <span className="font-label text-[11px] text-[#D4A843] flex items-center gap-2">
-                <div className={`led ${wPct >= 100 ? "led-on" : "led-gold"}`} /> Week {week} Progress
-              </span>
-              <span className={`font-readout text-3xl sm:text-4xl font-bold ${wPct >= 100 ? "text-[#33CC33] progress-glow-green" : "text-[#D4A843] progress-glow"}`}>{wPct}%</span>
-            </div>
-            <div className="vu"><div className="vu-fill" style={{ width: wPct + "%" }} /></div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mt-4 text-center">
-              <div>
-                <div className="font-stat text-xl sm:text-2xl text-[#D4A843]">{wDn}</div>
-                <div className="font-label text-[9px] text-[#555]">Done</div>
-              </div>
-              <div>
-                <div className="font-stat text-xl sm:text-2xl text-[#888]">{wTot}</div>
-                <div className="font-label text-[9px] text-[#555]">Total</div>
-              </div>
-              <div>
-                <div className="font-stat text-xl sm:text-2xl text-[#D4A843]">{wMin}</div>
-                <div className="font-label text-[9px] text-[#555]">Minutes</div>
-              </div>
-              <div>
-                <div className="font-stat text-xl sm:text-2xl text-[#D4A843]">
-                  {DAYS.filter(d => (dayExMap[d] || []).some(e => doneMap[week + "-" + d + "-" + e.id])).length}
-                </div>
-                <div className="font-label text-[9px] text-[#555]">Days Active</div>
-              </div>
-            </div>
-          </div>
-
-          {/* ── Streak + Calendar Row ── */}
-          <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-4 mb-4">
-            {/* Streak counter */}
-            <div className="panel p-4 flex items-center gap-3 sm:min-w-[200px]">
-              <span className="text-3xl">🔥</span>
-              <div>
-                <div className="font-stat text-2xl text-[#D4A843]">{streak.currentStreak}</div>
-                <div className="font-label text-[9px] text-[#555]">Day Streak</div>
-              </div>
-              <div className="ml-auto text-right">
-                <div className="font-readout text-[11px] text-[#666]">Best: {streak.longestStreak}</div>
-                <div className="font-readout text-[10px] text-[#444]">{streak.totalDays} total days</div>
-              </div>
-            </div>
-
-            {/* Practice Calendar Heatmap — last 12 weeks */}
-            <div className="panel p-4 overflow-hidden">
-              <div className="font-label text-[10px] text-[#555] mb-2 flex items-center gap-2">
-                <div className="led led-on" style={{ width: 6, height: 6 }} /> Practice Activity
-              </div>
-              <div className="flex gap-1" style={{ direction: "ltr" }}>
-                {/* Day labels */}
-                <div className="flex flex-col gap-[2px] text-[8px] text-[#444] font-readout pt-0" style={{ width: "20px" }}>
-                  <div style={{ height: "12px" }}></div>
-                  <div style={{ height: "12px", lineHeight: "12px" }}>Mon</div>
-                  <div style={{ height: "12px" }}></div>
-                  <div style={{ height: "12px", lineHeight: "12px" }}>Wed</div>
-                  <div style={{ height: "12px" }}></div>
-                  <div style={{ height: "12px", lineHeight: "12px" }}>Fri</div>
-                  <div style={{ height: "12px" }}></div>
-                </div>
-                {/* Grid */}
-                <div className="flex gap-[2px] flex-1 overflow-hidden justify-end">
-                  {(() => {
-                    const weeks: { date: string; count: number }[][] = [];
-                    const today = new Date();
-                    // Go back 83 days (12 weeks)
-                    const start = new Date(today);
-                    start.setDate(start.getDate() - 83);
-                    // Align to Sunday
-                    start.setDate(start.getDate() - start.getDay());
-                    let cur = new Date(start);
-                    let curWeek: { date: string; count: number }[] = [];
-                    while (cur <= today) {
-                      const ds = cur.toISOString().slice(0, 10);
-                      const cd = calendarData[ds];
-                      curWeek.push({ date: ds, count: cd?.exercisesDone || 0 });
-                      if (curWeek.length === 7) { weeks.push(curWeek); curWeek = []; }
-                      cur.setDate(cur.getDate() + 1);
-                    }
-                    if (curWeek.length > 0) weeks.push(curWeek);
-                    return weeks.map((wk, wi) => (
-                      <div key={wi} className="flex flex-col gap-[2px]">
-                        {wk.map((day, di) => {
-                          const bg = day.count === 0 ? "#111" : day.count <= 3 ? "#1a4a1a" : day.count <= 8 ? "#2d8a2d" : "#33CC33";
-                          return (
-                            <div key={di} title={`${day.date}: ${day.count} exercises`}
-                              className="cal-cell rounded-[2px]"
-                              style={{ width: "12px", height: "12px", background: bg }} />
-                          );
-                        })}
-                      </div>
-                    ));
-                  })()}
-                </div>
-              </div>
-              <div className="flex items-center gap-1 mt-2 justify-end">
-                <span className="font-readout text-[8px] text-[#444]">Less</span>
-                {["#111", "#1a4a1a", "#2d8a2d", "#33CC33"].map((c, i) => (
-                  <div key={i} className="rounded-[2px]" style={{ width: 10, height: 10, background: c }} />
-                ))}
-                <span className="font-readout text-[8px] text-[#444]">More</span>
-              </div>
-            </div>
-          </div>
-
-          {/* ── Smart Suggestions ── */}
+          {/* -- 1. Hero Card -- */}
           {(() => {
-            const suggestions = getSuggestions();
-            if (suggestions.length === 0) return null;
+            const dayPct = curExList.length > 0 ? Math.round((curDone / curExList.length) * 100) : 0;
             return (
-              <div className="panel-secondary p-4 mb-4">
-                <div className="font-label text-[10px] text-[#666] mb-2 flex items-center gap-2">
-                  💡 Suggestions
-                </div>
-                <div className="flex flex-col gap-2">
-                  {suggestions.map((s, i) => (
-                    <div key={i} className="flex items-start gap-2 text-[12px] text-[#888]">
-                      <span className="flex-shrink-0">{s.icon}</span>
-                      <span>{s.text}</span>
+              <div className="p-5 sm:p-6 mb-4" style={{ background: "linear-gradient(135deg, #1a1708, #121214)", border: "1px solid #D4A84330", borderRadius: 12 }}>
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <div className="font-heading text-lg sm:text-xl font-bold text-[#eee]">Today&apos;s Practice</div>
+                    <div className="font-readout text-[11px] text-[#666] mt-1">
+                      {curExList.length} Exercises &middot; {curMin} min
                     </div>
-                  ))}
+                    <div className="font-readout text-[10px] text-[#555] mt-0.5">
+                      {style} &middot; {scale} {mode}
+                    </div>
+                  </div>
+                  {streak.currentStreak > 0 && (
+                    <div className="flex items-center gap-1.5 bg-[#D4A843]/10 px-3 py-1.5 rounded-full">
+                      <span className="text-lg">🔥</span>
+                      <span className="font-stat text-[14px] text-[#D4A843]">{streak.currentStreak} Day Streak</span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-3 mt-4">
+                  <button type="button" onClick={() => { setView("daily"); }}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-label text-[13px] font-semibold text-[#121214] transition-all hover:brightness-110"
+                    style={{ background: "linear-gradient(135deg, #D4A843, #DFBD69)" }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                    Start Practice
+                  </button>
+                  <span className={`font-readout text-[13px] font-bold ${dayPct >= 100 && curExList.length > 0 ? "text-[#33CC33]" : "text-[#D4A843]"}`}>
+                    {dayPct}% complete
+                  </span>
+                </div>
+                <div className="mt-3 h-[6px] rounded-full overflow-hidden" style={{ background: "#ffffff08" }}>
+                  <div className="h-full rounded-full transition-all duration-500" style={{ width: dayPct + "%", background: dayPct >= 100 && curExList.length > 0 ? "#33CC33" : "linear-gradient(90deg, #D4A843, #DFBD69)" }} />
                 </div>
               </div>
             );
           })()}
 
-          {/* Schedule — Task 7: primary panel */}
-          <div className="panel-primary p-4 sm:p-5 mb-4">
-            <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
-              <span className="font-label text-[11px] text-[#D4A843] flex items-center gap-2"><div className="led led-gold" /> Schedule</span>
-              <div className="flex gap-2">
-                <button onClick={() => setShowEditor(!showEditor)} className="btn-ghost">{showEditor ? "Close" : "Edit"}</button>
-                <button onClick={buildAll} className="btn-gold">Build Routine</button>
+          {/* -- 2. Stats Row -- */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
+            {[
+              { value: String(streak.currentStreak), label: "Streak" },
+              { value: wPct + "%", label: "Progress" },
+              { value: String(wMin), label: "Minutes" },
+              { value: DAYS.filter(d => (dayExMap[d] || []).some(e => doneMap[week + "-" + d + "-" + e.id])).length + "/7", label: "Days Active" },
+            ].map(({ value, label }) => (
+              <div key={label} className="p-3 text-center" style={{ background: "#1a1a1e", borderRadius: 10 }}>
+                <div className="font-stat text-xl sm:text-2xl text-[#D4A843]">{value}</div>
+                <div className="font-label text-[9px] text-[#555] mt-0.5">{label}</div>
               </div>
+            ))}
+          </div>
+
+          {/* -- 3. Weekly Schedule (simplified) -- */}
+          <div className="panel-primary p-4 sm:p-5 mb-4" style={{ borderRadius: 8 }}>
+            <div className="flex justify-between items-center mb-4">
+              <span className="font-label text-[11px] text-[#D4A843] flex items-center gap-2"><div className="led led-gold" /> Week {week} Schedule</span>
+              <button onClick={() => setShowEditor(!showEditor)} className="font-readout text-[10px] text-[#555] hover:text-[#888] transition-colors flex items-center gap-1 bg-transparent border-0 cursor-pointer p-0">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707"/><circle cx="12" cy="12" r="3"/></svg>
+                {showEditor ? "Close editor" : "Edit schedule"}
+              </button>
             </div>
 
             {showEditor && (
-              <div className="mb-4 p-4 bg-[#0A0A0A] border border-[#1a1a1a] rounded-sm">
+              <div className="mb-4 p-4 bg-[#121214] border border-[#1a1a1a] rounded-lg">
                 {DAYS.map((day) => {
                   const ac = dayCats[day] || [], hrs = dayHrs[day] || 0;
                   return (
@@ -735,6 +911,20 @@ export default function GuitarForgeApp() {
                     </div>
                   );
                 })}
+                {/* Finish Week / Reset moved inside editor */}
+                <div className="flex gap-2 mt-4 pt-3 border-t border-[#1a1a1a]">
+                  <button onClick={buildAll} className="btn-gold !text-[10px]">Build Routine</button>
+                  <button onClick={() => {
+                    try {
+                      const archive = JSON.parse(localStorage.getItem("gf-archive") || "[]");
+                      archive.push({ week, mode, scale, style, doneMap, bpmLog, dayExMap, date: new Date().toLocaleDateString("he-IL") });
+                      localStorage.setItem("gf-archive", JSON.stringify(archive.slice(-52)));
+                    } catch {}
+                    setWeek(week + 1); setDoneMap({}); setBpmLog({});
+                  }} className="btn-ghost !text-[10px]">Finish Week &amp; Archive</button>
+                  <button onClick={() => { setWeek(week + 1); setDoneMap({}); setBpmLog({}); setDayExMap({}); }}
+                    className="btn-ghost !text-[10px] !text-[#C41E3A] !border-[#C41E3A]/30">Reset All</button>
+                </div>
               </div>
             )}
 
@@ -745,7 +935,8 @@ export default function GuitarForgeApp() {
                 const off = !ac.length, pct = exs.length ? Math.round((d2 / exs.length) * 100) : 0;
                 return (
                   <div key={day} onClick={() => { setSelDay(day); setView("daily"); }}
-                    className={`rounded-sm p-2 cursor-pointer text-center transition-all ${off ? "bg-[#0A0A0A] border border-[#1a1a1a]" : "panel hover:border-[#D4A843]/30"} ${selDay === day ? "!border-[#D4A843] ring-1 ring-[#D4A843]/30 !bg-[#1a1708]" : ""}`}>
+                    className={`p-2 cursor-pointer text-center transition-all ${off ? "bg-[#121214] border border-[#1a1a1a]" : "panel hover:border-[#D4A843]/30"} ${selDay === day ? "!border-[#D4A843] ring-1 ring-[#D4A843]/30 !bg-[#1a1708]" : ""}`}
+                    style={{ borderRadius: 8 }}>
                     <div className={`font-label text-[10px] ${off ? "text-[#444]" : selDay === day ? "text-[#D4A843]" : "text-[#bbb]"}`}>
                       <span className="sm:hidden">{day.slice(0, 3)}</span><span className="hidden sm:inline">{day}</span>
                     </div>
@@ -760,29 +951,36 @@ export default function GuitarForgeApp() {
             </div>
           </div>
 
-          <div className="flex gap-2 mb-4">
-            <button onClick={() => {
-              // Archive current week data before moving on
-              try {
-                const archive = JSON.parse(localStorage.getItem("gf-archive") || "[]");
-                archive.push({ week, mode, scale, style, doneMap, bpmLog, dayExMap, date: new Date().toLocaleDateString("he-IL") });
-                localStorage.setItem("gf-archive", JSON.stringify(archive.slice(-52)));
-              } catch {}
-              setWeek(week + 1); setDoneMap({}); setBpmLog({});
-            }} className="btn-gold !text-[10px]">Finish Week &amp; Archive</button>
-            <button onClick={() => { setWeek(week + 1); setDoneMap({}); setBpmLog({}); setDayExMap({}); }}
-              className="btn-ghost !text-[10px] !text-[#C41E3A] !border-[#C41E3A]/30">Reset All</button>
-          </div>
+          {/* -- 4. Smart Suggestions -- */}
+          {(() => {
+            const suggestions = getSuggestions();
+            if (suggestions.length === 0) return null;
+            return (
+              <div className="panel-secondary p-4 mb-4" style={{ borderRadius: 8 }}>
+                <div className="font-label text-[10px] text-[#666] mb-2 flex items-center gap-2">
+                  💡 Suggestions
+                </div>
+                <div className="flex flex-col gap-2">
+                  {suggestions.map((s, i) => (
+                    <div key={i} className="flex items-start gap-2 text-[12px] text-[#888]">
+                      <span className="flex-shrink-0">{s.icon}</span>
+                      <span>{s.text}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
 
-          {/* 3. Setlist */}
-          <div className="panel p-3 sm:p-5 mb-4" style={{ borderColor: "#1a3a2a" }}>
+          {/* -- 5. Setlist -- */}
+          <div className="panel p-3 sm:p-5 mb-4" style={{ borderColor: "#1a3a2a", borderRadius: 8 }}>
             <div className="font-label text-[11px] text-[#33CC33] mb-3 flex items-center gap-2">
               <div className="led led-on" /> Setlist
             </div>
             {songs.map((song) => {
               const dn = STAGES.filter((_, si) => songProgress[week + "-" + song.id + "-" + si]?.done).length;
               return (
-                <div key={song.id} className="flex items-center gap-3 px-3 py-2.5 bg-[#0A0A0A] border border-[#1a1a1a] rounded-sm mb-1.5">
+                <div key={song.id} className="flex items-center gap-3 px-3 py-2.5 bg-[#121214] border border-[#1a1a1a] rounded-lg mb-1.5">
                   <div className="flex-1">
                     <div className="font-heading text-sm !font-medium !normal-case !tracking-normal">{song.name}</div>
                     <div className="font-readout text-[10px] text-[#555]">{dn}/6</div>
@@ -802,9 +1000,9 @@ export default function GuitarForgeApp() {
             }} />
           </div>
 
-          {/* Suno backing track suggestion */}
+          {/* -- 6. Suno Backing Track -- */}
           {!sunoSuggestDismissed && !sunoSuggestUrl && (
-            <div className="panel-secondary p-3 mb-4 flex items-center gap-3">
+            <div className="panel-secondary p-3 mb-4 flex items-center gap-3" style={{ borderRadius: 8 }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2" className="flex-shrink-0">
                 <path d="M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 19V5l12-4v14m0 0c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" />
               </svg>
@@ -828,7 +1026,7 @@ export default function GuitarForgeApp() {
             </div>
           )}
           {sunoSuggestUrl && (
-            <div className="panel-secondary p-3 mb-4">
+            <div className="panel-secondary p-3 mb-4" style={{ borderRadius: 8 }}>
               <div className="flex items-center gap-2 mb-2">
                 <div className="font-label text-[10px] text-[#D4A843]">AI Backing Track</div>
                 <span className="font-readout text-[9px] text-[#555]">{scale} {mode} · {style}</span>
@@ -837,11 +1035,11 @@ export default function GuitarForgeApp() {
             </div>
           )}
 
-          {/* 4. Channel Settings (collapsible) */}
-          <div className="panel-secondary mb-4">
+          {/* -- 7. Channel Settings (collapsible) -- */}
+          <div className="panel-secondary mb-4" style={{ borderRadius: 8 }}>
             <button onClick={() => setSettingsOpen(p => !p)} className="panel-header flex items-center gap-2 w-full cursor-pointer bg-transparent border-0 text-left">
               <div className="led led-gold" />
-              <span className="flex-1">CHANNEL SETTINGS</span>
+              <span className="flex-1">Channel Settings</span>
               <span className="font-readout text-[10px] text-[#555]">
                 {!settingsOpen && `W${week} · ${mode} · ${scale} · ${style}`}
               </span>
@@ -857,6 +1055,102 @@ export default function GuitarForgeApp() {
                   { l: "Key", v: <select value={scale} onChange={(e) => setScale(e.target.value)} className="input w-full">{SCALES.map((s) => <option key={s}>{s}</option>)}</select> },
                   { l: "Style", v: <select value={style} onChange={(e) => setStyle(e.target.value)} className="input w-full text-[12px] sm:text-[14px]">{STYLES.map((s) => <option key={s}>{s}</option>)}</select> },
                 ].map(({ l, v }) => <label key={l} className="font-label text-[11px] text-[#666]">{l}<div className="mt-1">{v}</div></label>)}
+              </div>
+            )}
+          </div>
+
+          {/* -- 8. Week Analytics (merged from Report) -- */}
+          <div className="panel-secondary mb-4" style={{ borderRadius: 8 }}>
+            <button onClick={() => setShowAnalytics(p => !p)} className="panel-header flex items-center gap-2 w-full cursor-pointer bg-transparent border-0 text-left">
+              <span className="text-[14px]">📊</span>
+              <span className="flex-1">Week Analytics</span>
+              <span className="font-readout text-[10px] text-[#555]">
+                {!showAnalytics && `${wDn}/${wTot} done · ${wPct}%`}
+              </span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" className={`transition-transform ${showAnalytics ? "rotate-180" : ""}`}>
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+            {showAnalytics && (
+              <div className="p-3 sm:p-5">
+                {/* Calendar Heatmap */}
+                <div className="mb-5 pb-4 border-b border-[#1a1a1a]">
+                  <div className="font-label text-[10px] text-[#555] mb-2 flex items-center gap-2">
+                    <div className="led led-on" style={{ width: 6, height: 6 }} /> Practice Activity
+                  </div>
+                  <div className="flex gap-1" style={{ direction: "ltr" }}>
+                    <div className="flex flex-col gap-[2px] text-[8px] text-[#444] font-readout pt-0" style={{ width: "20px" }}>
+                      <div style={{ height: "12px" }}></div>
+                      <div style={{ height: "12px", lineHeight: "12px" }}>Mon</div>
+                      <div style={{ height: "12px" }}></div>
+                      <div style={{ height: "12px", lineHeight: "12px" }}>Wed</div>
+                      <div style={{ height: "12px" }}></div>
+                      <div style={{ height: "12px", lineHeight: "12px" }}>Fri</div>
+                      <div style={{ height: "12px" }}></div>
+                    </div>
+                    <div className="flex gap-[2px] flex-1 overflow-hidden justify-end">
+                      {(() => {
+                        const weeks: { date: string; count: number }[][] = [];
+                        const today = new Date();
+                        const start = new Date(today);
+                        start.setDate(start.getDate() - 83);
+                        start.setDate(start.getDate() - start.getDay());
+                        let cur = new Date(start);
+                        let curWeekArr: { date: string; count: number }[] = [];
+                        while (cur <= today) {
+                          const ds = cur.toISOString().slice(0, 10);
+                          const cd = calendarData[ds];
+                          curWeekArr.push({ date: ds, count: cd?.exercisesDone || 0 });
+                          if (curWeekArr.length === 7) { weeks.push(curWeekArr); curWeekArr = []; }
+                          cur.setDate(cur.getDate() + 1);
+                        }
+                        if (curWeekArr.length > 0) weeks.push(curWeekArr);
+                        return weeks.map((wk, wi) => (
+                          <div key={wi} className="flex flex-col gap-[2px]">
+                            {wk.map((day, di) => {
+                              const bg = day.count === 0 ? "#111" : day.count <= 3 ? "#1a4a1a" : day.count <= 8 ? "#2d8a2d" : "#33CC33";
+                              return (
+                                <div key={di} title={`${day.date}: ${day.count} exercises`}
+                                  className="cal-cell rounded-[2px]"
+                                  style={{ width: "12px", height: "12px", background: bg }} />
+                              );
+                            })}
+                          </div>
+                        ));
+                      })()}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 mt-2 justify-end">
+                    <span className="font-readout text-[8px] text-[#444]">Less</span>
+                    {["#111", "#1a4a1a", "#2d8a2d", "#33CC33"].map((c, i) => (
+                      <div key={i} className="rounded-[2px]" style={{ width: 10, height: 10, background: c }} />
+                    ))}
+                    <span className="font-readout text-[8px] text-[#444]">More</span>
+                  </div>
+                </div>
+
+                {/* Streak stats */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center mb-5 pb-4 border-b border-[#1a1a1a]">
+                  <div>
+                    <div className="font-stat text-xl text-[#D4A843]">{streak.currentStreak}</div>
+                    <div className="font-label text-[9px] text-[#555]">Current Streak</div>
+                  </div>
+                  <div>
+                    <div className="font-stat text-xl text-[#D4A843]">{streak.longestStreak}</div>
+                    <div className="font-label text-[9px] text-[#555]">Longest Streak</div>
+                  </div>
+                  <div>
+                    <div className="font-stat text-xl text-[#D4A843]">{streak.totalDays}</div>
+                    <div className="font-label text-[9px] text-[#555]">Total Days</div>
+                  </div>
+                  <div>
+                    <div className="font-readout text-sm text-[#666] mt-1">{streak.lastPracticeDate || "\u2014"}</div>
+                    <div className="font-label text-[9px] text-[#555]">Last Practice</div>
+                  </div>
+                </div>
+
+                {/* Weekly Charts */}
+                <WeeklyCharts week={week} dayExMap={dayExMap} doneMap={doneMap} bpmLog={bpmLog} />
               </div>
             )}
           </div>
@@ -890,7 +1184,7 @@ export default function GuitarForgeApp() {
             {DAYS.map((day) => (
               <button key={day} onClick={() => setSelDay(day)}
                 className={`font-label text-[11px] px-3 py-1.5 rounded-sm cursor-pointer transition-all flex-shrink-0 ${
-                  selDay === day ? "bg-[#D4A843] text-[#0A0A0A]" : "text-[#555] hover:text-[#aaa]"
+                  selDay === day ? "bg-[#D4A843] text-[#121214]" : "text-[#555] hover:text-[#aaa]"
                 }`}><span className="sm:hidden">{day.slice(0, 3)}</span><span className="hidden sm:inline">{day}</span></button>
             ))}
           </div>
@@ -931,11 +1225,11 @@ export default function GuitarForgeApp() {
                         value={exPickerSearch} onChange={e => setExPickerSearch(e.target.value)} />
                       <div className="flex gap-1 flex-wrap">
                         <button type="button" onClick={() => setExPickerCat("All")}
-                          className={`font-label text-[9px] px-2 py-0.5 rounded-sm border transition-all ${exPickerCat === "All" ? "bg-[#D4A843] text-[#0A0A0A] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>All</button>
+                          className={`font-label text-[9px] px-2 py-0.5 rounded-sm border transition-all ${exPickerCat === "All" ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>All</button>
                         {CATS.filter(c => c !== "Songs").map(cat => (
                           <button type="button" key={cat} onClick={() => setExPickerCat(cat)}
                             className="font-label text-[9px] px-2 py-0.5 rounded-sm border transition-all"
-                            style={exPickerCat === cat ? { background: COL[cat], borderColor: COL[cat], color: "#0A0A0A" } : { borderColor: (COL[cat] || "#888") + "40", color: (COL[cat] || "#888") + "99" }}>{cat}</button>
+                            style={exPickerCat === cat ? { background: COL[cat], borderColor: COL[cat], color: "#121214" } : { borderColor: (COL[cat] || "#888") + "40", color: (COL[cat] || "#888") + "99" }}>{cat}</button>
                         ))}
                       </div>
                     </div>
@@ -969,20 +1263,24 @@ export default function GuitarForgeApp() {
             </div>
           </div>
 
-          {/* Fix #2: Improved empty state */}
-          {!curExList.length && <div className="panel p-8 sm:p-12 text-center">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="0.8" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-5 opacity-40">
-              <path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z"/>
+          {/* Improved empty state */}
+          {!curExList.length && <div className="panel p-8 sm:p-12 text-center" style={{ background: "linear-gradient(180deg, rgba(212,168,67,0.04) 0%, transparent 60%)" }}>
+            <svg width="72" height="72" viewBox="0 0 24 24" fill="none" className="mx-auto mb-5">
+              <path d="M9 19V6l12-3v13" stroke="#D4A843" strokeWidth="0.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.5"/>
+              <path d="M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" fill="#D4A843" opacity="0.15" stroke="#D4A843" strokeWidth="0.8"/>
+              <path d="M21 16c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" fill="#D4A843" opacity="0.15" stroke="#D4A843" strokeWidth="0.8"/>
+              <path d="M9 10l12-3" stroke="#D4A843" strokeWidth="0.5" opacity="0.3" strokeDasharray="2 2"/>
             </svg>
             <div className="font-heading text-xl text-[#D4A843] mb-2">Ready to Practice?</div>
-            <div className="font-readout text-[12px] text-[#555] mb-5 max-w-[320px] mx-auto">
+            <div className="font-readout text-[12px] text-[#666] mb-6 max-w-[340px] mx-auto leading-relaxed">
               {curCats.length > 0
-                ? "Hit Auto Fill to generate today's routine based on your selected categories."
-                : "Go to Dashboard > Schedule to set categories for this day, then come back and Auto Fill."}
+                ? "Your categories are set. Hit Auto Fill to generate a personalized routine for today."
+                : "Set your categories in Dashboard > Schedule first, then come back to build your practice session."}
             </div>
-            <div className="flex gap-2 justify-center">
-              <button onClick={() => buildDay(selDay)} className="btn-gold">Auto Fill</button>
+            <div className="flex gap-3 justify-center">
+              {curCats.length > 0 && <button type="button" onClick={() => buildDay(selDay)} className="btn-gold">Auto Fill</button>}
               <button type="button" onClick={() => { setExPickerOpen(true); setExPickerSearch(""); setExPickerCat("All"); }} className="btn-ghost">+ Add Exercise</button>
+              {curCats.length === 0 && <button type="button" onClick={() => setView("dash")} className="btn-gold">Go to Dashboard</button>}
             </div>
           </div>}
 
@@ -1085,7 +1383,7 @@ export default function GuitarForgeApp() {
           <div className="flex gap-1 mb-4 overflow-x-auto scrollbar-hide">
             {([["exercises", "Exercises"], ["styles", "Styles"], ["songs", "Songs"], ["songlib", "Song Library +"]] as const).map(([key, label]) => (
               <button key={key} onClick={() => setLibTab(key)}
-                className={`font-label text-[11px] px-4 py-1.5 rounded-sm cursor-pointer border transition-all flex-shrink-0 ${libTab === key ? "bg-[#D4A843] text-[#0A0A0A] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>{label}</button>
+                className={`font-label text-[11px] px-4 py-1.5 rounded-sm cursor-pointer border transition-all flex-shrink-0 ${libTab === key ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>{label}</button>
             ))}
           </div>
 
@@ -1095,13 +1393,20 @@ export default function GuitarForgeApp() {
               value={libSearch} onChange={e => setLibSearch(e.target.value)} />
 
             <div className="flex gap-1 flex-wrap mb-4">
-              <button onClick={() => setLibFilter("All")} className={`font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border ${libFilter === "All" ? "bg-[#D4A843] text-[#0A0A0A] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>All ({EXERCISES.length})</button>
+              <button onClick={() => setLibFilter("All")} className={`font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border ${libFilter === "All" ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>All ({EXERCISES.length})</button>
               {CATS.filter((c) => c !== "Songs").map((cat) => {
                 const cnt = EXERCISES.filter((e) => e.c === cat).length, c = COL[cat];
                 if (!cnt) return null;
                 return <button key={cat} onClick={() => setLibFilter(cat)} className="font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border transition-all"
-                  style={libFilter === cat ? { background: c, borderColor: c, color: "#0A0A0A" } : { borderColor: c + "40", color: c + "99" }}>{cat} ({cnt})</button>;
+                  style={libFilter === cat ? { background: c, borderColor: c, color: "#121214" } : { borderColor: c + "40", color: c + "99" }}>{cat} ({cnt})</button>;
               })}
+            </div>
+
+            {/* Toggle: grouped vs flat */}
+            <div className="flex items-center gap-2 mb-3">
+              <button onClick={() => setLibShowAll(!libShowAll)} className="btn-ghost !text-[10px]">
+                {libShowAll ? "Group by Category" : "Show Flat List"}
+              </button>
             </div>
 
             {(() => {
@@ -1113,29 +1418,73 @@ export default function GuitarForgeApp() {
                 }
                 return true;
               });
-              const limited = libShowAll ? filtered : filtered.slice(0, 50);
-              return (<>
-                {limited.map((rawEx) => {
-                  const ex = getEditedEx(rawEx), c = COL[ex.c], isEd = editingId === ex.id;
-                  return (
-                    <div key={ex.id} className={`panel mb-1.5 overflow-hidden ${isEd ? "!border-[#D4A843]/30" : ""}`}>
-                      <div onClick={() => setEditingId(isEd ? null : ex.id)} className="flex items-center gap-3 px-4 py-3 cursor-pointer">
-                        <span className="tag min-w-[48px] text-center" style={{ border: `1px solid ${c}40`, color: c }}>{ex.c}</span>
-                        <div className="flex-1">
-                          <div className="font-heading text-[13px] !font-medium !normal-case !tracking-normal">{ex.n}</div>
-                          <div className="font-readout text-[10px] text-[#444]">{ex.f} · {ex.m}min {ex.b ? "· " + ex.b : ""}</div>
+              const isSearching = libSearch.trim().length > 0;
+
+              if (libShowAll) {
+                // Flat list mode
+                return (<>
+                  {filtered.map((rawEx) => {
+                    const ex = getEditedEx(rawEx), c = COL[ex.c], isEd = editingId === ex.id;
+                    return (
+                      <div key={ex.id} className={`panel mb-1.5 overflow-hidden ${isEd ? "!border-[#D4A843]/30" : ""}`}>
+                        <div onClick={() => setEditingId(isEd ? null : ex.id)} className="flex items-center gap-3 px-4 py-3 cursor-pointer">
+                          <span className="tag min-w-[48px] text-center" style={{ border: `1px solid ${c}40`, color: c }}>{ex.c}</span>
+                          <div className="flex-1">
+                            <div className="font-heading text-[13px] !font-medium !normal-case !tracking-normal">{ex.n}</div>
+                            <div className="font-readout text-[10px] text-[#444]">{ex.f} · {ex.m}min {ex.b ? "· " + ex.b : ""}</div>
+                          </div>
+                          <span className="text-[10px] text-[#333]">{isEd ? "−" : "+"}</span>
                         </div>
-                        <span className="text-[10px] text-[#333]">{isEd ? "−" : "+"}</span>
+                        {isEd && <LibraryEditor ex={ex} exEdits={exEdits} setExEdits={setExEdits} />}
                       </div>
-                      {isEd && <LibraryEditor ex={ex} exEdits={exEdits} setExEdits={setExEdits} />}
+                    );
+                  })}
+                  <div className="font-readout text-[10px] text-[#444] text-center mt-2">{filtered.length} exercises</div>
+                </>);
+              }
+
+              // Grouped mode
+              return (<>
+                {Object.entries(CAT_GROUPS).map(([groupName, groupCats]) => {
+                  const groupExercises = filtered.filter(e => groupCats.includes(e.c));
+                  if (groupExercises.length === 0) return null;
+                  const isCollapsed = isSearching ? false : (libCollapsed[groupName] ?? true);
+                  return (
+                    <div key={groupName} className="mb-2">
+                      <div
+                        onClick={() => { if (!isSearching) setLibCollapsed(p => ({ ...p, [groupName]: !isCollapsed })); }}
+                        className="flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer border border-[#1a1a1a] bg-[#141416] hover:border-[#D4A843]/20 transition-all"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                          style={{ transform: isCollapsed ? "rotate(0deg)" : "rotate(90deg)", transition: "transform 0.15s ease" }}>
+                          <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                        <span className="font-heading text-sm font-semibold text-[#ccc] flex-1">{groupName}</span>
+                        <span className="font-readout text-[10px] px-2 py-0.5 rounded-sm bg-[#1a1a1a] text-[#D4A843] border border-[#D4A843]/20">{groupExercises.length}</span>
+                      </div>
+                      {!isCollapsed && (
+                        <div className="mt-1">
+                          {groupExercises.map((rawEx) => {
+                            const ex = getEditedEx(rawEx), c = COL[ex.c], isEd = editingId === ex.id;
+                            return (
+                              <div key={ex.id} className={`panel mb-1.5 overflow-hidden ${isEd ? "!border-[#D4A843]/30" : ""}`}>
+                                <div onClick={() => setEditingId(isEd ? null : ex.id)} className="flex items-center gap-3 px-4 py-3 cursor-pointer">
+                                  <span className="tag min-w-[48px] text-center" style={{ border: `1px solid ${c}40`, color: c }}>{ex.c}</span>
+                                  <div className="flex-1">
+                                    <div className="font-heading text-[13px] !font-medium !normal-case !tracking-normal">{ex.n}</div>
+                                    <div className="font-readout text-[10px] text-[#444]">{ex.f} · {ex.m}min {ex.b ? "· " + ex.b : ""}</div>
+                                  </div>
+                                  <span className="text-[10px] text-[#333]">{isEd ? "−" : "+"}</span>
+                                </div>
+                                {isEd && <LibraryEditor ex={ex} exEdits={exEdits} setExEdits={setExEdits} />}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
-                {!libShowAll && filtered.length > 50 && (
-                  <button type="button" onClick={() => setLibShowAll(true)} className="btn-ghost w-full mt-2 !text-[11px]">
-                    Show all {filtered.length} items
-                  </button>
-                )}
               </>);
             })()}
           </>)}
@@ -1193,9 +1542,9 @@ export default function GuitarForgeApp() {
           {/* Song Library tab */}
           {libTab === "songlib" && (() => {
             const allSongs = [...SONG_LIBRARY, ...customSongs];
-            const genres = [...new Set(allSongs.map(s => s.genre).filter(Boolean))];
-            const artists = [...new Set(allSongs.map(s => s.artist).filter(Boolean))];
-            const filtered = allSongs.filter(s => {
+            const genres = [...new Set(allSongs.map(s => s.genre).filter((g): g is string => !!g))].sort();
+            const genreFiltered = songLibGenre === "all" ? allSongs : allSongs.filter(s => s.genre === songLibGenre);
+            const filtered = genreFiltered.filter(s => {
               if (songLibFilter !== "all" && s.difficulty !== songLibFilter) return false;
               if (songLibSearch.trim()) {
                 const q = songLibSearch.trim().toLowerCase();
@@ -1203,19 +1552,36 @@ export default function GuitarForgeApp() {
               }
               return true;
             });
-            const diffCounts = { all: allSongs.length, Beginner: allSongs.filter(s => s.difficulty === "Beginner").length, Intermediate: allSongs.filter(s => s.difficulty === "Intermediate").length, Advanced: allSongs.filter(s => s.difficulty === "Advanced").length };
+            const diffCounts = { all: genreFiltered.length, Beginner: genreFiltered.filter(s => s.difficulty === "Beginner").length, Intermediate: genreFiltered.filter(s => s.difficulty === "Intermediate").length, Advanced: genreFiltered.filter(s => s.difficulty === "Advanced").length };
             return (
               <div>
+                {/* Genre tabs */}
+                <div className="flex gap-1 flex-wrap mb-3 overflow-x-auto scrollbar-hide">
+                  <button onClick={() => { setSongLibGenre("all"); setSongLibLimit(20); }}
+                    className={`font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border transition-all flex-shrink-0 ${songLibGenre === "all" ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>
+                    All ({allSongs.length})
+                  </button>
+                  {genres.map(g => {
+                    const cnt = allSongs.filter(s => s.genre === g).length;
+                    return (
+                      <button key={g} onClick={() => { setSongLibGenre(g); setSongLibLimit(20); }}
+                        className={`font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border transition-all flex-shrink-0 ${songLibGenre === g ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>
+                        {g} ({cnt})
+                      </button>
+                    );
+                  })}
+                </div>
+
                 {/* Search */}
                 <input type="text" placeholder="Search song, artist, genre..." className="input w-full mb-3"
-                  value={songLibSearch} onChange={e => setSongLibSearch(e.target.value)} />
+                  value={songLibSearch} onChange={e => { setSongLibSearch(e.target.value); setSongLibLimit(20); }} />
 
                 {/* Difficulty filter */}
                 <div className="flex gap-1 flex-wrap mb-4">
                   {([["all", "All", "#D4A843"], ["Beginner", "Beginner", "#22c55e"], ["Intermediate", "Intermediate", "#f59e0b"], ["Advanced", "Advanced", "#ef4444"]] as const).map(([key, label, color]) => (
-                    <button key={key} onClick={() => setSongLibFilter(key as typeof songLibFilter)}
+                    <button key={key} onClick={() => { setSongLibFilter(key as typeof songLibFilter); setSongLibLimit(20); }}
                       className="font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border transition-all"
-                      style={songLibFilter === key ? { background: color, borderColor: color, color: "#0A0A0A" } : { borderColor: color + "40", color: color + "99" }}>
+                      style={songLibFilter === key ? { background: color, borderColor: color, color: "#121214" } : { borderColor: color + "40", color: color + "99" }}>
                       {label} ({diffCounts[key as keyof typeof diffCounts]})
                     </button>
                   ))}
@@ -1241,6 +1607,11 @@ export default function GuitarForgeApp() {
                   )}
                 </div>
 
+                {/* Showing count */}
+                <div className="font-readout text-[10px] text-[#555] mb-2">
+                  Showing {Math.min(songLibLimit, filtered.length)} of {filtered.length} songs
+                </div>
+
                 {/* Song cards */}
                 {filtered.length === 0 && (
                   <div className="panel p-8 text-center">
@@ -1248,7 +1619,7 @@ export default function GuitarForgeApp() {
                   </div>
                 )}
                 {(() => {
-                  const limited = songLibShowAll ? filtered : filtered.slice(0, 50);
+                  const limited = filtered.slice(0, songLibLimit);
                   return (<>
                     {limited.map(song => {
                       const dc = song.difficulty ? ({ Beginner: "#22c55e", Intermediate: "#f59e0b", Advanced: "#ef4444" }[song.difficulty] || "#888") : "#888";
@@ -1278,9 +1649,9 @@ export default function GuitarForgeApp() {
                         </div>
                       );
                     })}
-                    {!songLibShowAll && filtered.length > 50 && (
-                      <button type="button" onClick={() => setSongLibShowAll(true)} className="btn-ghost w-full mt-2 !text-[11px]">
-                        Show all {filtered.length} songs
+                    {songLibLimit < filtered.length && (
+                      <button type="button" onClick={() => setSongLibLimit(p => p + 20)} className="btn-ghost w-full mt-2 !text-[11px]">
+                        Load more ({filtered.length - songLibLimit} remaining)
                       </button>
                     )}
                   </>);
@@ -1331,7 +1702,7 @@ export default function GuitarForgeApp() {
                 const sd = STAGES.map((st, si) => ({ name: st.name, idx: si, ...(songProgress[week + "-" + song.id + "-" + si] || {}) }));
                 const dn = sd.filter((s) => s.done).length;
                 return (
-                  <div key={song.id} className="p-3 bg-[#0A0A0A] rounded-sm mb-2 border border-[#1a1a1a]">
+                  <div key={song.id} className="p-3 bg-[#121214] rounded-sm mb-2 border border-[#1a1a1a]">
                     <div className="flex justify-between mb-2"><span className="font-medium text-sm">{song.name}</span><span className="font-readout text-[11px] text-[#555]">{dn}/6</span></div>
                     <div className="vu vu-green !h-[3px] mb-2"><div className="vu-fill" style={{ width: Math.round((dn / 6) * 100) + "%" }} /></div>
                     {sd.map((s) => <div key={s.idx} className="flex gap-2 text-[11px] py-0.5"><div className={`led ${s.done ? "led-on" : "led-off"}`} style={{ width: 6, height: 6, marginTop: 5 }} /><span style={{ color: s.done ? "#ccc" : "#444" }}>{s.name}</span></div>)}
@@ -1430,6 +1801,7 @@ export default function GuitarForgeApp() {
           </div>
         );
       })()}
+    </div>
     </div>
     </ErrorBoundary>
   );

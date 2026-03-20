@@ -249,7 +249,7 @@ export default function SongModal({ song, onClose }: Props) {
                       <button key={opt.value} onClick={() => setProgress(opt.value)}
                         className={`font-label text-[10px] px-3 py-1.5 rounded-sm cursor-pointer border transition-all ${
                           progress === opt.value
-                            ? "bg-[#D4A843] text-[#0A0A0A] border-[#D4A843]"
+                            ? "bg-[#D4A843] text-[#121214] border-[#D4A843]"
                             : "border-[#333] text-[#666]"
                         }`}>{opt.label}</button>
                     ))}
