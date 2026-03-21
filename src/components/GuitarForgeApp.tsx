@@ -19,12 +19,15 @@ import AiCoachPage from "./AiCoachPage";
 import DarkAudioPlayer from "./DarkAudioPlayer";
 import LibraryEditor from "./LibraryEditor";
 import ErrorBoundary from "./ErrorBoundary";
+import { useAuth } from "./AuthProvider";
+import AuthPage from "./AuthPage";
 import SkillTreePage from "./SkillTreePage";
 import JamModePage from "./JamModePage";
 import { SONG_LIBRARY } from "@/lib/songs-data";
 import type { SongEntry } from "@/lib/types";
 import { buildStyle, recordUsage, saveToLibrary, getAllLibraryTracks, deleteFromLibrary } from "@/lib/suno";
 import type { LibraryTrack } from "@/lib/suno";
+import { syncData, uploadSettings } from "@/lib/cloud-sync";
 
 export default function GuitarForgeApp() {
   const [view, setViewRaw] = useState<View>("dash");
@@ -72,6 +75,15 @@ export default function GuitarForgeApp() {
   const [sunoSuggestLoading, setSunoSuggestLoading] = useState(false);
   const [sunoSuggestDismissed, setSunoSuggestDismissed] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
+
+  // ── Auth ──
+  const { user, loading: authLoading } = useAuth();
+  const [showAuthPage, setShowAuthPage] = useState(false);
+  const [authBannerDismissed, setAuthBannerDismissed] = useState(false);
+  const [lastSynced, setLastSynced] = useState<Date | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const syncedUserRef = useRef<string | null>(null);
 
   // ── Library: My Songs, Recordings, Backing Tracks ──
   const [mySongs, setMySongs] = useState<number[]>([]); // array of song IDs
@@ -197,6 +209,51 @@ export default function GuitarForgeApp() {
     }, 500);
     return () => clearTimeout(timer);
   }, [ready, week, mode, scale, style, dayCats, dayHrs, dayExMap, doneMap, bpmLog, noteLog, songs, songProgress, exEdits, customSongs, songLibProgress, mySongs]);
+
+  // ── Cloud Sync: download on login ──
+  useEffect(() => {
+    if (!user || !ready || syncedUserRef.current === user.id) return;
+    syncedUserRef.current = user.id;
+    setSyncing(true);
+    setSyncError(null);
+    const localData = { week, mode, scale, style, dayCats, dayHrs, dayExMap, doneMap, bpmLog, noteLog, songs, songProgress, exEdits, customSongs, songLibProgress, mySongs };
+    syncData(user.id, localData)
+      .then((merged) => {
+        // Apply merged data to state
+        const d = merged as Record<string, any>;
+        if (d.week) setWeek(d.week);
+        if (d.mode) setMode(d.mode);
+        if (d.scale) setScale(d.scale);
+        if (d.style && STYLES.includes(d.style)) setStyle(d.style);
+        if (d.dayCats) setDayCats(d.dayCats);
+        if (d.dayHrs) setDayHrs(d.dayHrs);
+        if (d.dayExMap) setDayExMap(d.dayExMap);
+        if (d.doneMap) setDoneMap(d.doneMap);
+        if (d.bpmLog) setBpmLog(d.bpmLog);
+        if (d.noteLog) setNoteLog(d.noteLog);
+        if (d.songs) setSongs(d.songs);
+        if (d.songProgress) setSongProgress(d.songProgress);
+        if (d.exEdits) setExEdits(d.exEdits);
+        if (d.customSongs) setCustomSongs(d.customSongs);
+        if (d.songLibProgress) setSongLibProgress(d.songLibProgress);
+        if (d.mySongs) setMySongs(d.mySongs);
+        setLastSynced(new Date());
+      })
+      .catch((err) => { setSyncError(String(err?.message || err)); })
+      .finally(() => setSyncing(false));
+  }, [user, ready]);
+
+  // ── Cloud Sync: upload on save (debounced) ──
+  useEffect(() => {
+    if (!ready || !user) return;
+    const timer = setTimeout(() => {
+      const data = { week, mode, scale, style, dayCats, dayHrs, dayExMap, doneMap, bpmLog, noteLog, songs, songProgress, exEdits, customSongs, songLibProgress, mySongs };
+      uploadSettings(user.id, data)
+        .then(() => setLastSynced(new Date()))
+        .catch(() => { /* silent — local save already succeeded */ });
+    }, 3000); // 3s debounce for cloud uploads
+    return () => clearTimeout(timer);
+  }, [ready, user, week, mode, scale, style, dayCats, dayHrs, dayExMap, doneMap, bpmLog, noteLog, songs, songProgress, exEdits, customSongs, songLibProgress, mySongs]);
 
   // ── Streak & Calendar update when exercise is marked done ──
   const updateStreakAndCalendar = useCallback((newDoneMap: BoolMap) => {
@@ -466,11 +523,15 @@ export default function GuitarForgeApp() {
   DAYS.forEach((d) => (dayExMap[d] || []).forEach((e) => { wTot++; wMin += e.m; if (doneMap[week + "-" + d + "-" + e.id]) wDn++; }));
   const wPct = wTot > 0 ? Math.round((wDn / wTot) * 100) : 0;
 
-  if (!ready) return (
+  if (!ready || authLoading) return (
     <div className="h-screen flex flex-col items-center justify-center gap-3" style={{ background: "#121214" }}>
       <div className="font-heading text-3xl font-black text-[#D4A843]">GuitarForge</div>
       <div className="font-label text-[10px] text-[#555]">Loading...</div>
     </div>
+  );
+
+  if (showAuthPage && !user) return (
+    <AuthPage onSkip={() => setShowAuthPage(false)} />
   );
 
   // ── Onboarding Wizard completion ──
@@ -663,7 +724,7 @@ export default function GuitarForgeApp() {
   return (
     <ErrorBoundary>
     <div className="flex h-screen text-white" style={{ background: "#121214" }} dir="ltr">
-      <Navbar view={view} onViewChange={setView} />
+      <Navbar view={view} onViewChange={setView} onShowAuth={() => setShowAuthPage(true)} lastSynced={lastSynced} syncing={syncing} />
       <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden">
       {view === "studio" && <StudioPage channelScale={scale} channelMode={mode} channelStyle={style} />}
       {view === "jam" && <JamModePage />}
@@ -828,6 +889,21 @@ export default function GuitarForgeApp() {
 
         {/* ══ DASHBOARD ══ */}
         {view === "dash" && (<div className="animate-fade-in">
+          {/* Auth banner for guests */}
+          {!user && !authBannerDismissed && (
+            <div className="flex items-center justify-between px-4 py-2.5 mb-3 rounded-lg" style={{ background: "rgba(212,168,67,0.08)", border: "1px solid rgba(212,168,67,0.2)" }}>
+              <div className="flex items-center gap-2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span className="text-[13px]" style={{ color: "#D4A843" }}>Sign in to sync your progress across devices</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => setShowAuthPage(true)} className="text-[12px] font-medium px-3 py-1 rounded-md" style={{ background: "#D4A843", color: "#0a0a0a" }}>Sign In</button>
+                <button type="button" aria-label="Dismiss" onClick={() => setAuthBannerDismissed(true)} className="text-[12px] px-1.5 py-1 rounded" style={{ color: "#666" }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+              </div>
+            </div>
+          )}
           {/* -- 1. Hero Card -- */}
           {(() => {
             const dayPct = curExList.length > 0 ? Math.round((curDone / curExList.length) * 100) : 0;

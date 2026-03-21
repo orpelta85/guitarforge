@@ -45,6 +45,7 @@ export interface SongEntry {
   artistCountry?: string;
   artistTags?: string;
   gp?: boolean;
+  gpPath?: string;
 }
 
 export interface Stage {

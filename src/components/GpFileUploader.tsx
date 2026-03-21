@@ -4,12 +4,13 @@ import { useState, useRef, useEffect, useCallback } from "react";
 interface TrackInfo { index: number; name: string; volume: number; isMuted: boolean; isSolo: boolean }
 interface Bookmark { name: string; startBar: number; endBar: number }
 
-export default function GpFileUploader({ exerciseId, tex, songName }: { exerciseId?: string; tex?: string; songName?: string }) {
+export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { exerciseId?: string; tex?: string; songName?: string; gpUrl?: string }) {
   const [fileData, setFileData] = useState<Uint8Array | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [savedIndicator, setSavedIndicator] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [gpUrlLoading, setGpUrlLoading] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [ready, setReady] = useState(false);
@@ -89,6 +90,79 @@ export default function GpFileUploader({ exerciseId, tex, songName }: { exercise
       setSavedIndicator(true);
     } catch {}
   }
+
+  // Auto-load GP file from Supabase Storage URL (with IndexedDB cache)
+  useEffect(() => {
+    if (!gpUrl || fileData) return;
+    let cancelled = false;
+    setGpUrlLoading(true);
+    setError(null);
+
+    const cacheKey = `gf-gp-cache-${gpUrl}`;
+
+    async function loadFromCache(): Promise<Uint8Array | null> {
+      try {
+        const db = await new Promise<IDBDatabase>((resolve, reject) => {
+          const req = indexedDB.open("gf-gp-cache", 1);
+          req.onupgradeneeded = () => { req.result.createObjectStore("files"); };
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+        const tx = db.transaction("files", "readonly");
+        const store = tx.objectStore("files");
+        const data = await new Promise<ArrayBuffer | undefined>((resolve, reject) => {
+          const req = store.get(cacheKey);
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+        db.close();
+        if (data) return new Uint8Array(data);
+      } catch {}
+      return null;
+    }
+
+    async function saveToCache(data: Uint8Array): Promise<void> {
+      try {
+        const db = await new Promise<IDBDatabase>((resolve, reject) => {
+          const req = indexedDB.open("gf-gp-cache", 1);
+          req.onupgradeneeded = () => { req.result.createObjectStore("files"); };
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+        const tx = db.transaction("files", "readwrite");
+        tx.objectStore("files").put(data.buffer, cacheKey);
+        db.close();
+      } catch {}
+    }
+
+    (async () => {
+      // Try IndexedDB cache first
+      const cached = await loadFromCache();
+      if (cached && !cancelled) {
+        setFileData(cached);
+        setFileName(gpUrl.split("/").pop() || "tab.gp");
+        setGpUrlLoading(false);
+        return;
+      }
+      // Fetch from Supabase Storage
+      try {
+        const res = await fetch(gpUrl);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const buf = await res.arrayBuffer();
+        if (cancelled) return;
+        const data = new Uint8Array(buf);
+        setFileData(data);
+        setFileName(gpUrl.split("/").pop() || "tab.gp");
+        await saveToCache(data);
+      } catch (err) {
+        if (!cancelled) setError("Failed to load GP file: " + String(err));
+      } finally {
+        if (!cancelled) setGpUrlLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [gpUrl, fileData]);
 
   // Auto-load AlphaTex if provided and no file uploaded
   useEffect(() => {
@@ -428,7 +502,12 @@ export default function GpFileUploader({ exerciseId, tex, songName }: { exercise
 
   return (
     <div>
-      {!fileData && !texLoaded ? (
+      {gpUrlLoading ? (
+        <div className="panel p-6 text-center">
+          <div className="inline-block w-5 h-5 border-2 border-[#D4A843] border-t-transparent rounded-full animate-spin mb-2" />
+          <div className="font-label text-sm text-[#555]">Loading Guitar Pro tab...</div>
+        </div>
+      ) : !fileData && !texLoaded ? (
         <div onDragOver={e => e.preventDefault()}
           onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f && /\.(gp[345x]?|gpx?)$/i.test(f.name)) handleFile(f); }}
           className="panel p-6 text-center cursor-pointer border-dashed !border-[#333] hover:!border-[#D4A843]/40 transition-all"

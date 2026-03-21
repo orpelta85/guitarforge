@@ -2,12 +2,16 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { useAuth } from "./AuthProvider";
 
 type View = "dash" | "daily" | "lib" | "songs" | "learn" | "studio" | "jam" | "log" | "profile" | "coach" | "skills";
 
 interface NavbarProps {
   view: View;
   onViewChange: (view: View) => void;
+  onShowAuth?: () => void;
+  lastSynced?: Date | null;
+  syncing?: boolean;
 }
 
 // ── SVG Icon components (inline, Lucide/Feather style) ──
@@ -158,8 +162,9 @@ const MORE_DRAWER_ITEMS: NavItem[] = [
   { id: "suno", label: "Suno AI", icon: IconSuno },
 ];
 
-export default function Navbar({ view, onViewChange }: NavbarProps) {
+export default function Navbar({ view, onViewChange, onShowAuth, lastSynced, syncing }: NavbarProps) {
   const [moreOpen, setMoreOpen] = useState(false);
+  const { user, logout } = useAuth();
 
   const handleNav = (id: View | "suno") => {
     if (id === "suno") {
@@ -214,18 +219,69 @@ export default function Navbar({ view, onViewChange }: NavbarProps) {
 
         {/* Profile at bottom */}
         <div className="sidebar-profile">
-          <button
-            onClick={() => onViewChange("profile")}
-            className={`sidebar-profile-btn ${view === "profile" ? "sidebar-item--active" : ""}`}
-          >
-            <div className="sidebar-avatar">
-              <IconProfile />
+          {user ? (
+            <div className="flex flex-col gap-1 w-full">
+              <button
+                onClick={() => onViewChange("profile")}
+                className={`sidebar-profile-btn ${view === "profile" ? "sidebar-item--active" : ""}`}
+              >
+                {user.user_metadata?.avatar_url ? (
+                  <img src={user.user_metadata.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
+                ) : (
+                  <div className="sidebar-avatar">
+                    <IconProfile />
+                  </div>
+                )}
+                <div className="flex flex-col items-start overflow-hidden">
+                  <span className="text-[13px] font-medium truncate w-full" style={{ color: view === "profile" ? "#D4A843" : "#ccc" }}>
+                    {user.user_metadata?.full_name || user.email?.split("@")[0] || "User"}
+                  </span>
+                  <span className="text-[10px] truncate w-full" style={{ color: "var(--text-muted)" }}>{user.email}</span>
+                </div>
+              </button>
+              {/* Cloud sync indicator */}
+              <div className="text-[9px] font-label px-3 mt-0.5" style={{ color: "var(--text-muted)" }}>
+                {syncing ? (
+                  <span className="flex items-center gap-1"><span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />Syncing...</span>
+                ) : lastSynced ? (
+                  <span className="flex items-center gap-1"><span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500" />Synced {lastSynced.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                ) : null}
+              </div>
+              <button
+                onClick={() => logout()}
+                className="text-[11px] px-3 py-1.5 rounded-md transition-colors text-left"
+                style={{ color: "#888" }}
+                onMouseEnter={e => (e.currentTarget.style.color = "#ef4444")}
+                onMouseLeave={e => (e.currentTarget.style.color = "#888")}
+              >
+                Sign Out
+              </button>
             </div>
-            <div className="flex flex-col items-start">
-              <span className="text-[13px] font-medium" style={{ color: view === "profile" ? "#D4A843" : "#ccc" }}>orpelta85</span>
-              <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Profile & Settings</span>
+          ) : (
+            <div className="flex flex-col gap-1 w-full">
+              <button
+                onClick={() => onViewChange("profile")}
+                className={`sidebar-profile-btn ${view === "profile" ? "sidebar-item--active" : ""}`}
+              >
+                <div className="sidebar-avatar">
+                  <IconProfile />
+                </div>
+                <div className="flex flex-col items-start">
+                  <span className="text-[13px] font-medium" style={{ color: view === "profile" ? "#D4A843" : "#ccc" }}>Guest</span>
+                  <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Profile & Settings</span>
+                </div>
+              </button>
+              {onShowAuth && (
+                <button
+                  onClick={onShowAuth}
+                  className="text-[11px] px-3 py-1.5 rounded-md transition-colors text-left"
+                  style={{ color: "#D4A843" }}
+                >
+                  Sign in to sync
+                </button>
+              )}
             </div>
-          </button>
+          )}
         </div>
       </aside>
 

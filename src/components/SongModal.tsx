@@ -116,7 +116,10 @@ export default function SongModal({ song, onClose }: Props) {
 
   const ytQuery = `how to play ${song.title} ${song.artist} guitar tutorial`;
   const dc = song.difficulty ? DIFFICULTY_COLORS[song.difficulty] || "#888" : "#888";
-  const hasGp = song.gp || !!song.gpFileName;
+  const hasGp = song.gp || !!song.gpFileName || !!song.gpPath;
+  const gpStorageUrl = song.gpPath
+    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/gp-tabs/${song.gpPath}`
+    : undefined;
 
   return (
     <div onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
@@ -246,7 +249,7 @@ export default function SongModal({ song, onClose }: Props) {
                 <div className="font-label text-[11px] tracking-wider text-[var(--gold)] mb-3 flex items-center gap-2">
                   <div className="led led-gold" /> GUITAR PRO TAB
                 </div>
-                <GpFileUploader exerciseId={`song-${song.id}`} songName={song.title} />
+                <GpFileUploader exerciseId={`song-${song.id}`} songName={song.title} gpUrl={gpStorageUrl} />
                 <div className="flex gap-1.5 flex-wrap mt-2">
                   <button type="button" onClick={async () => {
                     try {
