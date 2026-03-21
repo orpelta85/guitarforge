@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import type { SongEntry } from "@/lib/types";
 import { ytSearch } from "@/lib/helpers";
 import { useFocusTrap } from "./ExerciseModal";
+import StemSeparator from "./StemSeparator";
 import dynamic from "next/dynamic";
 const GpFileUploader = dynamic(() => import("./GpFileUploader"), {
   ssr: false,
@@ -249,6 +250,14 @@ export default function SongModal({ song, onClose }: Props) {
                   <button type="button" onClick={() => window.open(ytSearch(`${song.title} ${song.artist} original`), "_blank")} className="btn-ghost !text-[10px] !px-2.5 !py-1.5">Original Song</button>
                   <button type="button" onClick={() => window.open(ytSearch(`${song.title} ${song.artist} live`), "_blank")} className="btn-ghost !text-[10px] !px-2.5 !py-1.5">Live Version</button>
                 </div>
+
+                {/* Stem Separation */}
+                {btVideoId && (
+                  <StemSeparator
+                    audioUrl={`https://www.youtube.com/watch?v=${btVideoId}`}
+                    cacheKey={`song-stems-${song.id}`}
+                  />
+                )}
               </div>
 
               {/* GP file uploader */}

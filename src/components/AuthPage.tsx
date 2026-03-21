@@ -44,8 +44,20 @@ export default function AuthPage({ onSkip }: { onSkip: () => void }) {
 
   const handleGoogle = async () => {
     setError("");
-    const { error: authError } = await loginWithGoogle();
-    if (authError) setError(authError.message);
+    setSuccess("");
+    try {
+      const { error: authError } = await loginWithGoogle();
+      if (authError) {
+        // If Google OAuth is not configured, show a friendly message
+        if (authError.message?.includes("provider") || authError.message?.includes("OAuth") || authError.message?.includes("not enabled")) {
+          setError("Google Sign-In coming soon! Use email for now.");
+        } else {
+          setError(authError.message);
+        }
+      }
+    } catch {
+      setError("Google Sign-In coming soon! Use email for now.");
+    }
   };
 
   return (

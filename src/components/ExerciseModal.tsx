@@ -9,6 +9,7 @@ import TimerBox from "./TimerBox";
 import MetronomeBox from "./MetronomeBox";
 import RecorderBox from "./RecorderBox";
 import DarkAudioPlayer from "./DarkAudioPlayer";
+import StemSeparator from "./StemSeparator";
 import dynamic from "next/dynamic";
 const GpFileUploader = dynamic(() => import("./GpFileUploader"), {
   ssr: false,
@@ -251,10 +252,18 @@ function SunoSection({ ex, scale, mode, suno }: {
         </div>
       )}
       {suno.sunoTrack && !suno.sunoLoading && (
-        <button type="button" onClick={() => { suno.setSunoTrack(null); suno.setSunoConfirm(false); suno.setSunoError(""); }}
-          className="text-[10px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] cursor-pointer transition-colors mt-1">
-          Generate new track
-        </button>
+        <div className="flex items-center gap-3 mt-1">
+          <button type="button" onClick={() => { suno.setSunoTrack(null); suno.setSunoConfirm(false); suno.setSunoError(""); }}
+            className="text-[10px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] cursor-pointer transition-colors">
+            Generate new track
+          </button>
+        </div>
+      )}
+      {suno.sunoTrack && !suno.sunoLoading && (
+        <StemSeparator
+          audioUrl={suno.sunoTrack.audioUrl}
+          cacheKey={`ex-stems-${ex.id}-${suno.sunoTrack.clipId}`}
+        />
       )}
     </div>
   );
@@ -354,11 +363,12 @@ function TutorialTabContent({ exerciseName, ytQuery }: { exerciseName: string; y
 }
 
 /* ── Log tab (shared across all types) ── */
-function LogTabContent({ bpm, note, onBpmChange, onNoteChange, week, day, exId }: {
+function LogTabContent({ bpm, note, onBpmChange, onNoteChange, week, day, exId, exerciseName }: {
   bpm: string; note: string;
   onBpmChange: (v: string) => void;
   onNoteChange: (v: string) => void;
   week: number; day: string; exId: number;
+  exerciseName?: string;
 }) {
   return (
     <div>
@@ -379,7 +389,7 @@ function LogTabContent({ bpm, note, onBpmChange, onNoteChange, week, day, exId }
         </label>
       </div>
       <SectionLabel color="red">RECORDINGS</SectionLabel>
-      <RecorderBox storageKey={week + "-" + day + "-" + exId} />
+      <RecorderBox storageKey={week + "-" + day + "-" + exId} exerciseName={exerciseName} />
     </div>
   );
 }
@@ -503,7 +513,7 @@ function SongWindow({ exercise: ex, mode, scale, style, week, day, savedYtUrl, b
               </div>
               <div>
                 <SectionLabel color="red">RECORDER</SectionLabel>
-                <RecorderBox storageKey={week + "-" + day + "-" + ex.id} />
+                <RecorderBox storageKey={week + "-" + day + "-" + ex.id} exerciseName={songName} />
               </div>
             </div>
           </div>
@@ -514,7 +524,7 @@ function SongWindow({ exercise: ex, mode, scale, style, week, day, savedYtUrl, b
         )}
 
         {tab === "log" && (
-          <LogTabContent bpm={bpm} note={note} onBpmChange={onBpmChange} onNoteChange={onNoteChange} week={week} day={day} exId={ex.id} />
+          <LogTabContent bpm={bpm} note={note} onBpmChange={onBpmChange} onNoteChange={onNoteChange} week={week} day={day} exId={ex.id} exerciseName={ex.songName || ex.n} />
         )}
       </div>
     </>
@@ -618,7 +628,7 @@ function ExerciseWindow({ exercise: ex, mode, scale, style, week, day, savedYtUr
             </div>
             <div ref={recorderRef}>
               <SectionLabel color="red">RECORDER</SectionLabel>
-              <RecorderBox storageKey={week + "-" + day + "-" + ex.id} />
+              <RecorderBox storageKey={week + "-" + day + "-" + ex.id} exerciseName={ex.n} />
             </div>
           </div>
         )}
@@ -628,7 +638,7 @@ function ExerciseWindow({ exercise: ex, mode, scale, style, week, day, savedYtUr
         )}
 
         {tab === "log" && (
-          <LogTabContent bpm={bpm} note={note} onBpmChange={onBpmChange} onNoteChange={onNoteChange} week={week} day={day} exId={ex.id} />
+          <LogTabContent bpm={bpm} note={note} onBpmChange={onBpmChange} onNoteChange={onNoteChange} week={week} day={day} exId={ex.id} exerciseName={ex.songName || ex.n} />
         )}
       </div>
     </>
@@ -747,7 +757,7 @@ function TheoryWindow({ exercise: ex, week, day, bpm, note, onBpmChange, onNoteC
 
         {/* LOG TAB */}
         {tab === "log" && (
-          <LogTabContent bpm={bpm} note={note} onBpmChange={onBpmChange} onNoteChange={onNoteChange} week={week} day={day} exId={ex.id} />
+          <LogTabContent bpm={bpm} note={note} onBpmChange={onBpmChange} onNoteChange={onNoteChange} week={week} day={day} exId={ex.id} exerciseName={ex.songName || ex.n} />
         )}
       </div>
     </>

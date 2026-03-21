@@ -2,8 +2,13 @@
 import { useState, useEffect, useRef } from "react";
 import type { SavedRecording } from "@/lib/types";
 import DarkAudioPlayer from "./DarkAudioPlayer";
+import AudioAnalyzer from "./AudioAnalyzer";
 
-interface RecorderBoxProps { storageKey: string; }
+interface RecorderBoxProps {
+  storageKey: string;
+  exerciseName?: string;
+  expectedNotes?: string[];
+}
 
 const IDB_NAME = "gf-recorder";
 const IDB_STORE = "recordings";
@@ -121,7 +126,7 @@ async function migrateFromLocalStorage(key: string): Promise<SavedRecording[] | 
   }
 }
 
-export default function RecorderBox({ storageKey }: RecorderBoxProps) {
+export default function RecorderBox({ storageKey, exerciseName, expectedNotes }: RecorderBoxProps) {
   const [isRec, setIsRec] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [savedList, setSavedList] = useState<SavedRecording[]>([]);
@@ -227,15 +232,19 @@ export default function RecorderBox({ storageKey }: RecorderBoxProps) {
       {micError && <div className="font-label text-[10px] text-[#C41E3A] mb-2">{micError}</div>}
 
       {audioUrl && (
-        <DarkAudioPlayer src={audioUrl} title="Recording" compact className="mb-2" />
+        <div className="mb-2">
+          <DarkAudioPlayer src={audioUrl} title="Recording" compact className="mb-1" />
+          <AudioAnalyzer audioUrl={audioUrl} exerciseName={exerciseName} expectedNotes={expectedNotes} />
+        </div>
       )}
 
       {savedList.length > 0 && (
         <div>
           <div className="font-label text-[9px] text-[#444] mb-1">Recordings ({savedList.length})</div>
           {savedList.map((item, idx) => (
-            <div key={idx} className="mb-1">
+            <div key={idx} className="mb-2">
               <DarkAudioPlayer src={item.d} title={item.dt} compact />
+              <AudioAnalyzer audioUrl={item.d} exerciseName={exerciseName} expectedNotes={expectedNotes} />
             </div>
           ))}
         </div>

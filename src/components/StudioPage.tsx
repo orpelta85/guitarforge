@@ -3,6 +3,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { SCALES, MODES, STYLES } from "@/lib/constants";
 import { buildStyle, saveToLibrary as saveSunoToLibrary, getAllLibraryTracks, deleteFromLibrary, updateLibraryTrack, getLibraryStats, getDailyUsage, recordUsage } from "@/lib/suno";
 import type { LibraryTrack } from "@/lib/suno";
+import LooperBox from "./LooperBox";
 
 // ── Types ──
 interface StudioTrack {
@@ -381,6 +382,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
   const [previewingRecId, setPreviewingRecId] = useState<string | null>(null);
   const [editingTrackName, setEditingTrackName] = useState<number | null>(null);
   const [showAddTrackMenu, setShowAddTrackMenu] = useState(false);
+  const [showLooper, setShowLooper] = useState(false);
   const [drumPlaying, setDrumPlaying] = useState(false);
   const [drumStep, setDrumStep] = useState(-1);
   const [expandedDrumTrackId, setExpandedDrumTrackId] = useState<number | null>(null);
@@ -1452,6 +1454,10 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
               className="flex items-center gap-1 px-2.5 py-1.5 rounded text-[9px] text-[#777] hover:text-[#888] transition-colors cursor-pointer border border-[#1e1e1e] hover:border-[#33333366]">
               {"\uD83D\uDCC1"} Import File
             </button>
+            <button onClick={() => setShowLooper(!showLooper)}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded text-[9px] transition-colors cursor-pointer border ${showLooper ? "text-[#22c55e] border-[#22c55e33]" : "text-[#777] hover:text-[#22c55e] border-[#1e1e1e] hover:border-[#22c55e33]"}`}>
+              {"\uD83D\uDD01"} Looper
+            </button>
           </div>
 
           {showAddTrackMenu && (
@@ -1478,12 +1484,32 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                 <span className="text-[16px]">{"\uD83C\uDFB5"}</span>
                 <div><div className="font-medium">AI Backing Track</div><div className="text-[9px] text-[#666]">Generate with Suno AI</div></div>
               </button>
+              <button onClick={() => { setShowLooper(true); setShowAddTrackMenu(false); }}
+                className="w-full text-left text-[11px] text-[#ccc] hover:bg-[#2a2a2a] px-4 py-2.5 cursor-pointer transition-colors flex items-center gap-3">
+                <span className="text-[16px]">{"\uD83D\uDD01"}</span>
+                <div><div className="font-medium">Looper</div><div className="text-[9px] text-[#666]">Record & overdub loops</div></div>
+              </button>
             </div>
           )}
 
           <input ref={fileRef} type="file" accept="audio/wav,audio/mp3,audio/mpeg,audio/ogg,audio/flac,audio/*" className="hidden" multiple
             onChange={(e) => { if (e.target.files) Array.from(e.target.files).forEach((f) => importFile(f)); }} />
         </div>
+
+        {/* ─── LOOPER PANEL ─── */}
+        {showLooper && (
+          <div className="rounded-lg overflow-hidden mb-2" style={{ background: "#111", border: "1px solid #22c55e33" }}>
+            <div className="flex items-center justify-between px-3 py-2" style={{ background: "#111", borderBottom: "1px solid #222" }}>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-[#22c55e] font-medium">Looper</span>
+              </div>
+              <button type="button" onClick={() => setShowLooper(false)} className="text-[#555] hover:text-[#888] text-[14px] cursor-pointer">x</button>
+            </div>
+            <div className="p-3">
+              <LooperBox />
+            </div>
+          </div>
+        )}
 
         {/* ─── SUNO AI PANEL (collapsible) ─── */}
         {showSunoPanel && (
