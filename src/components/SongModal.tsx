@@ -1,7 +1,8 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { SongEntry } from "@/lib/types";
 import { ytSearch } from "@/lib/helpers";
+import { useFocusTrap } from "./ExerciseModal";
 import dynamic from "next/dynamic";
 const GpFileUploader = dynamic(() => import("./GpFileUploader"), {
   ssr: false,
@@ -121,10 +122,16 @@ export default function SongModal({ song, onClose }: Props) {
     ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/gp-tabs/${song.gpPath}`
     : undefined;
 
+  const modalRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(modalRef);
+
   return (
     <div onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-      className="exercise-modal-overlay">
-      <div className="exercise-modal-content">
+      className="exercise-modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Song: ${song.title} by ${song.artist}`}>
+      <div className="exercise-modal-content" ref={modalRef}>
 
         {/* DARK HEADER */}
         <div className="px-4 sm:px-6 py-4 sm:py-5 modal-dark-header">
@@ -142,7 +149,7 @@ export default function SongModal({ song, onClose }: Props) {
               {song.album && <div className="font-readout text-[12px] text-[var(--text-muted)] mt-0.5">{song.album}{song.year ? ` (${song.year})` : ""}{song.tuning && song.tuning !== "Standard" ? ` / ${song.tuning}` : ""}</div>}
             </div>
             <button type="button" onClick={onClose}
-              className="w-9 h-9 rounded-full bg-[var(--bg-elevated)] border border-[var(--border-accent)] flex items-center justify-center text-[var(--text-secondary)] text-lg cursor-pointer hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors flex-shrink-0"
+              className="w-9 h-9 min-w-[44px] min-h-[44px] rounded-full bg-[var(--bg-elevated)] border border-[var(--border-accent)] flex items-center justify-center text-[var(--text-secondary)] text-lg cursor-pointer hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors flex-shrink-0"
               aria-label="Close">
               ×
             </button>
@@ -153,7 +160,7 @@ export default function SongModal({ song, onClose }: Props) {
             <div className="flex gap-1 flex-wrap">
               {PROGRESS_OPTIONS.map(opt => (
                 <button type="button" key={opt.value} onClick={() => setProgress(opt.value)}
-                  className={`font-label text-[10px] px-2.5 py-1 rounded cursor-pointer border transition-all ${
+                  className={`font-label text-[10px] px-2.5 py-1 min-h-[44px] rounded cursor-pointer border transition-all ${
                     progress === opt.value
                       ? "bg-[var(--gold)] text-[#121214] border-[var(--gold)]"
                       : "border-[var(--border-panel)] text-[var(--text-muted)]"
@@ -171,7 +178,7 @@ export default function SongModal({ song, onClose }: Props) {
             { id: "log" as Tab, label: "Log" },
           ]).map(({ id, label }) => (
             <button type="button" key={id} onClick={() => setTab(id)}
-              className={`flex-1 py-3 font-label text-[12px] cursor-pointer border-b-2 transition-all ${
+              className={`flex-1 py-3 min-h-[44px] font-label text-[12px] cursor-pointer border-b-2 transition-all ${
                 tab === id ? "border-[var(--gold)] text-[var(--gold)]" : "border-transparent text-[var(--text-muted)]"
               }`}>{label}</button>
           ))}
@@ -353,8 +360,9 @@ export default function SongModal({ song, onClose }: Props) {
                   <div className="flex gap-1">
                     {[1, 2, 3, 4, 5].map(s => (
                       <button type="button" key={s} onClick={() => setRating(s === rating ? 0 : s)}
-                        className={`text-xl cursor-pointer bg-transparent border-none transition-colors ${s <= rating ? "text-[var(--gold)]" : "text-[var(--border-panel)]"}`}
-                        style={{ textShadow: s <= rating ? "0 0 6px rgba(212,168,67,0.4)" : "none" }}>
+                        className={`text-xl cursor-pointer bg-transparent border-none transition-colors min-w-[44px] min-h-[44px] ${s <= rating ? "text-[var(--gold)]" : "text-[var(--border-panel)]"}`}
+                        style={{ textShadow: s <= rating ? "0 0 6px rgba(212,168,67,0.4)" : "none" }}
+                        aria-label={`Rate ${s} star${s > 1 ? "s" : ""}`}>
                         ★
                       </button>
                     ))}
@@ -367,7 +375,7 @@ export default function SongModal({ song, onClose }: Props) {
                   <div className="flex gap-1.5 flex-wrap">
                     {PROGRESS_OPTIONS.map(opt => (
                       <button type="button" key={opt.value} onClick={() => setProgress(opt.value)}
-                        className={`font-label text-[10px] px-3 py-1.5 rounded cursor-pointer border transition-all ${
+                        className={`font-label text-[10px] px-3 py-1.5 min-h-[44px] rounded cursor-pointer border transition-all ${
                           progress === opt.value
                             ? "bg-[var(--gold)] text-[#121214] border-[var(--gold)]"
                             : "border-[var(--border-panel)] text-[var(--text-muted)]"

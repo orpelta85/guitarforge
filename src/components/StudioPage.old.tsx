@@ -1,0 +1,4004 @@
+"use client";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { SCALES, MODES, STYLES } from "@/lib/constants";
+import { buildStyle, saveToLibrary as saveSunoToLibrary, getAllLibraryTracks, deleteFromLibrary, updateLibraryTrack, getLibraryStats, getDailyUsage, recordUsage } from "@/lib/suno";
+import type { LibraryTrack } from "@/lib/suno";
+
+// ── Types ──
+interface TrackEffects {
+  reverb: { wet: number; decay: number; enabled: boolean };
+  delay: { wet: number; time: number; feedback: number; enabled: boolean };
+  distortion: { wet: number; amount: number; enabled: boolean };
+  eq: { low: number; mid: number; high: number; enabled: boolean };
+  chorus: { wet: number; frequency: number; depth: number; enabled: boolean };
+  compressor: { threshold: number; ratio: number; attack: number; release: number; enabled: boolean };
+}
+
+interface TrackInputSettings {
+  deviceId: string;
+  channel: "mono-l" | "mono-r" | "stereo";
+  gain: number;
+  monitoring: boolean;
+}
+
+interface StudioTrack {
+  id: number;
+  name: string;
+  color: string;
+  audioBlob: Blob | null;
+  audioUrl: string | null;
+  volume: number;
+  pan: number;
+  muted: boolean;
+  solo: boolean;
+  recordArm: boolean;
+  collapsed: boolean;
+  type: "recording" | "import" | "suno" | "mic" | "file" | "youtube" | "drum";
+  effects: TrackEffects;
+  inputSettings?: TrackInputSettings;
+  drumPattern?: boolean[][];
+}
+
+interface TrackRegion {
+  id: string;
+  trackId: number;
+  startTime: number;
+  duration: number;
+  offset: number; // trim start within the original buffer
+  peaks: number[];
+  bufferDuration: number;
+}
+
+type ToneModule = typeof import("tone");
+
+interface ToneNodes {
+  player: InstanceType<ToneModule["Player"]>;
+  eq: InstanceType<ToneModule["EQ3"]>;
+  distortion: InstanceType<ToneModule["Distortion"]>;
+  chorus: InstanceType<ToneModule["Chorus"]>;
+  delay: InstanceType<ToneModule["FeedbackDelay"]>;
+  reverb: InstanceType<ToneModule["Reverb"]>;
+  channel: InstanceType<ToneModule["Channel"]>;
+}
+
+interface WaveSurferInstance {
+  destroy: () => void;
+  loadBlob: (blob: Blob) => Promise<void>;
+  load: (url: string) => Promise<void>;
+  setTime: (t: number) => void;
+  zoom: (pxPerSec: number) => void;
+  getDuration: () => number;
+  getCurrentTime: () => number;
+  on: (event: string, cb: (...args: unknown[]) => void) => void;
+  getWrapper: () => HTMLElement;
+}
+
+interface SavedRecording {
+  id: string;
+  name: string;
+  date: string;
+  duration: number;
+  format: "wav" | "mp3";
+}
+
+// ── IndexedDB helpers ──
+const IDB_NAME = "gf-studio";
+const IDB_STORE = "recordings";
+
+function openRecordingsDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(IDB_STORE)) {
+        db.createObjectStore(IDB_STORE, { keyPath: "id" });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function idbSaveRecording(id: string, name: string, blob: Blob, duration: number, format: "wav" | "mp3" = "wav"): Promise<SavedRecording> {
+  const db = await openRecordingsDB();
+  const meta: SavedRecording = { id, name, date: new Date().toISOString(), duration, format };
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, "readwrite");
+    tx.objectStore(IDB_STORE).put({ ...meta, blob });
+    tx.oncomplete = () => {
+      const existing: SavedRecording[] = JSON.parse(localStorage.getItem("gf-recordings") || "[]");
+      const updated = existing.filter((r) => r.id !== id);
+      updated.unshift(meta);
+      localStorage.setItem("gf-recordings", JSON.stringify(updated));
+      resolve(meta);
+    };
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function idbLoadRecordings(): Promise<SavedRecording[]> {
+  try {
+    return JSON.parse(localStorage.getItem("gf-recordings") || "[]");
+  } catch { return []; }
+}
+
+async function idbGetBlob(id: string): Promise<Blob | null> {
+  const db = await openRecordingsDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, "readonly");
+    const req = tx.objectStore(IDB_STORE).get(id);
+    req.onsuccess = () => resolve(req.result?.blob ?? null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function idbDeleteRecording(id: string): Promise<void> {
+  const db = await openRecordingsDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, "readwrite");
+    tx.objectStore(IDB_STORE).delete(id);
+    tx.oncomplete = () => {
+      const existing: SavedRecording[] = JSON.parse(localStorage.getItem("gf-recordings") || "[]");
+      localStorage.setItem("gf-recordings", JSON.stringify(existing.filter((r) => r.id !== id)));
+      resolve();
+    };
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function idbRenameRecording(id: string, newName: string): Promise<void> {
+  const db = await openRecordingsDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, "readwrite");
+    const store = tx.objectStore(IDB_STORE);
+    const req = store.get(id);
+    req.onsuccess = () => {
+      if (req.result) {
+        req.result.name = newName;
+        store.put(req.result);
+      }
+    };
+    tx.oncomplete = () => {
+      const existing: SavedRecording[] = JSON.parse(localStorage.getItem("gf-recordings") || "[]");
+      const rec = existing.find((r) => r.id === id);
+      if (rec) rec.name = newName;
+      localStorage.setItem("gf-recordings", JSON.stringify(existing));
+      resolve();
+    };
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+const TRACK_COLORS = ["#C41E3A", "#D4A843", "#8b5cf6", "#06b6d4", "#22c55e", "#f97316", "#ec4899", "#14b8a6"];
+
+const MUSICAL_KEYS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+const MUSICAL_MODES = ["Major", "Minor", "Dorian", "Mixolydian", "Phrygian", "Lydian"];
+
+const SHORTCUT_HINTS: Record<string, string> = {
+  rewind: "Enter",
+  stop: "",
+  play: "Space",
+  record: "R",
+  loop: "C",
+  metronome: "M",
+  snap: "G",
+};
+
+const DEFAULT_EFFECTS: TrackEffects = {
+  reverb: { wet: 0, decay: 1.5, enabled: false },
+  delay: { wet: 0, time: 0.25, feedback: 0.3, enabled: false },
+  distortion: { wet: 0, amount: 0, enabled: false },
+  eq: { low: 0, mid: 0, high: 0, enabled: false },
+  chorus: { wet: 0, frequency: 1.5, depth: 0.7, enabled: false },
+  compressor: { threshold: -24, ratio: 4, attack: 0.003, release: 0.25, enabled: false },
+};
+
+interface AmpPreset {
+  name: string;
+  label: string;
+  effects: Partial<TrackEffects>;
+}
+
+const AMP_PRESETS: AmpPreset[] = [
+  {
+    name: "clean", label: "Clean",
+    effects: {
+      eq: { low: 2, mid: 0, high: 3, enabled: true },
+      chorus: { wet: 0.2, frequency: 1.5, depth: 0.7, enabled: true },
+      distortion: { wet: 0, amount: 0, enabled: false },
+      delay: { wet: 0, time: 0.25, feedback: 0.3, enabled: false },
+      reverb: { wet: 0, decay: 1.5, enabled: false },
+      compressor: { threshold: -24, ratio: 4, attack: 0.003, release: 0.25, enabled: false },
+    },
+  },
+  {
+    name: "crunch", label: "Crunch",
+    effects: {
+      distortion: { wet: 0.4, amount: 0.3, enabled: true },
+      eq: { low: 3, mid: 4, high: 1, enabled: true },
+      chorus: { wet: 0, frequency: 1.5, depth: 0.7, enabled: false },
+      delay: { wet: 0, time: 0.25, feedback: 0.3, enabled: false },
+      reverb: { wet: 0, decay: 1.5, enabled: false },
+      compressor: { threshold: -24, ratio: 4, attack: 0.003, release: 0.25, enabled: false },
+    },
+  },
+  {
+    name: "highgain", label: "High Gain",
+    effects: {
+      distortion: { wet: 0.8, amount: 0.7, enabled: true },
+      eq: { low: 5, mid: 6, high: 2, enabled: true },
+      reverb: { wet: 0.15, decay: 1.5, enabled: true },
+      chorus: { wet: 0, frequency: 1.5, depth: 0.7, enabled: false },
+      delay: { wet: 0, time: 0.25, feedback: 0.3, enabled: false },
+      compressor: { threshold: -20, ratio: 6, attack: 0.003, release: 0.25, enabled: true },
+    },
+  },
+  {
+    name: "lead", label: "Lead",
+    effects: {
+      distortion: { wet: 0.6, amount: 0.5, enabled: true },
+      delay: { wet: 0.3, time: 0.25, feedback: 0.3, enabled: true },
+      reverb: { wet: 0.25, decay: 1.5, enabled: true },
+      eq: { low: 0, mid: 0, high: 0, enabled: false },
+      chorus: { wet: 0, frequency: 1.5, depth: 0.7, enabled: false },
+      compressor: { threshold: -24, ratio: 4, attack: 0.003, release: 0.25, enabled: false },
+    },
+  },
+  {
+    name: "ambient", label: "Ambient",
+    effects: {
+      chorus: { wet: 0.4, frequency: 1.5, depth: 0.7, enabled: true },
+      delay: { wet: 0.5, time: 0.25, feedback: 0.5, enabled: true },
+      reverb: { wet: 0.6, decay: 5, enabled: true },
+      distortion: { wet: 0, amount: 0, enabled: false },
+      eq: { low: 0, mid: 0, high: 0, enabled: false },
+      compressor: { threshold: -24, ratio: 4, attack: 0.003, release: 0.25, enabled: false },
+    },
+  },
+];
+
+// Amp simulator presets from DAW-SPEC
+interface AmpSimPreset {
+  name: string;
+  label: string;
+  gain: number;
+  bass: number;
+  mid: number;
+  treble: number;
+  presence: number;
+  master: number;
+}
+
+const AMP_SIM_PRESETS: AmpSimPreset[] = [
+  { name: "clean", label: "Clean", gain: 2, bass: 5, mid: 6, treble: 6, presence: 5, master: 7 },
+  { name: "crunch", label: "Crunch", gain: 5, bass: 6, mid: 6, treble: 6, presence: 5, master: 5 },
+  { name: "highgain", label: "High Gain", gain: 8, bass: 6, mid: 5, treble: 6, presence: 6, master: 4 },
+  { name: "lead", label: "Lead", gain: 7, bass: 5, mid: 7, treble: 6, presence: 6, master: 5 },
+  { name: "modernmetal", label: "Modern Metal", gain: 9, bass: 7, mid: 4, treble: 7, presence: 7, master: 4 },
+];
+
+const TIME_SIGS: [number, number][] = [[4, 4], [3, 4], [6, 8], [2, 4], [5, 4], [7, 8]];
+
+// ── Drum Machine ──
+const DRUM_INSTRUMENTS = [
+  { name: "Kick", short: "KCK" },
+  { name: "Snare", short: "SNR" },
+  { name: "HiHat Closed", short: "HHC" },
+  { name: "HiHat Open", short: "HHO" },
+  { name: "Clap", short: "CLP" },
+  { name: "Ride", short: "RDE" },
+  { name: "Tom Low", short: "TML" },
+  { name: "Tom High", short: "TMH" },
+] as const;
+const DRUM_STEPS = 16;
+
+const DRUM_PRESETS: { name: string; pattern: boolean[][] }[] = [
+  { name: "Basic Rock", pattern: [
+    [true,false,false,false,true,false,false,false,true,false,false,false,true,false,false,false], // Kick
+    [false,false,false,false,true,false,false,false,false,false,false,false,true,false,false,false], // Snare
+    [true,false,true,false,true,false,true,false,true,false,true,false,true,false,true,false], // HHC
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // HHO
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Clap
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Ride
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Tom Low
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Tom High
+  ]},
+  { name: "Metal Double Bass", pattern: [
+    [true,false,true,false,true,false,true,false,true,false,true,false,true,false,true,false], // Kick
+    [false,false,false,false,true,false,false,false,false,false,false,false,true,false,false,false], // Snare
+    [true,false,true,false,true,false,true,false,true,false,true,false,true,false,true,false], // HHC
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // HHO
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Clap
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Ride
+    [false,false,false,false,false,false,false,false,false,false,false,true,false,false,false,false], // Tom Low
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,true,false], // Tom High
+  ]},
+  { name: "Blast Beat", pattern: [
+    [true,false,true,false,true,false,true,false,true,false,true,false,true,false,true,false], // Kick
+    [false,true,false,true,false,true,false,true,false,true,false,true,false,true,false,true], // Snare
+    [true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true], // HHC
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // HHO
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Clap
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Ride
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Tom Low
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Tom High
+  ]},
+  { name: "Half-Time", pattern: [
+    [true,false,false,false,false,false,false,false,true,false,false,false,false,false,false,false], // Kick
+    [false,false,false,false,false,false,false,false,true,false,false,false,false,false,false,false], // Snare
+    [true,false,true,false,true,false,true,false,true,false,true,false,true,false,true,false], // HHC
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // HHO
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Clap
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Ride
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Tom Low
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Tom High
+  ]},
+  { name: "Shuffle", pattern: [
+    [true,false,false,false,false,false,true,false,true,false,false,false,false,false,true,false], // Kick
+    [false,false,false,false,true,false,false,false,false,false,false,false,true,false,false,false], // Snare
+    [true,false,false,true,false,false,true,false,false,true,false,false,true,false,false,true], // HHC
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // HHO
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Clap
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Ride
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Tom Low
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Tom High
+  ]},
+  { name: "Punk Fast", pattern: [
+    [true,false,false,false,true,false,false,false,true,false,false,false,true,false,false,false], // Kick
+    [false,false,true,false,false,false,true,false,false,false,true,false,false,false,true,false], // Snare
+    [true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true], // HHC
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // HHO
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Clap
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Ride
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Tom Low
+    [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false], // Tom High
+  ]},
+];
+
+function createEmptyDrumPattern(): boolean[][] {
+  return DRUM_INSTRUMENTS.map(() => Array(DRUM_STEPS).fill(false));
+}
+
+// Bug fix #2: route all drum sounds through an output node instead of ctx.destination
+// so track volume/pan/mute/solo controls work on drum tracks
+function synthDrumHit(ctx: AudioContext | OfflineAudioContext, instrument: number, time: number, output?: AudioNode) {
+  const t = time;
+  const dest = output || ctx.destination;
+  switch (instrument) {
+    case 0: { // Kick: sine pitch drop
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(150, t);
+      osc.frequency.exponentialRampToValueAtTime(50, t + 0.12);
+      gain.gain.setValueAtTime(1, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+      osc.connect(gain).connect(dest);
+      osc.start(t); osc.stop(t + 0.25);
+      break;
+    }
+    case 1: { // Snare: noise burst + sine
+      const bufSize = Math.ceil(ctx.sampleRate * 0.15);
+      const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+      const noise = ctx.createBufferSource();
+      noise.buffer = buf;
+      const ng = ctx.createGain();
+      ng.gain.setValueAtTime(0.6, t);
+      ng.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+      noise.connect(ng).connect(dest);
+      noise.start(t); noise.stop(t + 0.15);
+      const osc = ctx.createOscillator();
+      const og = ctx.createGain();
+      osc.type = "sine"; osc.frequency.value = 180;
+      og.gain.setValueAtTime(0.7, t);
+      og.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+      osc.connect(og).connect(dest);
+      osc.start(t); osc.stop(t + 0.1);
+      break;
+    }
+    case 2: { // HiHat Closed: short HP noise
+      const bufSize = Math.ceil(ctx.sampleRate * 0.05);
+      const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+      const noise = ctx.createBufferSource();
+      noise.buffer = buf;
+      const hp = ctx.createBiquadFilter();
+      hp.type = "highpass"; hp.frequency.value = 7000;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.3, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+      noise.connect(hp).connect(g).connect(dest);
+      noise.start(t); noise.stop(t + 0.05);
+      break;
+    }
+    case 3: { // HiHat Open: longer HP noise
+      const bufSize = Math.ceil(ctx.sampleRate * 0.2);
+      const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+      const noise = ctx.createBufferSource();
+      noise.buffer = buf;
+      const hp = ctx.createBiquadFilter();
+      hp.type = "highpass"; hp.frequency.value = 6000;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.3, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+      noise.connect(hp).connect(g).connect(dest);
+      noise.start(t); noise.stop(t + 0.2);
+      break;
+    }
+    case 4: { // Clap: noise burst
+      const bufSize = Math.ceil(ctx.sampleRate * 0.1);
+      const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+      const noise = ctx.createBufferSource();
+      noise.buffer = buf;
+      const bp = ctx.createBiquadFilter();
+      bp.type = "bandpass"; bp.frequency.value = 2500;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.5, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+      noise.connect(bp).connect(g).connect(dest);
+      noise.start(t); noise.stop(t + 0.1);
+      break;
+    }
+    case 5: { // Ride: sine + noise
+      const osc = ctx.createOscillator();
+      const og = ctx.createGain();
+      osc.type = "triangle"; osc.frequency.value = 800;
+      og.gain.setValueAtTime(0.15, t);
+      og.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+      osc.connect(og).connect(dest);
+      osc.start(t); osc.stop(t + 0.4);
+      const bufSize = Math.ceil(ctx.sampleRate * 0.3);
+      const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < bufSize; i++) d[i] = Math.random() * 2 - 1;
+      const noise = ctx.createBufferSource();
+      noise.buffer = buf;
+      const hp = ctx.createBiquadFilter();
+      hp.type = "highpass"; hp.frequency.value = 8000;
+      const ng = ctx.createGain();
+      ng.gain.setValueAtTime(0.1, t);
+      ng.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+      noise.connect(hp).connect(ng).connect(dest);
+      noise.start(t); noise.stop(t + 0.3);
+      break;
+    }
+    case 6: { // Tom Low
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(120, t);
+      osc.frequency.exponentialRampToValueAtTime(60, t + 0.15);
+      g.gain.setValueAtTime(0.8, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+      osc.connect(g).connect(dest);
+      osc.start(t); osc.stop(t + 0.25);
+      break;
+    }
+    case 7: { // Tom High
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(200, t);
+      osc.frequency.exponentialRampToValueAtTime(100, t + 0.12);
+      g.gain.setValueAtTime(0.8, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+      osc.connect(g).connect(dest);
+      osc.start(t); osc.stop(t + 0.2);
+      break;
+    }
+  }
+}
+
+// Render a drum pattern to an AudioBuffer for export (Bug fix #5)
+async function renderDrumPatternAsync(
+  pattern: boolean[][],
+  bpm: number,
+  durationSec: number,
+  sampleRate = 44100,
+): Promise<AudioBuffer> {
+  const stepDuration = (60 / bpm) / 4;
+  const stepsPerLoop = DRUM_STEPS;
+  const loopDuration = stepsPerLoop * stepDuration;
+  const loops = Math.max(1, Math.ceil(durationSec / loopDuration));
+  const totalDuration = loops * loopDuration + 0.5;
+  const length = Math.ceil(totalDuration * sampleRate);
+  const offCtx = new OfflineAudioContext(2, length, sampleRate);
+  const gain = offCtx.createGain();
+  gain.connect(offCtx.destination);
+  for (let loop = 0; loop < loops; loop++) {
+    for (let step = 0; step < DRUM_STEPS; step++) {
+      const t = (loop * DRUM_STEPS + step) * stepDuration;
+      for (let i = 0; i < DRUM_INSTRUMENTS.length; i++) {
+        if (pattern[i][step]) {
+          synthDrumHit(offCtx, i, t, gain);
+        }
+      }
+    }
+  }
+  return offCtx.startRendering();
+}
+
+function computePeaks(buffer: AudioBuffer, width: number): number[] {
+  const data = buffer.getChannelData(0);
+  const step = Math.floor(data.length / width);
+  if (step <= 0) return Array(width).fill(0);
+  const peaks: number[] = [];
+  for (let i = 0; i < width; i++) {
+    let max = 0;
+    for (let j = 0; j < step; j++) {
+      const abs = Math.abs(data[i * step + j] || 0);
+      if (abs > max) max = abs;
+    }
+    peaks.push(max);
+  }
+  return peaks;
+}
+
+function drawWaveform(canvas: HTMLCanvasElement, peaks: number[], color: string, trimStart = 0, trimEnd = 1, muted = false) {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  const { width, height } = canvas;
+  ctx.clearRect(0, 0, width, height);
+  const mid = height / 2;
+  const fillColor = muted ? '#333' : color + '99';
+  // Center line
+  ctx.fillStyle = muted ? '#1a1a1a' : color + '22';
+  ctx.fillRect(0, mid, width, 1);
+  // Waveform bars
+  ctx.fillStyle = fillColor;
+  const startIdx = Math.floor(trimStart * peaks.length);
+  const endIdx = Math.floor(trimEnd * peaks.length);
+  const visiblePeaks = peaks.slice(startIdx, endIdx);
+  const step = width / visiblePeaks.length;
+  for (let i = 0; i < visiblePeaks.length; i++) {
+    const h = visiblePeaks[i] * mid * 0.9;
+    const x = i * step;
+    ctx.fillRect(x, mid - h, Math.max(1, step - 0.5), h * 2);
+  }
+}
+
+function fmtTime(sec: number): string {
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  const ms = Math.floor((sec % 1) * 10);
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}.${ms}`;
+}
+
+function dbDisplay(vol: number): string {
+  if (vol <= 0) return "-inf";
+  const db = 20 * Math.log10(vol / 100);
+  return `${db >= 0 ? "+" : ""}${db.toFixed(1)}`;
+}
+
+interface StudioPageProps {
+  channelScale?: string;
+  channelMode?: string;
+  channelStyle?: string;
+}
+
+export default function StudioPage({ channelScale, channelMode, channelStyle }: StudioPageProps = {}) {
+  // ── State ──
+  const [tracks, setTracks] = useState<StudioTrack[]>([]);
+  const [isRec, setIsRec] = useState(false);
+  const [recTime, setRecTime] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const [looping, setLooping] = useState(false);
+  const [masterVol, setMasterVol] = useState(80);
+  const [bpm, setBpm] = useState(120);
+  const [timeSigIdx, setTimeSigIdx] = useState(0);
+  const [metronomeOn, setMetronomeOn] = useState(false);
+  const [zoom, setZoom] = useState(50);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [showPanel, setShowPanel] = useState<"none" | "import" | "suno" | "youtube">("none");
+  const [fxTrackId, setFxTrackId] = useState<number | null>(null);
+  const [ytQuery, setYtQuery] = useState("");
+  const [ytVideoId, setYtVideoId] = useState("");
+  const [sunoScale, setSunoScale] = useState(channelScale || "Am");
+  const [sunoMode, setSunoMode] = useState(channelMode || "Aeolian");
+  const [sunoStyle, setSunoStyle] = useState(channelStyle || "Metal");
+  const [sunoBpm, setSunoBpm] = useState(120);
+  const [sunoLoading, setSunoLoading] = useState(false);
+  const [sunoError, setSunoError] = useState("");
+  const [sunoCredits, setSunoCredits] = useState<number | null>(null);
+  const [sunoCreditsLoading, setSunoCreditsLoading] = useState(false);
+  const [sunoConfirm, setSunoConfirm] = useState(false);
+  const [sunoTab, setSunoTab] = useState<"generate" | "library" | "credits">("generate");
+  const [sunoCustomPrompt, setSunoCustomPrompt] = useState(false);
+  const [sunoPromptText, setSunoPromptText] = useState("");
+  const [sunoGeneratedTracks, setSunoGeneratedTracks] = useState<{ id: string; title: string; audioUrl: string; duration: number }[]>([]);
+  const [sunoLibrary, setSunoLibrary] = useState<LibraryTrack[]>([]);
+  const [sunoLibSearch, setSunoLibSearch] = useState("");
+  const [sunoLibStats, setSunoLibStats] = useState<{ count: number; totalBytes: number }>({ count: 0, totalBytes: 0 });
+  const [sunoPlayingId, setSunoPlayingId] = useState<string | null>(null);
+  const [sunoDailyUsage, setSunoDailyUsage] = useState({ date: "", used: 0, generations: 0 });
+  const sunoAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [selectedTrackId, setSelectedTrackId] = useState<number | null>(null);
+  const [editingTrackName, setEditingTrackName] = useState<number | null>(null);
+  const [sidebarWidth, setSidebarWidth] = useState(220);
+  const [bottomPanelHeight, setBottomPanelHeight] = useState(240);
+  const [bottomTab, setBottomTab] = useState<"mixer" | "fx" | "editor" | "input" | "none">("none");
+  const [trackMenuId, setTrackMenuId] = useState<number | null>(null);
+  const [vuLevels, setVuLevels] = useState<Record<number, number>>({});
+  const [projectName, setProjectName] = useState("New Project");
+  const [editingProjectName, setEditingProjectName] = useState(false);
+  const [snapToGrid, setSnapToGrid] = useState(true);
+  const [inputDevices, setInputDevices] = useState<MediaDeviceInfo[]>([]);
+  const [selectedInputDevice, setSelectedInputDevice] = useState("");
+  const [monitoring, setMonitoring] = useState(false);
+  const [showTimeSigPicker, setShowTimeSigPicker] = useState(false);
+  const [showMetronomeSettings, setShowMetronomeSettings] = useState(false);
+  const [metronomeVol, setMetronomeVol] = useState(50);
+
+  // Amp simulator state
+  const [ampPreset, setAmpPreset] = useState("highgain");
+  const [ampKnobs, setAmpKnobs] = useState({ gain: 8, bass: 6, mid: 5, treble: 6, presence: 6, master: 4 });
+  const [showRightPanel, setShowRightPanel] = useState(false);
+  const [contextSidebarTab, setContextSidebarTab] = useState<"library" | "effects" | "suno" | "recordings">("library");
+  const [projectKey, setProjectKey] = useState("Am");
+  const [showKeyPicker, setShowKeyPicker] = useState(false);
+  const [colorPickerTrackId, setColorPickerTrackId] = useState<number | null>(null);
+  const [inputLevel, setInputLevel] = useState(0);
+  const inputLevelRef = useRef<number>(0);
+  const [showAddTrackMenu, setShowAddTrackMenu] = useState(false);
+  const [inputSettingsTrackId, setInputSettingsTrackId] = useState<number | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
+  const [showRecordingsPanel, setShowRecordingsPanel] = useState(false);
+  const [savedRecordings, setSavedRecordings] = useState<SavedRecording[]>([]);
+  const [recSearchQuery, setRecSearchQuery] = useState("");
+  const [editingRecId, setEditingRecId] = useState<string | null>(null);
+  const [previewingRecId, setPreviewingRecId] = useState<string | null>(null);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [savingToLibrary, setSavingToLibrary] = useState(false);
+  const [regions, setRegions] = useState<TrackRegion[]>([]);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; regionId: string } | null>(null);
+  const [dragState, setDragState] = useState<{
+    regionId: string;
+    mode: "move" | "trim-left" | "trim-right";
+    startX: number;
+    origStartTime: number;
+    origDuration: number;
+    origOffset: number;
+  } | null>(null);
+  const [drumPlaying, setDrumPlaying] = useState(false);
+  const [drumStep, setDrumStep] = useState(-1);
+  const [drumGridExpanded, setDrumGridExpanded] = useState(true);
+  const [soundsTab, setSoundsTab] = useState<"recordings" | "sounds">("recordings");
+  const [soundsSubTab, setSoundsSubTab] = useState<"files" | "presets" | "loops">("files");
+  const drumAudioCtxRef = useRef<AudioContext | null>(null);
+  const drumTimerRef = useRef<number | null>(null);
+  const drumGainRef = useRef<GainNode | null>(null);
+  const drumPanRef = useRef<StereoPannerNode | null>(null);
+  const drumNextNoteTimeRef = useRef(0);
+  const drumCurrentStepRef = useRef(0);
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
+  const regionCanvasRefs = useRef<Record<string, HTMLCanvasElement | null>>({});
+  const audioBuffersRef = useRef<Record<number, AudioBuffer>>({});
+
+  const timeSig = TIME_SIGS[timeSigIdx];
+
+  // ── Refs ──
+  const toneRef = useRef<ToneModule | null>(null);
+  const masterGainRef = useRef<InstanceType<ToneModule["Gain"]> | null>(null);
+  const toneNodesRef = useRef<Record<number, ToneNodes>>({});
+  const wsRef = useRef<Record<number, WaveSurferInstance>>({});
+  const recWsRef = useRef<WaveSurferInstance | null>(null);
+  const recPluginRef = useRef<{ stopRecording: () => void; destroy: () => void } | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recChunksRef = useRef<Blob[]>([]);
+  const recAnalyserRef = useRef<AnalyserNode | null>(null);
+  const recAudioCtxRef = useRef<AudioContext | null>(null);
+  const recLevelAnimRef = useRef<number>(0);
+  const [recLevel, setRecLevel] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const animRef = useRef<number>(0);
+  const metronomeRef = useRef<{
+    loop: InstanceType<ToneModule["Loop"]>;
+    synth: InstanceType<ToneModule["MembraneSynth"]>;
+    gain: InstanceType<ToneModule["Gain"]>;
+  } | null>(null);
+  const ctr = useRef(0);
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const trackContainersRef = useRef<Record<number, HTMLDivElement | null>>({});
+  const recContainerRef = useRef<HTMLDivElement | null>(null);
+  const mountedRef = useRef(true);
+  const sidebarDragRef = useRef(false);
+  const bottomDragRef = useRef(false);
+  const vuAnimRef = useRef<number>(0);
+  const playStartRef = useRef<{ wallTime: number; offset: number } | null>(null);
+
+  // ── Tone.js initialization ──
+  const ensureTone = useCallback(async () => {
+    if (toneRef.current) return toneRef.current;
+    const Tone = await import("tone");
+    await Tone.start();
+    toneRef.current = Tone;
+    const gain = new Tone.Gain(masterVol / 100).toDestination();
+    masterGainRef.current = gain;
+    return Tone;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Master volume sync ──
+  useEffect(() => {
+    if (masterGainRef.current) {
+      masterGainRef.current.gain.value = masterVol / 100;
+    }
+  }, [masterVol]);
+
+  // ── Metronome ──
+  const setupMetronome = useCallback(async () => {
+    const Tone = await ensureTone();
+    if (metronomeRef.current) return;
+    const synth = new Tone.MembraneSynth({
+      pitchDecay: 0.008,
+      octaves: 2,
+      envelope: { attack: 0.001, decay: 0.1, sustain: 0, release: 0.05 },
+    });
+    const gain = new Tone.Gain(metronomeVol / 100).toDestination();
+    synth.connect(gain);
+    const loop = new Tone.Loop((time: number) => {
+      synth.triggerAttackRelease("C2", "16n", time);
+    }, "4n");
+    metronomeRef.current = { loop, synth, gain };
+  }, [ensureTone, metronomeVol]);
+
+  useEffect(() => {
+    if (!metronomeRef.current) return;
+    const Tone = toneRef.current;
+    if (!Tone) return;
+    Tone.getTransport().bpm.value = bpm;
+  }, [bpm]);
+
+  useEffect(() => {
+    if (!metronomeRef.current) return;
+    if (metronomeOn) {
+      metronomeRef.current.loop.start(0);
+    } else {
+      metronomeRef.current.loop.stop();
+    }
+  }, [metronomeOn]);
+
+  useEffect(() => {
+    if (metronomeRef.current) {
+      metronomeRef.current.gain.gain.value = metronomeVol / 100;
+    }
+  }, [metronomeVol]);
+
+  // ── Zoom sync ──
+  useEffect(() => {
+    const pxPerSec = 20 + (zoom / 100) * 300;
+    Object.values(wsRef.current).forEach((ws) => {
+      try { ws.zoom(pxPerSec); } catch { /* not ready */ }
+    });
+  }, [zoom]);
+
+  // ── Solo/mute logic ──
+  const applySoloMute = useCallback((trks: StudioTrack[]) => {
+    const hasSolo = trks.some((t) => t.solo);
+    trks.forEach((t) => {
+      const nodes = toneNodesRef.current[t.id];
+      if (!nodes) return;
+      const audible = hasSolo ? t.solo : !t.muted;
+      nodes.channel.mute = !audible;
+    });
+  }, []);
+
+  // ── Apply effects to Tone nodes ──
+  const applyEffects = useCallback((trackId: number, fx: TrackEffects) => {
+    const nodes = toneNodesRef.current[trackId];
+    if (!nodes) return;
+    nodes.eq.low.value = fx.eq.enabled ? fx.eq.low : 0;
+    nodes.eq.mid.value = fx.eq.enabled ? fx.eq.mid : 0;
+    nodes.eq.high.value = fx.eq.enabled ? fx.eq.high : 0;
+    nodes.distortion.wet.value = fx.distortion.enabled ? fx.distortion.wet : 0;
+    nodes.distortion.distortion = fx.distortion.amount;
+    nodes.chorus.wet.value = fx.chorus.enabled ? fx.chorus.wet : 0;
+    nodes.chorus.frequency.value = fx.chorus.frequency;
+    nodes.chorus.depth = fx.chorus.depth;
+    nodes.delay.wet.value = fx.delay.enabled ? fx.delay.wet : 0;
+    nodes.delay.feedback.value = fx.delay.feedback;
+    nodes.reverb.wet.value = fx.reverb.enabled ? fx.reverb.wet : 0;
+    nodes.reverb.decay = Math.max(0.1, fx.reverb.decay);
+  }, []);
+
+  // ── Create Tone nodes for a track ──
+  const createToneNodes = useCallback(async (track: StudioTrack): Promise<ToneNodes | null> => {
+    if (!track.audioUrl) return null;
+    const Tone = await ensureTone();
+    const master = masterGainRef.current;
+    if (!master) return null;
+
+    const player = new Tone.Player({ url: track.audioUrl, loop: false });
+    const eq = new Tone.EQ3(0, 0, 0);
+    const distortion = new Tone.Distortion(0);
+    distortion.wet.value = 0;
+    const chorus = new Tone.Chorus(1.5, 0.7, 0);
+    chorus.wet.value = 0;
+    const delay = new Tone.FeedbackDelay(0.25, 0.3);
+    delay.wet.value = 0;
+    const reverb = new Tone.Reverb(1.5);
+    reverb.wet.value = 0;
+    const channel = new Tone.Channel(0, 0);
+
+    player.chain(eq, distortion, chorus, delay, reverb, channel, master);
+
+    const dbVol = track.volume > 0 ? 20 * Math.log10(track.volume / 100) : -Infinity;
+    channel.volume.value = dbVol;
+    channel.pan.value = track.pan / 100;
+
+    const nodes: ToneNodes = { player, eq, distortion, chorus, delay, reverb, channel };
+    toneNodesRef.current[track.id] = nodes;
+
+    return nodes;
+  }, [ensureTone]);
+
+  // ── Create wavesurfer for a track ──
+  const createWavesurfer = useCallback(async (track: StudioTrack, container: HTMLDivElement) => {
+    const WaveSurfer = (await import("wavesurfer.js")).default;
+    const ws = WaveSurfer.create({
+      container,
+      waveColor: track.color + "66",
+      progressColor: track.color,
+      cursorColor: "#D4A843",
+      cursorWidth: 2,
+      height: 56,
+      barWidth: 2,
+      barGap: 1,
+      barRadius: 1,
+      interact: true,
+      normalize: true,
+      backend: "WebAudio",
+      media: document.createElement("audio"),
+    }) as unknown as WaveSurferInstance;
+
+    if (track.audioBlob) {
+      await ws.loadBlob(track.audioBlob);
+    } else if (track.audioUrl) {
+      await ws.load(track.audioUrl);
+    }
+
+    ws.on("interaction", (progress: unknown) => {
+      const p = progress as number;
+      const dur = ws.getDuration();
+      if (dur > 0 && toneRef.current) {
+        const seekTime = p * dur;
+        Object.values(toneNodesRef.current).forEach((n) => {
+          if (n.player.loaded) n.player.seek(seekTime);
+        });
+        Object.values(wsRef.current).forEach((w) => {
+          try { w.setTime(seekTime); } catch { /* skip */ }
+        });
+        setCurrentTime(seekTime);
+      }
+    });
+
+    wsRef.current[track.id] = ws;
+    const dur = ws.getDuration();
+    if (dur > 0) setDuration((prev) => Math.max(prev, dur));
+    return ws;
+  }, []);
+
+  // ── Add track helper ──
+  const addTrack = useCallback(async (name: string, url: string, type: StudioTrack["type"], blob?: Blob) => {
+    ctr.current++;
+    const id = ctr.current;
+    const color = TRACK_COLORS[(id - 1) % TRACK_COLORS.length];
+    const newTrack: StudioTrack = {
+      id, name, color,
+      audioBlob: blob || null,
+      audioUrl: url,
+      volume: 100,
+      pan: 0,
+      muted: false,
+      solo: false,
+      recordArm: false,
+      collapsed: false,
+      type,
+      effects: JSON.parse(JSON.stringify(DEFAULT_EFFECTS)),
+    };
+    setTracks((p) => [...p, newTrack]);
+
+    // Compute waveform peaks from blob
+    if (blob) createRegionFromBlob(id, blob);
+    else if (url) {
+      fetch(url).then((r) => r.blob()).then((b) => createRegionFromBlob(id, b)).catch(() => {});
+    }
+
+    setTimeout(async () => {
+      if (!mountedRef.current) return;
+      const container = trackContainersRef.current[id];
+      if (container) await createWavesurfer(newTrack, container);
+      await createToneNodes(newTrack);
+    }, 100);
+  }, [createWavesurfer, createToneNodes]);
+
+  // ── Add empty mic track (for record-ready track) ──
+  const addMicTrack = useCallback(() => {
+    ctr.current++;
+    const id = ctr.current;
+    const color = TRACK_COLORS[(id - 1) % TRACK_COLORS.length];
+    const newTrack: StudioTrack = {
+      id, name: `Mic ${id}`, color,
+      audioBlob: null, audioUrl: null,
+      volume: 100, pan: 0,
+      muted: false, solo: false, recordArm: true, collapsed: false,
+      type: "mic",
+      effects: JSON.parse(JSON.stringify(DEFAULT_EFFECTS)),
+      inputSettings: { deviceId: selectedInputDevice, channel: "stereo", gain: 100, monitoring: false },
+    };
+    setTracks((p) => [...p, newTrack]);
+    setShowAddTrackMenu(false);
+  }, [selectedInputDevice]);
+
+  // ── Add Drum Machine track ──
+  const addDrumTrack = useCallback(() => {
+    ctr.current++;
+    const id = ctr.current;
+    const color = TRACK_COLORS[(id - 1) % TRACK_COLORS.length];
+    const newTrack: StudioTrack = {
+      id, name: `Drums ${id}`, color,
+      audioBlob: null, audioUrl: null,
+      volume: 100, pan: 0,
+      muted: false, solo: false, recordArm: false, collapsed: false,
+      type: "drum",
+      effects: JSON.parse(JSON.stringify(DEFAULT_EFFECTS)),
+      drumPattern: createEmptyDrumPattern(),
+    };
+    setTracks((p) => [...p, newTrack]);
+    setSelectedTrackId(id);
+    setBottomTab("editor");
+    setShowAddTrackMenu(false);
+  }, []);
+
+  // ── Drum pattern toggle ──
+  const toggleDrumCell = useCallback((trackId: number, instrIdx: number, stepIdx: number) => {
+    setTracks((prev) => prev.map((t) => {
+      if (t.id !== trackId || !t.drumPattern) return t;
+      const pat = t.drumPattern.map((row) => [...row]);
+      pat[instrIdx][stepIdx] = !pat[instrIdx][stepIdx];
+      return { ...t, drumPattern: pat };
+    }));
+  }, []);
+
+  // ── Drum playback (Bug fix #1: look-ahead scheduler, Bug fix #2: mixer routing) ──
+  const DRUM_LOOKAHEAD_MS = 25;
+  const DRUM_SCHEDULE_AHEAD_S = 0.1;
+
+  const startDrumPlayback = useCallback((pattern: boolean[][], trackId?: number) => {
+    if (!drumAudioCtxRef.current) drumAudioCtxRef.current = new AudioContext();
+    const ctx = drumAudioCtxRef.current;
+
+    // Bug fix #2: create gain + pan nodes so track controls affect drum output
+    const gainNode = ctx.createGain();
+    const panNode = ctx.createStereoPanner();
+    gainNode.connect(panNode).connect(ctx.destination);
+    drumGainRef.current = gainNode;
+    drumPanRef.current = panNode;
+
+    // Apply current track settings
+    if (trackId !== undefined) {
+      const track = tracks.find(t => t.id === trackId);
+      if (track) {
+        const hasSolo = tracks.some(t => t.solo);
+        const audible = hasSolo ? track.solo : !track.muted;
+        gainNode.gain.value = audible ? track.volume / 100 : 0;
+        panNode.pan.value = track.pan / 100;
+      }
+    }
+
+    const stepDuration = (60 / bpm) / 4; // 16th notes
+    drumCurrentStepRef.current = 0;
+    drumNextNoteTimeRef.current = ctx.currentTime;
+    setDrumPlaying(true);
+    setDrumStep(0);
+
+    const scheduler = () => {
+      while (drumNextNoteTimeRef.current < ctx.currentTime + DRUM_SCHEDULE_AHEAD_S) {
+        const step = drumCurrentStepRef.current;
+        for (let i = 0; i < DRUM_INSTRUMENTS.length; i++) {
+          if (pattern[i][step]) {
+            synthDrumHit(ctx, i, drumNextNoteTimeRef.current, gainNode);
+          }
+        }
+        // Schedule UI update close to the actual note time
+        const delay = Math.max(0, (drumNextNoteTimeRef.current - ctx.currentTime) * 1000);
+        const stepSnap = step;
+        setTimeout(() => setDrumStep(stepSnap), delay);
+
+        drumNextNoteTimeRef.current += stepDuration;
+        drumCurrentStepRef.current = (step + 1) % DRUM_STEPS;
+      }
+      drumTimerRef.current = window.setTimeout(scheduler, DRUM_LOOKAHEAD_MS);
+    };
+    scheduler();
+  }, [bpm, tracks]);
+
+  const stopDrumPlayback = useCallback(() => {
+    if (drumTimerRef.current !== null) { clearTimeout(drumTimerRef.current); drumTimerRef.current = null; }
+    if (drumGainRef.current) { drumGainRef.current.disconnect(); drumGainRef.current = null; }
+    if (drumPanRef.current) { drumPanRef.current.disconnect(); drumPanRef.current = null; }
+    setDrumPlaying(false);
+    setDrumStep(-1);
+  }, []);
+
+  // Keep drum gain/pan in sync with track controls during playback
+  useEffect(() => {
+    if (!drumPlaying || !drumGainRef.current) return;
+    const selTrack = tracks.find(t => t.id === selectedTrackId && t.type === "drum");
+    if (!selTrack) return;
+    const hasSolo = tracks.some(t => t.solo);
+    const audible = hasSolo ? selTrack.solo : !selTrack.muted;
+    drumGainRef.current.gain.value = audible ? selTrack.volume / 100 : 0;
+    if (drumPanRef.current) drumPanRef.current.pan.value = selTrack.pan / 100;
+  }, [tracks, drumPlaying, selectedTrackId]);
+
+  // Fix #9: Save drum patterns to localStorage
+  useEffect(() => {
+    const drumTracks = tracks.filter(t => t.type === "drum" && t.drumPattern);
+    if (drumTracks.length === 0) return;
+    const data = drumTracks.map(t => ({ id: t.id, name: t.name, pattern: t.drumPattern }));
+    try { localStorage.setItem("gf-studio-drums", JSON.stringify(data)); } catch {}
+  }, [tracks]);
+
+  // Fix #9: Restore drum patterns on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("gf-studio-drums");
+      if (!raw) return;
+      const saved = JSON.parse(raw) as { id: number; name: string; pattern: boolean[][] }[];
+      if (!saved.length) return;
+      setTracks(prev => {
+        if (prev.some(t => t.type === "drum")) return prev;
+        return [...prev, ...saved.map(s => ({
+          id: s.id, name: s.name, color: TRACK_COLORS[(s.id - 1) % TRACK_COLORS.length],
+          audioBlob: null, audioUrl: null, volume: 100, pan: 0,
+          muted: false, solo: false, recordArm: false, collapsed: false,
+          type: "drum" as const, effects: JSON.parse(JSON.stringify(DEFAULT_EFFECTS)),
+          drumPattern: s.pattern,
+        }))];
+      });
+    } catch {}
+  }, []);
+
+  // ── Add YouTube track placeholder ──
+  const addYoutubeTrack = useCallback(() => {
+    setShowRightPanel(true);
+    setShowAddTrackMenu(false);
+  }, []);
+
+  // ── Recording ──
+  const startRec = useCallback(async () => {
+    if (!navigator.mediaDevices) { alert("Microphone not available"); return; }
+    try {
+      const constraints: MediaStreamConstraints = {
+        audio: selectedInputDevice
+          ? { deviceId: { exact: selectedInputDevice }, echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+          : { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+      };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      mediaStreamRef.current = stream;
+
+      // Set up AnalyserNode for live level meter
+      const audioCtx = new AudioContext();
+      recAudioCtxRef.current = audioCtx;
+      const source = audioCtx.createMediaStreamSource(stream);
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 256;
+      source.connect(analyser);
+      recAnalyserRef.current = analyser;
+
+      // Start live level meter animation
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      const tickLevel = () => {
+        if (!recAnalyserRef.current) return;
+        recAnalyserRef.current.getByteTimeDomainData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+          const v = (dataArray[i] - 128) / 128;
+          sum += v * v;
+        }
+        const rms = Math.sqrt(sum / dataArray.length);
+        setRecLevel(Math.min(1, rms * 3));
+        recLevelAnimRef.current = requestAnimationFrame(tickLevel);
+      };
+      recLevelAnimRef.current = requestAnimationFrame(tickLevel);
+
+      // Set up MediaRecorder
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "";
+      const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      mediaRecorderRef.current = mediaRecorder;
+      recChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) recChunksRef.current.push(e.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        if (!mountedRef.current) return;
+        // Stop level meter
+        if (recLevelAnimRef.current) cancelAnimationFrame(recLevelAnimRef.current);
+        recAnalyserRef.current = null;
+        if (recAudioCtxRef.current) { try { recAudioCtxRef.current.close(); } catch { /* ok */ } recAudioCtxRef.current = null; }
+        setRecLevel(0);
+
+        const chunks = recChunksRef.current;
+        recChunksRef.current = [];
+        if (chunks.length === 0) return;
+
+        const blob = new Blob(chunks, { type: mediaRecorder.mimeType || "audio/webm" });
+        const url = URL.createObjectURL(blob);
+
+        // Find armed mic track to assign recording to, or create new track
+        const armedTrack = tracks.find((t) => t.type === "mic" && t.recordArm && !t.audioUrl);
+        if (armedTrack) {
+          // Update the armed track with the recorded audio
+          setTracks((prev) => prev.map((t) => t.id === armedTrack.id ? { ...t, audioBlob: blob, audioUrl: url, recordArm: false } : t));
+          createRegionFromBlob(armedTrack.id, blob);
+          setTimeout(async () => {
+            if (!mountedRef.current) return;
+            const container = trackContainersRef.current[armedTrack.id];
+            const updatedTrack = { ...armedTrack, audioBlob: blob, audioUrl: url, recordArm: false };
+            if (container) await createWavesurfer(updatedTrack, container);
+            await createToneNodes(updatedTrack);
+          }, 100);
+        } else {
+          addTrack(`Recording ${ctr.current + 1}`, url, "recording", blob);
+        }
+
+        // Release mic
+        stream.getTracks().forEach((t) => t.stop());
+        mediaStreamRef.current = null;
+        mediaRecorderRef.current = null;
+      };
+
+      mediaRecorder.start(100); // Collect data every 100ms for live updates
+      setIsRec(true);
+      setRecTime(0);
+      timerRef.current = setInterval(() => setRecTime((t) => t + 1), 1000);
+    } catch (err) {
+      alert("Microphone access denied: " + (err instanceof Error ? err.message : String(err)));
+    }
+  }, [addTrack, selectedInputDevice, tracks, createWavesurfer, createToneNodes]);
+
+  const stopRec = useCallback(() => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+    setIsRec(false);
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+  }, []);
+
+  // ── Playback ──
+  const playAll = useCallback(async () => {
+    const Tone = await ensureTone();
+    await setupMetronome();
+    setTracks((prev) => { applySoloMute(prev); return prev; });
+
+    const startOffset = currentTime;
+    Object.entries(toneNodesRef.current).forEach(([, nodes]) => {
+      if (nodes.player.loaded) {
+        try { nodes.player.start(Tone.now(), startOffset); } catch { /* already started */ }
+      }
+    });
+
+    if (metronomeOn) {
+      Tone.getTransport().bpm.value = bpm;
+      Tone.getTransport().start();
+    }
+
+    setPlaying(true);
+    playStartRef.current = { wallTime: performance.now(), offset: startOffset };
+
+    const tickFn = () => {
+      if (!mountedRef.current || !playStartRef.current) return;
+      const elapsed = (performance.now() - playStartRef.current.wallTime) / 1000;
+      const ct = playStartRef.current.offset + elapsed;
+
+      if (ct >= duration && duration > 0) {
+        if (looping) {
+          Object.values(toneNodesRef.current).forEach((nodes) => {
+            try { nodes.player.stop(); nodes.player.start(undefined, 0); } catch { /* ok */ }
+          });
+          Object.values(wsRef.current).forEach((ws) => {
+            try { ws.setTime(0); } catch { /* skip */ }
+          });
+          setCurrentTime(0);
+          playStartRef.current = { wallTime: performance.now(), offset: 0 };
+          animRef.current = requestAnimationFrame(tickFn);
+          return;
+        } else {
+          if (animRef.current) cancelAnimationFrame(animRef.current);
+          setPlaying(false);
+          setCurrentTime(duration);
+          playStartRef.current = null;
+          Object.values(toneNodesRef.current).forEach((nodes) => {
+            try { nodes.player.stop(); } catch { /* ok */ }
+          });
+          return;
+        }
+      }
+
+      setCurrentTime(ct);
+      Object.values(wsRef.current).forEach((ws) => {
+        try { ws.setTime(ct); } catch { /* skip */ }
+      });
+      animRef.current = requestAnimationFrame(tickFn);
+    };
+    animRef.current = requestAnimationFrame(tickFn);
+  }, [ensureTone, setupMetronome, applySoloMute, currentTime, metronomeOn, bpm, duration, looping]);
+
+  const stopAll = useCallback(() => {
+    Object.values(toneNodesRef.current).forEach((nodes) => {
+      try { nodes.player.stop(); } catch { /* ok */ }
+    });
+    if (toneRef.current) {
+      toneRef.current.getTransport().stop();
+      toneRef.current.getTransport().position = 0;
+    }
+    if (animRef.current) cancelAnimationFrame(animRef.current);
+    playStartRef.current = null;
+    setPlaying(false);
+    setCurrentTime(0);
+    Object.values(wsRef.current).forEach((ws) => {
+      try { ws.setTime(0); } catch { /* skip */ }
+    });
+  }, []);
+
+  const rewindToStart = useCallback(() => {
+    setCurrentTime(0);
+    Object.values(wsRef.current).forEach((ws) => {
+      try { ws.setTime(0); } catch { /* skip */ }
+    });
+    if (playing) {
+      Object.values(toneNodesRef.current).forEach((nodes) => {
+        try { nodes.player.stop(); nodes.player.start(undefined, 0); } catch { /* ok */ }
+      });
+      playStartRef.current = { wallTime: performance.now(), offset: 0 };
+    }
+  }, [playing]);
+
+  // ── Track controls ──
+  const updateTrackVol = useCallback((id: number, vol: number) => {
+    setTracks((p) => p.map((t) => t.id === id ? { ...t, volume: vol } : t));
+    const nodes = toneNodesRef.current[id];
+    if (nodes) {
+      const dbVol = vol > 0 ? 20 * Math.log10(vol / 100) : -Infinity;
+      nodes.channel.volume.value = dbVol;
+    }
+  }, []);
+
+  const updateTrackPan = useCallback((id: number, pan: number) => {
+    setTracks((p) => p.map((t) => t.id === id ? { ...t, pan } : t));
+    const nodes = toneNodesRef.current[id];
+    if (nodes) nodes.channel.pan.value = pan / 100;
+  }, []);
+
+  const toggleMute = useCallback((id: number) => {
+    setTracks((prev) => {
+      const next = prev.map((t) => t.id === id ? { ...t, muted: !t.muted } : t);
+      applySoloMute(next);
+      return next;
+    });
+  }, [applySoloMute]);
+
+  const toggleSolo = useCallback((id: number) => {
+    setTracks((prev) => {
+      const next = prev.map((t) => t.id === id ? { ...t, solo: !t.solo } : t);
+      applySoloMute(next);
+      return next;
+    });
+  }, [applySoloMute]);
+
+  const toggleRecordArm = useCallback((id: number) => {
+    setTracks((p) => p.map((t) => t.id === id ? { ...t, recordArm: !t.recordArm } : t));
+  }, []);
+
+  const toggleCollapsed = useCallback((id: number) => {
+    setTracks((p) => p.map((t) => t.id === id ? { ...t, collapsed: !t.collapsed } : t));
+  }, []);
+
+  const deleteTrack = useCallback((id: number) => {
+    const ws = wsRef.current[id];
+    if (ws) { try { ws.destroy(); } catch { /* ok */ } delete wsRef.current[id]; }
+    const nodes = toneNodesRef.current[id];
+    if (nodes) {
+      try { nodes.player.stop(); } catch { /* ok */ }
+      try { nodes.player.dispose(); } catch { /* ok */ }
+      try { nodes.eq.dispose(); } catch { /* ok */ }
+      try { nodes.distortion.dispose(); } catch { /* ok */ }
+      try { nodes.chorus.dispose(); } catch { /* ok */ }
+      try { nodes.delay.dispose(); } catch { /* ok */ }
+      try { nodes.reverb.dispose(); } catch { /* ok */ }
+      try { nodes.channel.dispose(); } catch { /* ok */ }
+      delete toneNodesRef.current[id];
+    }
+    delete trackContainersRef.current[id];
+    setTracks((prev) => {
+      const track = prev.find((t) => t.id === id);
+      if (track?.audioUrl) URL.revokeObjectURL(track.audioUrl);
+      return prev.filter((t) => t.id !== id);
+    });
+    if (fxTrackId === id) setFxTrackId(null);
+    if (selectedTrackId === id) setSelectedTrackId(null);
+  }, [fxTrackId, selectedTrackId]);
+
+  // ── Effects update ──
+  const updateTrackEffects = useCallback((id: number, fx: TrackEffects) => {
+    setTracks((p) => p.map((t) => t.id === id ? { ...t, effects: fx } : t));
+    applyEffects(id, fx);
+  }, [applyEffects]);
+
+  const applyPreset = useCallback((id: number, preset: AmpPreset) => {
+    const base = JSON.parse(JSON.stringify(DEFAULT_EFFECTS)) as TrackEffects;
+    const merged: TrackEffects = { ...base };
+    if (preset.effects.eq) merged.eq = { ...base.eq, ...preset.effects.eq };
+    if (preset.effects.distortion) merged.distortion = { ...base.distortion, ...preset.effects.distortion };
+    if (preset.effects.chorus) merged.chorus = { ...base.chorus, ...preset.effects.chorus };
+    if (preset.effects.delay) merged.delay = { ...base.delay, ...preset.effects.delay };
+    if (preset.effects.reverb) merged.reverb = { ...base.reverb, ...preset.effects.reverb };
+    if (preset.effects.compressor) merged.compressor = { ...base.compressor, ...preset.effects.compressor };
+    updateTrackEffects(id, merged);
+  }, [updateTrackEffects]);
+
+  // ── Import file ──
+  const importFile = useCallback((file: File) => {
+    const url = URL.createObjectURL(file);
+    addTrack(file.name.replace(/\.[^.]+$/, ""), url, "import", file);
+    setShowPanel("none");
+  }, [addTrack]);
+
+  // ── Drop handler ──
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    const files = e.dataTransfer.files;
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      if (f.type.startsWith("audio/")) importFile(f);
+    }
+  }, [importFile]);
+
+  // ── YouTube ──
+  const extractVid = (url: string): string | null => {
+    const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
+    return m ? m[1] : null;
+  };
+  const loadYt = () => { const vid = extractVid(ytQuery); if (vid) setYtVideoId(vid); };
+
+  // ── Suno ──
+  const fetchSunoCredits = useCallback(async () => {
+    setSunoCreditsLoading(true);
+    try {
+      const res = await fetch("/api/suno");
+      const data = await res.json();
+      if (typeof data.credits_left === "number") setSunoCredits(data.credits_left);
+    } catch { /* non-critical */ }
+    setSunoCreditsLoading(false);
+  }, []);
+
+  const loadSunoLibrary = useCallback(async () => {
+    const tracks = await getAllLibraryTracks();
+    setSunoLibrary(tracks);
+    const stats = await getLibraryStats();
+    setSunoLibStats(stats);
+  }, []);
+
+  // Fetch credits + library when suno panel opens
+  useEffect(() => {
+    if (showPanel === "suno" || contextSidebarTab === "suno") {
+      fetchSunoCredits();
+      loadSunoLibrary();
+      setSunoDailyUsage(getDailyUsage());
+    }
+  }, [showPanel, contextSidebarTab, fetchSunoCredits, loadSunoLibrary]);
+
+  // Refresh daily usage when credits tab is active
+  useEffect(() => {
+    if (sunoTab === "credits") setSunoDailyUsage(getDailyUsage());
+  }, [sunoTab]);
+
+  const sunoStylePreview = useMemo(() => {
+    if (sunoCustomPrompt) return sunoPromptText;
+    return buildStyle(sunoScale, sunoMode, sunoStyle, sunoBpm);
+  }, [sunoScale, sunoMode, sunoStyle, sunoBpm, sunoCustomPrompt, sunoPromptText]);
+
+  const generateSuno = useCallback(async () => {
+    setSunoLoading(true);
+    setSunoError("");
+    setSunoConfirm(false);
+    setSunoGeneratedTracks([]);
+    try {
+      const stylePayload = sunoCustomPrompt ? sunoPromptText : undefined;
+      const res = await fetch("/api/suno", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scale: sunoScale, mode: sunoMode, style: sunoStyle, bpm: sunoBpm,
+          title: `${sunoScale} ${sunoMode} ${sunoStyle} ${sunoBpm}bpm`,
+          ...(stylePayload ? { customStyle: stylePayload } : {}),
+        }),
+      });
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+      const data = await res.json();
+      if (data.tracks && data.tracks.length > 0) {
+        const generated = data.tracks.map((t: { id: string; title: string; audioUrl: string; duration: number }) => ({
+          id: t.id || crypto.randomUUID(),
+          title: t.title || "AI Track",
+          audioUrl: t.audioUrl,
+          duration: t.duration || 0,
+        }));
+        setSunoGeneratedTracks(generated);
+        recordUsage(10);
+        // Save each track to library
+        for (const t of generated) {
+          try {
+            const audioRes = await fetch(t.audioUrl);
+            const blob = await audioRes.blob();
+            await saveSunoToLibrary({
+              id: t.id,
+              audioBlob: blob,
+              audioUrl: t.audioUrl,
+              title: t.title,
+              style: sunoCustomPrompt ? sunoPromptText : buildStyle(sunoScale, sunoMode, sunoStyle, sunoBpm),
+              params: { scale: sunoScale, mode: sunoMode, style: sunoStyle, bpm: sunoBpm },
+              duration: t.duration,
+              createdAt: Date.now(),
+              source: "generate",
+              favorite: false,
+            });
+          } catch { /* save failure non-critical */ }
+        }
+        loadSunoLibrary();
+        fetchSunoCredits();
+        setSunoDailyUsage(getDailyUsage());
+      } else {
+        throw new Error("No tracks returned");
+      }
+    } catch (err) {
+      setSunoError(err instanceof Error ? err.message : "Failed to generate track");
+    }
+    setSunoLoading(false);
+  }, [sunoScale, sunoMode, sunoStyle, sunoBpm, sunoCustomPrompt, sunoPromptText, fetchSunoCredits, loadSunoLibrary]);
+
+  const sunoPlayTrack = useCallback((url: string, id: string) => {
+    if (sunoAudioRef.current) {
+      sunoAudioRef.current.pause();
+      sunoAudioRef.current = null;
+    }
+    if (sunoPlayingId === id) {
+      setSunoPlayingId(null);
+      return;
+    }
+    const audio = new Audio(url);
+    audio.onended = () => setSunoPlayingId(null);
+    audio.play();
+    sunoAudioRef.current = audio;
+    setSunoPlayingId(id);
+  }, [sunoPlayingId]);
+
+  const sunoDeleteTrack = useCallback(async (id: string) => {
+    await deleteFromLibrary(id);
+    loadSunoLibrary();
+  }, [loadSunoLibrary]);
+
+  const sunoToggleFavorite = useCallback(async (id: string, current: boolean) => {
+    await updateLibraryTrack(id, { favorite: !current });
+    loadSunoLibrary();
+  }, [loadSunoLibrary]);
+
+  const sunoAddToDaw = useCallback((title: string, url: string) => {
+    addTrack(title || "AI Track", url, "suno");
+  }, [addTrack]);
+
+  // ── Export/Mixdown (Bug fix #5: include drum tracks) ──
+  const exportMix = useCallback(async () => {
+    if (tracks.length === 0) return;
+    setExporting(true);
+    setExportProgress(10);
+    const Tone = await ensureTone();
+    const maxDur = Math.max(...tracks.map((t) => {
+      const ws = wsRef.current[t.id];
+      return ws ? ws.getDuration() : 0;
+    }), 1);
+
+    // Pre-render drum patterns to AudioBuffers
+    const drumBuffers: Record<number, AudioBuffer> = {};
+    const drumTracks = tracks.filter(t => t.type === "drum" && t.drumPattern);
+    for (const dt of drumTracks) {
+      if (!dt.drumPattern) continue;
+      const hasSolo = tracks.some(t => t.solo);
+      const audible = hasSolo ? dt.solo : !dt.muted;
+      if (!audible) continue;
+      drumBuffers[dt.id] = await renderDrumPatternAsync(dt.drumPattern, bpm, maxDur);
+    }
+    setExportProgress(15);
+
+    try {
+      setExportProgress(20);
+      const buffer = await Tone.Offline(async ({ transport }) => {
+        const offGain = new Tone.Gain(masterVol / 100).toDestination();
+        for (const track of tracks) {
+          const hasSolo = tracks.some((t) => t.solo);
+          const audible = hasSolo ? track.solo : !track.muted;
+          if (!audible) continue;
+
+          // Drum track: use pre-rendered buffer
+          if (track.type === "drum" && drumBuffers[track.id]) {
+            const toneBuffer = new Tone.ToneAudioBuffer(drumBuffers[track.id]);
+            const player = new Tone.Player(toneBuffer);
+            const chan = new Tone.Channel(
+              track.volume > 0 ? 20 * Math.log10(track.volume / 100) : -Infinity,
+              track.pan / 100,
+            );
+            player.chain(chan, offGain);
+            player.start(0);
+            continue;
+          }
+
+          if (!track.audioUrl) continue;
+          const player = new Tone.Player(track.audioUrl);
+          const eq = new Tone.EQ3(
+            track.effects.eq.enabled ? track.effects.eq.low : 0,
+            track.effects.eq.enabled ? track.effects.eq.mid : 0,
+            track.effects.eq.enabled ? track.effects.eq.high : 0,
+          );
+          const dist = new Tone.Distortion(track.effects.distortion.amount);
+          dist.wet.value = track.effects.distortion.enabled ? track.effects.distortion.wet : 0;
+          const ch = new Tone.Chorus(track.effects.chorus.frequency, track.effects.chorus.depth, 0);
+          ch.wet.value = track.effects.chorus.enabled ? track.effects.chorus.wet : 0;
+          const del = new Tone.FeedbackDelay(track.effects.delay.time, track.effects.delay.feedback);
+          del.wet.value = track.effects.delay.enabled ? track.effects.delay.wet : 0;
+          const rev = new Tone.Reverb(Math.max(0.1, track.effects.reverb.decay));
+          rev.wet.value = track.effects.reverb.enabled ? track.effects.reverb.wet : 0;
+          const chan = new Tone.Channel(
+            track.volume > 0 ? 20 * Math.log10(track.volume / 100) : -Infinity,
+            track.pan / 100,
+          );
+          player.chain(eq, dist, ch, del, rev, chan, offGain);
+          await Tone.loaded();
+          player.start(0);
+        }
+        transport.start(0);
+      }, maxDur, 2, 44100);
+      setExportProgress(70);
+      const wavBlob = audioBufferToWav(buffer);
+      setExportProgress(90);
+      const url = URL.createObjectURL(wavBlob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${projectName.replace(/\s+/g, "-")}-${Date.now()}.wav`;
+      a.click();
+      setExportProgress(100);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    } catch (err) {
+      alert("Export failed: " + (err instanceof Error ? err.message : String(err)));
+    }
+    setExporting(false);
+    setExportProgress(0);
+  }, [tracks, masterVol, ensureTone, projectName, bpm]);
+
+  // ── Export MP3 (Bug fix #5: include drum tracks) ──
+  const exportMp3 = useCallback(async () => {
+    if (tracks.length === 0) return;
+    setExporting(true);
+    setExportProgress(10);
+    const Tone = await ensureTone();
+    const maxDur = Math.max(...tracks.map((t) => {
+      const ws = wsRef.current[t.id];
+      return ws ? ws.getDuration() : 0;
+    }), 1);
+
+    // Pre-render drum patterns
+    const drumBuffers: Record<number, AudioBuffer> = {};
+    const drumTracks = tracks.filter(t => t.type === "drum" && t.drumPattern);
+    for (const dt of drumTracks) {
+      if (!dt.drumPattern) continue;
+      const hasSolo = tracks.some(t => t.solo);
+      const audible = hasSolo ? dt.solo : !dt.muted;
+      if (!audible) continue;
+      drumBuffers[dt.id] = await renderDrumPatternAsync(dt.drumPattern, bpm, maxDur);
+    }
+
+    try {
+      setExportProgress(20);
+      const buffer = await Tone.Offline(async ({ transport }) => {
+        const offGain = new Tone.Gain(masterVol / 100).toDestination();
+        for (const track of tracks) {
+          const hasSolo = tracks.some((t) => t.solo);
+          const audible = hasSolo ? track.solo : !track.muted;
+          if (!audible) continue;
+
+          // Drum track: use pre-rendered buffer
+          if (track.type === "drum" && drumBuffers[track.id]) {
+            const toneBuffer = new Tone.ToneAudioBuffer(drumBuffers[track.id]);
+            const player = new Tone.Player(toneBuffer);
+            const chan = new Tone.Channel(
+              track.volume > 0 ? 20 * Math.log10(track.volume / 100) : -Infinity,
+              track.pan / 100,
+            );
+            player.chain(chan, offGain);
+            player.start(0);
+            continue;
+          }
+
+          if (!track.audioUrl) continue;
+          const player = new Tone.Player(track.audioUrl);
+          const eq = new Tone.EQ3(
+            track.effects.eq.enabled ? track.effects.eq.low : 0,
+            track.effects.eq.enabled ? track.effects.eq.mid : 0,
+            track.effects.eq.enabled ? track.effects.eq.high : 0,
+          );
+          const dist = new Tone.Distortion(track.effects.distortion.amount);
+          dist.wet.value = track.effects.distortion.enabled ? track.effects.distortion.wet : 0;
+          const ch = new Tone.Chorus(track.effects.chorus.frequency, track.effects.chorus.depth, 0);
+          ch.wet.value = track.effects.chorus.enabled ? track.effects.chorus.wet : 0;
+          const del = new Tone.FeedbackDelay(track.effects.delay.time, track.effects.delay.feedback);
+          del.wet.value = track.effects.delay.enabled ? track.effects.delay.wet : 0;
+          const rev = new Tone.Reverb(Math.max(0.1, track.effects.reverb.decay));
+          rev.wet.value = track.effects.reverb.enabled ? track.effects.reverb.wet : 0;
+          const chan = new Tone.Channel(
+            track.volume > 0 ? 20 * Math.log10(track.volume / 100) : -Infinity,
+            track.pan / 100,
+          );
+          player.chain(eq, dist, ch, del, rev, chan, offGain);
+          await Tone.loaded();
+          player.start(0);
+        }
+        transport.start(0);
+      }, maxDur, 2, 44100);
+      setExportProgress(60);
+      const mp3Blob = await audioBufferToMp3(buffer);
+      setExportProgress(90);
+      const url = URL.createObjectURL(mp3Blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${projectName.replace(/\s+/g, "-")}-${Date.now()}.mp3`;
+      a.click();
+      setExportProgress(100);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    } catch (err) {
+      alert("Export MP3 failed: " + (err instanceof Error ? err.message : String(err)));
+    }
+    setExporting(false);
+    setExportProgress(0);
+  }, [tracks, masterVol, ensureTone, projectName, bpm]);
+
+  // ── WAV encoder ──
+  function audioBufferToWav(buffer: { numberOfChannels: number; sampleRate: number; length: number; getChannelData: (ch: number) => Float32Array }): Blob {
+    const numCh = buffer.numberOfChannels;
+    const sampleRate = buffer.sampleRate;
+    const bitsPerSample = 16;
+    const bytesPerSample = bitsPerSample / 8;
+    const blockAlign = numCh * bytesPerSample;
+    const dataSize = buffer.length * blockAlign;
+    const arrayBuf = new ArrayBuffer(44 + dataSize);
+    const view = new DataView(arrayBuf);
+    const writeStr = (offset: number, str: string) => {
+      for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+    };
+    writeStr(0, "RIFF");
+    view.setUint32(4, 36 + dataSize, true);
+    writeStr(8, "WAVE");
+    writeStr(12, "fmt ");
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, numCh, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * blockAlign, true);
+    view.setUint16(32, blockAlign, true);
+    view.setUint16(34, bitsPerSample, true);
+    writeStr(36, "data");
+    view.setUint32(40, dataSize, true);
+    const channels: Float32Array[] = [];
+    for (let ch = 0; ch < numCh; ch++) channels.push(buffer.getChannelData(ch));
+    let offset = 44;
+    for (let i = 0; i < buffer.length; i++) {
+      for (let ch = 0; ch < numCh; ch++) {
+        const sample = Math.max(-1, Math.min(1, channels[ch][i]));
+        view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+        offset += 2;
+      }
+    }
+    return new Blob([arrayBuf], { type: "audio/wav" });
+  }
+
+  // ── MP3 encoder (lamejs) ──
+  async function audioBufferToMp3(buffer: { numberOfChannels: number; sampleRate: number; length: number; getChannelData: (ch: number) => Float32Array }): Promise<Blob> {
+    const lamejs = await import("lamejs");
+    const Mp3Encoder = (lamejs as unknown as { Mp3Encoder: new (channels: number, sampleRate: number, kbps: number) => { encodeBuffer: (left: Int16Array, right?: Int16Array) => Int8Array; flush: () => Int8Array } }).Mp3Encoder;
+    const numCh = Math.min(buffer.numberOfChannels, 2);
+    const sampleRate = buffer.sampleRate;
+    const kbps = 192;
+    const encoder = new Mp3Encoder(numCh, sampleRate, kbps);
+    const left = new Int16Array(buffer.length);
+    const right = numCh === 2 ? new Int16Array(buffer.length) : left;
+    const leftF = buffer.getChannelData(0);
+    const rightF = numCh === 2 ? buffer.getChannelData(1) : leftF;
+    for (let i = 0; i < buffer.length; i++) {
+      left[i] = Math.max(-32768, Math.min(32767, Math.round(leftF[i] * 32767)));
+      right[i] = Math.max(-32768, Math.min(32767, Math.round(rightF[i] * 32767)));
+    }
+    const chunks: Int8Array[] = [];
+    const blockSize = 1152;
+    for (let i = 0; i < buffer.length; i += blockSize) {
+      const leftChunk = left.subarray(i, i + blockSize);
+      const rightChunk = numCh === 2 ? right.subarray(i, i + blockSize) : undefined;
+      const mp3buf = encoder.encodeBuffer(leftChunk, rightChunk);
+      if (mp3buf.length > 0) chunks.push(mp3buf);
+    }
+    const end = encoder.flush();
+    if (end.length > 0) chunks.push(end);
+    return new Blob(chunks as unknown as BlobPart[], { type: "audio/mp3" });
+  }
+
+  // ── Load saved recordings on mount ──
+  useEffect(() => {
+    idbLoadRecordings().then(setSavedRecordings).catch(() => {});
+  }, []);
+
+  // ── Save to library (Bug fix #5: include drum tracks) ──
+  const saveToLibrary = useCallback(async () => {
+    if (tracks.length === 0) return;
+    setSavingToLibrary(true);
+    const Tone = await ensureTone();
+    const maxDur = Math.max(...tracks.map((t) => {
+      const ws = wsRef.current[t.id];
+      return ws ? ws.getDuration() : 0;
+    }), 1);
+
+    // Pre-render drum patterns
+    const drumBuffers: Record<number, AudioBuffer> = {};
+    const drumTracks = tracks.filter(t => t.type === "drum" && t.drumPattern);
+    for (const dt of drumTracks) {
+      if (!dt.drumPattern) continue;
+      const hasSolo = tracks.some(t => t.solo);
+      const audible = hasSolo ? dt.solo : !dt.muted;
+      if (!audible) continue;
+      drumBuffers[dt.id] = await renderDrumPatternAsync(dt.drumPattern, bpm, maxDur);
+    }
+
+    try {
+      const buffer = await Tone.Offline(async ({ transport }) => {
+        const offGain = new Tone.Gain(masterVol / 100).toDestination();
+        for (const track of tracks) {
+          const hasSolo = tracks.some((t) => t.solo);
+          const audible = hasSolo ? track.solo : !track.muted;
+          if (!audible) continue;
+
+          // Drum track: use pre-rendered buffer
+          if (track.type === "drum" && drumBuffers[track.id]) {
+            const toneBuffer = new Tone.ToneAudioBuffer(drumBuffers[track.id]);
+            const player = new Tone.Player(toneBuffer);
+            const chan = new Tone.Channel(
+              track.volume > 0 ? 20 * Math.log10(track.volume / 100) : -Infinity,
+              track.pan / 100,
+            );
+            player.chain(chan, offGain);
+            player.start(0);
+            continue;
+          }
+
+          if (!track.audioUrl) continue;
+          const player = new Tone.Player(track.audioUrl);
+          const eq = new Tone.EQ3(
+            track.effects.eq.enabled ? track.effects.eq.low : 0,
+            track.effects.eq.enabled ? track.effects.eq.mid : 0,
+            track.effects.eq.enabled ? track.effects.eq.high : 0,
+          );
+          const dist = new Tone.Distortion(track.effects.distortion.amount);
+          dist.wet.value = track.effects.distortion.enabled ? track.effects.distortion.wet : 0;
+          const ch = new Tone.Chorus(track.effects.chorus.frequency, track.effects.chorus.depth, 0);
+          ch.wet.value = track.effects.chorus.enabled ? track.effects.chorus.wet : 0;
+          const del = new Tone.FeedbackDelay(track.effects.delay.time, track.effects.delay.feedback);
+          del.wet.value = track.effects.delay.enabled ? track.effects.delay.wet : 0;
+          const rev = new Tone.Reverb(Math.max(0.1, track.effects.reverb.decay));
+          rev.wet.value = track.effects.reverb.enabled ? track.effects.reverb.wet : 0;
+          const chan = new Tone.Channel(
+            track.volume > 0 ? 20 * Math.log10(track.volume / 100) : -Infinity,
+            track.pan / 100,
+          );
+          player.chain(eq, dist, ch, del, rev, chan, offGain);
+          await Tone.loaded();
+          player.start(0);
+        }
+        transport.start(0);
+      }, maxDur, 2, 44100);
+      const wavBlob = audioBufferToWav(buffer);
+      const id = `rec-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const name = projectName || "Untitled";
+      const meta = await idbSaveRecording(id, name, wavBlob, maxDur);
+      setSavedRecordings((prev) => [meta, ...prev.filter((r) => r.id !== id)]);
+      setShowRecordingsPanel(true);
+    } catch (err) {
+      alert("Save failed: " + (err instanceof Error ? err.message : String(err)));
+    }
+    setSavingToLibrary(false);
+    setShowExportMenu(false);
+  }, [tracks, masterVol, ensureTone, projectName, bpm]);
+
+  // ── Recordings panel helpers ──
+  const previewRecording = useCallback(async (id: string) => {
+    if (previewAudioRef.current) {
+      previewAudioRef.current.pause();
+      URL.revokeObjectURL(previewAudioRef.current.src);
+      previewAudioRef.current = null;
+    }
+    if (previewingRecId === id) {
+      setPreviewingRecId(null);
+      return;
+    }
+    const blob = await idbGetBlob(id);
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    audio.onended = () => { setPreviewingRecId(null); URL.revokeObjectURL(url); };
+    audio.play();
+    previewAudioRef.current = audio;
+    setPreviewingRecId(id);
+  }, [previewingRecId]);
+
+  const downloadRecording = useCallback(async (rec: SavedRecording) => {
+    const blob = await idbGetBlob(rec.id);
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${rec.name.replace(/\s+/g, "-")}.${rec.format}`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }, []);
+
+  const removeRecording = useCallback(async (id: string) => {
+    await idbDeleteRecording(id);
+    setSavedRecordings((prev) => prev.filter((r) => r.id !== id));
+    if (previewingRecId === id && previewAudioRef.current) {
+      previewAudioRef.current.pause();
+      previewAudioRef.current = null;
+      setPreviewingRecId(null);
+    }
+  }, [previewingRecId]);
+
+  const renameRecordingItem = useCallback(async (id: string, newName: string) => {
+    await idbRenameRecording(id, newName);
+    setSavedRecordings((prev) => prev.map((r) => r.id === id ? { ...r, name: newName } : r));
+    setEditingRecId(null);
+  }, []);
+
+  const importRecordingToProject = useCallback(async (rec: SavedRecording) => {
+    const blob = await idbGetBlob(rec.id);
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    addTrack(rec.name, url, "import", blob);
+  }, [addTrack]);
+
+  const filteredRecordings = useMemo(() => {
+    if (!recSearchQuery.trim()) return savedRecordings;
+    const q = recSearchQuery.toLowerCase();
+    return savedRecordings.filter((r) => r.name.toLowerCase().includes(q));
+  }, [savedRecordings, recSearchQuery]);
+
+  // ── Track rename ──
+  const renameTrack = useCallback((id: number, name: string) => {
+    setTracks((p) => p.map((t) => t.id === id ? { ...t, name } : t));
+  }, []);
+
+  // ── Decode audio and create region with peaks ──
+  const createRegionFromBlob = useCallback(async (trackId: number, blob: Blob) => {
+    try {
+      const arrayBuffer = await blob.arrayBuffer();
+      const audioCtx = new AudioContext();
+      const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+      audioCtx.close();
+      audioBuffersRef.current[trackId] = audioBuffer;
+      const peakWidth = 2000;
+      const peaks = computePeaks(audioBuffer, peakWidth);
+      const region: TrackRegion = {
+        id: `region-${trackId}-${Date.now()}`,
+        trackId,
+        startTime: 0,
+        duration: audioBuffer.duration,
+        offset: 0,
+        peaks,
+        bufferDuration: audioBuffer.duration,
+      };
+      setRegions((prev) => [...prev.filter((r) => r.trackId !== trackId), region]);
+      setDuration((prev) => Math.max(prev, audioBuffer.duration));
+    } catch { /* decode failed, wavesurfer still handles display */ }
+  }, []);
+
+  // ── Region editing: split ──
+  const splitRegion = useCallback((regionId: string, splitTime: number) => {
+    setRegions((prev) => {
+      const region = prev.find((r) => r.id === regionId);
+      if (!region) return prev;
+      const relTime = splitTime - region.startTime;
+      if (relTime <= 0.05 || relTime >= region.duration - 0.05) return prev;
+      const splitRatio = relTime / region.duration;
+      const peakSplit = Math.floor(splitRatio * region.peaks.length);
+      const left: TrackRegion = {
+        ...region,
+        id: `region-${region.trackId}-${Date.now()}-L`,
+        duration: relTime,
+        peaks: region.peaks.slice(0, peakSplit),
+      };
+      const right: TrackRegion = {
+        ...region,
+        id: `region-${region.trackId}-${Date.now()}-R`,
+        startTime: region.startTime + relTime,
+        duration: region.duration - relTime,
+        offset: region.offset + relTime,
+        peaks: region.peaks.slice(peakSplit),
+      };
+      return [...prev.filter((r) => r.id !== regionId), left, right];
+    });
+  }, []);
+
+  // ── Region editing: delete ──
+  const deleteRegion = useCallback((regionId: string) => {
+    setRegions((prev) => prev.filter((r) => r.id !== regionId));
+    setContextMenu(null);
+  }, []);
+
+  // ── Region drag handlers ──
+  useEffect(() => {
+    if (!dragState) return;
+    const onMouseMove = (e: MouseEvent) => {
+      const pps = 20 + (zoom / 100) * 300;
+      const dx = e.clientX - dragState.startX;
+      const dt = dx / pps;
+      const beatSec = 60 / bpm;
+
+      setRegions((prev) => prev.map((r) => {
+        if (r.id !== dragState.regionId) return r;
+        if (dragState.mode === "move") {
+          let newStart = Math.max(0, dragState.origStartTime + dt);
+          if (snapToGrid) newStart = Math.round(newStart / beatSec) * beatSec;
+          return { ...r, startTime: newStart };
+        } else if (dragState.mode === "trim-left") {
+          const maxTrim = dragState.origDuration - 0.05;
+          const trimDelta = Math.max(-dragState.origOffset, Math.min(maxTrim, dt));
+          const snappedDelta = snapToGrid ? Math.round(trimDelta / beatSec) * beatSec : trimDelta;
+          return {
+            ...r,
+            startTime: dragState.origStartTime + snappedDelta,
+            offset: dragState.origOffset + snappedDelta,
+            duration: dragState.origDuration - snappedDelta,
+          };
+        } else { // trim-right
+          const newDur = Math.max(0.05, dragState.origDuration + dt);
+          const maxDur = r.bufferDuration - r.offset;
+          const clampedDur = Math.min(newDur, maxDur);
+          return { ...r, duration: snapToGrid ? Math.round(clampedDur / beatSec) * beatSec || 0.05 : clampedDur };
+        }
+      }));
+    };
+    const onMouseUp = () => {
+      setDragState(null);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+    document.body.style.userSelect = "none";
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+  }, [dragState, zoom, bpm, snapToGrid]);
+
+  // ── Draw waveforms on canvases when regions/zoom change ──
+  useEffect(() => {
+    const pps = 20 + (zoom / 100) * 300;
+    regions.forEach((region) => {
+      const canvas = regionCanvasRefs.current[region.id];
+      if (!canvas) return;
+      const regionWidth = Math.max(1, Math.floor(region.duration * pps));
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = regionWidth * dpr;
+      canvas.height = 56 * dpr;
+      canvas.style.width = `${regionWidth}px`;
+      canvas.style.height = '56px';
+      const ctx = canvas.getContext('2d');
+      if (ctx) ctx.scale(dpr, dpr);
+      const track = tracks.find((t) => t.id === region.trackId);
+      const color = track?.color || '#888';
+      const hasSolo = tracks.some((t) => t.solo);
+      const isMuted = track ? (hasSolo ? !track.solo : track.muted) : false;
+      const trimStart = region.offset / region.bufferDuration;
+      const trimEnd = (region.offset + region.duration) / region.bufferDuration;
+      drawWaveform(canvas, region.peaks, color, trimStart, trimEnd, isMuted);
+    });
+  }, [regions, zoom, tracks]);
+
+  // ── Close context menu on click outside ──
+  useEffect(() => {
+    if (!contextMenu) return;
+    const handler = () => setContextMenu(null);
+    window.addEventListener("click", handler);
+    return () => window.removeEventListener("click", handler);
+  }, [contextMenu]);
+
+  // ── VU meter simulation ──
+  useEffect(() => {
+    const tick = () => {
+      if (!mountedRef.current) return;
+      const levels: Record<number, number> = {};
+      tracks.forEach((t) => {
+        const hasSolo = tracks.some((tr) => tr.solo);
+        const audible = hasSolo ? t.solo : !t.muted;
+        if (playing && audible) {
+          levels[t.id] = 0.3 + Math.random() * 0.5 + (t.volume / 100) * 0.2;
+        } else if (isRec && t.type === "recording") {
+          levels[t.id] = 0.4 + Math.random() * 0.4;
+        } else {
+          levels[t.id] = 0;
+        }
+      });
+      setVuLevels(levels);
+      vuAnimRef.current = requestAnimationFrame(tick);
+    };
+    if (playing || isRec) {
+      vuAnimRef.current = requestAnimationFrame(tick);
+    } else {
+      setVuLevels({});
+    }
+    return () => { if (vuAnimRef.current) cancelAnimationFrame(vuAnimRef.current); };
+  }, [playing, isRec, tracks]);
+
+  // ── Resizable panels ──
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      if (sidebarDragRef.current) setSidebarWidth(Math.max(180, Math.min(400, e.clientX)));
+      if (bottomDragRef.current) setBottomPanelHeight(Math.max(150, Math.min(500, window.innerHeight - e.clientY)));
+    };
+    const onMouseUp = () => {
+      sidebarDragRef.current = false;
+      bottomDragRef.current = false;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+  }, []);
+
+  // ── Enumerate input devices ──
+  useEffect(() => {
+    navigator.mediaDevices?.enumerateDevices().then((devices) => {
+      const inputs = devices.filter((d) => d.kind === "audioinput");
+      setInputDevices(inputs);
+      if (inputs.length > 0 && !selectedInputDevice) setSelectedInputDevice(inputs[0].deviceId);
+    }).catch(() => {});
+  }, [selectedInputDevice]);
+
+  // ── Input level meter (when monitoring) ──
+  useEffect(() => {
+    if (!monitoring || !mediaStreamRef.current) {
+      setInputLevel(0);
+      return;
+    }
+    const ctx = new AudioContext();
+    const src = ctx.createMediaStreamSource(mediaStreamRef.current);
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 256;
+    src.connect(analyser);
+    const data = new Uint8Array(analyser.frequencyBinCount);
+    let raf = 0;
+    const tick = () => {
+      analyser.getByteFrequencyData(data);
+      const avg = data.reduce((a, b) => a + b, 0) / data.length / 255;
+      inputLevelRef.current = avg;
+      setInputLevel(avg);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => { cancelAnimationFrame(raf); ctx.close(); };
+  }, [monitoring]);
+
+  // ── Track color change ──
+  const changeTrackColor = useCallback((id: number, color: string) => {
+    setTracks((p) => p.map((t) => t.id === id ? { ...t, color } : t));
+    const ws = wsRef.current[id];
+    if (ws) {
+      try {
+        const wrapper = ws.getWrapper();
+        const wave = wrapper.querySelector("wave") as HTMLElement | null;
+        if (wave) wave.style.color = color;
+      } catch { /* ok */ }
+    }
+    setColorPickerTrackId(null);
+  }, []);
+
+  // ── Selected track helpers ──
+  const selectedTrack = useMemo(() =>
+    selectedTrackId !== null ? tracks.find((t) => t.id === selectedTrackId) ?? null : null
+  , [selectedTrackId, tracks]);
+
+  useEffect(() => {
+    if (selectedTrackId !== null && bottomTab === "none") setBottomTab("fx");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTrackId]);
+
+  // ── Measure ruler data ──
+  const measures = useMemo(() => {
+    const beatsPerMeasure = timeSig[0];
+    const secPerBeat = 60 / bpm;
+    const secPerMeasure = secPerBeat * beatsPerMeasure;
+    const totalMeasures = duration > 0 ? Math.ceil(duration / secPerMeasure) + 2 : 16;
+    return Array.from({ length: totalMeasures }, (_, i) => ({
+      measure: i + 1,
+      time: i * secPerMeasure,
+      width: secPerMeasure,
+    }));
+  }, [bpm, duration, timeSig]);
+
+  // ── Cleanup on unmount ──
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (animRef.current) cancelAnimationFrame(animRef.current);
+      Object.values(wsRef.current).forEach((ws) => { try { ws.destroy(); } catch { /* ok */ } });
+      if (recWsRef.current) { try { recWsRef.current.destroy(); } catch { /* ok */ } }
+      Object.values(toneNodesRef.current).forEach((nodes) => {
+        try { nodes.player.stop(); } catch { /* ok */ }
+        try { nodes.player.dispose(); } catch { /* ok */ }
+        try { nodes.eq.dispose(); } catch { /* ok */ }
+        try { nodes.distortion.dispose(); } catch { /* ok */ }
+        try { nodes.chorus.dispose(); } catch { /* ok */ }
+        try { nodes.delay.dispose(); } catch { /* ok */ }
+        try { nodes.reverb.dispose(); } catch { /* ok */ }
+        try { nodes.channel.dispose(); } catch { /* ok */ }
+      });
+      if (metronomeRef.current) {
+        try { metronomeRef.current.loop.dispose(); } catch { /* ok */ }
+        try { metronomeRef.current.synth.dispose(); } catch { /* ok */ }
+        try { metronomeRef.current.gain.dispose(); } catch { /* ok */ }
+      }
+      if (masterGainRef.current) { try { masterGainRef.current.dispose(); } catch { /* ok */ } }
+      if (mediaStreamRef.current) mediaStreamRef.current.getTracks().forEach((t) => t.stop());
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") { try { mediaRecorderRef.current.stop(); } catch { /* ok */ } }
+      if (recLevelAnimRef.current) cancelAnimationFrame(recLevelAnimRef.current);
+      if (recAudioCtxRef.current) { try { recAudioCtxRef.current.close(); } catch { /* ok */ } }
+      if (drumTimerRef.current !== null) clearTimeout(drumTimerRef.current);
+      if (drumAudioCtxRef.current) { try { drumAudioCtxRef.current.close(); } catch { /* ok */ } }
+    };
+  }, []);
+
+  // ── Keyboard shortcuts ──
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      switch (e.key.toLowerCase()) {
+        case " ": e.preventDefault(); playing ? stopAll() : playAll(); break;
+        case "r": if (!e.ctrlKey && !e.metaKey) { e.preventDefault(); isRec ? stopRec() : startRec(); } break;
+        case "m": if (!e.ctrlKey) { e.preventDefault(); setupMetronome().then(() => setMetronomeOn((p) => !p)); } break;
+        case "c": if (!e.ctrlKey) { e.preventDefault(); setLooping((p) => !p); } break;
+        case "g": if (!e.ctrlKey) { e.preventDefault(); setSnapToGrid((p) => !p); } break;
+        case "enter": e.preventDefault(); rewindToStart(); break;
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [playing, stopAll, playAll, isRec, stopRec, startRec, setupMetronome, rewindToStart]);
+
+  const fxTrack = selectedTrack ?? (fxTrackId !== null ? tracks.find((t) => t.id === fxTrackId) ?? null : null);
+  const pxPerSec = 20 + (zoom / 100) * 300;
+
+  return (
+    <div className="flex flex-col overflow-hidden select-none" style={{ background: "#121214", fontFamily: "'Inter', system-ui, sans-serif", height: "calc(100vh - 90px)" }} dir="ltr">
+      {/* ═══════════════════ TOP BAR ═══════════════════ */}
+      <div className="flex items-center min-h-[44px] h-auto sm:h-11 px-1 sm:px-3 gap-1 sm:gap-2 border-b flex-shrink-0 flex-wrap py-1 sm:py-0" style={{ background: "#111111", borderColor: "#1e1e1e" }}>
+        {/* Left: Project Name */}
+        <div className="flex items-center gap-2 min-w-0 sm:min-w-[140px]">
+          {editingProjectName ? (
+            <input autoFocus value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
+              onBlur={() => setEditingProjectName(false)}
+              onKeyDown={(e) => e.key === "Enter" && setEditingProjectName(false)}
+              className="bg-[#1a1a1a] border border-[#D4A843] rounded px-2 py-0.5 text-xs text-[#eee] outline-none w-32"
+            />
+          ) : (
+            <span className="text-xs text-[#ccc] font-medium cursor-pointer hover:text-[#D4A843] transition-colors truncate max-w-[100px] sm:max-w-[160px]"
+              onClick={() => setEditingProjectName(true)}>
+              {projectName}
+            </span>
+          )}
+        </div>
+
+        {/* Left-center: Metronome + BPM + Time Sig */}
+        <div className="flex items-center gap-1.5 px-2 py-1 rounded" style={{ background: "#0e0e0e" }}>
+          {/* Metronome */}
+          <div className="relative">
+            <button onClick={async () => { await setupMetronome(); setMetronomeOn(!metronomeOn); }}
+              title="Metronome (M)"
+              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer ${metronomeOn ? "text-[#D4A843]" : "text-[#555] hover:text-[#888]"}`}
+              style={{ background: metronomeOn ? "#2a2418" : "transparent", border: metronomeOn ? "1px solid #D4A84333" : "1px solid transparent" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L8 22h8L12 2z"/><path d="M12 8l6-3"/></svg>
+            </button>
+            <button onClick={() => setShowMetronomeSettings(!showMetronomeSettings)}
+              className="absolute -right-1 -bottom-0.5 w-3 h-3 rounded-full bg-[#1a1a1a] border border-[#333] text-[#555] text-[6px] flex items-center justify-center cursor-pointer hover:border-[#555]">
+              &#9662;
+            </button>
+            {showMetronomeSettings && (
+              <div className="absolute top-9 left-0 z-50 bg-[#1a1a1a] border border-[#333] rounded-lg shadow-xl p-3 min-w-[160px] max-w-[90vw]" onClick={(e) => e.stopPropagation()}>
+                <div className="text-[10px] sm:text-[9px] text-[#888] mb-2 font-medium">Metronome Settings</div>
+                <label className="flex items-center gap-2 text-[9px] text-[#666]">
+                  Volume
+                  <input type="range" min={0} max={100} value={metronomeVol}
+                    onChange={(e) => setMetronomeVol(Number(e.target.value))}
+                    className="flex-1 accent-[#D4A843] h-1" />
+                  <span className="text-[#888] w-6 text-right">{metronomeVol}</span>
+                </label>
+                <button onClick={() => setShowMetronomeSettings(false)} className="mt-2 text-[8px] text-[#555] hover:text-[#888] cursor-pointer">Close</button>
+              </div>
+            )}
+          </div>
+
+          <div className="w-px h-5 bg-[#222]" />
+
+          {/* BPM */}
+          <div className="flex items-center gap-1">
+            <input type="number" min={40} max={300} value={bpm}
+              onChange={(e) => setBpm(Number(e.target.value))}
+              className="w-11 h-6 bg-transparent border border-[#2a2a2a] rounded text-[#D4A843] text-[11px] text-center font-mono focus:border-[#D4A843] outline-none hover:border-[#444] transition-colors" />
+            <span className="text-[9px] text-[#444] font-medium">bpm</span>
+          </div>
+
+          <div className="w-px h-5 bg-[#222]" />
+
+          {/* Time Signature */}
+          <div className="relative">
+            <button onClick={() => setShowTimeSigPicker(!showTimeSigPicker)}
+              className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[11px] font-mono text-[#aaa] hover:text-[#ccc] hover:bg-[#1a1a1a] transition-colors cursor-pointer">
+              <span>{timeSig[0]}</span>
+              <span className="text-[#444]">/</span>
+              <span>{timeSig[1]}</span>
+            </button>
+            {showTimeSigPicker && (
+              <div className="absolute top-8 left-0 z-50 bg-[#1a1a1a] border border-[#333] rounded-lg shadow-xl py-1 min-w-[64px]">
+                {TIME_SIGS.map(([n, d], idx) => (
+                  <button key={idx} onClick={() => { setTimeSigIdx(idx); setShowTimeSigPicker(false); }}
+                    className={`w-full text-center text-[11px] font-mono px-3 py-1 cursor-pointer transition-colors ${idx === timeSigIdx ? "text-[#D4A843] bg-[#D4A84311]" : "text-[#888] hover:bg-[#222] hover:text-[#ccc]"}`}>
+                    {n}/{d}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="w-px h-5 bg-[#222]" />
+
+          {/* Key */}
+          <div className="relative">
+            <button onClick={() => setShowKeyPicker(!showKeyPicker)}
+              className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-mono text-[#aaa] hover:text-[#ccc] hover:bg-[#1a1a1a] transition-colors cursor-pointer">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+              <span>{projectKey}</span>
+            </button>
+            {showKeyPicker && (
+              <div className="absolute top-8 left-0 z-50 bg-[#1a1a1a] border border-[#333] rounded-lg shadow-xl p-2 min-w-[140px] max-w-[90vw]">
+                <div className="text-[10px] sm:text-[8px] text-[#555] mb-1.5 font-medium uppercase tracking-wider">Project Key</div>
+                <div className="grid grid-cols-4 gap-0.5 mb-2">
+                  {MUSICAL_KEYS.map((k) => (
+                    <button key={k} onClick={() => { setProjectKey(k + (projectKey.includes("m") ? "m" : "")); }}
+                      className={`text-[9px] py-0.5 rounded cursor-pointer transition-colors ${projectKey.startsWith(k) ? "bg-[#D4A843] text-[#111] font-bold" : "text-[#888] hover:bg-[#222]"}`}>{k}</button>
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 gap-0.5">
+                  {MUSICAL_MODES.map((m) => (
+                    <button key={m} onClick={() => { setProjectKey(projectKey.replace(/[A-G]#?/, "$&") + (m === "Minor" ? "m" : "")); setShowKeyPicker(false); }}
+                      className="text-[8px] py-0.5 rounded text-[#666] hover:bg-[#222] hover:text-[#aaa] cursor-pointer transition-colors">{m}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Center: Transport Controls */}
+        <div className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 flex-wrap">
+          {/* Rewind */}
+          <button onClick={rewindToStart} title={`Rewind (${SHORTCUT_HINTS.rewind})`} aria-label="Rewind"
+            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer group"
+            style={{ background: "#1e1e1e", border: "1px solid #2a2a2a" }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-[#888] group-hover:text-[#ccc] transition-colors">
+              <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
+            </svg>
+          </button>
+
+          {/* Stop */}
+          <button onClick={stopAll} title="Stop" aria-label="Stop"
+            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer group"
+            style={{ background: "#1e1e1e", border: "1px solid #2a2a2a" }}>
+            <div className="w-3.5 h-3.5 rounded-[2px] bg-[#888] group-hover:bg-[#ccc] transition-colors" />
+          </button>
+
+          {/* Play */}
+          {!playing ? (
+            <button onClick={playAll} title={`Play (${SHORTCUT_HINTS.play})`} aria-label="Play"
+              className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer group"
+              disabled={tracks.length === 0}
+              style={{
+                background: tracks.length > 0 ? "#1a3a1a" : "#1e1e1e",
+                border: tracks.length > 0 ? "1px solid #33aa3366" : "1px solid #2a2a2a",
+              }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className={`ml-0.5 ${tracks.length > 0 ? "text-[#4ade80]" : "text-[#555]"} group-hover:text-white transition-colors`}>
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </button>
+          ) : (
+            <button onClick={stopAll} title={`Pause (${SHORTCUT_HINTS.play})`} aria-label="Pause"
+              className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer"
+              style={{
+                background: "#1a3a1a",
+                border: "1px solid #22c55e",
+                boxShadow: "0 0 8px rgba(34,197,94,0.2)",
+              }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-white">
+                <path d="M6 4h4v16H6zM14 4h4v16h-4z"/>
+              </svg>
+            </button>
+          )}
+
+          {/* Record */}
+          {!isRec ? (
+            <button onClick={startRec} title={`Record (${SHORTCUT_HINTS.record})`} aria-label="Record"
+              className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer group"
+              style={{ background: "#1e1e1e", border: "1px solid #2a2a2a" }}>
+              <div className="w-3.5 h-3.5 rounded-full group-hover:brightness-125 transition-all" style={{ background: "radial-gradient(circle at 40% 35%, #ff4466 0%, #C41E3A 50%, #8a1525 100%)" }} />
+            </button>
+          ) : (
+            <button onClick={stopRec} title="Stop Recording" aria-label="Stop Recording"
+              className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer"
+              style={{
+                background: "#1e1e1e",
+                border: "1px solid #ee3355",
+                boxShadow: "0 0 12px rgba(196,30,58,0.4)",
+                animation: "pulse 1.5s ease-in-out infinite",
+              }}>
+              <div className="w-3.5 h-3.5 rounded-full" style={{ background: "radial-gradient(circle at 40% 35%, #ff6688 0%, #ee3355 40%, #C41E3A 100%)", boxShadow: "0 0 6px rgba(238,51,85,0.5)" }} />
+            </button>
+          )}
+
+          {/* Loop */}
+          <button onClick={() => setLooping(!looping)} title={`Loop (${SHORTCUT_HINTS.loop})`} aria-label="Loop"
+            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer"
+            style={{
+              background: looping ? "#2a2418" : "#1e1e1e",
+              border: looping ? "1px solid #D4A84355" : "1px solid #2a2a2a",
+            }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={looping ? "#D4A843" : "#666"} strokeWidth="2" style={looping ? { filter: "drop-shadow(0 0 2px rgba(212,168,67,0.3))" } : {}}>
+              <path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/>
+            </svg>
+          </button>
+
+          <div className="w-px h-6 bg-[#222] mx-1" />
+
+          {/* Time Display — segment-display style */}
+          <div className="px-2 sm:px-3 py-1 rounded font-mono text-sm flex items-center min-w-[100px] sm:min-w-[120px] justify-center relative overflow-hidden"
+            style={{ background: "#050505", border: "1px solid #1a1a1a", boxShadow: "inset 0 1px 4px rgba(0,0,0,0.5)" }}>
+            <span className="text-[#D4A84333] absolute tracking-[2px]" style={{ fontFamily: "'Courier New', monospace", fontSize: "15px" }}>88:88.8</span>
+            <span className="text-[#D4A843] relative tracking-[2px]" style={{ fontFamily: "'Courier New', monospace", fontSize: "15px", textShadow: "0 0 8px rgba(212,168,67,0.4), 0 0 2px rgba(212,168,67,0.6)" }}>{fmtTime(currentTime)}</span>
+          </div>
+
+          {/* Recording indicator */}
+          {isRec && (
+            <div className="flex items-center gap-1.5 ml-1">
+              <div className="w-2 h-2 rounded-full bg-[#C41E3A] animate-pulse" />
+              <span className="font-mono text-xs text-[#C41E3A]">{fmtTime(recTime)}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Right: Master volume + Export */}
+        <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 sm:min-w-[260px] justify-end">
+          {/* Master volume */}
+          <div className="hidden sm:flex items-center gap-1.5">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" className="flex-shrink-0">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/>
+            </svg>
+            <input type="range" min={0} max={100} value={masterVol}
+              onChange={(e) => setMasterVol(Number(e.target.value))}
+              className="w-20 accent-[#D4A843] h-1 cursor-pointer" />
+            <span className="font-mono text-[9px] text-[#666] w-12 text-right">{dbDisplay(masterVol)} dB</span>
+          </div>
+
+          <div className="w-px h-5 bg-[#222]" />
+
+          {/* Export dropdown */}
+          <div className="relative">
+            <button onClick={() => setShowExportMenu(!showExportMenu)} disabled={tracks.length === 0}
+              title="Export / Save"
+              className="text-[10px] font-semibold px-3 py-1.5 rounded-md transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
+              style={{
+                background: tracks.length > 0 ? "linear-gradient(180deg, #D4A843 0%, #B8922E 100%)" : "transparent",
+                color: tracks.length > 0 ? "#111" : "#555",
+                border: tracks.length > 0 ? "none" : "1px solid #333",
+                boxShadow: tracks.length > 0 ? "0 2px 8px rgba(212,168,67,0.2)" : "none",
+              }}>
+              {exporting ? `${exportProgress}%` : "Export"}
+              <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
+            </button>
+            {showExportMenu && (
+              <div className="absolute top-9 right-0 z-50 bg-[#1e1e1e] border border-[#333] rounded-lg shadow-2xl py-1 min-w-[180px] max-w-[90vw]"
+                onClick={(e) => e.stopPropagation()}>
+                <button onClick={() => { saveToLibrary(); }}
+                  disabled={savingToLibrary}
+                  className="w-full text-left text-[10px] text-[#ccc] hover:bg-[#2a2a2a] px-3 py-2 cursor-pointer transition-colors flex items-center gap-2 disabled:opacity-50">
+                  <span className="text-[14px]">{savingToLibrary ? "\u23F3" : "\uD83D\uDCBE"}</span>
+                  <div>
+                    <div className="font-medium">{savingToLibrary ? "Saving..." : "Save to Library"}</div>
+                    <div className="text-[8px] text-[#666]">Save to recordings library</div>
+                  </div>
+                </button>
+                <button onClick={() => { exportMix(); setShowExportMenu(false); }}
+                  disabled={exporting}
+                  className="w-full text-left text-[10px] text-[#ccc] hover:bg-[#2a2a2a] px-3 py-2 cursor-pointer transition-colors flex items-center gap-2 disabled:opacity-50">
+                  <span className="text-[14px]">{exporting ? "\u23F3" : "\uD83D\uDCE5"}</span>
+                  <div className="flex-1">
+                    <div className="font-medium">{exporting ? "Exporting..." : "Download WAV"}</div>
+                    <div className="text-[8px] text-[#666]">{exporting ? `${exportProgress}%` : "Lossless audio file"}</div>
+                    {exporting && (
+                      <div className="w-full h-[3px] bg-[#222] rounded-full mt-1 overflow-hidden">
+                        <div className="h-full bg-[#D4A843] rounded-full transition-all duration-300" style={{ width: `${exportProgress}%` }} />
+                      </div>
+                    )}
+                  </div>
+                </button>
+                <button onClick={() => { exportMp3(); setShowExportMenu(false); }}
+                  disabled={exporting}
+                  className="w-full text-left text-[10px] text-[#ccc] hover:bg-[#2a2a2a] px-3 py-2 cursor-pointer transition-colors flex items-center gap-2 disabled:opacity-50">
+                  <span className="text-[14px]">{exporting ? "\u23F3" : "\uD83C\uDFB5"}</span>
+                  <div className="flex-1">
+                    <div className="font-medium">{exporting ? "Exporting..." : "Download MP3"}</div>
+                    <div className="text-[8px] text-[#666]">{exporting ? `${exportProgress}%` : "Compressed 192kbps"}</div>
+                  </div>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Context sidebar toggle */}
+          <button onClick={() => { const isOpen = showRightPanel || showRecordingsPanel; if (isOpen) { setShowRightPanel(false); setShowRecordingsPanel(false); } else { setShowRightPanel(true); setShowRecordingsPanel(false); } }}
+            className={`w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer transition-colors relative ${(showRightPanel || showRecordingsPanel) ? "text-[#D4A843]" : "text-[#555] hover:text-[#888]"}`}
+            style={{ background: (showRightPanel || showRecordingsPanel) ? "#2a2418" : "#1e1e1e", border: (showRightPanel || showRecordingsPanel) ? "1px solid #D4A84333" : "1px solid #2a2a2a" }}
+            title="Sidebar (Library / Suno / Recordings)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18"/>
+            </svg>
+            {savedRecordings.length > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-[#D4A843] text-[#111] text-[6px] font-bold rounded-full flex items-center justify-center">{savedRecordings.length > 9 ? "9+" : savedRecordings.length}</span>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* ═══════════════════ MAIN LAYOUT ═══════════════════ */}
+      <div className="flex flex-1 overflow-hidden overflow-x-auto">
+        {/* ═══════════════════ LEFT SIDEBAR: Track List ═══════════════════ */}
+        <div className="flex-shrink-0 flex flex-col overflow-hidden max-w-[120px] sm:max-w-none" style={{ width: sidebarWidth, background: "#141414", borderRight: "1px solid #1e1e1e" }}>
+          {/* Sidebar header with Add Track */}
+          <div className="flex items-center h-[26px] px-2 gap-1 flex-shrink-0" style={{ background: "#181818", borderBottom: "1px solid #1e1e1e" }}>
+            <div className="relative">
+              <button onClick={() => setShowAddTrackMenu(!showAddTrackMenu)}
+                className="flex items-center gap-1 text-[9px] text-[#888] hover:text-[#D4A843] transition-colors cursor-pointer px-1.5 py-0.5 rounded hover:bg-[#D4A84308]">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                <span>Add Track</span>
+              </button>
+              {showAddTrackMenu && (
+                <div className="absolute top-7 left-0 z-50 bg-[#1e1e1e] border border-[#333] rounded-lg shadow-2xl py-1 min-w-[180px]"
+                  onClick={(e) => e.stopPropagation()}>
+                  <button onClick={addMicTrack}
+                    className="w-full text-left text-[10px] text-[#ccc] hover:bg-[#2a2a2a] px-3 py-2 cursor-pointer transition-colors flex items-center gap-2.5">
+                    <span className="text-[14px]">&#127908;</span>
+                    <div>
+                      <div className="font-medium">Record</div>
+                      <div className="text-[8px] text-[#666]">Mic / Audio Interface</div>
+                    </div>
+                  </button>
+                  <button onClick={() => { fileRef.current?.click(); setShowAddTrackMenu(false); }}
+                    className="w-full text-left text-[10px] text-[#ccc] hover:bg-[#2a2a2a] px-3 py-2 cursor-pointer transition-colors flex items-center gap-2.5">
+                    <span className="text-[14px]">&#128193;</span>
+                    <div>
+                      <div className="font-medium">Upload File</div>
+                      <div className="text-[8px] text-[#666]">WAV, MP3, OGG, FLAC</div>
+                    </div>
+                  </button>
+                  <button onClick={addYoutubeTrack}
+                    className="w-full text-left text-[10px] text-[#ccc] hover:bg-[#2a2a2a] px-3 py-2 cursor-pointer transition-colors flex items-center gap-2.5">
+                    <span className="text-[14px]">&#128279;</span>
+                    <div>
+                      <div className="font-medium">YouTube / URL</div>
+                      <div className="text-[8px] text-[#666]">Import from link</div>
+                    </div>
+                  </button>
+                  <div className="border-t border-[#2a2a2a] my-0.5" />
+                  <button onClick={addDrumTrack}
+                    className="w-full text-left text-[10px] text-[#ccc] hover:bg-[#2a2a2a] px-3 py-2 cursor-pointer transition-colors flex items-center gap-2.5">
+                    <span className="text-[14px]">&#129345;</span>
+                    <div>
+                      <div className="font-medium">Drum Machine</div>
+                      <div className="text-[8px] text-[#666]">Step sequencer pattern</div>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
+            <input ref={fileRef} type="file" accept="audio/wav,audio/mp3,audio/mpeg,audio/ogg,audio/flac,audio/*" className="hidden" multiple
+              onChange={(e) => { if (e.target.files) Array.from(e.target.files).forEach((f) => importFile(f)); }} />
+
+            <div className="flex-1" />
+
+            {/* Snap */}
+            <button onClick={() => setSnapToGrid(!snapToGrid)} title="Snap to Grid (G)"
+              className={`w-5 h-5 rounded flex items-center justify-center cursor-pointer text-[8px] transition-colors ${snapToGrid ? "text-[#D4A843] bg-[#D4A84311]" : "text-[#444]"}`}>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            </button>
+          </div>
+
+          {/* Track entries */}
+          <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "#333 transparent" }}>
+            {tracks.map((tr, idx) => {
+              const isSelected = selectedTrackId === tr.id;
+              const level = vuLevels[tr.id] ?? 0;
+              return (
+                <div key={tr.id}
+                  className={`relative transition-colors cursor-pointer ${isSelected ? "bg-[#1c1c14]" : "hover:bg-[#1a1a1a]"}`}
+                  onClick={() => setSelectedTrackId(tr.id)}
+                  onContextMenu={(e) => { e.preventDefault(); setColorPickerTrackId(colorPickerTrackId === tr.id ? null : tr.id); }}
+                  style={{
+                    borderLeft: `3px solid ${isSelected ? tr.color : tr.color + "aa"}`,
+                    borderBottom: "1px solid #1a1a1a",
+                    boxShadow: isSelected ? `inset 4px 0 16px -4px ${tr.color}55, inset 0 0 0 1px ${tr.color}11` : "none",
+                  }}>
+                  {/* Row 1: Icon + Track Name + Gear + Menu */}
+                  <div className="flex items-center gap-1 px-2 pt-1.5 pb-0.5">
+                    <span className="font-mono text-[7px] text-[#333] w-3 text-center flex-shrink-0 leading-none">{String(idx + 1).padStart(2, "0")}</span>
+                    <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: tr.color }} />
+
+                    {editingTrackName === tr.id ? (
+                      <input autoFocus defaultValue={tr.name}
+                        onBlur={(e) => { renameTrack(tr.id, e.target.value || tr.name); setEditingTrackName(null); }}
+                        onKeyDown={(e) => { if (e.key === "Enter") { renameTrack(tr.id, (e.target as HTMLInputElement).value || tr.name); setEditingTrackName(null); } }}
+                        className="flex-1 bg-[#121214] border border-[#D4A843] rounded px-1 py-0 text-[10px] text-[#ccc] outline-none min-w-0"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    ) : (
+                      <span className={`flex-1 text-[10px] truncate min-w-0 font-medium ${isSelected ? "text-[#ccc]" : "text-[#999]"}`}
+                        onDoubleClick={(e) => { e.stopPropagation(); setEditingTrackName(tr.id); }}>
+                        {tr.name}
+                      </span>
+                    )}
+
+                    {/* Gear icon for mic/recording tracks */}
+                    {(tr.type === "mic" || tr.type === "recording") && (
+                      <button onClick={(e) => { e.stopPropagation(); setInputSettingsTrackId(inputSettingsTrackId === tr.id ? null : tr.id); }}
+                        className={`w-4 h-4 flex items-center justify-center cursor-pointer transition-colors rounded hover:bg-[#ffffff08] ${inputSettingsTrackId === tr.id ? "text-[#D4A843]" : "text-[#3a3a3a] hover:text-[#888]"}`}
+                        title="Input Settings">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                      </button>
+                    )}
+
+                    {/* Menu (...) */}
+                    <button onClick={(e) => { e.stopPropagation(); setTrackMenuId(trackMenuId === tr.id ? null : tr.id); }}
+                      className="text-[#3a3a3a] hover:text-[#888] text-[10px] w-5 h-4 flex items-center justify-center cursor-pointer transition-colors rounded hover:bg-[#ffffff08]"
+                      title="More actions">&#8943;</button>
+
+                    {/* Collapse toggle */}
+                    <button onClick={(e) => { e.stopPropagation(); toggleCollapsed(tr.id); }}
+                      className="text-[#3a3a3a] hover:text-[#888] text-[9px] cursor-pointer w-4 h-4 flex items-center justify-center transition-colors"
+                      title="Collapse">
+                      {tr.collapsed ? "\u25B6" : "\u25BC"}
+                    </button>
+                  </div>
+
+                  {/* Row 2: M S Fx RecArm VU ── Volume ── Pan */}
+                  {!tr.collapsed && (
+                    <>
+                      <div className="flex items-center gap-1 px-2 py-0.5">
+                        {/* Mute */}
+                        <button onClick={(e) => { e.stopPropagation(); toggleMute(tr.id); }}
+                          className={`text-[7px] font-bold w-[18px] h-[15px] rounded-[3px] cursor-pointer flex items-center justify-center transition-all ${tr.muted ? "bg-[#3b82f6] text-white shadow-[0_0_4px_rgba(59,130,246,0.3)]" : "bg-transparent border border-[#2a2a2a] text-[#555] hover:border-[#444] hover:text-[#888]"}`}
+                          title="Mute">
+                          M
+                        </button>
+                        {/* Solo */}
+                        <button onClick={(e) => { e.stopPropagation(); toggleSolo(tr.id); }}
+                          className={`text-[7px] font-bold w-[18px] h-[15px] rounded-[3px] cursor-pointer flex items-center justify-center transition-all ${tr.solo ? "bg-[#D4A843] text-[#111] shadow-[0_0_4px_rgba(212,168,67,0.3)]" : "bg-transparent border border-[#2a2a2a] text-[#555] hover:border-[#444] hover:text-[#888]"}`}
+                          title="Solo">
+                          S
+                        </button>
+                        {/* Fx */}
+                        <button onClick={(e) => { e.stopPropagation(); setFxTrackId(fxTrackId === tr.id ? null : tr.id); setSelectedTrackId(tr.id); setBottomTab("fx"); }}
+                          className={`text-[7px] font-medium px-1 h-[15px] rounded-[3px] cursor-pointer flex items-center justify-center transition-all ${fxTrackId === tr.id ? "bg-[#8b5cf6] text-white" : "bg-transparent border border-[#2a2a2a] text-[#555] hover:border-[#444] hover:text-[#888]"}`}
+                          title="Effects">
+                          Fx
+                        </button>
+                        {/* Record arm */}
+                        <button onClick={(e) => { e.stopPropagation(); toggleRecordArm(tr.id); }}
+                          className={`w-[15px] h-[15px] rounded-full cursor-pointer flex items-center justify-center transition-all ${tr.recordArm ? "shadow-[0_0_8px_rgba(196,30,58,0.5)]" : "hover:border-[#555]"}`}
+                          style={tr.recordArm ? { background: "radial-gradient(circle at 40% 35%, #ff4466, #C41E3A)", animation: "pulse 2s ease-in-out infinite" } : { background: "transparent", border: "1px solid #333" }}
+                          title="Record Arm">
+                          {!tr.recordArm && <div className="w-1.5 h-1.5 rounded-full bg-[#444]" />}
+                        </button>
+
+                        {/* Mini VU meter */}
+                        <div className="w-8 h-[4px] bg-[#080808] rounded-[1px] overflow-hidden" style={{ border: "1px solid #1a1a1a" }}>
+                          <div className="h-full transition-all duration-75 rounded-[1px]" style={{
+                            width: `${Math.min(100, level * 100)}%`,
+                            background: level > 0.85 ? "linear-gradient(90deg, #22c55e 0%, #eab308 60%, #ef4444 100%)"
+                              : level > 0.6 ? "linear-gradient(90deg, #22c55e 0%, #eab308 100%)"
+                              : "#22c55e",
+                          }} />
+                        </div>
+                      </div>
+
+                      {/* Volume slider + Pan indicator */}
+                      <div className="flex items-center gap-1 px-2 pb-1">
+                        <input type="range" min={0} max={100} value={tr.volume}
+                          onChange={(e) => { e.stopPropagation(); updateTrackVol(tr.id, Number(e.target.value)); }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex-1 accent-[#888] h-[3px] cursor-pointer" style={{ accentColor: tr.color }} />
+                        <span className="font-mono text-[7px] text-[#555] w-7 text-right whitespace-nowrap">
+                          {tr.pan === 0 ? "C" : tr.pan < 0 ? `L${Math.abs(tr.pan)}` : `R${tr.pan}`}
+                        </span>
+                      </div>
+
+                      {/* Per-track input settings panel (gear icon) */}
+                      {inputSettingsTrackId === tr.id && (tr.type === "mic" || tr.type === "recording") && (
+                        <div className="mx-2 mb-1.5 p-2 rounded-md space-y-1.5" style={{ background: "#0e0e0e", border: "1px solid #222" }}
+                          onClick={(e) => e.stopPropagation()}>
+                          <div className="text-[8px] text-[#666] font-medium uppercase tracking-wider mb-1">Input Settings</div>
+                          <label className="block">
+                            <span className="text-[7px] text-[#555]">Input Device</span>
+                            <select value={tr.inputSettings?.deviceId || selectedInputDevice}
+                              onChange={(e) => {
+                                const did = e.target.value;
+                                setTracks((p) => p.map((t) => t.id === tr.id ? { ...t, inputSettings: { ...(t.inputSettings || { deviceId: "", channel: "stereo" as const, gain: 100, monitoring: false }), deviceId: did } } : t));
+                              }}
+                              className="w-full bg-[#151515] border border-[#2a2a2a] rounded px-1.5 py-0.5 text-[9px] text-[#aaa] outline-none cursor-pointer">
+                              {inputDevices.map((d) => (
+                                <option key={d.deviceId} value={d.deviceId}>{d.label || `Device (${d.deviceId.slice(0, 8)}...)`}</option>
+                              ))}
+                            </select>
+                          </label>
+                          <label className="block">
+                            <span className="text-[7px] text-[#555]">Channel</span>
+                            <select value={tr.inputSettings?.channel || "stereo"}
+                              onChange={(e) => {
+                                const ch = e.target.value as "mono-l" | "mono-r" | "stereo";
+                                setTracks((p) => p.map((t) => t.id === tr.id ? { ...t, inputSettings: { ...(t.inputSettings || { deviceId: "", channel: "stereo" as const, gain: 100, monitoring: false }), channel: ch } } : t));
+                              }}
+                              className="w-full bg-[#151515] border border-[#2a2a2a] rounded px-1.5 py-0.5 text-[9px] text-[#aaa] outline-none cursor-pointer">
+                              <option value="mono-l">Mono L</option>
+                              <option value="mono-r">Mono R</option>
+                              <option value="stereo">Stereo</option>
+                            </select>
+                          </label>
+                          <label className="block">
+                            <span className="text-[7px] text-[#555]">Input Gain</span>
+                            <div className="flex items-center gap-1">
+                              <input type="range" min={0} max={200} value={tr.inputSettings?.gain ?? 100}
+                                onChange={(e) => {
+                                  const g = Number(e.target.value);
+                                  setTracks((p) => p.map((t) => t.id === tr.id ? { ...t, inputSettings: { ...(t.inputSettings || { deviceId: "", channel: "stereo" as const, gain: 100, monitoring: false }), gain: g } } : t));
+                                }}
+                                className="flex-1 accent-[#D4A843] h-[2px] cursor-pointer" />
+                              <span className="text-[7px] text-[#666] font-mono w-6 text-right">{tr.inputSettings?.gain ?? 100}%</span>
+                            </div>
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[7px] text-[#555]">Monitor</span>
+                            <button onClick={() => {
+                              const cur = tr.inputSettings?.monitoring ?? false;
+                              setTracks((p) => p.map((t) => t.id === tr.id ? { ...t, inputSettings: { ...(t.inputSettings || { deviceId: "", channel: "stereo" as const, gain: 100, monitoring: false }), monitoring: !cur } } : t));
+                            }}
+                              className={`w-7 h-[14px] rounded-full transition-all cursor-pointer relative ${tr.inputSettings?.monitoring ? "bg-[#D4A843]" : "bg-[#2a2a2a]"}`}>
+                              <div className={`absolute top-[2px] w-[10px] h-[10px] rounded-full bg-white transition-all shadow-sm ${tr.inputSettings?.monitoring ? "left-[13px]" : "left-[2px]"}`} />
+                            </button>
+                          </div>
+                          {/* Input level meter */}
+                          <div className="flex items-center gap-1">
+                            <span className="text-[7px] text-[#555]">Level</span>
+                            <div className="flex-1 h-[4px] bg-[#080808] rounded-[1px] overflow-hidden" style={{ border: "1px solid #1a1a1a" }}>
+                              <div className="h-full transition-all duration-75 rounded-[1px]" style={{
+                                width: `${Math.min(100, (isRec && tr.recordArm ? 0.4 + Math.random() * 0.4 : 0) * 100)}%`,
+                                background: "linear-gradient(90deg, #22c55e 0%, #eab308 70%, #ef4444 100%)",
+                              }} />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* Color picker (on right-click) */}
+                  {colorPickerTrackId === tr.id && (
+                    <div className="absolute top-0 right-2 z-50 bg-[#1e1e1e] border border-[#333] rounded-lg shadow-2xl p-2 min-w-[90px]"
+                      onClick={(e) => e.stopPropagation()}>
+                      <div className="text-[8px] text-[#555] mb-1.5 font-medium">Track Color</div>
+                      <div className="grid grid-cols-4 gap-1">
+                        {TRACK_COLORS.map((c) => (
+                          <button key={c} onClick={() => changeTrackColor(tr.id, c)}
+                            className={`w-5 h-5 rounded-full cursor-pointer transition-all hover:scale-110 ${tr.color === c ? "ring-2 ring-white ring-offset-1 ring-offset-[#1e1e1e]" : ""}`}
+                            style={{ background: c }} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Context menu */}
+                  {trackMenuId === tr.id && (
+                    <div className="absolute top-8 right-2 z-50 bg-[#1e1e1e] border border-[#333] rounded-lg shadow-2xl py-1 min-w-[130px]"
+                      onClick={(e) => e.stopPropagation()}>
+                      <button onClick={() => { setEditingTrackName(tr.id); setTrackMenuId(null); }}
+                        className="w-full text-left text-[10px] text-[#aaa] hover:bg-[#2a2a2a] px-3 py-1.5 cursor-pointer transition-colors">Rename</button>
+                      <button onClick={() => { setColorPickerTrackId(tr.id); setTrackMenuId(null); }}
+                        className="w-full text-left text-[10px] text-[#aaa] hover:bg-[#2a2a2a] px-3 py-1.5 cursor-pointer transition-colors">Change Color</button>
+                      <button onClick={() => { updateTrackPan(tr.id, 0); updateTrackVol(tr.id, 100); setTrackMenuId(null); }}
+                        className="w-full text-left text-[10px] text-[#aaa] hover:bg-[#2a2a2a] px-3 py-1.5 cursor-pointer transition-colors">Reset Controls</button>
+                      <button onClick={() => { const newTr = [...tracks]; const i = newTr.findIndex((t) => t.id === tr.id); if (i > 0) { [newTr[i-1], newTr[i]] = [newTr[i], newTr[i-1]]; setTracks(newTr); } setTrackMenuId(null); }}
+                        className="w-full text-left text-[10px] text-[#aaa] hover:bg-[#2a2a2a] px-3 py-1.5 cursor-pointer transition-colors disabled:opacity-30"
+                        disabled={idx === 0}>Move Up</button>
+                      <button onClick={() => { const newTr = [...tracks]; const i = newTr.findIndex((t) => t.id === tr.id); if (i < newTr.length - 1) { [newTr[i], newTr[i+1]] = [newTr[i+1], newTr[i]]; setTracks(newTr); } setTrackMenuId(null); }}
+                        className="w-full text-left text-[10px] text-[#aaa] hover:bg-[#2a2a2a] px-3 py-1.5 cursor-pointer transition-colors disabled:opacity-30"
+                        disabled={idx === tracks.length - 1}>Move Down</button>
+                      <div className="border-t border-[#2a2a2a] my-1" />
+                      <button onClick={() => { deleteTrack(tr.id); setTrackMenuId(null); }}
+                        className="w-full text-left text-[10px] text-[#C41E3A] hover:bg-[#1a0a0a] px-3 py-1.5 cursor-pointer transition-colors">Delete Track</button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Master track section at bottom — visually distinct */}
+          <div style={{ background: "linear-gradient(180deg, #181614 0%, #141210 100%)", borderTop: "2px solid #D4A84322" }}>
+            <div className="flex items-center gap-1.5 px-2 pt-2 pb-1">
+              <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: "radial-gradient(circle at 40% 35%, #EDCF72, #D4A843, #B8922E)", boxShadow: "0 0 6px rgba(212,168,67,0.3)" }} />
+              <span className="text-[9px] text-[#D4A843] font-bold tracking-wider uppercase">Master Track</span>
+              <div className="flex-1" />
+              {/* Stereo Master VU */}
+              <div className="flex gap-[2px]">
+                <div className="w-[5px] h-[14px] bg-[#080808] rounded-[1px] overflow-hidden flex flex-col-reverse" style={{ border: "1px solid #1a1a1a" }}>
+                  <div className="w-full transition-all duration-75" style={{
+                    height: `${playing || isRec ? Math.min(100, (masterVol / 100) * 60 + Math.random() * 30) : 0}%`,
+                    background: "linear-gradient(0deg, #22c55e 0%, #eab308 65%, #ef4444 100%)",
+                  }} />
+                </div>
+                <div className="w-[5px] h-[14px] bg-[#080808] rounded-[1px] overflow-hidden flex flex-col-reverse" style={{ border: "1px solid #1a1a1a" }}>
+                  <div className="w-full transition-all duration-75" style={{
+                    height: `${playing || isRec ? Math.min(100, (masterVol / 100) * 55 + Math.random() * 28) : 0}%`,
+                    background: "linear-gradient(0deg, #22c55e 0%, #eab308 65%, #ef4444 100%)",
+                  }} />
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 px-2 pb-2">
+              <input type="range" min={0} max={100} value={masterVol}
+                onChange={(e) => setMasterVol(Number(e.target.value))}
+                className="flex-1 accent-[#D4A843] h-[3px] cursor-pointer" />
+              <span className="font-mono text-[8px] text-[#D4A843] w-7 text-right">{dbDisplay(masterVol)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ═══════════════════ Sidebar Resize Handle ═══════════════════ */}
+        <div
+          className="w-[3px] cursor-col-resize hover:bg-[#D4A84333] active:bg-[#D4A84355] transition-colors flex-shrink-0"
+          style={{ background: "#1a1a1a" }}
+          onMouseDown={() => { sidebarDragRef.current = true; document.body.style.cursor = "col-resize"; document.body.style.userSelect = "none"; }}
+        />
+
+        {/* ═══════════════════ CENTER: Timeline + Bottom Panel ═══════════════════ */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Measure ruler */}
+          <div className="h-[28px] flex-shrink-0 overflow-hidden relative" style={{ background: "#1a1a1a", borderBottom: "1px solid #252525" }}>
+            <div className="absolute top-0 left-0 h-full flex">
+              {measures.map((m) => (
+                <div key={m.measure} className="relative h-full" style={{ width: `${pxPerSec * m.width}px`, borderRight: "1px solid #2a2a2a" }}>
+                  <span className="absolute top-1 left-2 font-mono text-[9px] text-[#666] font-semibold">{m.measure}</span>
+                  {/* Beat ticks — show subdivisions when zoomed in */}
+                  {Array.from({ length: timeSig[0] * (zoom > 60 ? 2 : 1) }).map((_, bi) => {
+                    const isBeat = bi % (zoom > 60 ? 2 : 1) === 0;
+                    const isDownbeat = bi === 0;
+                    return (
+                      <div key={bi} className="absolute bottom-0" style={{ left: `${(bi / (timeSig[0] * (zoom > 60 ? 2 : 1))) * 100}%` }}>
+                        <div className="absolute bottom-0 w-px" style={{
+                          height: isDownbeat ? "10px" : isBeat ? "6px" : "3px",
+                          background: isDownbeat ? "#555" : isBeat ? "#333" : "#252525",
+                        }} />
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+            {/* Playhead on ruler */}
+            <div className="absolute top-0 h-full z-10 pointer-events-none" style={{ transform: `translateX(${currentTime * pxPerSec}px)`, left: 0, willChange: playing ? 'transform' : 'auto' }}>
+              <div className="w-px h-full bg-[#D4A843]" style={{ boxShadow: "0 0 4px rgba(212,168,67,0.3)" }} />
+              <div className="absolute top-0 -translate-x-1/2 w-3 h-3 bg-[#D4A843]" style={{ clipPath: "polygon(0 0, 100% 0, 50% 100%)", filter: "drop-shadow(0 1px 2px rgba(212,168,67,0.4))" }} />
+            </div>
+          </div>
+
+          {/* Zoom bar */}
+          <div className="h-5 flex items-center px-2 gap-2 flex-shrink-0" style={{ background: "#111", borderBottom: "1px solid #1a1a1a" }}>
+            <button onClick={() => setZoom(Math.max(0, zoom - 10))} className="text-[#555] hover:text-[#888] text-xs cursor-pointer transition-colors">-</button>
+            <input type="range" min={0} max={100} value={zoom}
+              onChange={(e) => setZoom(Number(e.target.value))}
+              className="w-20 accent-[#555] h-[2px] cursor-pointer" />
+            <button onClick={() => setZoom(Math.min(100, zoom + 10))} className="text-[#555] hover:text-[#888] text-xs cursor-pointer transition-colors">+</button>
+            <div className="flex-1" />
+            <span className="text-[8px] text-[#333] font-mono">{tracks.length} tracks</span>
+          </div>
+
+          {/* Track waveforms area */}
+          <div className="flex-1 overflow-auto relative" style={{ background: "#0c0c0c" }}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={handleDrop}>
+            {/* Recording live level meter */}
+            {isRec && (
+              <div style={{ borderLeft: "3px solid #C41E3A", borderBottom: "1px solid #1a1a1a" }}>
+                <div className="flex items-center gap-2 px-2 py-1" style={{ background: "#15090a" }}>
+                  <div className="w-2 h-2 rounded-full bg-[#C41E3A] animate-pulse" />
+                  <span className="text-[9px] text-[#C41E3A] font-medium">Recording...</span>
+                  <span className="font-mono text-[9px] text-[#C41E3A]">{fmtTime(recTime)}</span>
+                </div>
+                <div className="min-h-[56px] flex items-center px-3 gap-2" style={{ background: "#0a0808" }}>
+                  {/* Live level bar */}
+                  <div className="flex-1 h-6 rounded overflow-hidden relative" style={{ background: "#111" }}>
+                    <div
+                      className="h-full rounded transition-all duration-75"
+                      style={{
+                        width: `${Math.min(100, recLevel * 100)}%`,
+                        background: recLevel > 0.8 ? "linear-gradient(90deg, #22c55e 0%, #D4A843 60%, #ef4444 100%)" : recLevel > 0.4 ? "linear-gradient(90deg, #22c55e 0%, #D4A843 100%)" : "linear-gradient(90deg, #22c55e 0%, #22c55e 100%)",
+                        boxShadow: recLevel > 0.1 ? `0 0 8px rgba(34,197,94,${recLevel * 0.5})` : "none",
+                      }}
+                    />
+                    {/* Grid lines */}
+                    {[25, 50, 75].map((p) => (
+                      <div key={p} className="absolute top-0 bottom-0 w-px bg-[#1a1a1a]" style={{ left: `${p}%` }} />
+                    ))}
+                  </div>
+                  <span className="font-mono text-[8px] text-[#666] w-8 text-right">{recLevel > 0 ? `${Math.round(20 * Math.log10(Math.max(0.001, recLevel)))} dB` : "-inf"}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Empty state — BandLab style */}
+            {tracks.length === 0 && !isRec && (
+              <div className="flex items-center justify-center h-full"
+                onDragOver={(e) => { e.preventDefault(); e.currentTarget.querySelector<HTMLDivElement>(".drop-zone")?.classList.add("border-[#D4A84344]"); }}
+                onDragLeave={(e) => { e.currentTarget.querySelector<HTMLDivElement>(".drop-zone")?.classList.remove("border-[#D4A84344]"); }}>
+                <div className="drop-zone border-2 border-dashed rounded-2xl px-20 py-16 text-center transition-all"
+                  style={{ borderColor: "#333", maxWidth: "420px" }}>
+                  <div className="text-[48px] leading-none mb-4 opacity-20" style={{ color: "#555" }}>{"\u266A"}</div>
+                  <div className="text-[#555] text-[15px] font-medium mb-2">Drop a loop or audio file</div>
+                  <div className="text-[#333] text-[11px] leading-relaxed">or use <span className="text-[#C41E3A]">Record</span> / <span className="text-[#888]">Add Track</span> to get started</div>
+                </div>
+              </div>
+            )}
+
+            {/* Track waveforms */}
+            {tracks.map((tr) => {
+              const isSelected = selectedTrackId === tr.id;
+              const hasSolo = tracks.some((t) => t.solo);
+              const audible = hasSolo ? tr.solo : !tr.muted;
+              const trackRegions = regions.filter((r) => r.trackId === tr.id);
+              const hasRegions = trackRegions.length > 0;
+              return (
+                <div key={tr.id}
+                  className={`transition-colors relative ${isSelected ? "bg-[#12120e]" : ""}`}
+                  style={{
+                    borderLeft: `3px solid ${tr.color}`,
+                    borderBottom: "1px solid #1a1a1a",
+                    opacity: !audible ? 0.3 : 1,
+                  }}
+                  onClick={() => setSelectedTrackId(tr.id)}>
+                  {tr.collapsed ? (
+                    <div className="h-4 flex items-center px-2">
+                      <span className="text-[8px] text-[#444]">{tr.name}</span>
+                    </div>
+                  ) : (
+                    <div className="relative min-h-[56px]" style={{ background: isSelected ? "#0e0e0a" : "#121214" }}>
+                      {/* Hidden wavesurfer container (still needed for audio seek/interaction) */}
+                      <div
+                        ref={(el) => { if (el) trackContainersRef.current[tr.id] = el; }}
+                        className="min-h-[56px]"
+                        style={{ display: hasRegions ? "none" : "block" }}
+                      />
+                      {/* Canvas-based waveform regions */}
+                      {hasRegions && trackRegions.map((region) => {
+                        const regionLeft = region.startTime * pxPerSec;
+                        const regionWidth = Math.max(4, region.duration * pxPerSec);
+                        const edgeZone = 6;
+                        return (
+                          <div
+                            key={region.id}
+                            className="absolute top-0 bottom-0"
+                            style={{
+                              left: `${regionLeft}px`,
+                              width: `${regionWidth}px`,
+                              background: tr.color + '11',
+                              borderRadius: '2px',
+                              border: `1px solid ${tr.color}33`,
+                            }}
+                            onContextMenu={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setContextMenu({ x: e.clientX, y: e.clientY, regionId: region.id });
+                            }}
+                            onDoubleClick={(e) => {
+                              e.stopPropagation();
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const relX = e.clientX - rect.left;
+                              const relTime = (relX / regionWidth) * region.duration;
+                              splitRegion(region.id, region.startTime + relTime);
+                            }}
+                            onMouseDown={(e) => {
+                              if (e.button !== 0) return;
+                              e.stopPropagation();
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const relX = e.clientX - rect.left;
+                              let mode: "move" | "trim-left" | "trim-right" = "move";
+                              if (relX < edgeZone) mode = "trim-left";
+                              else if (relX > rect.width - edgeZone) mode = "trim-right";
+                              document.body.style.cursor = mode === "move" ? "grabbing" : "col-resize";
+                              setDragState({
+                                regionId: region.id,
+                                mode,
+                                startX: e.clientX,
+                                origStartTime: region.startTime,
+                                origDuration: region.duration,
+                                origOffset: region.offset,
+                              });
+                            }}
+                            onMouseMove={(e) => {
+                              if (dragState) return;
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const relX = e.clientX - rect.left;
+                              if (relX < edgeZone || relX > rect.width - edgeZone) {
+                                e.currentTarget.style.cursor = "col-resize";
+                              } else {
+                                e.currentTarget.style.cursor = "grab";
+                              }
+                            }}
+                          >
+                            <canvas
+                              ref={(el) => { regionCanvasRefs.current[region.id] = el; }}
+                              className="absolute top-0 left-0 w-full h-full pointer-events-none"
+                            />
+                            {/* Region label */}
+                            <div className="absolute top-0.5 left-1 z-[5] pointer-events-none">
+                              <span className="text-[8px] font-medium px-1 py-px rounded" style={{ color: tr.color, background: "#121214cc" }}>{tr.name}</span>
+                            </div>
+                            {/* Trim edge indicators */}
+                            <div className="absolute top-0 bottom-0 left-0 w-[3px] rounded-l" style={{ background: tr.color + '44' }} />
+                            <div className="absolute top-0 bottom-0 right-0 w-[3px] rounded-r" style={{ background: tr.color + '44' }} />
+                          </div>
+                        );
+                      })}
+                      {/* Track name label (shown when no regions) */}
+                      {!hasRegions && (
+                        <div className="absolute top-0.5 left-1 z-[5] pointer-events-none">
+                          <span className="text-[8px] font-medium px-1 py-px rounded" style={{ color: tr.color, background: "#121214cc" }}>{tr.name}</span>
+                        </div>
+                      )}
+                      {/* Recording indicator for armed tracks */}
+                      {isRec && tr.recordArm && (
+                        <div className="absolute top-0.5 right-1 z-[5] flex items-center gap-1 pointer-events-none">
+                          <div className="w-1.5 h-1.5 rounded-full bg-[#C41E3A] animate-pulse" />
+                          <span className="text-[7px] text-[#C41E3A] font-mono">REC</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Vertical playhead across all waveforms */}
+            {(duration > 0 || currentTime > 0) && (
+              <div className="absolute top-0 bottom-0 w-px bg-[#D4A843] z-10 pointer-events-none"
+                style={{
+                  transform: `translateX(${currentTime * pxPerSec}px)`,
+                  left: 0,
+                  willChange: playing ? 'transform' : 'auto',
+                  boxShadow: "0 0 6px rgba(212,168,67,0.4)",
+                }} />
+            )}
+
+            {/* Context menu for region editing */}
+            {contextMenu && (
+              <div
+                className="fixed z-50 rounded shadow-lg py-1"
+                style={{ left: contextMenu.x, top: contextMenu.y, background: "#1a1a1a", border: "1px solid #333", minWidth: "140px" }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  className="w-full text-left px-3 py-1.5 text-xs text-[#ccc] hover:bg-[#252525] transition-colors cursor-pointer"
+                  onClick={() => deleteRegion(contextMenu.regionId)}
+                >
+                  Delete Region
+                </button>
+                <button
+                  className="w-full text-left px-3 py-1.5 text-xs text-[#ccc] hover:bg-[#252525] transition-colors cursor-pointer"
+                  onClick={() => {
+                    const region = regions.find((r) => r.id === contextMenu.regionId);
+                    if (region) splitRegion(region.id, region.startTime + region.duration / 2);
+                    setContextMenu(null);
+                  }}
+                >
+                  Split at Center
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* ═══════════════════ BOTTOM PANEL ═══════════════════ */}
+          {bottomTab !== "none" && (
+            <>
+              {/* Bottom resize handle — thin line with grab cursor */}
+              <div
+                className="h-[5px] cursor-row-resize flex-shrink-0 group relative"
+                style={{ background: "#111" }}
+                onMouseDown={() => { bottomDragRef.current = true; document.body.style.cursor = "row-resize"; document.body.style.userSelect = "none"; }}>
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-[2px] rounded-full bg-[#2a2a2a] group-hover:bg-[#D4A84355] transition-colors" />
+              </div>
+
+              {/* Bottom panel tabs */}
+              <div className="flex items-center h-7 px-2 gap-0.5 flex-shrink-0" style={{ background: "#141414", borderBottom: "1px solid #1e1e1e" }}>
+                {(["mixer", "fx", "editor", "input"] as const).map((tab) => (
+                  <button key={tab} onClick={() => setBottomTab(tab)}
+                    className={`text-[9px] px-2.5 py-1 rounded-t-md cursor-pointer transition-all font-medium ${bottomTab === tab ? "bg-[#1a1a1a] text-[#ccc] border-t border-x border-[#2a2a2a]" : "text-[#555] hover:text-[#888] hover:bg-[#1a1a1a55]"}`}>
+                    {tab === "mixer" ? "Mixer" : tab === "fx" ? "Effects" : tab === "editor" ? "Editor" : "Input/Output"}
+                  </button>
+                ))}
+                <div className="flex-1" />
+                {fxTrack && (
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full" style={{ background: fxTrack.color }} />
+                    <span className="text-[9px] text-[#666] font-medium">{fxTrack.name}</span>
+                  </div>
+                )}
+                <button onClick={() => setBottomTab("none")}
+                  className="text-[#444] hover:text-[#888] text-xs ml-2 cursor-pointer w-5 h-5 rounded flex items-center justify-center hover:bg-[#222] transition-colors">
+                  &#10005;
+                </button>
+              </div>
+
+              {/* Bottom panel content */}
+              <div className="overflow-auto flex-shrink-0" style={{ height: bottomPanelHeight, background: "#111" }}>
+                {/* ── MIXER TAB ── */}
+                {bottomTab === "mixer" && (
+                  <div className="flex gap-0 h-full overflow-x-auto">
+                    {tracks.map((tr) => {
+                      const level = vuLevels[tr.id] ?? 0;
+                      return (
+                        <div key={tr.id}
+                          className={`flex flex-col items-center px-2 py-2 min-w-[68px] border-r transition-colors ${selectedTrackId === tr.id ? "bg-[#151512]" : "hover:bg-[#131313]"}`}
+                          style={{ borderColor: "#1e1e1e" }}
+                          onClick={() => setSelectedTrackId(tr.id)}>
+                          {/* Pan knob */}
+                          <div className="flex items-center gap-0.5 mb-1.5">
+                            <span className="text-[6px] text-[#444]">L</span>
+                            <input type="range" min={-100} max={100} value={tr.pan}
+                              onChange={(e) => updateTrackPan(tr.id, Number(e.target.value))}
+                              className="w-10 accent-[#888] h-[2px] cursor-pointer" />
+                            <span className="text-[6px] text-[#444]">R</span>
+                          </div>
+                          {/* Vertical fader area with VU meters */}
+                          <div className="flex items-end gap-[3px] flex-1 mb-1">
+                            {/* VU meter L - thin bar with proper gradient */}
+                            <div className="w-[4px] rounded-[1px] overflow-hidden flex flex-col-reverse" style={{ height: "100%", background: "#060606", border: "1px solid #181818" }}>
+                              <div className="w-full transition-all duration-75" style={{
+                                height: `${Math.min(100, level * 100)}%`,
+                                background: "linear-gradient(0deg, #22c55e 0%, #22c55e 50%, #eab308 75%, #ef4444 100%)",
+                              }} />
+                            </div>
+                            {/* Fader */}
+                            <div className="flex flex-col items-center" style={{ height: "100%" }}>
+                              <input type="range" min={0} max={100} value={tr.volume}
+                                onChange={(e) => updateTrackVol(tr.id, Number(e.target.value))}
+                                className="cursor-pointer accent-[#ccc]"
+                                style={{ writingMode: "vertical-lr", direction: "rtl", width: "14px", height: "100%" }} />
+                            </div>
+                            {/* VU meter R - thin bar */}
+                            <div className="w-[4px] rounded-[1px] overflow-hidden flex flex-col-reverse" style={{ height: "100%", background: "#060606", border: "1px solid #181818" }}>
+                              <div className="w-full transition-all duration-75" style={{
+                                height: `${Math.min(100, level * 100 * 0.9)}%`,
+                                background: "linear-gradient(0deg, #22c55e 0%, #22c55e 50%, #eab308 75%, #ef4444 100%)",
+                              }} />
+                            </div>
+                          </div>
+                          {/* dB display */}
+                          <span className="font-mono text-[7px] text-[#555] mb-1">{dbDisplay(tr.volume)}</span>
+                          {/* M / S buttons */}
+                          <div className="flex gap-0.5 mb-1">
+                            <button onClick={(e) => { e.stopPropagation(); toggleMute(tr.id); }}
+                              className={`text-[7px] font-bold w-[16px] h-[13px] rounded-[2px] cursor-pointer flex items-center justify-center transition-all ${tr.muted ? "bg-[#3b82f6] text-white shadow-[0_0_4px_rgba(59,130,246,0.3)]" : "border border-[#2a2a2a] text-[#555] hover:border-[#444]"}`}>
+                              M
+                            </button>
+                            <button onClick={(e) => { e.stopPropagation(); toggleSolo(tr.id); }}
+                              className={`text-[7px] font-bold w-[16px] h-[13px] rounded-[2px] cursor-pointer flex items-center justify-center transition-all ${tr.solo ? "bg-[#D4A843] text-[#111] shadow-[0_0_4px_rgba(212,168,67,0.3)]" : "border border-[#2a2a2a] text-[#555] hover:border-[#444]"}`}>
+                              S
+                            </button>
+                          </div>
+                          {/* Track name at bottom */}
+                          <span className="text-[8px] text-[#777] font-medium mt-0.5 truncate w-full text-center">{tr.name}</span>
+                          {/* Color indicator */}
+                          <div className="w-full h-[3px] rounded-full mt-0.5" style={{ background: tr.color }} />
+                        </div>
+                      );
+                    })}
+                    {/* Master channel — visually distinct */}
+                    <div className="flex flex-col items-center px-3 py-2 min-w-[76px]" style={{ background: "linear-gradient(180deg, #161410 0%, #121008 100%)", borderLeft: "2px solid #D4A84333" }}>
+                      <div className="mb-1.5" />
+                      <div className="flex items-end gap-[3px] flex-1 mb-1">
+                        <div className="w-[5px] rounded-[1px] overflow-hidden flex flex-col-reverse" style={{ height: "100%", background: "#060606", border: "1px solid #181818" }}>
+                          <div className="w-full transition-all duration-75" style={{
+                            height: `${playing || isRec ? Math.min(100, (masterVol / 100) * 60 + Math.random() * 30) : 0}%`,
+                            background: "linear-gradient(0deg, #22c55e 0%, #22c55e 50%, #eab308 75%, #ef4444 100%)",
+                          }} />
+                        </div>
+                        <div className="flex flex-col items-center" style={{ height: "100%" }}>
+                          <input type="range" min={0} max={100} value={masterVol}
+                            onChange={(e) => setMasterVol(Number(e.target.value))}
+                            className="cursor-pointer accent-[#D4A843]"
+                            style={{ writingMode: "vertical-lr", direction: "rtl", width: "16px", height: "100%" }} />
+                        </div>
+                        <div className="w-[5px] rounded-[1px] overflow-hidden flex flex-col-reverse" style={{ height: "100%", background: "#060606", border: "1px solid #181818" }}>
+                          <div className="w-full transition-all duration-75" style={{
+                            height: `${playing || isRec ? Math.min(100, (masterVol / 100) * 55 + Math.random() * 28) : 0}%`,
+                            background: "linear-gradient(0deg, #22c55e 0%, #22c55e 50%, #eab308 75%, #ef4444 100%)",
+                          }} />
+                        </div>
+                      </div>
+                      <span className="font-mono text-[7px] text-[#D4A843] mb-1">{dbDisplay(masterVol)}</span>
+                      <span className="text-[8px] text-[#D4A843] font-bold mt-0.5">MASTER</span>
+                      <div className="w-full h-[3px] rounded-full mt-0.5 bg-[#D4A843]" />
+                    </div>
+                    {tracks.length === 0 && (
+                      <div className="flex-1 flex items-center justify-center">
+                        <span className="text-[10px] text-[#333]">Add tracks to use the mixer</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* ── FX TAB ── */}
+                {bottomTab === "fx" && fxTrack && (
+                  <div className="p-3">
+                    {/* Presets */}
+                    <div className="flex gap-1.5 mb-3 flex-wrap items-center">
+                      <span className="text-[8px] text-[#555] uppercase tracking-wider font-medium">Presets</span>
+                      {AMP_PRESETS.map((p) => (
+                        <button key={p.name} onClick={() => applyPreset(fxTrack.id, p)}
+                          className="text-[9px] px-2 py-0.5 rounded border border-[#2a2a2a] text-[#777] hover:text-[#ccc] hover:border-[#444] hover:bg-[#1a1a1a] transition-all cursor-pointer">{p.label}</button>
+                      ))}
+                      <button onClick={() => updateTrackEffects(fxTrack.id, JSON.parse(JSON.stringify(DEFAULT_EFFECTS)))}
+                        className="text-[9px] px-2 py-0.5 rounded border border-[#2a1515] text-[#C41E3A] hover:border-[#C41E3A] hover:bg-[#1a0a0a] transition-all cursor-pointer">Reset All</button>
+                    </div>
+
+                    {/* ── Amp Simulator GUI ── */}
+                    <div className="mb-3 rounded-lg overflow-hidden" style={{ background: "linear-gradient(180deg, #141410 0%, #0e0e0c 100%)", border: "1px solid #2a2824" }}>
+                      <div className="px-3 py-2 flex items-center gap-3" style={{ background: "linear-gradient(180deg, #1a1815 0%, #141210 100%)", borderBottom: "1px solid #2a2824" }}>
+                        <span className="text-[10px] font-semibold text-[#D4A843] uppercase tracking-wider">Amp Simulator</span>
+                        <div className="flex gap-1 flex-1">
+                          {AMP_SIM_PRESETS.map((p) => (
+                            <button key={p.name} onClick={() => { setAmpPreset(p.name); setAmpKnobs({ gain: p.gain, bass: p.bass, mid: p.mid, treble: p.treble, presence: p.presence, master: p.master }); }}
+                              className={`text-[9px] px-2 py-0.5 rounded cursor-pointer transition-all ${ampPreset === p.name ? "bg-[#D4A843] text-[#111] font-semibold" : "border border-[#2a2a2a] text-[#666] hover:text-[#ccc] hover:border-[#444]"}`}>{p.label}</button>
+                          ))}
+                        </div>
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#D4A843] shadow-[0_0_4px_rgba(212,168,67,0.5)]" />
+                      </div>
+                      <div className="flex items-center justify-center gap-5 p-4" style={{ background: "radial-gradient(ellipse at center, #18160f 0%, #0e0e0c 100%)" }}>
+                        {(["gain", "bass", "mid", "treble", "presence", "master"] as const).map((k) => (
+                          <FxKnob key={k} label={k.charAt(0).toUpperCase() + k.slice(1)} value={ampKnobs[k]} min={0} max={10} step={0.5}
+                            onChange={(v) => setAmpKnobs((prev) => ({ ...prev, [k]: v }))} />
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                      <EffectSection title="EQ3" enabled={fxTrack.effects.eq.enabled}
+                        onToggle={() => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, eq: { ...fxTrack.effects.eq, enabled: !fxTrack.effects.eq.enabled } })}>
+                        <FxKnob label="Low" value={fxTrack.effects.eq.low} min={-12} max={12} step={0.5}
+                          onChange={(v) => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, eq: { ...fxTrack.effects.eq, low: v } })} />
+                        <FxKnob label="Mid" value={fxTrack.effects.eq.mid} min={-12} max={12} step={0.5}
+                          onChange={(v) => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, eq: { ...fxTrack.effects.eq, mid: v } })} />
+                        <FxKnob label="High" value={fxTrack.effects.eq.high} min={-12} max={12} step={0.5}
+                          onChange={(v) => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, eq: { ...fxTrack.effects.eq, high: v } })} />
+                      </EffectSection>
+
+                      <EffectSection title="Reverb" enabled={fxTrack.effects.reverb.enabled}
+                        onToggle={() => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, reverb: { ...fxTrack.effects.reverb, enabled: !fxTrack.effects.reverb.enabled } })}>
+                        <FxKnob label="Wet" value={fxTrack.effects.reverb.wet} min={0} max={1} step={0.01}
+                          onChange={(v) => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, reverb: { ...fxTrack.effects.reverb, wet: v } })} />
+                        <FxKnob label="Decay" value={fxTrack.effects.reverb.decay} min={0.1} max={10} step={0.1}
+                          onChange={(v) => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, reverb: { ...fxTrack.effects.reverb, decay: v } })} />
+                      </EffectSection>
+
+                      <EffectSection title="Delay" enabled={fxTrack.effects.delay.enabled}
+                        onToggle={() => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, delay: { ...fxTrack.effects.delay, enabled: !fxTrack.effects.delay.enabled } })}>
+                        <FxKnob label="Wet" value={fxTrack.effects.delay.wet} min={0} max={1} step={0.01}
+                          onChange={(v) => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, delay: { ...fxTrack.effects.delay, wet: v } })} />
+                        <FxKnob label="Time" value={fxTrack.effects.delay.time} min={0.01} max={1} step={0.01}
+                          onChange={(v) => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, delay: { ...fxTrack.effects.delay, time: v } })} />
+                        <FxKnob label="Feedback" value={fxTrack.effects.delay.feedback} min={0} max={0.9} step={0.01}
+                          onChange={(v) => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, delay: { ...fxTrack.effects.delay, feedback: v } })} />
+                      </EffectSection>
+
+                      <EffectSection title="Compressor" enabled={fxTrack.effects.compressor.enabled}
+                        onToggle={() => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, compressor: { ...fxTrack.effects.compressor, enabled: !fxTrack.effects.compressor.enabled } })}>
+                        <FxKnob label="Threshold" value={fxTrack.effects.compressor.threshold} min={-60} max={0} step={1}
+                          onChange={(v) => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, compressor: { ...fxTrack.effects.compressor, threshold: v } })} />
+                        <FxKnob label="Ratio" value={fxTrack.effects.compressor.ratio} min={1} max={20} step={0.5}
+                          onChange={(v) => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, compressor: { ...fxTrack.effects.compressor, ratio: v } })} />
+                      </EffectSection>
+
+                      <EffectSection title="Distortion" enabled={fxTrack.effects.distortion.enabled}
+                        onToggle={() => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, distortion: { ...fxTrack.effects.distortion, enabled: !fxTrack.effects.distortion.enabled } })}>
+                        <FxKnob label="Wet" value={fxTrack.effects.distortion.wet} min={0} max={1} step={0.01}
+                          onChange={(v) => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, distortion: { ...fxTrack.effects.distortion, wet: v } })} />
+                        <FxKnob label="Amount" value={fxTrack.effects.distortion.amount} min={0} max={1} step={0.01}
+                          onChange={(v) => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, distortion: { ...fxTrack.effects.distortion, amount: v } })} />
+                      </EffectSection>
+
+                      <EffectSection title="Chorus" enabled={fxTrack.effects.chorus.enabled}
+                        onToggle={() => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, chorus: { ...fxTrack.effects.chorus, enabled: !fxTrack.effects.chorus.enabled } })}>
+                        <FxKnob label="Wet" value={fxTrack.effects.chorus.wet} min={0} max={1} step={0.01}
+                          onChange={(v) => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, chorus: { ...fxTrack.effects.chorus, wet: v } })} />
+                        <FxKnob label="Freq" value={fxTrack.effects.chorus.frequency} min={0.1} max={10} step={0.1}
+                          onChange={(v) => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, chorus: { ...fxTrack.effects.chorus, frequency: v } })} />
+                        <FxKnob label="Depth" value={fxTrack.effects.chorus.depth} min={0} max={1} step={0.01}
+                          onChange={(v) => updateTrackEffects(fxTrack.id, { ...fxTrack.effects, chorus: { ...fxTrack.effects.chorus, depth: v } })} />
+                      </EffectSection>
+                    </div>
+                  </div>
+                )}
+                {bottomTab === "fx" && !fxTrack && (
+                  <div className="flex items-center justify-center h-full">
+                    <span className="text-[10px] text-[#333]">Select a track to edit effects</span>
+                  </div>
+                )}
+
+                {/* ── EDITOR TAB ── */}
+                {bottomTab === "editor" && fxTrack && fxTrack.type === "drum" && fxTrack.drumPattern && (
+                  <div className="p-3 overflow-auto">
+                    <div className="flex items-center gap-3 mb-2">
+                      <button
+                        onClick={() => {
+                          if (drumPlaying) stopDrumPlayback();
+                          else if (fxTrack.drumPattern) startDrumPlayback(fxTrack.drumPattern, fxTrack.id);
+                        }}
+                        className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] font-medium cursor-pointer transition-colors ${
+                          drumPlaying ? "bg-[#ef4444] text-white" : "bg-[#D4A843] text-[#111]"
+                        }`}>
+                        {drumPlaying ? (
+                          <><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>Stop</>
+                        ) : (
+                          <><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>Play</>
+                        )}
+                      </button>
+                      <span className="text-[9px] text-[#555]">{bpm} BPM</span>
+                      <span className="text-[9px] text-[#555]">16 Steps</span>
+                      <button onClick={() => {
+                        setTracks((prev) => prev.map((t) => t.id === fxTrack.id ? { ...t, drumPattern: createEmptyDrumPattern() } : t));
+                      }} className="text-[9px] text-[#555] hover:text-[#ef4444] cursor-pointer transition-colors">Clear</button>
+                      <select
+                        title="Drum preset"
+                        onChange={(e) => {
+                          const idx = Number(e.target.value);
+                          if (idx >= 0 && idx < DRUM_PRESETS.length) {
+                            setTracks((prev) => prev.map((t) => t.id === fxTrack.id ? { ...t, drumPattern: DRUM_PRESETS[idx].pattern.map(r => [...r]) } : t));
+                          }
+                          e.target.value = "";
+                        }}
+                        defaultValue=""
+                        className="bg-[#1a1a1a] text-[9px] text-[#888] border border-[#333] rounded px-2 py-0.5 cursor-pointer"
+                      >
+                        <option value="" disabled>Presets...</option>
+                        {DRUM_PRESETS.map((p, i) => (
+                          <option key={p.name} value={i}>{p.name}</option>
+                        ))}
+                      </select>
+                      <div className="flex-1" />
+                      <button onClick={() => setDrumGridExpanded(!drumGridExpanded)}
+                        className="text-[9px] text-[#555] hover:text-[#888] cursor-pointer transition-colors flex items-center gap-1">
+                        {drumGridExpanded ? "Collapse" : "Expand"} Grid
+                        <span className="text-[7px]">{drumGridExpanded ? "\u25B2" : "\u25BC"}</span>
+                      </button>
+                    </div>
+                    {/* Step numbers */}
+                    {drumGridExpanded && (
+                    <div className="inline-block" style={{ minWidth: "fit-content" }}>
+                    <div className="flex items-center mb-1" style={{ paddingLeft: 72 }}>
+                      {Array.from({ length: DRUM_STEPS }, (_, i) => (
+                        <div key={i} className={`w-6 h-4 flex items-center justify-center text-[7px] font-mono ${
+                          drumStep === i ? "text-[#D4A843]" : i % 4 === 0 ? "text-[#555]" : "text-[#333]"
+                        }`}>{i + 1}</div>
+                      ))}
+                    </div>
+                    {/* Grid */}
+                    {DRUM_INSTRUMENTS.map((instr, instrIdx) => (
+                      <div key={instr.name} className="flex items-center mb-0.5">
+                        <div className="w-[72px] flex-shrink-0 text-[9px] text-[#888] truncate pr-2 text-right font-medium">{instr.name}</div>
+                        {fxTrack.drumPattern![instrIdx].map((on, stepIdx) => (
+                          <button
+                            key={stepIdx}
+                            onClick={() => toggleDrumCell(fxTrack.id, instrIdx, stepIdx)}
+                            className={`w-6 h-6 rounded-sm cursor-pointer transition-all border ${
+                              on
+                                ? "border-[#D4A84366]"
+                                : stepIdx % 4 === 0
+                                  ? "border-[#2a2a2a] hover:border-[#444]"
+                                  : "border-[#1e1e1e] hover:border-[#333]"
+                            }`}
+                            style={{
+                              background: on
+                                ? drumStep === stepIdx ? "#D4A843" : "#D4A84399"
+                                : drumStep === stepIdx ? "#222" : stepIdx % 4 === 0 ? "#181818" : "#141414",
+                            }}
+                          />
+                        ))}
+                      </div>
+                    ))}
+                    </div>
+                    )}
+                  </div>
+                )}
+                {bottomTab === "editor" && fxTrack && fxTrack.type !== "drum" && (
+                  <div className="p-4">
+                    <div className="grid grid-cols-2 gap-4 max-w-md">
+                      <div>
+                        <span className="text-[9px] text-[#555] uppercase tracking-wider font-medium block mb-2">Pan</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[8px] text-[#444]">L</span>
+                          <input type="range" min={-100} max={100} value={fxTrack.pan}
+                            onChange={(e) => updateTrackPan(fxTrack.id, Number(e.target.value))}
+                            className="flex-1 accent-[#888] h-[3px] cursor-pointer" />
+                          <span className="text-[8px] text-[#444]">R</span>
+                          <span className="font-mono text-[9px] text-[#666] w-8 text-right">
+                            {fxTrack.pan === 0 ? "C" : fxTrack.pan < 0 ? `L${Math.abs(fxTrack.pan)}` : `R${fxTrack.pan}`}
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-[9px] text-[#555] uppercase tracking-wider font-medium block mb-2">Volume</span>
+                        <div className="flex items-center gap-2">
+                          <input type="range" min={0} max={100} value={fxTrack.volume}
+                            onChange={(e) => updateTrackVol(fxTrack.id, Number(e.target.value))}
+                            className="flex-1 accent-[#888] h-[3px] cursor-pointer" style={{ accentColor: fxTrack.color }} />
+                          <span className="font-mono text-[9px] text-[#666] w-12 text-right">{dbDisplay(fxTrack.volume)} dB</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex gap-4 text-[9px] text-[#444]">
+                      <span>Type: {fxTrack.type}</span>
+                      <span>Color: <span className="inline-block w-2 h-2 rounded-full align-middle" style={{ background: fxTrack.color }} /></span>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── INPUT/OUTPUT TAB ── */}
+                {bottomTab === "input" && (
+                  <div className="p-4">
+                    <div className="max-w-lg space-y-4">
+                      <div>
+                        <span className="text-[9px] text-[#555] uppercase tracking-wider font-medium block mb-2">Input Device</span>
+                        <select value={selectedInputDevice}
+                          onChange={(e) => setSelectedInputDevice(e.target.value)}
+                          className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-md px-2 py-1.5 text-[10px] text-[#aaa] outline-none focus:border-[#D4A843] transition-colors cursor-pointer">
+                          {inputDevices.map((d) => (
+                            <option key={d.deviceId} value={d.deviceId}>{d.label || `Microphone (${d.deviceId.slice(0, 8)}...)`}</option>
+                          ))}
+                          {inputDevices.length === 0 && <option value="">No devices found — click to allow access</option>}
+                        </select>
+                        {inputDevices.length === 0 && (
+                          <button onClick={async () => {
+                            try {
+                              const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                              stream.getTracks().forEach((t) => t.stop());
+                              const devices = await navigator.mediaDevices.enumerateDevices();
+                              const inputs = devices.filter((d) => d.kind === "audioinput");
+                              setInputDevices(inputs);
+                              if (inputs.length > 0) setSelectedInputDevice(inputs[0].deviceId);
+                            } catch { /* denied */ }
+                          }}
+                            className="mt-1 text-[9px] text-[#D4A843] hover:text-[#EDCF72] cursor-pointer transition-colors">
+                            Request microphone access
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Input Level Meter */}
+                      <div>
+                        <span className="text-[9px] text-[#555] uppercase tracking-wider font-medium block mb-2">Input Level</span>
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-[8px] bg-[#080808] rounded-[2px] overflow-hidden" style={{ border: "1px solid #1a1a1a" }}>
+                            <div className="h-full transition-all duration-75 rounded-[1px]" style={{
+                              width: `${Math.min(100, (monitoring ? inputLevel : isRec ? 0.4 + Math.random() * 0.3 : 0) * 100)}%`,
+                              background: "linear-gradient(90deg, #22c55e 0%, #22c55e 50%, #eab308 75%, #ef4444 100%)",
+                            }} />
+                          </div>
+                          <span className="font-mono text-[8px] text-[#555] w-10 text-right">
+                            {monitoring ? `${(inputLevel * 100).toFixed(0)}%` : isRec ? "REC" : "---"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <span className="text-[9px] text-[#555] uppercase tracking-wider font-medium">Monitoring</span>
+                        <button onClick={() => setMonitoring(!monitoring)}
+                          className={`w-9 h-[18px] rounded-full transition-all cursor-pointer relative ${monitoring ? "bg-[#D4A843]" : "bg-[#2a2a2a]"}`}>
+                          <div className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white transition-all shadow-sm ${monitoring ? "left-[19px]" : "left-[2px]"}`} />
+                        </button>
+                        <span className={`text-[8px] font-medium ${monitoring ? "text-[#D4A843]" : "text-[#444]"}`}>{monitoring ? "ON" : "OFF"}</span>
+                      </div>
+
+                      <div className="flex gap-6">
+                        <div>
+                          <span className="text-[9px] text-[#555] uppercase tracking-wider font-medium block mb-1">Sample Rate</span>
+                          <span className="text-[10px] text-[#666] font-mono">44100 Hz</span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-[#555] uppercase tracking-wider font-medium block mb-1">Buffer Size</span>
+                          <span className="text-[10px] text-[#666] font-mono">128 samples</span>
+                        </div>
+                        <div>
+                          <span className="text-[9px] text-[#555] uppercase tracking-wider font-medium block mb-1">Bit Depth</span>
+                          <span className="text-[10px] text-[#666] font-mono">16-bit</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* ═══════════════════ RIGHT PANEL: Unified Context Sidebar ═══════════════════ */}
+        {(showRightPanel || showRecordingsPanel) && (
+          <div className="flex-shrink-0 flex flex-col overflow-hidden" style={{ width: 280, background: "#131313", borderLeft: "1px solid #1e1e1e" }}>
+            {/* Sidebar Tab Bar */}
+            <div className="flex items-center h-8 px-1 gap-0 flex-shrink-0" style={{ background: "#161616", borderBottom: "1px solid #1e1e1e" }}>
+              {(["library", "suno", "recordings"] as const).map((tab) => (
+                <button key={tab} onClick={() => { setContextSidebarTab(tab); if (tab === "suno") { fetchSunoCredits(); loadSunoLibrary(); } }}
+                  className="flex-1 text-[9px] py-1.5 font-medium transition-all cursor-pointer rounded-t"
+                  style={{
+                    color: contextSidebarTab === tab ? "#D4A843" : "#555",
+                    background: contextSidebarTab === tab ? "#1e1e1e" : "transparent",
+                    borderBottom: contextSidebarTab === tab ? "2px solid #D4A843" : "2px solid transparent",
+                  }}>
+                  {tab === "library" ? "Library" : tab === "suno" ? "Suno AI" : `Recordings${savedRecordings.length > 0 ? ` (${savedRecordings.length})` : ""}`}
+                </button>
+              ))}
+              <button onClick={() => { setShowRightPanel(false); setShowRecordingsPanel(false); }}
+                className="text-[#444] hover:text-[#888] text-xs cursor-pointer w-6 h-6 flex items-center justify-center rounded hover:bg-[#222] ml-1 transition-colors flex-shrink-0">&#10005;</button>
+            </div>
+
+            {/* ── TAB: Library (Import Sources) ── */}
+            {contextSidebarTab === "library" && (
+              <div className="flex-1 overflow-y-auto p-3 space-y-3" style={{ scrollbarWidth: "thin", scrollbarColor: "#333 transparent" }}>
+                {/* File import */}
+                <div className="rounded-lg p-3" style={{ background: "#1a1a1a", border: "1px solid #222" }}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <span className="text-[10px] text-[#aaa] font-medium">Import File</span>
+                  </div>
+                  <button onClick={() => fileRef.current?.click()}
+                    className="w-full text-[9px] py-2 rounded-md border border-dashed border-[#333] text-[#666] hover:text-[#aaa] hover:border-[#555] transition-all cursor-pointer">
+                    Choose audio file...
+                  </button>
+                </div>
+
+                {/* YouTube */}
+                <div className="rounded-lg p-3" style={{ background: "#1a1a1a", border: "1px solid #222" }}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#C41E3A"><path d="M23.5 6.2a3 3 0 00-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6a3 3 0 00-2.1 2.1C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 002.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 002.1-2.1c.5-1.9.5-5.8.5-5.8s0-3.9-.5-5.8zM9.5 15.6V8.4l6.3 3.6-6.3 3.6z"/></svg>
+                    <span className="text-[10px] text-[#aaa] font-medium">YouTube</span>
+                  </div>
+                  <div className="flex gap-1 mb-2">
+                    <input value={ytQuery} onChange={(e) => setYtQuery(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && loadYt()}
+                      placeholder="Paste URL..."
+                      className="flex-1 bg-[#0e0e0e] border border-[#2a2a2a] rounded px-2 py-1 text-[9px] text-[#aaa] outline-none focus:border-[#C41E3A] transition-colors" />
+                    <button onClick={loadYt} className="text-[8px] px-2 py-1 bg-[#C41E3A] text-white rounded hover:brightness-110 cursor-pointer transition-all">Load</button>
+                  </div>
+                  {ytVideoId && (
+                    <div className="aspect-video w-full rounded overflow-hidden bg-black mb-2">
+                      <iframe src={`https://www.youtube.com/embed/${ytVideoId}?modestbranding=1&rel=0`}
+                        className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen title="YouTube" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ── TAB: Suno AI ── */}
+            {contextSidebarTab === "suno" && (
+              <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex items-center justify-between px-3 py-2 flex-shrink-0" style={{ background: "#151515", borderBottom: "1px solid #222" }}>
+                  <div className="flex items-center gap-2">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    <span className="text-[10px] text-[#ccc] font-medium" style={{ fontFamily: "Oswald, sans-serif", letterSpacing: "0.05em" }}>SUNO AI</span>
+                  </div>
+                  {sunoCredits !== null && (
+                    <span className={`text-[8px] font-medium px-1.5 py-0.5 rounded ${sunoCredits <= 10 ? "text-[#ef4444] bg-[#ef444415]" : "text-[#D4A843] bg-[#D4A84315]"}`}>
+                      {sunoCreditsLoading ? "..." : `${sunoCredits} credits`}
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-shrink-0" style={{ borderBottom: "1px solid #222" }}>
+                  {(["generate", "library", "credits"] as const).map((tab) => (
+                    <button key={tab} onClick={() => setSunoTab(tab)}
+                      className="flex-1 text-[9px] py-1.5 font-medium transition-all cursor-pointer"
+                      style={{
+                        color: sunoTab === tab ? "#D4A843" : "#555",
+                        background: sunoTab === tab ? "#1e1e1e" : "transparent",
+                        borderBottom: sunoTab === tab ? "2px solid #D4A843" : "2px solid transparent",
+                        fontFamily: "Oswald, sans-serif",
+                        letterSpacing: "0.04em",
+                      }}>
+                      {tab === "generate" ? "GENERATE" : tab === "library" ? "LIBRARY" : "CREDITS"}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex-1 overflow-y-auto p-3" style={{ scrollbarWidth: "thin", scrollbarColor: "#333 transparent" }}>
+                  {sunoTab === "generate" && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[8px] text-[#555]">Prompt mode</span>
+                        <button onClick={() => { setSunoCustomPrompt(!sunoCustomPrompt); setSunoGeneratedTracks([]); }}
+                          className="text-[8px] px-2 py-0.5 rounded cursor-pointer transition-all"
+                          style={{ background: sunoCustomPrompt ? "#D4A84320" : "#222", color: sunoCustomPrompt ? "#D4A843" : "#666", border: `1px solid ${sunoCustomPrompt ? "#D4A84340" : "#333"}` }}>
+                          {sunoCustomPrompt ? "Custom" : "Builder"}
+                        </button>
+                      </div>
+                      {!sunoCustomPrompt ? (
+                        <>
+                          <div className="flex gap-1.5">
+                            <label className="flex-1">
+                              <span className="text-[7px] text-[#555] block mb-0.5" style={{ fontFamily: "Oswald, sans-serif" }}>KEY</span>
+                              <select value={sunoScale} onChange={(e) => setSunoScale(e.target.value)}
+                                className="w-full bg-[#0e0e0e] border border-[#2a2a2a] rounded px-1.5 py-1 text-[9px] text-[#aaa] outline-none focus:border-[#D4A843] cursor-pointer">
+                                {SCALES.map((s) => <option key={s} value={s}>{s}</option>)}
+                              </select>
+                            </label>
+                            <label className="flex-1">
+                              <span className="text-[7px] text-[#555] block mb-0.5" style={{ fontFamily: "Oswald, sans-serif" }}>MODE</span>
+                              <select value={sunoMode} onChange={(e) => setSunoMode(e.target.value)}
+                                className="w-full bg-[#0e0e0e] border border-[#2a2a2a] rounded px-1.5 py-1 text-[9px] text-[#aaa] outline-none focus:border-[#D4A843] cursor-pointer">
+                                {MODES.map((m) => <option key={m} value={m}>{m}</option>)}
+                              </select>
+                            </label>
+                          </div>
+                          <label className="block">
+                            <span className="text-[7px] text-[#555] block mb-0.5" style={{ fontFamily: "Oswald, sans-serif" }}>STYLE</span>
+                            <select value={sunoStyle} onChange={(e) => setSunoStyle(e.target.value)}
+                              className="w-full bg-[#0e0e0e] border border-[#2a2a2a] rounded px-1.5 py-1 text-[9px] text-[#aaa] outline-none focus:border-[#D4A843] cursor-pointer">
+                              {STYLES.map((s) => <option key={s} value={s}>{s}</option>)}
+                            </select>
+                          </label>
+                          <label className="block">
+                            <span className="text-[7px] text-[#555] block mb-0.5" style={{ fontFamily: "Oswald, sans-serif" }}>BPM</span>
+                            <input type="number" value={sunoBpm} min={40} max={300}
+                              onChange={(e) => setSunoBpm(Math.min(300, Math.max(40, Number(e.target.value))))}
+                              className="w-24 bg-[#0e0e0e] border border-[#2a2a2a] rounded px-1.5 py-1 text-[9px] outline-none focus:border-[#D4A843]"
+                              style={{ color: "#D4A843", fontFamily: "JetBrains Mono, monospace" }} />
+                          </label>
+                        </>
+                      ) : (
+                        <div>
+                          <span className="text-[7px] text-[#555] block mb-0.5" style={{ fontFamily: "Oswald, sans-serif" }}>CUSTOM PROMPT</span>
+                          <textarea value={sunoPromptText}
+                            onChange={(e) => setSunoPromptText(e.target.value.slice(0, 200))}
+                            placeholder="e.g. heavy metal, E minor, 140 BPM, aggressive rhythm guitar..."
+                            rows={3}
+                            className="w-full bg-[#0e0e0e] border border-[#2a2a2a] rounded px-2 py-1.5 text-[9px] text-[#aaa] outline-none focus:border-[#D4A843] resize-none placeholder:text-[#333]" />
+                          <div className="text-[7px] text-right mt-0.5" style={{ color: sunoPromptText.length > 180 ? "#ef4444" : "#444", fontFamily: "JetBrains Mono, monospace" }}>
+                            {sunoPromptText.length}/200
+                          </div>
+                        </div>
+                      )}
+                      <div className="rounded p-2" style={{ background: "#0e0e0e", border: "1px solid #1e1e1e" }}>
+                        <span className="text-[7px] text-[#444] block mb-1" style={{ fontFamily: "Oswald, sans-serif" }}>PROMPT PREVIEW</span>
+                        <div className="text-[8px] text-[#777] leading-relaxed" style={{ fontFamily: "JetBrains Mono, monospace" }}>
+                          {sunoStylePreview || <span className="text-[#333] italic">Enter a prompt...</span>}
+                        </div>
+                      </div>
+                      {!sunoConfirm ? (
+                        <button onClick={() => setSunoConfirm(true)} disabled={sunoLoading || (sunoCustomPrompt && !sunoPromptText.trim())}
+                          className="w-full text-[9px] py-2 rounded-md text-white hover:brightness-110 disabled:opacity-40 cursor-pointer transition-all font-medium"
+                          style={{ background: "linear-gradient(135deg, #D4A843, #B8922E)", fontFamily: "Oswald, sans-serif", letterSpacing: "0.05em" }}>
+                          {sunoLoading ? (
+                            <span className="flex items-center justify-center gap-2">
+                              <svg className="animate-spin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" opacity="0.3"/><path d="M12 2a10 10 0 019.95 9"/></svg>
+                              GENERATING...
+                            </span>
+                          ) : "GENERATE BACKING TRACK"}
+                        </button>
+                      ) : (
+                        <div className="rounded p-2.5 space-y-2" style={{ background: "#111", border: "1px solid #D4A84320" }}>
+                          <div className="flex items-center gap-2">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            <span className="text-[9px] text-[#aaa]">This will use <strong className="text-[#D4A843]">~10 credits</strong></span>
+                          </div>
+                          {sunoCredits !== null && (
+                            <div className="text-[8px] text-[#555]">You have {sunoCredits} credits remaining.</div>
+                          )}
+                          <div className="flex gap-1.5">
+                            <button onClick={generateSuno} disabled={sunoLoading}
+                              className="flex-1 text-[9px] py-1.5 rounded text-white hover:brightness-110 disabled:opacity-50 cursor-pointer transition-all font-medium"
+                              style={{ background: "#D4A843", fontFamily: "Oswald, sans-serif" }}>
+                              {sunoLoading ? "GENERATING..." : "CONFIRM"}
+                            </button>
+                            <button onClick={() => setSunoConfirm(false)}
+                              className="flex-1 text-[9px] py-1.5 rounded bg-[#222] text-[#888] hover:bg-[#333] cursor-pointer transition-all">
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      {sunoError && (
+                        <div className="flex items-center gap-1.5 text-[9px] text-[#ef4444] bg-[#ef444410] rounded p-2">
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                          {sunoError}
+                        </div>
+                      )}
+                      {sunoGeneratedTracks.length > 0 && (
+                        <div className="space-y-1.5">
+                          <span className="text-[7px] text-[#555] block" style={{ fontFamily: "Oswald, sans-serif" }}>GENERATED TRACKS</span>
+                          {sunoGeneratedTracks.map((t) => (
+                            <div key={t.id} className="flex items-center gap-2 rounded p-2" style={{ background: "#111", border: "1px solid #1e1e1e" }}>
+                              <button onClick={() => sunoPlayTrack(t.audioUrl, t.id)}
+                                className="w-6 h-6 rounded-full flex items-center justify-center cursor-pointer transition-all shrink-0"
+                                style={{ background: sunoPlayingId === t.id ? "#D4A843" : "#222", border: `1px solid ${sunoPlayingId === t.id ? "#D4A843" : "#333"}` }}>
+                                {sunoPlayingId === t.id ? (
+                                  <svg width="8" height="8" viewBox="0 0 24 24" fill="white"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                                ) : (
+                                  <svg width="8" height="8" viewBox="0 0 24 24" fill="#aaa"><polygon points="5,3 19,12 5,21"/></svg>
+                                )}
+                              </button>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-[9px] text-[#ccc] truncate">{t.title}</div>
+                                {t.duration > 0 && <div className="text-[7px] text-[#444]" style={{ fontFamily: "JetBrains Mono, monospace" }}>{Math.floor(t.duration / 60)}:{String(Math.floor(t.duration % 60)).padStart(2, "0")}</div>}
+                              </div>
+                              <button onClick={() => sunoAddToDaw(t.title, t.audioUrl)}
+                                className="text-[8px] px-2 py-1 rounded cursor-pointer transition-all hover:brightness-125"
+                                style={{ background: "#D4A84320", color: "#D4A843", border: "1px solid #D4A84330" }}>
+                                + DAW
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {sunoTab === "library" && (
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <svg className="absolute left-2 top-1/2 -translate-y-1/2" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#444" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input value={sunoLibSearch} onChange={(e) => setSunoLibSearch(e.target.value)}
+                          placeholder="Search tracks..."
+                          className="w-full bg-[#0e0e0e] border border-[#2a2a2a] rounded pl-7 pr-2 py-1.5 text-[9px] text-[#aaa] outline-none focus:border-[#D4A843] placeholder:text-[#333]" />
+                      </div>
+                      <div className="space-y-1 max-h-[400px] overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "#333 transparent" }}>
+                        {(() => {
+                          const filtered = sunoLibrary.filter((t) => !sunoLibSearch || t.title.toLowerCase().includes(sunoLibSearch.toLowerCase()));
+                          const favs = filtered.filter((t) => t.favorite);
+                          const rest = filtered.filter((t) => !t.favorite);
+                          const sorted = [...favs, ...rest];
+                          if (sorted.length === 0) return (
+                            <div className="text-center py-6">
+                              <svg className="mx-auto mb-2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="1.5"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                              <div className="text-[9px] text-[#444]">No tracks yet</div>
+                              <div className="text-[7px] text-[#333]">Generate your first backing track</div>
+                            </div>
+                          );
+                          return sorted.map((t) => (
+                            <div key={t.id} className="rounded p-2 group" style={{ background: "#111", border: "1px solid #1e1e1e" }}>
+                              <div className="flex items-center gap-2">
+                                <button onClick={() => sunoPlayTrack(t.audioUrl, t.id)}
+                                  className="w-6 h-6 rounded-full flex items-center justify-center cursor-pointer transition-all shrink-0"
+                                  style={{ background: sunoPlayingId === t.id ? "#D4A843" : "#1a1a1a", border: `1px solid ${sunoPlayingId === t.id ? "#D4A843" : "#2a2a2a"}` }}>
+                                  {sunoPlayingId === t.id ? (
+                                    <svg width="8" height="8" viewBox="0 0 24 24" fill="white"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                                  ) : (
+                                    <svg width="8" height="8" viewBox="0 0 24 24" fill="#666"><polygon points="5,3 19,12 5,21"/></svg>
+                                  )}
+                                </button>
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-[9px] text-[#ccc] truncate">{t.title}</div>
+                                  <div className="flex items-center gap-2 text-[7px] text-[#444]" style={{ fontFamily: "JetBrains Mono, monospace" }}>
+                                    {t.params && <span>{t.params.scale} {t.params.mode}</span>}
+                                    {t.params?.bpm && <span>{t.params.bpm}bpm</span>}
+                                    {t.duration > 0 && <span>{Math.floor(t.duration / 60)}:{String(Math.floor(t.duration % 60)).padStart(2, "0")}</span>}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                                  <button onClick={() => sunoToggleFavorite(t.id, t.favorite)} title={t.favorite ? "Unfavorite" : "Favorite"}
+                                    className="w-5 h-5 flex items-center justify-center rounded cursor-pointer hover:bg-[#222] transition-colors">
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill={t.favorite ? "#D4A843" : "none"} stroke={t.favorite ? "#D4A843" : "#555"} strokeWidth="2">
+                                      <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
+                                    </svg>
+                                  </button>
+                                  <button onClick={() => sunoAddToDaw(t.title, t.audioUrl)} title="Add to DAW"
+                                    className="w-5 h-5 flex items-center justify-center rounded cursor-pointer hover:bg-[#222] transition-colors">
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                  </button>
+                                  <button onClick={() => sunoDeleteTrack(t.id)} title="Delete"
+                                    className="w-5 h-5 flex items-center justify-center rounded cursor-pointer hover:bg-[#ef444420] transition-colors">
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2"><polyline points="3,6 5,6 21,6"/><path d="M19,6v14a2,2,0,01-2,2H7a2,2,0,01-2-2V6m3,0V4a2,2,0,012-2h4a2,2,0,012,2v2"/></svg>
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                    </div>
+                  )}
+                  {sunoTab === "credits" && (
+                    <div className="space-y-3">
+                      <div className="text-center py-2">
+                        <div className="text-[28px] font-bold" style={{ color: "#D4A843", fontFamily: "Oswald, sans-serif" }}>
+                          {sunoCreditsLoading ? "..." : (sunoCredits ?? "--")}
+                        </div>
+                        <div className="text-[9px] text-[#555]">credits remaining</div>
+                      </div>
+                      <button onClick={fetchSunoCredits} disabled={sunoCreditsLoading}
+                        className="w-full text-[8px] py-1.5 rounded cursor-pointer transition-all disabled:opacity-50"
+                        style={{ background: "#1a1a1a", color: "#666", border: "1px solid #222" }}>
+                        {sunoCreditsLoading ? "Refreshing..." : "Refresh Credits"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ── TAB: Recordings ── */}
+            {contextSidebarTab === "recordings" && (
+              <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="px-3 pt-2 pb-1 flex-shrink-0">
+                  <div className="relative">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" className="absolute left-2 top-1/2 -translate-y-1/2">
+                      <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+                    </svg>
+                    <input
+                      value={recSearchQuery}
+                      onChange={(e) => setRecSearchQuery(e.target.value)}
+                      placeholder="Search recordings..."
+                      className="w-full bg-[#0e0e0e] border border-[#2a2a2a] rounded px-2 pl-7 py-1 text-[9px] text-[#aaa] outline-none focus:border-[#D4A84333] transition-colors"
+                    />
+                  </div>
+                </div>
+                <div className="flex-1 overflow-y-auto px-2 pb-2" style={{ scrollbarWidth: "thin", scrollbarColor: "#333 transparent" }}>
+                  {filteredRecordings.length === 0 && (
+                    <div className="flex flex-col items-center justify-center h-full text-center py-8">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="1.5" className="mb-2">
+                        <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
+                      </svg>
+                      <span className="text-[10px] text-[#444]">No saved recordings</span>
+                      <span className="text-[8px] text-[#333] mt-1">Export &gt; Save to Library</span>
+                    </div>
+                  )}
+                  {filteredRecordings.map((rec) => {
+                    const isPreviewing = previewingRecId === rec.id;
+                    const isEditing = editingRecId === rec.id;
+                    const date = new Date(rec.date);
+                    const dateStr = `${date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+                    const durMin = Math.floor(rec.duration / 60);
+                    const durSec = Math.floor(rec.duration % 60);
+                    const durStr = `${durMin}:${String(durSec).padStart(2, "0")}`;
+                    return (
+                      <div key={rec.id}
+                        className="rounded-lg mt-1.5 p-2 transition-all hover:bg-[#1e1e1e] group"
+                        style={{
+                          background: "#161616",
+                          borderLeft: isPreviewing ? "2px solid #D4A843" : "2px solid transparent",
+                        }}>
+                        <div className="flex items-start gap-1.5">
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill={isPreviewing ? "#D4A843" : "#555"} className="mt-0.5 flex-shrink-0">
+                            <path d="M9 18V5l12-2v13M6 18a3 3 0 100-6 3 3 0 000 6zM18 16a3 3 0 100-6 3 3 0 000 6z"/>
+                          </svg>
+                          <div className="flex-1 min-w-0">
+                            {isEditing ? (
+                              <input
+                                autoFocus
+                                defaultValue={rec.name}
+                                onBlur={(e) => renameRecordingItem(rec.id, e.target.value || rec.name)}
+                                onKeyDown={(e) => { if (e.key === "Enter") renameRecordingItem(rec.id, (e.target as HTMLInputElement).value || rec.name); if (e.key === "Escape") setEditingRecId(null); }}
+                                onClick={(e) => e.stopPropagation()}
+                                className="w-full bg-[#121214] border border-[#D4A843] rounded px-1 py-0 text-[9px] text-[#ccc] outline-none"
+                              />
+                            ) : (
+                              <div className="text-[9px] text-[#ccc] font-medium truncate">{rec.name}</div>
+                            )}
+                            <div className="text-[7px] text-[#555] mt-0.5 flex items-center gap-1.5">
+                              <span>{durStr}</span>
+                              <span>{"\u00B7"}</span>
+                              <span>{dateStr}</span>
+                              <span>{"\u00B7"}</span>
+                              <span className="uppercase">{rec.format}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-0.5 mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                          <button onClick={() => previewRecording(rec.id)}
+                            title={isPreviewing ? "Stop" : "Preview"}
+                            className={`w-5 h-5 rounded flex items-center justify-center transition-colors cursor-pointer ${isPreviewing ? "text-[#D4A843] bg-[#D4A84311]" : "text-[#555] hover:text-[#D4A843]"}`}>
+                            {isPreviewing ? (
+                              <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                            ) : (
+                              <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            )}
+                          </button>
+                          <button onClick={() => setEditingRecId(rec.id)} title="Rename"
+                            className="w-5 h-5 rounded flex items-center justify-center text-[#555] hover:text-[#D4A843] transition-colors cursor-pointer">
+                            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                          </button>
+                          <button onClick={() => downloadRecording(rec)} title="Download"
+                            className="w-5 h-5 rounded flex items-center justify-center text-[#555] hover:text-[#D4A843] transition-colors cursor-pointer">
+                            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                          </button>
+                          <button onClick={() => importRecordingToProject(rec)} title="Add to project"
+                            className="w-5 h-5 rounded flex items-center justify-center text-[#555] hover:text-[#22c55e] transition-colors cursor-pointer">
+                            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                          </button>
+                          <div className="flex-1" />
+                          <button onClick={() => removeRecording(rec.id)} title="Delete"
+                            className="w-5 h-5 rounded flex items-center justify-center text-[#444] hover:text-[#ef4444] transition-colors cursor-pointer">
+                            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ═══════════════════ BOTTOM STATUS BAR ═══════════════════ */}
+      <div className="flex items-center h-5 px-3 flex-shrink-0" style={{ background: "#0e0e0e", borderTop: "1px solid #1a1a1a" }}>
+        <div className="flex items-center gap-3">
+          <button onClick={() => { if (bottomTab === "mixer") setBottomTab("none"); else setBottomTab("mixer"); }}
+            className={`text-[8px] cursor-pointer transition-colors ${bottomTab === "mixer" ? "text-[#D4A843]" : "text-[#444] hover:text-[#888]"}`}>
+            Mixer
+          </button>
+          <button onClick={() => { if (bottomTab === "fx") setBottomTab("none"); else setBottomTab("fx"); }}
+            className={`text-[8px] cursor-pointer transition-colors ${bottomTab === "fx" ? "text-[#8b5cf6]" : "text-[#444] hover:text-[#888]"}`}>
+            Effects
+          </button>
+          <button onClick={() => { if (bottomTab === "editor") setBottomTab("none"); else setBottomTab("editor"); }}
+            className={`text-[8px] cursor-pointer transition-colors ${bottomTab === "editor" ? "text-[#D4A843]" : "text-[#444] hover:text-[#888]"}`}>
+            Editor
+          </button>
+          <button onClick={() => { if (bottomTab === "input") setBottomTab("none"); else setBottomTab("input"); }}
+            className={`text-[8px] cursor-pointer transition-colors ${bottomTab === "input" ? "text-[#D4A843]" : "text-[#444] hover:text-[#888]"}`}>
+            I/O
+          </button>
+          <div className="w-px h-3 bg-[#222]" />
+          <button onClick={() => { const isOpen = showRightPanel || showRecordingsPanel; if (isOpen) { setShowRightPanel(false); setShowRecordingsPanel(false); } else { setShowRightPanel(true); } }}
+            className={`text-[8px] cursor-pointer transition-colors ${(showRightPanel || showRecordingsPanel) ? "text-[#D4A843]" : "text-[#444] hover:text-[#888]"}`}>
+            Sidebar {savedRecordings.length > 0 ? `(${savedRecordings.length})` : ""}
+          </button>
+        </div>
+        <div className="flex-1" />
+        <div className="flex items-center gap-3 text-[8px] text-[#333] font-mono">
+          <span>{timeSig[0]}/{timeSig[1]}</span>
+          <span>{bpm} BPM</span>
+          <span>{projectKey}</span>
+          <span>{tracks.length} tracks</span>
+          {snapToGrid && <span className="text-[#444]">SNAP</span>}
+          {looping && <span className="text-[#D4A84344]">LOOP</span>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════ SUB-COMPONENTS ═══════════════════
+
+function EffectSection({ title, enabled, onToggle, children }: {
+  title: string;
+  enabled: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={`rounded-lg transition-all ${enabled ? "opacity-100" : "opacity-50 hover:opacity-70"}`}
+      style={{ background: enabled ? "#0e0e0c" : "#121214", border: `1px solid ${enabled ? "#2a2a28" : "#1a1a1a"}`, boxShadow: enabled ? "0 1px 4px rgba(0,0,0,0.2)" : "none" }}>
+      {/* Card header */}
+      <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-t-lg" style={{ background: enabled ? "#151512" : "#0e0e0e", borderBottom: `1px solid ${enabled ? "#222" : "#1a1a1a"}` }}>
+        <button onClick={onToggle}
+          className={`w-[16px] h-[16px] rounded-[4px] cursor-pointer flex items-center justify-center transition-all text-[8px] font-bold ${enabled ? "bg-[#D4A843] text-[#111] shadow-[0_0_6px_rgba(212,168,67,0.2)]" : "border border-[#333] text-transparent hover:border-[#555]"}`}>
+          {enabled ? "\u2713" : ""}
+        </button>
+        <span className={`text-[10px] font-semibold transition-colors ${enabled ? "text-[#ccc]" : "text-[#555]"}`}>{title}</span>
+        <div className="flex-1" />
+        <div className={`w-1.5 h-1.5 rounded-full ${enabled ? "bg-[#22c55e]" : "bg-[#333]"}`} />
+      </div>
+      <div className="flex gap-3 flex-wrap p-2.5">{children}</div>
+    </div>
+  );
+}
+
+function FxKnob({ label, value, min, max, step, onChange }: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  onChange: (v: number) => void;
+}) {
+  const dragRef = useRef<{ startY: number; startVal: number } | null>(null);
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (!dragRef.current) return;
+      const delta = (dragRef.current.startY - e.clientY) * ((max - min) / 150);
+      const raw = dragRef.current.startVal + delta;
+      const stepped = Math.round(raw / step) * step;
+      onChange(Math.max(min, Math.min(max, stepped)));
+    };
+    const onUp = () => { dragRef.current = null; document.body.style.cursor = ""; };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
+  }, [min, max, step, onChange]);
+
+  const pct = (value - min) / (max - min);
+  const angle = -135 + pct * 270;
+
+  return (
+    <div className="flex flex-col items-center gap-0.5 min-w-[48px]">
+      <span className="text-[7px] text-[#555] font-medium">{label}</span>
+      <div
+        className="w-8 h-8 rounded-full cursor-grab active:cursor-grabbing relative transition-all hover:shadow-[0_0_8px_rgba(212,168,67,0.15)]"
+        style={{ background: "linear-gradient(180deg, #222 0%, #1a1a1a 100%)", border: "2px solid #333" }}
+        onMouseDown={(e) => { dragRef.current = { startY: e.clientY, startVal: value }; document.body.style.cursor = "grabbing"; }}
+        onDoubleClick={() => onChange(min + (max - min) / 2)}>
+        {/* Knob track arc */}
+        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 32 32">
+          <circle cx="16" cy="16" r="12" fill="none" stroke="#222" strokeWidth="2"
+            strokeDasharray={`${pct * 75.4} 999`}
+            strokeDashoffset="-18.85"
+            transform="rotate(-225 16 16)" />
+          <circle cx="16" cy="16" r="12" fill="none" stroke="#D4A843" strokeWidth="2"
+            strokeDasharray={`${pct * 75.4} 999`}
+            strokeDashoffset="-18.85"
+            transform="rotate(-225 16 16)"
+            opacity="0.6" />
+        </svg>
+        {/* Pointer */}
+        <div className="absolute top-[3px] left-1/2 w-[2px] h-[8px] bg-[#D4A843] rounded-full"
+          style={{ transform: `translateX(-50%) rotate(${angle}deg)`, transformOrigin: "50% 950%" }} />
+      </div>
+      <span className="font-mono text-[7px] text-[#555]">
+        {Math.abs(value) < 10 ? value.toFixed(2) : value.toFixed(1)}
+      </span>
+    </div>
+  );
+}

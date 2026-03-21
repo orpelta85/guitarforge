@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import type { Exercise } from "@/lib/types";
 import { COL, STYLES } from "@/lib/constants";
 import { EXERCISES } from "@/lib/exercises";
@@ -89,10 +89,12 @@ function SectionLabel({ color, children }: { color: "gold" | "green" | "red" | "
 /* ── Shared: Tab bar ── */
 function TabBar<T extends string>({ tabs, active, onChange }: { tabs: { id: T; label: string }[]; active: T; onChange: (t: T) => void }) {
   return (
-    <div className="flex border-b border-[var(--border-subtle)] bg-[var(--bg-recess)]">
+    <div className="flex border-b border-[var(--border-subtle)] bg-[var(--bg-recess)]" role="tablist">
       {tabs.map(({ id, label }) => (
         <button key={id} onClick={() => onChange(id)}
-          className={`flex-1 py-3 font-label text-[12px] cursor-pointer border-b-2 transition-all ${
+          role="tab"
+          aria-selected={active === id}
+          className={`flex-1 py-3 min-h-[44px] font-label text-[12px] cursor-pointer border-b-2 transition-all ${
             active === id ? "border-[var(--gold)] text-[var(--gold)]" : "border-transparent text-[var(--text-muted)]"
           }`}>{label}</button>
       ))}
@@ -113,7 +115,7 @@ function DarkHeader({ children }: { children: React.ReactNode }) {
 function CloseButton({ onClick }: { onClick: () => void }) {
   return (
     <button type="button" onClick={onClick}
-      className="w-9 h-9 rounded-full bg-[var(--bg-elevated)] border border-[var(--border-accent)] flex items-center justify-center text-[var(--text-secondary)] text-lg cursor-pointer hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors flex-shrink-0"
+      className="w-9 h-9 min-w-[44px] min-h-[44px] rounded-full bg-[var(--bg-elevated)] border border-[var(--border-accent)] flex items-center justify-center text-[var(--text-secondary)] text-lg cursor-pointer hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors flex-shrink-0"
       aria-label="Close">
       ×
     </button>
@@ -753,16 +755,52 @@ function TheoryWindow({ exercise: ex, week, day, bpm, note, onBpmChange, onNoteC
 }
 
 
+/* ── Focus trap hook for modals ── */
+function useFocusTrap(ref: React.RefObject<HTMLElement | null>) {
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const prev = document.activeElement as HTMLElement | null;
+    const focusable = () => el.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), textarea, input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    );
+    const trap = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+      const nodes = focusable();
+      if (nodes.length === 0) return;
+      const first = nodes[0];
+      const last = nodes[nodes.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    };
+    el.addEventListener("keydown", trap);
+    const firstFocusable = focusable()[0];
+    if (firstFocusable) firstFocusable.focus();
+    return () => {
+      el.removeEventListener("keydown", trap);
+      if (prev && typeof prev.focus === "function") prev.focus();
+    };
+  }, [ref]);
+}
+
 /* ════════════════════════════════════════════════════════════════
    MAIN EXPORT — routes to the correct window type
    ════════════════════════════════════════════════════════════════ */
 export default function ExerciseModal(props: Props) {
   const modalType = getModalType(props.exercise);
+  const modalRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(modalRef);
 
   return (
     <div onClick={(e) => { if (e.target === e.currentTarget) props.onClose(); }}
-      className="exercise-modal-overlay">
-      <div className="exercise-modal-content">
+      className="exercise-modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Exercise: ${props.exercise.n}`}>
+      <div className="exercise-modal-content" ref={modalRef}>
         {modalType === "song" && <SongWindow {...props} />}
         {modalType === "exercise" && <ExerciseWindow {...props} />}
         {modalType === "theory" && <TheoryWindow {...props} />}
@@ -770,3 +808,5 @@ export default function ExerciseModal(props: Props) {
     </div>
   );
 }
+
+export { useFocusTrap };

@@ -49,7 +49,7 @@ export default function AuthPage({ onSkip }: { onSkip: () => void }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: "#0a0a0a" }}>
+    <div className="min-h-screen flex items-center justify-center" style={{ background: "#121214" }}>
       <div className="w-full max-w-md mx-4">
         {/* Logo */}
         <div className="text-center mb-8">
@@ -148,7 +148,7 @@ export default function AuthPage({ onSkip }: { onSkip: () => void }) {
               className="w-full py-2.5 rounded-lg text-sm font-semibold transition-colors"
               style={{
                 background: loading ? "#3a3520" : "#D4A843",
-                color: loading ? "#888" : "#0a0a0a",
+                color: loading ? "#888" : "#121214",
               }}
             >
               {loading ? "..." : mode === "login" ? "Sign In" : "Create Account"}

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { EXERCISES } from "@/lib/exercises";
 import { CATS, COL } from "@/lib/constants";
 import { SONG_LIBRARY } from "@/lib/songs-data";
@@ -15,13 +15,14 @@ interface CoachMessage {
   role: "user" | "assistant";
   content: string;
   timestamp: number;
-  actions?: MessageAction[];
+  actions?: ParsedAction[];
 }
 
-interface MessageAction {
+interface ParsedAction {
+  type: string;
+  params: string[];
   label: string;
-  type: "apply-plan" | "add-song" | "quick-action";
-  data?: unknown;
+  executed?: boolean;
 }
 
 interface UserProfile {
@@ -30,63 +31,137 @@ interface UserProfile {
   favoriteArtists: string; equipment: string;
 }
 
-// ── Context builder ──
+interface BYOKSettings {
+  provider: "gemini" | "openai" | "anthropic";
+  apiKey: string;
+}
+
+// ── Rich context builder ──
 
 function getCoachContext(): string {
   const parts: string[] = [];
 
+  // Profile
   try {
     const raw = localStorage.getItem("gf-profile");
     if (raw) {
       const p: UserProfile = JSON.parse(raw);
-      parts.push(`Player: ${p.name || "Unknown"}, ${p.level}, ${p.yearsPlaying}y exp, ${p.practiceHoursPerDay}h/day.`);
-      parts.push(`Genres: ${p.genres.join(", ")}. Goals: ${p.goals || "none set"}.`);
-      if (p.favoriteArtists) parts.push(`Fav artists: ${p.favoriteArtists}.`);
-      if (p.equipment) parts.push(`Gear: ${p.equipment}.`);
+      parts.push(`Player: ${p.name || "Unknown"}, Level: ${p.level}, ${p.yearsPlaying} years experience, practices ${p.practiceHoursPerDay}h/day.`);
+      if (p.genres.length) parts.push(`Preferred genres: ${p.genres.join(", ")}.`);
+      if (p.goals) parts.push(`Goals: ${p.goals}.`);
+      if (p.favoriteArtists) parts.push(`Favorite artists: ${p.favoriteArtists}.`);
+      if (p.equipment) parts.push(`Equipment: ${p.equipment}.`);
     }
   } catch {}
 
+  // Current channel & exercise data
   try {
     const raw = localStorage.getItem("gf30");
     if (raw) {
       const d = JSON.parse(raw);
-      const doneKeys = Object.keys(d.doneMap || {}).filter(k => d.doneMap[k]);
-      const cats = [...new Set(doneKeys.map(k => {
-        const id = parseInt(k.split("-")[1]);
-        const ex = EXERCISES.find(e => e.id === id);
-        return ex?.c || "Unknown";
-      }))];
-      parts.push(`Week ${d.week || 1}. Mode: ${d.mode || "Aeolian"}, Scale: ${d.scale || "Am"}, Style: ${d.style || "Metal"}.`);
-      parts.push(`Exercises done this week: ${doneKeys.length}. Categories: ${cats.join(", ") || "none"}.`);
+      parts.push(`\nCurrent channel: Scale=${d.scale || "Am"}, Mode=${d.mode || "Aeolian"}, Style=${d.style || "Metal"}, Week ${d.week || 1}.`);
 
-      // BPM highlights
-      const bpmLog = d.bpmLog || {};
-      const bpmEntries = Object.entries(bpmLog).slice(0, 5).map(([k, v]) => {
+      // Done exercises this week
+      const doneMap = d.doneMap || {};
+      const doneKeys = Object.keys(doneMap).filter(k => doneMap[k]);
+      const doneExercises = doneKeys.map(k => {
         const id = parseInt(k.split("-")[1]);
-        const ex = EXERCISES.find(e => e.id === id);
-        return `${ex?.n || "Ex#" + id}: ${v} BPM`;
+        return EXERCISES.find(e => e.id === id);
+      }).filter(Boolean);
+
+      // Category completion analysis
+      const allCats = [...new Set(EXERCISES.map(e => e.c))];
+      const doneCats: Record<string, number> = {};
+      const totalCats: Record<string, number> = {};
+      allCats.forEach(c => { doneCats[c] = 0; totalCats[c] = 0; });
+      EXERCISES.forEach(e => { totalCats[e.c] = (totalCats[e.c] || 0) + 1; });
+      doneExercises.forEach(e => { if (e) doneCats[e.c] = (doneCats[e.c] || 0) + 1; });
+
+      // Strengths (>60% done) and weaknesses (<20% done or 0)
+      const strengths: string[] = [];
+      const weaknesses: string[] = [];
+      const neglected: string[] = [];
+      allCats.forEach(c => {
+        const pct = totalCats[c] > 0 ? doneCats[c] / totalCats[c] : 0;
+        if (pct > 0.6) strengths.push(`${c} (${Math.round(pct * 100)}%)`);
+        else if (pct === 0) neglected.push(c);
+        else if (pct < 0.2) weaknesses.push(`${c} (${Math.round(pct * 100)}%)`);
       });
-      if (bpmEntries.length) parts.push(`BPM log: ${bpmEntries.join(", ")}.`);
+
+      parts.push(`Exercises completed this week: ${doneKeys.length} out of ${EXERCISES.length}.`);
+      if (doneExercises.length) {
+        const names = doneExercises.slice(0, 8).map(e => e!.n);
+        parts.push(`Recently completed: ${names.join(", ")}.`);
+      }
+      if (strengths.length) parts.push(`Strong categories: ${strengths.join(", ")}.`);
+      if (weaknesses.length) parts.push(`Weak categories: ${weaknesses.join(", ")}.`);
+      if (neglected.length) parts.push(`NOT practiced at all: ${neglected.join(", ")}.`);
+
+      // BPM log with progression
+      const bpmLog = d.bpmLog || {};
+      const bpmEntries = Object.entries(bpmLog);
+      if (bpmEntries.length) {
+        const bpmLines = bpmEntries.slice(0, 10).map(([k, v]) => {
+          const id = parseInt(k.split("-")[1]);
+          const ex = EXERCISES.find(e => e.id === id);
+          return `${ex?.n || "Ex#" + id}: ${v} BPM (target: ${ex?.b || "?"})`;
+        });
+        parts.push(`\nBPM log:\n${bpmLines.join("\n")}`);
+      }
+
+      // Notes
+      const noteLog = d.noteLog || {};
+      const noteEntries = Object.entries(noteLog).filter(([, v]) => v);
+      if (noteEntries.length) {
+        const noteLines = noteEntries.slice(0, 5).map(([k, v]) => {
+          const id = parseInt(k.split("-")[1]);
+          const ex = EXERCISES.find(e => e.id === id);
+          return `${ex?.n || "Ex#" + id}: "${v}"`;
+        });
+        parts.push(`\nUser notes on exercises:\n${noteLines.join("\n")}`);
+      }
     }
   } catch {}
 
+  // Streak data
   try {
     const raw = localStorage.getItem("gf-streak");
     if (raw) {
       const s = JSON.parse(raw);
-      parts.push(`Streak: ${s.currentStreak || 0}d (longest: ${s.longestStreak || 0}d, total: ${s.totalDays || 0}d).`);
+      parts.push(`\nStreak: ${s.currentStreak || 0} consecutive days (longest ever: ${s.longestStreak || 0}, total practice days: ${s.totalDays || 0}).`);
+      if (s.lastDate) parts.push(`Last practice: ${s.lastDate}.`);
     }
   } catch {}
 
+  // Learning progress
   try {
     const raw = localStorage.getItem("gf-learn");
     if (raw) {
       const l = JSON.parse(raw);
-      if (l.xp) parts.push(`Learning: ${l.xp} XP, level ${l.level || 1}.`);
+      if (l.xp) parts.push(`Learning progress: ${l.xp} XP, level ${l.level || 1}.`);
+      if (l.completedLessons && l.completedLessons.length) {
+        parts.push(`Completed lessons: ${l.completedLessons.length}.`);
+      }
     }
   } catch {}
 
-  return parts.join(" ") || "No user data available yet. Profile not set up.";
+  // Song library stats
+  try {
+    const songProgress = JSON.parse(localStorage.getItem("gf-song-progress") || "{}");
+    const songsDone = Object.values(songProgress).filter((v: unknown) => (v as { done?: boolean })?.done).length;
+    if (songsDone > 0 || SONG_LIBRARY.length > 0) {
+      parts.push(`\nSong library: ${SONG_LIBRARY.length} songs available, ${songsDone} completed.`);
+    }
+  } catch {}
+
+  // Available exercises summary
+  const catCounts = EXERCISES.reduce((acc, e) => {
+    acc[e.c] = (acc[e.c] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+  parts.push(`\nAvailable exercise categories: ${Object.entries(catCounts).map(([c, n]) => `${c}(${n})`).join(", ")}.`);
+
+  return parts.join("\n") || "No user data available yet. Profile not set up.";
 }
 
 // ── Channel settings reader ──
@@ -107,8 +182,6 @@ function getChannelSettings(): { scale: string; mode: string; style: string; wee
   return { scale: "Am", mode: "Aeolian", style: "Metal", week: 1 };
 }
 
-// ── Demo response engine ──
-
 function getProfile(): UserProfile | null {
   try {
     const raw = localStorage.getItem("gf-profile");
@@ -116,215 +189,34 @@ function getProfile(): UserProfile | null {
   } catch { return null; }
 }
 
-function matchSongs(profile: UserProfile | null, count: number = 6): SongEntry[] {
-  if (!profile) return SONG_LIBRARY.slice(0, count);
-  const genres = profile.genres.map(g => g.toLowerCase());
-  const level = profile.level.toLowerCase();
-  let diff: string | null = null;
-  if (level.includes("beginner")) diff = "Beginner";
-  else if (level.includes("intermediate")) diff = "Intermediate";
-  else if (level.includes("advanced") || level.includes("expert")) diff = "Advanced";
-
-  const scored = SONG_LIBRARY.map(s => {
-    let score = 0;
-    const sg = (s.genre || "").toLowerCase();
-    if (genres.some(g => sg.includes(g) || g.includes(sg))) score += 3;
-    if (diff && s.difficulty === diff) score += 2;
-    if (diff === "Advanced" && s.difficulty === "Intermediate") score += 1;
-    if (diff === "Intermediate" && s.difficulty === "Beginner") score += 1;
-    score += Math.random() * 0.5;
-    return { song: s, score };
-  });
-  scored.sort((a, b) => b.score - a.score);
-  return scored.slice(0, count).map(s => s.song);
-}
-
-function generateRoutine(profile: UserProfile | null): string {
-  const hours = profile?.practiceHoursPerDay || 1.5;
-  const totalMin = Math.round(hours * 60);
-  const level = (profile?.level || "").toLowerCase();
-  const genres = profile?.genres || ["Metal"];
-
-  const isAdv = level.includes("advanced") || level.includes("expert");
-  const isBeg = level.includes("beginner");
-
-  const warmUps = EXERCISES.filter(e => e.c === "Warm-Up");
-  const technique = EXERCISES.filter(e => ["Shred", "Legato", "Picking", "Tapping", "Sweep", "Arpeggios"].includes(e.c));
-  const musical = EXERCISES.filter(e => ["Improv", "Phrasing", "Ear Training", "Modes"].includes(e.c));
-  const rhythm = EXERCISES.filter(e => ["Rhythm", "Riffs", "Chords"].includes(e.c));
-  const creative = EXERCISES.filter(e => ["Composition", "Songs", "Bends", "Dynamics"].includes(e.c));
-
-  const pick = (arr: typeof EXERCISES, n: number) => {
-    const shuffled = [...arr].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, n);
-  };
-
-  const DAYS_HEB = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
-
-  let plan = `**תוכנית תרגול שבועית** (${totalMin} דק׳/יום)\n\n`;
-
-  for (let i = 0; i < 7; i++) {
-    const dayExercises: string[] = [];
-    const wu = pick(warmUps, 1)[0];
-    if (wu) dayExercises.push(`- Warm-Up: ${wu.n} (${wu.m} דק׳)`);
-
-    if (i % 2 === 0) {
-      const techs = pick(technique, isAdv ? 2 : 1);
-      techs.forEach(t => dayExercises.push(`- ${t.c}: ${t.n} (${t.m} דק׳)`));
-    } else {
-      const mus = pick(musical, isAdv ? 2 : 1);
-      mus.forEach(m => dayExercises.push(`- ${m.c}: ${m.n} (${m.m} דק׳)`));
+function getBYOKSettings(): BYOKSettings | null {
+  try {
+    const raw = localStorage.getItem("gf-byok");
+    if (raw) {
+      const s = JSON.parse(raw);
+      if (s.apiKey && s.provider) return s;
     }
-
-    if (i < 5) {
-      const rhy = pick(rhythm, 1)[0];
-      if (rhy) dayExercises.push(`- ${rhy.c}: ${rhy.n} (${rhy.m} דק׳)`);
-    }
-
-    if (i === 5 || i === 6) {
-      const cr = pick(creative, 1)[0];
-      if (cr) dayExercises.push(`- ${cr.c}: ${cr.n} (${cr.m} דק׳)`);
-    }
-
-    if (!isBeg && i % 3 === 0) {
-      dayExercises.push(`- Songs: תרגול שיר מהספרייה (15 דק׳)`);
-    }
-
-    plan += `**יום ${DAYS_HEB[i]}:**\n${dayExercises.join("\n")}\n\n`;
-  }
-
-  plan += `*התוכנית מותאמת לרמת ${profile?.level || "Intermediate"} ולז׳אנרים ${genres.join(", ")}.*`;
-  return plan;
-}
-
-function getDemoResponse(input: string): { content: string; actions?: MessageAction[] } {
-  const lower = input.toLowerCase();
-  const profile = getProfile();
-  const name = profile?.name || "גיטריסט";
-
-  // Backing track / jam
-  if (/backing|track|jam|play along|תרגול עם/.test(lower)) {
-    let currentScale = "Am";
-    let currentMode = "Aeolian";
-    let currentStyle = "Metal";
-    try {
-      const raw = localStorage.getItem("gf30");
-      if (raw) {
-        const d = JSON.parse(raw);
-        if (d.scale) currentScale = d.scale;
-        if (d.mode) currentMode = d.mode;
-        if (d.style) currentStyle = d.style;
-      }
-    } catch {}
-    const stylePreview = buildStyle(currentScale, currentMode, currentStyle, 120);
-    return {
-      content: `אני יכול ליצור backing track מותאם להגדרות שלך!\n\n**Current Settings:**\n- Scale: ${currentScale}\n- Mode: ${currentMode}\n- Style: ${currentStyle}\n\n**Style prompt:** ${stylePreview}\n\nלחץ על הכפתור למטה כדי לייצר backing track.`,
-      actions: [{ label: "Generate Backing Track", type: "quick-action" as const, data: { scale: currentScale, mode: currentMode, style: currentStyle, bpm: 120 } }],
-    };
-  }
-
-  // Routine / plan
-  if (/routine|plan|schedule|תוכנית|לוח|תרגול יומי/.test(lower)) {
-    return {
-      content: `${name}, הנה תוכנית תרגול מותאמת אישית:\n\n${generateRoutine(profile)}`,
-    };
-  }
-
-  // Song recommendations
-  if (/song|recommend|שיר|המלצ/.test(lower)) {
-    const songs = matchSongs(profile, 6);
-    let resp = `הנה המלצות שירים שמתאימות לרמה ולסגנון שלך:\n\n`;
-    songs.forEach((s, i) => {
-      resp += `**${i + 1}. ${s.title}** — ${s.artist}\n`;
-      resp += `   Difficulty: ${s.difficulty || "?"} · Genre: ${s.genre || "?"} · Tuning: ${s.tuning || "Standard"}\n\n`;
-    });
-    resp += `*רוצה שאמליץ על עוד שירים? ספר לי איזה סגנון בא לך.*`;
-    return { content: resp };
-  }
-
-  // Progress / stats
-  if (/progress|stats|התקדמות|סטטיסטיק/.test(lower)) {
-    const ctx = getCoachContext();
-    let resp = `הנה סיכום ההתקדמות שלך:\n\n`;
-
-    try {
-      const raw = localStorage.getItem("gf-streak");
-      if (raw) {
-        const s = JSON.parse(raw);
-        resp += `**Streak:** ${s.currentStreak || 0} ימים רצופים (שיא: ${s.longestStreak || 0})\n`;
-        resp += `**סה״כ ימי תרגול:** ${s.totalDays || 0}\n\n`;
-      }
-    } catch {}
-
-    try {
-      const raw = localStorage.getItem("gf30");
-      if (raw) {
-        const d = JSON.parse(raw);
-        const done = Object.keys(d.doneMap || {}).filter(k => d.doneMap[k]).length;
-        resp += `**תרגילים שהושלמו השבוע:** ${done}\n`;
-        const bpmEntries = Object.entries(d.bpmLog || {});
-        if (bpmEntries.length > 0) {
-          resp += `**BPM Log:**\n`;
-          bpmEntries.slice(0, 5).forEach(([k, v]) => {
-            const id = parseInt(k.split("-")[1]);
-            const ex = EXERCISES.find(e => e.id === id);
-            resp += `- ${ex?.n || "Exercise"}: ${v} BPM\n`;
-          });
-        }
-      }
-    } catch {}
-
-    resp += `\n*המשך להתאמן בעקביות! כל יום שאתה מתרגל הוא צעד קדימה.*`;
-    return { content: resp };
-  }
-
-  // Theory
-  if (/theory|scale|chord|mode|תאוריה|סולם|אקורד/.test(lower)) {
-    const tips = [
-      `**Minor Pentatonic** הוא הסולם הראשון שכל גיטריסט צריך לשלוט בו. 5 תווים, 5 פוזיציות. בהרבה מקרים זה כל מה שאתה צריך לסולו מעולה.\n\n**טיפ:** תתרגל את הסולם בכל 5 הפוזיציות על פני הצוואר. רוב הגיטריסטים נתקעים בפוזיציה אחת — אל תהיה אחד מהם.\n\nתרגילים רלוונטיים מהספרייה: "Two-Octave Scale Am Pentatonic" ו-"Fretboard Note Names".`,
-      `**Modes — מה הם ולמה זה חשוב:**\n\n- **Aeolian** (Natural Minor) — עצוב, Metal, Rock\n- **Dorian** — Minor עם Maj6, Funk, Jazz\n- **Phrygian** — אפלולי, Flamenco, Metal\n- **Mixolydian** — Major עם b7, Blues, Rock\n- **Lydian** — חולמני, Satriani, Film Music\n\nהתחל עם Aeolian ו-Dorian — הם הכי שימושיים ב-Rock/Metal.`,
-      `**Circle of Fifths — הכלי הכי חשוב בתאוריה:**\n\nכל טונליות נמצאת ב-circle. זזים ימינה = מוסיפים #, זזים שמאלה = מוסיפים b.\n\n**שימוש מעשי:** אם אתה ב-Am, האקורדים הנפוצים יהיו Am, Dm, Em, C, G, F. ה-Circle מסביר למה.\n\nתסתכל על הכלי Circle of 5ths בעמוד Learning!`,
-    ];
-    return { content: tips[Math.floor(Math.random() * tips.length)] };
-  }
-
-  // Technique
-  if (/technique|picking|legato|sweep|tap|shred|טכניק/.test(lower)) {
-    const tips = [
-      `**Alternate Picking — הטכניקה הבסיסית ביותר:**\n\nDown-Up-Down-Up בלי חריגות. גם כשעוברים מיתר.\n\n**3 כללים:**\n1. תנועה קטנה — ככל שהתנועה קטנה יותר, אתה מהיר יותר\n2. תמיד עם מטרונום\n3. 3 טעויות רצופות = הורד 10 BPM\n\nתרגיל מומלץ: "Alternate Picking Full Pentatonic Speed Build"`,
-      `**Legato — הקול הנקי של הגיטרה:**\n\nHammer-ons ו-Pull-offs בווליום שווה. הסוד: Pull-off זה לא רק להרים את האצבע — תמשוך את המיתר קצת הצידה.\n\n**תרגול:** 10 דקות בנייה איטית + 10 דקות זרימה רצופה. כשזה זורם — אתה יודע שזה עובד.\n\nתרגיל: "Basic Legato 2H + 2P Pentatonic"`,
-      `**Sweep Picking — טכניקה מתקדמת שנשמעת מדהים:**\n\nהפיק "נופל" על המיתרים בתנועה אחת רציפה. כל אצבע מרימה את המיתר הקודם.\n\n**טיפ קריטי:** אל תנגן sweep כמו strum! כל תו צריך להישמע בנפרד.\n\nהתחל ב-3 מיתרים לפני שעולה ל-5. תרגיל: "3-String Minor Arpeggio Sweep"`,
-    ];
-    return { content: tips[Math.floor(Math.random() * tips.length)] };
-  }
-
-  // Default — general tips
-  const defaults = [
-    `היי ${name}! יש לי כמה טיפים כלליים:\n\n1. **תמיד התחל עם חימום** — 5-10 דקות של stretching וכרומטיקה\n2. **תנגן עם מטרונום** — בלעדיו אתה רק מתרגל טעויות\n3. **הקלט את עצמך** — זה מפתיע כמה אתה שומע דברים שלא שמת לב אליהם בזמן אמת\n4. **גיוון** — אל תתרגל רק את מה שאתה כבר טוב בו\n\nמה אתה רוצה לעבוד עליו? אני יכול לבנות לך תוכנית, להמליץ על שירים, או לעזור עם תאוריה.`,
-    `שלום ${name}! אני כאן לעזור.\n\n**הנה כמה דברים שאני יכול לעשות:**\n- לבנות תוכנית תרגול שבועית מותאמת אישית\n- להמליץ על שירים מהספרייה שמתאימים לרמה שלך\n- לנתח את ההתקדמות שלך ולתת פידבק\n- לעזור עם תאוריה מוזיקלית, סולמות ואקורדים\n- לתת טיפים לטכניקות ספציפיות\n\nפשוט שאל!`,
-    `טיפ היום: **The 80/20 Rule for Guitar**\n\n80% מההתקדמות שלך מגיעה מ-20% מהתרגול. מה ה-20% הזה?\n\n1. **תרגול איטי ונקי** — יותר חשוב מלנגן מהר עם טעויות\n2. **זיהוי נקודות חולשה** — תתרגל את מה שקשה, לא את מה שקל\n3. **עקביות** — 30 דקות כל יום עדיף על 4 שעות פעם בשבוע\n\nרוצה שאבנה לך תוכנית שמתמקדת ב-20% הנכונים?`,
-  ];
-  return { content: defaults[Math.floor(Math.random() * defaults.length)] };
+  } catch {}
+  return null;
 }
 
 // ── Welcome message ──
 
 function getWelcomeMessage(): CoachMessage {
   const profile = getProfile();
-  const name = profile?.name || "גיטריסט";
-  const ctx = getCoachContext();
+  const name = profile?.name || "guitarist";
 
-  let greeting = `היי ${name}! אני ה-Coach של GuitarForge. `;
+  let greeting = `Hey ${name}! I'm your GuitarForge AI Coach. `;
 
   if (profile) {
-    greeting += `אני רואה שאתה מנגן ${profile.instrument || "גיטרה"} ברמת ${profile.level}`;
-    if (profile.genres.length > 0) greeting += ` עם דגש על ${profile.genres.slice(0, 3).join(", ")}`;
+    greeting += `I see you play ${profile.instrument || "guitar"} at the ${profile.level} level`;
+    if (profile.genres.length > 0) greeting += `, focusing on ${profile.genres.slice(0, 3).join(", ")}`;
     greeting += ".\n\n";
   } else {
-    greeting += "מומלץ למלא את הפרופיל כדי שאוכל לתת המלצות מותאמות אישית.\n\n";
+    greeting += "Set up your profile so I can give you personalized recommendations.\n\n";
   }
 
-  greeting += "אני יכול לעזור עם תוכניות תרגול, המלצות שירים, טיפים לטכניקה ותאוריה מוזיקלית. מה בא לך?";
+  greeting += "I can help with practice plans, exercise suggestions, technique tips, theory, and more. What would you like to work on?";
 
   return {
     id: "welcome",
@@ -338,8 +230,8 @@ function getWelcomeMessage(): CoachMessage {
 
 const QUICK_ACTIONS = [
   {
-    label: "Suggest exercises for my level",
-    query: "Suggest exercises that match my current skill level",
+    label: "Suggest exercises for my weak areas",
+    query: "Analyze my practice data and suggest exercises for my weakest categories. Be specific about which exercises I should do and why.",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M4 19.5A2.5 2.5 0 016.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" /><line x1="9" y1="8" x2="16" y2="8" /><line x1="9" y1="12" x2="14" y2="12" />
@@ -348,7 +240,7 @@ const QUICK_ACTIONS = [
   },
   {
     label: "Explain a technique",
-    query: "Explain a guitar technique — picking, legato, or sweep",
+    query: "Pick a guitar technique I should improve based on my practice data, and explain it in detail with practice tips.",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" /><line x1="12" y1="17" x2="12.01" y2="17" />
@@ -357,7 +249,7 @@ const QUICK_ACTIONS = [
   },
   {
     label: "Build a practice routine",
-    query: "Build me a practice routine",
+    query: "Build me a complete weekly practice routine based on my level, goals, and what I've been practicing. Include specific exercises with durations and BPM targets for each day.",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /><path d="M8 14h.01" /><path d="M12 14h.01" /><path d="M16 14h.01" /><path d="M8 18h.01" /><path d="M12 18h.01" />
@@ -366,7 +258,7 @@ const QUICK_ACTIONS = [
   },
   {
     label: "What should I practice today?",
-    query: "What should I practice today based on my progress?",
+    query: "Based on my practice history, streak, and weak areas — what exactly should I practice today? Give me a focused session plan with specific exercises and times.",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -375,7 +267,7 @@ const QUICK_ACTIONS = [
   },
   {
     label: "Generate backing track",
-    query: "Generate a backing track for my current settings",
+    query: "I want a backing track to jam with. Suggest the best settings for my current practice focus and generate one.",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="5.5" cy="17.5" r="2.5" /><circle cx="17.5" cy="15.5" r="2.5" /><path d="M8 17V5l12-2v12" />
@@ -384,7 +276,7 @@ const QUICK_ACTIONS = [
   },
   {
     label: "Analyze my progress",
-    query: "Analyze my progress and stats",
+    query: "Give me a detailed analysis of my practice progress: strengths, weaknesses, BPM trends, category coverage, and what I should focus on next.",
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
@@ -400,9 +292,9 @@ function renderContent(text: string): React.ReactNode {
   const elements: React.ReactNode[] = [];
 
   for (let i = 0; i < lines.length; i++) {
-    let line = lines[i];
+    const line = lines[i];
 
-    // Bold
+    // Bold + inline code
     const parts: React.ReactNode[] = [];
     let lastIdx = 0;
     const boldRe = /\*\*(.+?)\*\*/g;
@@ -430,24 +322,49 @@ function renderContent(text: string): React.ReactNode {
   return <>{elements}</>;
 }
 
+// ── Action label generator ──
+
+function actionToLabel(action: { type: string; params: string[] }): string {
+  switch (action.type) {
+    case "navigate":
+      const viewNames: Record<string, string> = {
+        practice: "Go to Practice", daily: "Go to Practice",
+        learn: "Go to Learning", studio: "Go to Studio",
+        songs: "Go to Songs", lib: "Go to Library",
+        coach: "Go to Coach", profile: "Go to Profile",
+      };
+      return viewNames[action.params[0]] || `Navigate to ${action.params[0]}`;
+    case "suggest_exercises":
+      return `Show ${action.params[0] || ""} exercises`;
+    case "generate_backing":
+      return `Generate ${action.params.join(" ")} backing track`;
+    default:
+      return action.type;
+  }
+}
+
 // ── Main Component ──
 
 const HISTORY_KEY = "gf-coach-history";
 const MAX_MESSAGES = 50;
 
-export default function AiCoachPage() {
+interface AiCoachPageProps {
+  onNavigate?: (view: string) => void;
+}
+
+export default function AiCoachPage({ onNavigate }: AiCoachPageProps) {
   const [messages, setMessages] = useState<CoachMessage[]>([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [apiKey, setApiKey] = useState("");
   const [coachTrackUrl, setCoachTrackUrl] = useState<string | null>(null);
   const [coachTrackLoading, setCoachTrackLoading] = useState(false);
   const [channelSettings, setChannelSettings] = useState({ scale: "Am", mode: "Aeolian", style: "Metal", week: 1 });
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const initRef = useRef(false);
 
-  // Load history + API key + channel settings
+  // Load history + channel settings
   useEffect(() => {
     if (initRef.current) return;
     initRef.current = true;
@@ -484,15 +401,8 @@ export default function AiCoachPage() {
     }
   }, [messages, isTyping]);
 
-  // Load API key
-  useEffect(() => {
-    try {
-      const key = localStorage.getItem("gf-coach-apikey") || "";
-      setApiKey(key);
-    } catch {}
-  }, []);
-
-  async function sendMessage(text: string) {
+  // ── Send message to AI ──
+  const sendMessage = useCallback(async (text: string) => {
     if (!text.trim()) return;
 
     const userMsg: CoachMessage = {
@@ -505,57 +415,70 @@ export default function AiCoachPage() {
     setMessages(prev => [...prev, userMsg]);
     setInput("");
     setIsTyping(true);
+    setErrorMsg(null);
 
-    const key = localStorage.getItem("gf-coach-apikey") || "";
+    try {
+      const history = [...messages, userMsg].slice(-20).map(m => ({
+        role: m.role,
+        content: m.content,
+      }));
+      const context = getCoachContext();
+      const byok = getBYOKSettings();
 
-    if (key && key.startsWith("sk-")) {
-      try {
-        const history = [...messages, userMsg].slice(-20).map(m => ({
-          role: m.role,
-          content: m.content,
-        }));
-        const context = getCoachContext();
+      const reqBody: Record<string, unknown> = {
+        message: text.trim(),
+        context,
+        history,
+      };
 
-        const res = await fetch("/api/coach", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: text.trim(), context, history, apiKey: key }),
-        });
-
-        if (!res.ok) throw new Error(`API error: ${res.status}`);
-
-        const data = await res.json();
-        const assistantMsg: CoachMessage = {
-          id: `a-${Date.now()}`,
-          role: "assistant",
-          content: data.content || "Sorry, I couldn't generate a response.",
-          timestamp: Date.now(),
-        };
-        setMessages(prev => [...prev, assistantMsg]);
-      } catch (err) {
-        const errorMsg: CoachMessage = {
-          id: `a-${Date.now()}`,
-          role: "assistant",
-          content: `שגיאה בחיבור ל-API. חוזר למצב Demo.\n\n${getDemoResponse(text).content}`,
-          timestamp: Date.now(),
-        };
-        setMessages(prev => [...prev, errorMsg]);
+      // Add BYOK if configured
+      if (byok) {
+        reqBody.provider = byok.provider;
+        reqBody.byokKey = byok.apiKey;
       }
-    } else {
-      await new Promise(r => setTimeout(r, 600 + Math.random() * 800));
-      const demo = getDemoResponse(text);
+
+      const res = await fetch("/api/coach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(reqBody),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+        throw new Error(errData.error || `API error: ${res.status}`);
+      }
+
+      const data = await res.json();
+
+      // Parse actions from API response
+      const parsedActions: ParsedAction[] = (data.actions || []).map((a: { type: string; params: string[] }) => ({
+        type: a.type,
+        params: a.params,
+        label: actionToLabel(a),
+      }));
+
       const assistantMsg: CoachMessage = {
         id: `a-${Date.now()}`,
         role: "assistant",
-        content: demo.content,
+        content: data.content || "I couldn't generate a response. Please try again.",
         timestamp: Date.now(),
-        actions: demo.actions,
+        actions: parsedActions.length > 0 ? parsedActions : undefined,
       };
       setMessages(prev => [...prev, assistantMsg]);
+    } catch (err) {
+      const errText = err instanceof Error ? err.message : "Unknown error";
+      setErrorMsg(errText);
+      const errorMsgObj: CoachMessage = {
+        id: `a-${Date.now()}`,
+        role: "assistant",
+        content: `Sorry, I encountered an error: ${errText}\n\nPlease try again. If this persists, check AI settings in your Profile.`,
+        timestamp: Date.now(),
+      };
+      setMessages(prev => [...prev, errorMsgObj]);
     }
 
     setIsTyping(false);
-  }
+  }, [messages]);
 
   function clearChat() {
     const welcome = getWelcomeMessage();
@@ -570,6 +493,69 @@ export default function AiCoachPage() {
     }
   }
 
+  // ── Execute action from coach response ──
+  function executeAction(action: ParsedAction, msgId: string) {
+    switch (action.type) {
+      case "navigate": {
+        const viewMap: Record<string, string> = {
+          practice: "daily", daily: "daily",
+          learn: "learn", learning: "learn",
+          studio: "studio", songs: "songs",
+          library: "lib", lib: "lib",
+          profile: "profile",
+        };
+        const target = viewMap[action.params[0]] || action.params[0];
+        if (onNavigate) {
+          onNavigate(target);
+        } else {
+          window.location.hash = `#${target}`;
+        }
+        break;
+      }
+      case "suggest_exercises": {
+        const category = action.params[0] || "";
+        if (onNavigate) {
+          onNavigate("daily");
+        } else {
+          window.location.hash = "#daily";
+        }
+        // Store the suggestion for the practice page to pick up
+        try {
+          localStorage.setItem("gf-coach-suggestion", JSON.stringify({
+            type: "filter_category",
+            category,
+            timestamp: Date.now(),
+          }));
+        } catch {}
+        break;
+      }
+      case "generate_backing": {
+        const [style, key, bpm] = action.params;
+        handleGenerateBacking({
+          style: style || channelSettings.style,
+          scale: key || channelSettings.scale,
+          mode: channelSettings.mode,
+          bpm: parseInt(bpm) || 120,
+        });
+        break;
+      }
+    }
+
+    // Mark action as executed
+    setMessages(prev => prev.map(m => {
+      if (m.id === msgId && m.actions) {
+        return {
+          ...m,
+          actions: m.actions.map(a =>
+            a === action ? { ...a, executed: true } : a
+          ),
+        };
+      }
+      return m;
+    }));
+  }
+
+  // ── Generate backing track ──
   async function handleGenerateBacking(actionData: { scale: string; mode: string; style: string; bpm: number }) {
     if (coachTrackLoading) return;
     setCoachTrackLoading(true);
@@ -604,14 +590,24 @@ export default function AiCoachPage() {
       const data = await res.json();
       if (data.tracks && data.tracks.length > 0) {
         const track = data.tracks[0];
-        setCoachTrackUrl(track.audioUrl || track.streamAudioUrl);
+        const audioUrl = track.audioUrl || track.streamAudioUrl;
+        setCoachTrackUrl(audioUrl);
         recordUsage(10);
 
+        // Download actual audio blob (fix empty blob bug)
         try {
+          let audioBlob = new Blob();
+          if (audioUrl) {
+            try {
+              const audioRes = await fetch(audioUrl);
+              if (audioRes.ok) audioBlob = await audioRes.blob();
+            } catch {}
+          }
+
           const libTrack: LibraryTrack = {
             id: track.id || `coach-${Date.now()}`,
-            audioBlob: new Blob(),
-            audioUrl: track.audioUrl || track.streamAudioUrl,
+            audioBlob,
+            audioUrl,
             title: track.title || `${actionData.scale} ${actionData.mode} Backing`,
             style: actionData.style,
             params: actionData,
@@ -626,7 +622,7 @@ export default function AiCoachPage() {
         const doneMsg: CoachMessage = {
           id: `a-done-${Date.now()}`,
           role: "assistant",
-          content: `Backing track ready! **${track.title || "Backing Track"}** (${Math.round((track.duration || 0))}s)\n\nThe track has been saved to your library. Use the player above to jam along!`,
+          content: `Backing track ready! **${track.title || "Backing Track"}** (${Math.round((track.duration || 0))}s)\n\nSaved to your library. Use the player below to jam along!`,
           timestamp: Date.now(),
         };
         setMessages(prev => [...prev, doneMsg]);
@@ -637,7 +633,7 @@ export default function AiCoachPage() {
       const errMsg: CoachMessage = {
         id: `a-err-${Date.now()}`,
         role: "assistant",
-        content: `Could not generate backing track: ${err instanceof Error ? err.message : "Unknown error"}.\n\nMake sure SUNO_API_KEY is configured in your environment.`,
+        content: `Could not generate backing track: ${err instanceof Error ? err.message : "Unknown error"}.\n\nMake sure SUNO_API_KEY is configured.`,
         timestamp: Date.now(),
       };
       setMessages(prev => [...prev, errMsg]);
@@ -646,7 +642,6 @@ export default function AiCoachPage() {
     }
   }
 
-  const isDemo = !apiKey || !apiKey.startsWith("sk-");
   const showQuickActions = messages.length <= 2 && !isTyping;
 
   return (
@@ -655,16 +650,13 @@ export default function AiCoachPage() {
       {/* ── Coach Header ── */}
       <div className="flex-shrink-0 mb-3">
         <div className="relative overflow-hidden rounded-xl border border-[#1a1a1a] bg-gradient-to-br from-[#141214] via-[#121014] to-[#0e0c10]">
-          {/* Subtle glow effect behind the icon */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 bg-[#D4A843]/5 blur-3xl rounded-full pointer-events-none" />
 
           <div className="relative px-4 sm:px-6 py-5 sm:py-6">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-center gap-4">
-                {/* Coach avatar — amp/guitar icon */}
                 <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-gradient-to-br from-[#D4A843]/20 to-[#D4A843]/5 border border-[#D4A843]/30 flex items-center justify-center flex-shrink-0 shadow-lg shadow-[#D4A843]/5">
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    {/* Guitar amp icon */}
                     <rect x="3" y="3" width="18" height="18" rx="2" />
                     <circle cx="12" cy="10" r="3" />
                     <line x1="7" y1="16" x2="7.01" y2="16" strokeWidth="2" />
@@ -678,7 +670,7 @@ export default function AiCoachPage() {
                     AI Guitar Coach
                   </h1>
                   <p className="text-[13px] text-[#666] mt-0.5">
-                    Ask me anything about guitar technique, theory, or practice
+                    Powered by AI — ask anything about guitar, technique, or practice
                   </p>
                 </div>
               </div>
@@ -706,8 +698,8 @@ export default function AiCoachPage() {
                 Week {channelSettings.week}
               </span>
               <span className="ml-auto inline-flex items-center gap-1.5 text-[10px] font-label">
-                <span className={`w-1.5 h-1.5 rounded-full ${isDemo ? "bg-[#555]" : "bg-emerald-500"}`} />
-                <span className="text-[#555]">{isDemo ? "Demo Mode" : "API Connected"}</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span className="text-[#555]">{getBYOKSettings() ? `BYOK: ${getBYOKSettings()!.provider}` : "Gemini Free"}</span>
               </span>
             </div>
           </div>
@@ -759,26 +751,35 @@ export default function AiCoachPage() {
               <div className={`text-[14px] leading-relaxed ${msg.role === "user" ? "text-[#ccc]" : "text-[#999]"}`}>
                 {renderContent(msg.content)}
               </div>
-              {/* Action buttons */}
+
+              {/* Action buttons from AI */}
               {msg.actions && msg.actions.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-3" style={{ direction: "ltr" }}>
                   {msg.actions.map((action, ai) => (
                     <button key={ai}
-                      onClick={() => {
-                        if (action.data && typeof action.data === "object" && "scale" in action.data) {
-                          handleGenerateBacking(action.data as { scale: string; mode: string; style: string; bpm: number });
-                        }
-                      }}
-                      disabled={coachTrackLoading}
-                      className="font-label text-[11px] text-[#D4A843] border border-[#D4A843]/30 hover:border-[#D4A843]/60 hover:bg-[#D4A843]/10 px-4 py-2 rounded-lg transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
-                      {coachTrackLoading ? (
+                      onClick={() => executeAction(action, msg.id)}
+                      disabled={action.executed}
+                      className={`font-label text-[11px] border px-4 py-2 rounded-lg transition-all cursor-pointer flex items-center gap-2 ${
+                        action.executed
+                          ? "text-[#555] border-[#222] bg-[#111] cursor-default"
+                          : "text-[#D4A843] border-[#D4A843]/30 hover:border-[#D4A843]/60 hover:bg-[#D4A843]/10"
+                      }`}>
+                      {action.executed ? (
                         <>
-                          <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2"><circle cx="12" cy="12" r="10" strokeDasharray="60" strokeDashoffset="20" /></svg>
-                          Generating...
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg>
+                          Done
                         </>
                       ) : (
                         <>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="5.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="15.5" r="2.5"/><path d="M8 17V5l12-2v12"/></svg>
+                          {action.type === "navigate" && (
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2" strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+                          )}
+                          {action.type === "suggest_exercises" && (
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2" strokeLinecap="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" /></svg>
+                          )}
+                          {action.type === "generate_backing" && (
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2" strokeLinecap="round"><circle cx="5.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="15.5" r="2.5"/><path d="M8 17V5l12-2v12"/></svg>
+                          )}
                           {action.label}
                         </>
                       )}
@@ -786,20 +787,21 @@ export default function AiCoachPage() {
                   ))}
                 </div>
               )}
-              {/* Inline audio player */}
+
+              {/* Inline audio player for generated tracks */}
               {coachTrackUrl && msg.id.startsWith("a-done-") && (
                 <div className="mt-3" style={{ direction: "ltr" }}>
                   <DarkAudioPlayer src={coachTrackUrl} title="AI Backing Track" compact />
                 </div>
               )}
               <div className="font-readout text-[9px] text-[#333] mt-2" style={{ textAlign: msg.role === "user" ? "right" : "left" }}>
-                {new Date(msg.timestamp).toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })}
+                {new Date(msg.timestamp).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
               </div>
             </div>
           </div>
         ))}
 
-        {/* Typing indicator — animated dots */}
+        {/* Typing indicator */}
         {isTyping && (
           <div className="flex justify-start">
             <div className="bg-[#141214] border-l-2 border-[#D4A843]/30 border-t border-r border-b border-t-[#1a1a1a] border-r-[#1a1a1a] border-b-[#1a1a1a] rounded-2xl rounded-bl-md px-4 py-3">
@@ -831,7 +833,7 @@ export default function AiCoachPage() {
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Type a question..."
+              placeholder="Ask about technique, theory, practice plans..."
               className="w-full bg-[#111113] border border-[#222] focus:border-[#D4A843]/50 rounded-xl px-4 py-3 text-[14px] text-[#ccc] placeholder-[#444] outline-none transition-all shadow-inner"
               disabled={isTyping}
             />
@@ -852,11 +854,9 @@ export default function AiCoachPage() {
             </svg>
           </button>
         </div>
-        {isDemo && (
-          <div className="font-label text-[9px] text-[#444] text-center mt-2">
-            Demo Mode — Pre-built responses. Set Claude API Key in Profile for real AI.
-          </div>
-        )}
+        <div className="font-label text-[9px] text-[#333] text-center mt-2">
+          AI Coach is free for all users. Add your own API key in Profile for alternative providers.
+        </div>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import type { Exercise, Song, DayCats, DayHrs, DayExMap, BoolMap, StringMap, SongProgressMap, ExEditMap } from "@/lib/types";
 import { DAYS, CATS, COL, MODES, SCALES, STYLES, DEFAULT_DAY_CATS, DEFAULT_DAY_HRS, CAT_GROUPS } from "@/lib/constants";
 import { EXERCISES } from "@/lib/exercises";
@@ -216,7 +216,7 @@ export default function GuitarForgeApp() {
     syncedUserRef.current = user.id;
     setSyncing(true);
     setSyncError(null);
-    const localData = { week, mode, scale, style, dayCats, dayHrs, dayExMap, doneMap, bpmLog, noteLog, songs, songProgress, exEdits, customSongs, songLibProgress, mySongs };
+    const localData = { week, mode, scale, style, dayCats, dayHrs, dayExMap, doneMap, bpmLog, noteLog, songs, songProgress, exEdits, customSongs, songLibProgress, mySongs, streak, calendarData };
     syncData(user.id, localData)
       .then((merged) => {
         // Apply merged data to state
@@ -237,6 +237,8 @@ export default function GuitarForgeApp() {
         if (d.customSongs) setCustomSongs(d.customSongs);
         if (d.songLibProgress) setSongLibProgress(d.songLibProgress);
         if (d.mySongs) setMySongs(d.mySongs);
+        if (d.streak) { setStreak(d.streak); try { localStorage.setItem("gf-streak", JSON.stringify(d.streak)); } catch {} }
+        if (d.calendarData) { setCalendarData(d.calendarData); try { localStorage.setItem("gf-calendar", JSON.stringify(d.calendarData)); } catch {} }
         setLastSynced(new Date());
       })
       .catch((err) => { setSyncError(String(err?.message || err)); })
@@ -247,13 +249,20 @@ export default function GuitarForgeApp() {
   useEffect(() => {
     if (!ready || !user) return;
     const timer = setTimeout(() => {
-      const data = { week, mode, scale, style, dayCats, dayHrs, dayExMap, doneMap, bpmLog, noteLog, songs, songProgress, exEdits, customSongs, songLibProgress, mySongs };
+      const data = { week, mode, scale, style, dayCats, dayHrs, dayExMap, doneMap, bpmLog, noteLog, songs, songProgress, exEdits, customSongs, songLibProgress, mySongs, streak, calendarData };
       uploadSettings(user.id, data)
         .then(() => setLastSynced(new Date()))
         .catch(() => { /* silent — local save already succeeded */ });
     }, 3000); // 3s debounce for cloud uploads
     return () => clearTimeout(timer);
-  }, [ready, user, week, mode, scale, style, dayCats, dayHrs, dayExMap, doneMap, bpmLog, noteLog, songs, songProgress, exEdits, customSongs, songLibProgress, mySongs]);
+  }, [ready, user, week, mode, scale, style, dayCats, dayHrs, dayExMap, doneMap, bpmLog, noteLog, songs, songProgress, exEdits, customSongs, songLibProgress, mySongs, streak, calendarData]);
+
+  // ── Auto-dismiss sync error toast after 5 seconds ──
+  useEffect(() => {
+    if (!syncError) return;
+    const timer = setTimeout(() => setSyncError(null), 5000);
+    return () => clearTimeout(timer);
+  }, [syncError]);
 
   // ── Streak & Calendar update when exercise is marked done ──
   const updateStreakAndCalendar = useCallback((newDoneMap: BoolMap) => {
@@ -721,32 +730,41 @@ export default function GuitarForgeApp() {
     </div>
   );
 
+  // ── Memoized song library computations ──
+  const allSongsMemo = useMemo(() => [...SONG_LIBRARY, ...customSongs], [customSongs]);
+  const songGenres = useMemo(() => [...new Set(allSongsMemo.map(s => s.genre).filter((g): g is string => !!g))].sort(), [allSongsMemo]);
+  const songLibFiltered = useMemo(() => {
+    const genreFiltered = songLibGenre === "all" ? allSongsMemo : allSongsMemo.filter(s => s.genre === songLibGenre);
+    return genreFiltered.filter(s => {
+      if (songLibFilter !== "all" && s.difficulty !== songLibFilter) return false;
+      if (songLibSearch.trim()) {
+        const q = songLibSearch.trim().toLowerCase();
+        return s.title.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q) || (s.genre || "").toLowerCase().includes(q) || (s.album || "").toLowerCase().includes(q);
+      }
+      return true;
+    });
+  }, [allSongsMemo, songLibGenre, songLibFilter, songLibSearch]);
+  const songLibDiffCounts = useMemo(() => {
+    const genreFiltered = songLibGenre === "all" ? allSongsMemo : allSongsMemo.filter(s => s.genre === songLibGenre);
+    return { all: genreFiltered.length, Beginner: genreFiltered.filter(s => s.difficulty === "Beginner").length, Intermediate: genreFiltered.filter(s => s.difficulty === "Intermediate").length, Advanced: genreFiltered.filter(s => s.difficulty === "Advanced").length };
+  }, [allSongsMemo, songLibGenre]);
+
   return (
     <ErrorBoundary>
     <div className="flex h-screen text-white" style={{ background: "#121214" }} dir="ltr">
       <Navbar view={view} onViewChange={setView} onShowAuth={() => setShowAuthPage(true)} lastSynced={lastSynced} syncing={syncing} />
-      <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden">
+      <div id="main-content" className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden">
       {view === "studio" && <StudioPage channelScale={scale} channelMode={mode} channelStyle={style} />}
       {view === "jam" && <JamModePage />}
       <div key={viewKey} className="view-transition px-2 sm:px-5 py-3 sm:py-5 pb-16 md:pb-5 max-w-[960px] lg:max-w-[1100px] xl:max-w-[1280px] mx-auto w-full">
 
         {view === "learn" && <LearningCenterPage />}
         {view === "profile" && <ProfilePage />}
-        {view === "coach" && <AiCoachPage />}
+        {view === "coach" && <AiCoachPage onNavigate={(v) => setView(v as View)} />}
         {view === "skills" && <SkillTreePage />}
         {view === "songs" && (() => {
-          const allSongs = [...SONG_LIBRARY, ...customSongs];
-          const genres = [...new Set(allSongs.map(s => s.genre).filter((g): g is string => !!g))].sort();
-          const genreFiltered = songLibGenre === "all" ? allSongs : allSongs.filter(s => s.genre === songLibGenre);
-          const filtered = genreFiltered.filter(s => {
-            if (songLibFilter !== "all" && s.difficulty !== songLibFilter) return false;
-            if (songLibSearch.trim()) {
-              const q = songLibSearch.trim().toLowerCase();
-              return s.title.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q) || (s.genre || "").toLowerCase().includes(q) || (s.album || "").toLowerCase().includes(q);
-            }
-            return true;
-          });
-          const diffCounts = { all: genreFiltered.length, Beginner: genreFiltered.filter(s => s.difficulty === "Beginner").length, Intermediate: genreFiltered.filter(s => s.difficulty === "Intermediate").length, Advanced: genreFiltered.filter(s => s.difficulty === "Advanced").length };
+          const filtered = songLibFiltered;
+          const diffCounts = songLibDiffCounts;
           return (
             <div className="animate-fade-in">
               <div className="font-heading text-xl font-bold text-[#D4A843] mb-4">Song Library</div>
@@ -754,14 +772,14 @@ export default function GuitarForgeApp() {
               {/* Genre tabs */}
               <div className="flex gap-1 flex-wrap mb-3 overflow-x-auto scrollbar-hide">
                 <button onClick={() => { setSongLibGenre("all"); setSongLibLimit(20); }}
-                  className={`font-label text-[10px] px-3 py-1 rounded-lg cursor-pointer border transition-all flex-shrink-0 ${songLibGenre === "all" ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>
-                  All ({allSongs.length})
+                  className={`font-label text-[10px] px-3 py-1 min-h-[44px] rounded-lg cursor-pointer border transition-all flex-shrink-0 ${songLibGenre === "all" ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>
+                  All ({allSongsMemo.length})
                 </button>
-                {genres.map(g => {
-                  const cnt = allSongs.filter(s => s.genre === g).length;
+                {songGenres.map(g => {
+                  const cnt = allSongsMemo.filter(s => s.genre === g).length;
                   return (
                     <button key={g} onClick={() => { setSongLibGenre(g); setSongLibLimit(20); }}
-                      className={`font-label text-[10px] px-3 py-1 rounded-lg cursor-pointer border transition-all flex-shrink-0 ${songLibGenre === g ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>
+                      className={`font-label text-[10px] px-3 py-1 min-h-[44px] rounded-lg cursor-pointer border transition-all flex-shrink-0 ${songLibGenre === g ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>
                       {g} ({cnt})
                     </button>
                   );
@@ -775,7 +793,7 @@ export default function GuitarForgeApp() {
               <div className="flex gap-1 flex-wrap mb-4">
                 {([["all", "All", "#D4A843"], ["Beginner", "Beginner", "#22c55e"], ["Intermediate", "Intermediate", "#D4A843"], ["Advanced", "Advanced", "#ef4444"]] as const).map(([key, label, color]) => (
                   <button key={key} onClick={() => { setSongLibFilter(key as typeof songLibFilter); setSongLibLimit(20); }}
-                    className="font-label text-[10px] px-3 py-1 rounded-lg cursor-pointer border transition-all"
+                    className="font-label text-[10px] px-3 py-1 min-h-[44px] rounded-lg cursor-pointer border transition-all"
                     style={songLibFilter === key ? { background: color, borderColor: color, color: "#121214" } : { borderColor: color + "40", color: color + "99" }}>
                     {label} ({diffCounts[key as keyof typeof diffCounts]})
                   </button>
@@ -822,6 +840,8 @@ export default function GuitarForgeApp() {
                     const isCustom = song.id >= 1000000000;
                     return (
                       <div key={song.id} onClick={() => setSongModal(song)}
+                        tabIndex={0} role="button" aria-label={`${song.title} by ${song.artist}`}
+                        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSongModal(song); } }}
                         className="panel p-4 mb-1.5 cursor-pointer hover:border-[#D4A843]/30 transition-all">
                         <div className="flex justify-between items-start">
                           <div className="flex-1 min-w-0">
@@ -897,7 +917,7 @@ export default function GuitarForgeApp() {
                 <span className="text-[13px]" style={{ color: "#D4A843" }}>Sign in to sync your progress across devices</span>
               </div>
               <div className="flex items-center gap-2">
-                <button type="button" onClick={() => setShowAuthPage(true)} className="text-[12px] font-medium px-3 py-1 rounded-md" style={{ background: "#D4A843", color: "#0a0a0a" }}>Sign In</button>
+                <button type="button" onClick={() => setShowAuthPage(true)} className="text-[12px] font-medium px-3 py-1 rounded-md" style={{ background: "#D4A843", color: "#121214" }}>Sign In</button>
                 <button type="button" aria-label="Dismiss" onClick={() => setAuthBannerDismissed(true)} className="text-[12px] px-1.5 py-1 rounded" style={{ color: "#666" }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
                 </button>
@@ -1544,7 +1564,7 @@ export default function GuitarForgeApp() {
                     </div>
                   </button>
                   <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: cc }} />
-                  <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setModal(ex)}>
+                  <div className="flex-1 min-w-0 cursor-pointer" tabIndex={0} role="button" onClick={() => setModal(ex)} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setModal(ex); } }}>
                     <div className="font-heading text-[13px] sm:text-sm !font-medium !normal-case !tracking-normal leading-snug">{ex.n}</div>
                     <div className="font-readout text-[10px] text-[#555] mt-0.5">{isSong ? "Song" : ex.c} &middot; {ex.m}min {ex.b ? "&middot; " + ex.b + " BPM" : ""}</div>
                   </div>
@@ -1797,7 +1817,7 @@ export default function GuitarForgeApp() {
                         {styleExercises.map(ex => {
                           const c = COL[ex.c];
                           return (
-                            <div key={ex.id} onClick={() => setModal(ex)} className="panel p-3 mb-1.5 cursor-pointer hover:border-[#D4A843]/30 transition-all">
+                            <div key={ex.id} onClick={() => setModal(ex)} tabIndex={0} role="button" onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setModal(ex); } }} className="panel p-3 mb-1.5 cursor-pointer hover:border-[#D4A843]/30 transition-all">
                               <div className="flex items-center gap-3">
                                 <span className="tag min-w-[48px] text-center" style={{ border: `1px solid ${c}40`, color: c }}>{ex.c}</span>
                                 <div className="flex-1">
@@ -2297,6 +2317,22 @@ export default function GuitarForgeApp() {
         );
       })()}
     </div>
+
+    {/* Sync error toast */}
+    {syncError && (
+      <div className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[999] max-w-md w-[calc(100%-2rem)] px-4 py-3 rounded-lg flex items-center gap-3 shadow-lg animate-fade-in"
+        style={{ background: "rgba(196,30,58,0.15)", border: "1px solid rgba(196,30,58,0.3)", backdropFilter: "blur(8px)" }}
+        role="alert">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C41E3A" strokeWidth="2" className="flex-shrink-0">
+          <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+        <span className="text-[12px] text-[#eee] flex-1">Sync failed: {syncError}. Data saved locally.</span>
+        <button type="button" onClick={() => setSyncError(null)} className="text-[#888] hover:text-[#ccc] transition-colors flex-shrink-0" aria-label="Dismiss sync error">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+    )}
+
     </div>
     </ErrorBoundary>
   );

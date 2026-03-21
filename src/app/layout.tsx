@@ -32,6 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en" dir="ltr">
       <body className="antialiased">
+        <a href="#main-content" className="skip-to-content">Skip to content</a>
         {children}
         <Script src="/register-sw.js" strategy="afterInteractive" />
       </body>

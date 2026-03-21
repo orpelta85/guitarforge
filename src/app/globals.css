@@ -18,7 +18,7 @@
   /* ── Text (warm, not clinical white) ── */
   --text-primary: #e8e4dc;
   --text-secondary: #9a9590;
-  --text-muted: #5c5852;
+  --text-muted: #8a8478;
 
   /* ── Borders ── */
   --border-subtle: #1a1916;
@@ -965,6 +965,25 @@ input[type="number"]::-webkit-outer-spin-button { opacity: 0.3; }
 .modal-dark-header {
   background: linear-gradient(180deg, #1e1c18 0%, #18181c 100%);
   border-bottom: 1px solid var(--border-panel);
+}
+
+/* ── Skip-to-content link ── */
+.skip-to-content {
+  position: absolute;
+  top: -100px;
+  left: 16px;
+  z-index: 9999;
+  padding: 8px 16px;
+  background: var(--gold);
+  color: #121214;
+  border-radius: 0 0 8px 8px;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  transition: top 0.15s ease;
+}
+.skip-to-content:focus {
+  top: 0;
 }
 
 /* ══════════════════════════════════════════════════════════════

@@ -26,8 +26,10 @@ export default function ProfilePage() {
     practiceHoursPerDay: 2, favoriteArtists: "", equipment: "",
   });
   const [saved, setSaved] = useState(false);
-  const [coachKey, setCoachKey] = useState("");
+  const [byokProvider, setByokProvider] = useState<"gemini" | "openai" | "anthropic">("gemini");
+  const [byokKey, setByokKey] = useState("");
   const [showKey, setShowKey] = useState(false);
+  const [byokEnabled, setByokEnabled] = useState(false);
 
   useEffect(() => {
     try {
@@ -35,8 +37,15 @@ export default function ProfilePage() {
       if (raw) setProfile(JSON.parse(raw));
     } catch {}
     try {
-      const key = localStorage.getItem("gf-coach-apikey") || "";
-      setCoachKey(key);
+      const raw = localStorage.getItem("gf-byok");
+      if (raw) {
+        const s = JSON.parse(raw);
+        if (s.provider && s.apiKey) {
+          setByokProvider(s.provider);
+          setByokKey(s.apiKey);
+          setByokEnabled(true);
+        }
+      }
     } catch {}
   }, []);
 
@@ -142,47 +151,102 @@ export default function ProfilePage() {
         </label>
       </div>
 
-      {/* AI Coach API Key */}
+      {/* AI Settings — BYOK */}
       <div className="panel p-3 sm:p-5 mb-3">
         <div className="font-label text-[11px] text-[#D4A843] mb-3 flex items-center gap-2">
-          <div className="led led-gold" /> AI Coach Settings
+          <div className="led led-gold" /> AI Settings
         </div>
-        <label className="font-label text-[10px] text-[#555] block">
-          Claude API Key (optional)
-          <div className="font-label text-[9px] text-[#333] mt-0.5 mb-1">
-            Without an API key the coach works in Demo mode with pre-written responses. Add a key from console.anthropic.com for real AI coaching.
-          </div>
-          <div className="flex gap-2 items-center">
-            <input
-              type={showKey ? "text" : "password"}
-              value={coachKey}
-              onChange={e => setCoachKey(e.target.value)}
-              placeholder="sk-ant-..."
-              className="input mt-1 flex-1"
-            />
-            <button type="button" onClick={() => setShowKey(!showKey)}
-              className="font-label text-[9px] text-[#555] border border-[#222] px-2 py-1.5 rounded-sm mt-1 hover:border-[#333] transition-all">
-              {showKey ? "Hide" : "Show"}
-            </button>
-          </div>
-        </label>
-        <div className="flex items-center gap-2 mt-2">
+
+        <div className="font-label text-[9px] text-[#555] mb-3 leading-relaxed">
+          The AI Coach is <span className="text-emerald-500 font-medium">free for all users</span> powered by Google Gemini.
+          Optionally, bring your own API key (BYOK) to use a different provider.
+        </div>
+
+        {/* BYOK toggle */}
+        <label className="flex items-center gap-3 cursor-pointer mb-3">
           <button type="button" onClick={() => {
-            try { localStorage.setItem("gf-coach-apikey", coachKey); } catch {}
-            setSaved(true); setTimeout(() => setSaved(false), 2000);
-          }} className="font-label text-[10px] text-[#D4A843] border border-[#D4A843]/30 px-3 py-1 rounded-sm hover:bg-[#D4A843]/10 transition-all">
-            Save Key
+            const next = !byokEnabled;
+            setByokEnabled(next);
+            if (!next) {
+              try { localStorage.removeItem("gf-byok"); } catch {}
+            }
+          }}
+            className={`w-9 h-5 rounded-full transition-all relative flex-shrink-0 ${byokEnabled ? "bg-[#D4A843]" : "bg-[#222]"}`}>
+            <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${byokEnabled ? "left-[18px]" : "left-0.5"}`} />
           </button>
-          {coachKey && coachKey.startsWith("sk-") && (
-            <span className="font-label text-[9px] text-[#33CC33]">Key configured</span>
-          )}
-          {coachKey && !coachKey.startsWith("sk-") && coachKey.length > 0 && (
-            <span className="font-label text-[9px] text-[#ef4444]">Invalid key format</span>
-          )}
-          {!coachKey && (
-            <span className="font-label text-[9px] text-[#555]">Demo mode active</span>
-          )}
-        </div>
+          <span className="font-label text-[10px] text-[#888]">Use my own API key (BYOK)</span>
+        </label>
+
+        {byokEnabled && (
+          <div className="space-y-3 pl-1 border-l-2 border-[#D4A843]/20 ml-1 pl-4">
+            {/* Provider selector */}
+            <label className="font-label text-[10px] text-[#555] block">
+              Provider
+              <select value={byokProvider} onChange={e => setByokProvider(e.target.value as "gemini" | "openai" | "anthropic")}
+                className="input mt-1">
+                <option value="gemini">Google Gemini</option>
+                <option value="openai">OpenAI (GPT-4o Mini)</option>
+                <option value="anthropic">Anthropic (Claude Haiku)</option>
+              </select>
+            </label>
+
+            {/* API Key input */}
+            <label className="font-label text-[10px] text-[#555] block">
+              API Key
+              <div className="font-label text-[9px] text-[#333] mt-0.5 mb-1">
+                {byokProvider === "gemini" && "Get a key from aistudio.google.com"}
+                {byokProvider === "openai" && "Get a key from platform.openai.com"}
+                {byokProvider === "anthropic" && "Get a key from console.anthropic.com"}
+              </div>
+              <div className="flex gap-2 items-center">
+                <input
+                  type={showKey ? "text" : "password"}
+                  value={byokKey}
+                  onChange={e => setByokKey(e.target.value)}
+                  placeholder={
+                    byokProvider === "gemini" ? "AIza..." :
+                    byokProvider === "openai" ? "sk-..." :
+                    "sk-ant-..."
+                  }
+                  className="input mt-1 flex-1"
+                />
+                <button type="button" onClick={() => setShowKey(!showKey)}
+                  className="font-label text-[9px] text-[#555] border border-[#222] px-2 py-1.5 rounded-sm mt-1 hover:border-[#333] transition-all">
+                  {showKey ? "Hide" : "Show"}
+                </button>
+              </div>
+            </label>
+
+            {/* Save BYOK */}
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={() => {
+                if (byokKey.trim()) {
+                  try {
+                    localStorage.setItem("gf-byok", JSON.stringify({ provider: byokProvider, apiKey: byokKey.trim() }));
+                  } catch {}
+                  setSaved(true); setTimeout(() => setSaved(false), 2000);
+                }
+              }} className="font-label text-[10px] text-[#D4A843] border border-[#D4A843]/30 px-3 py-1 rounded-sm hover:bg-[#D4A843]/10 transition-all">
+                Save BYOK Key
+              </button>
+              {byokKey.trim() && (
+                <span className="font-label text-[9px] text-[#33CC33]">Key set for {byokProvider}</span>
+              )}
+            </div>
+
+            <div className="font-label text-[9px] text-[#333] leading-relaxed">
+              Your key is stored locally in your browser and never sent to our servers.
+              It is sent directly to {byokProvider === "gemini" ? "Google" : byokProvider === "openai" ? "OpenAI" : "Anthropic"} through our API route.
+            </div>
+          </div>
+        )}
+
+        {!byokEnabled && (
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <span className="font-label text-[9px] text-[#555]">Using free Gemini AI (15 requests/min, 30 messages/day)</span>
+          </div>
+        )}
       </div>
 
       {/* Save */}

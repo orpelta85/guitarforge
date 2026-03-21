@@ -198,6 +198,8 @@ export default function Navbar({ view, onViewChange, onShowAuth, lastSynced, syn
               key={id}
               onClick={() => handleNav(id)}
               className={`sidebar-item ${isActive(id) ? "sidebar-item--active" : ""}`}
+              aria-label={label}
+              aria-current={isActive(id) ? "page" : undefined}
             >
               <span className="sidebar-item-icon"><Icon /></span>
               <span>{label}</span>
@@ -210,6 +212,8 @@ export default function Navbar({ view, onViewChange, onShowAuth, lastSynced, syn
               key={id}
               onClick={() => handleNav(id)}
               className={`sidebar-item ${isActive(id) ? "sidebar-item--active" : ""}`}
+              aria-label={label}
+              aria-current={isActive(id) ? "page" : undefined}
             >
               <span className="sidebar-item-icon"><Icon /></span>
               <span>{label}</span>
@@ -253,6 +257,7 @@ export default function Navbar({ view, onViewChange, onShowAuth, lastSynced, syn
                 style={{ color: "#888" }}
                 onMouseEnter={e => (e.currentTarget.style.color = "#ef4444")}
                 onMouseLeave={e => (e.currentTarget.style.color = "#888")}
+                aria-label="Sign out"
               >
                 Sign Out
               </button>
@@ -293,6 +298,8 @@ export default function Navbar({ view, onViewChange, onShowAuth, lastSynced, syn
             key={id}
             onClick={() => { handleNav(id); setMoreOpen(false); }}
             className={`mobile-tab-item ${isActive(id) ? "mobile-tab-item--active" : ""}`}
+            aria-label={label}
+            aria-current={isActive(id) ? "page" : undefined}
           >
             <Icon />
             <span>{label}</span>
@@ -302,6 +309,8 @@ export default function Navbar({ view, onViewChange, onShowAuth, lastSynced, syn
           type="button"
           onClick={() => setMoreOpen(!moreOpen)}
           className={`mobile-tab-item ${moreOpen || ["coach", "skills", "jam"].includes(view) ? "mobile-tab-item--active" : ""}`}
+          aria-label="More navigation options"
+          aria-expanded={moreOpen}
         >
           <IconMore />
           <span>More</span>
@@ -323,11 +332,13 @@ export default function Navbar({ view, onViewChange, onShowAuth, lastSynced, syn
                   type="button"
                   key={id}
                   onClick={() => { handleNav(id); setMoreOpen(false); }}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left"
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left min-h-[44px]"
                   style={{
                     background: isActive(id) ? "rgba(212,168,67,0.1)" : "transparent",
                     color: isActive(id) ? "var(--gold)" : "var(--text-secondary)",
                   }}
+                  aria-label={label}
+                  aria-current={isActive(id) ? "page" : undefined}
                 >
                   <Icon />
                   <span className="text-sm font-medium">{label}</span>

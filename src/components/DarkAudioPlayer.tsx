@@ -252,7 +252,7 @@ export default function DarkAudioPlayer({
         {/* Play/Pause */}
         <button
           onClick={togglePlay}
-          className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-colors"
+          className="flex-shrink-0 w-6 h-6 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center transition-colors"
           style={{
             background: "var(--bg-tertiary)",
             border: "1px solid var(--border-accent)",
@@ -409,7 +409,7 @@ export default function DarkAudioPlayer({
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => setVolume(volume === 0 ? 0.8 : 0)}
-            className="flex-shrink-0"
+            className="flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
             aria-label={volume === 0 ? "Unmute" : "Mute"}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -443,7 +443,7 @@ export default function DarkAudioPlayer({
         {/* Loop toggle */}
         <button
           onClick={toggleLoop}
-          className="p-1 rounded transition-colors"
+          className="p-1 rounded transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
           style={{
             color: looping ? "var(--gold)" : "var(--text-muted)",
             opacity: looping ? 1 : 0.5,
@@ -463,9 +463,10 @@ export default function DarkAudioPlayer({
         <a
           href={src}
           download
-          className="p-1 rounded transition-colors"
+          className="p-1 rounded transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
           style={{ color: "var(--text-muted)", opacity: 0.5 }}
           title="Download"
+          aria-label="Download audio"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
