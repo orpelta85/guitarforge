@@ -2,13 +2,17 @@
 import { useMemo } from "react";
 import type { SongEntry } from "@/lib/types";
 import { SONG_LIBRARY } from "@/lib/songs-data";
-import type { LibraryTrack } from "@/lib/suno";
+import SongFilterBar, { useFilteredSongs } from "./SongFilterBar";
+import type { SongSort, DifficultyFilter } from "./SongFilterBar";
 
 interface SongsPageProps {
   customSongs: SongEntry[];
   songLibSearch: string;
-  songLibFilter: "all" | "Beginner" | "Intermediate" | "Advanced";
+  songLibFilter: DifficultyFilter;
   songLibGenre: string;
+  songLibGenres: string[];
+  songLibSort: SongSort;
+  songLibHasGP: boolean;
   songLibLimit: number;
   showAddSong: boolean;
   newSongTitle: string;
@@ -19,8 +23,11 @@ interface SongsPageProps {
   // Setters
   setCustomSongs: React.Dispatch<React.SetStateAction<SongEntry[]>>;
   setSongLibSearch: (s: string) => void;
-  setSongLibFilter: (f: "all" | "Beginner" | "Intermediate" | "Advanced") => void;
+  setSongLibFilter: (f: DifficultyFilter) => void;
   setSongLibGenre: (s: string) => void;
+  setSongLibGenres: (g: string[]) => void;
+  setSongLibSort: (s: SongSort) => void;
+  setSongLibHasGP: (b: boolean) => void;
   setSongLibLimit: React.Dispatch<React.SetStateAction<number>>;
   setShowAddSong: (b: boolean) => void;
   setNewSongTitle: (s: string) => void;
@@ -33,69 +40,38 @@ interface SongsPageProps {
 
 export default function SongsPage(props: SongsPageProps) {
   const {
-    customSongs, songLibSearch, songLibFilter, songLibGenre, songLibLimit,
+    customSongs, songLibSearch, songLibFilter, songLibGenres, songLibSort, songLibHasGP, songLibLimit,
     showAddSong, newSongTitle, newSongArtist,
     songBackingTracks, songBackingLoading, songBackingPlaying,
-    setCustomSongs, setSongLibSearch, setSongLibFilter, setSongLibGenre,
-    setSongLibLimit, setShowAddSong, setNewSongTitle, setNewSongArtist,
-    setSongModal, generateSongBacking, toggleSongBackingPlay,
+    setCustomSongs, setSongLibSearch, setSongLibFilter, setSongLibGenres,
+    setSongLibSort, setSongLibHasGP, setSongLibLimit, setShowAddSong,
+    setNewSongTitle, setNewSongArtist, setSongModal, generateSongBacking, toggleSongBackingPlay,
   } = props;
 
-  const allSongsMemo = useMemo(() => [...SONG_LIBRARY, ...customSongs], [customSongs]);
-  const songGenres = useMemo(() => [...new Set(allSongsMemo.map(s => s.genre).filter((g): g is string => !!g))].sort(), [allSongsMemo]);
-  const songLibFiltered = useMemo(() => {
-    const genreFiltered = songLibGenre === "all" ? allSongsMemo : allSongsMemo.filter(s => s.genre === songLibGenre);
-    return genreFiltered.filter(s => {
-      if (songLibFilter !== "all" && s.difficulty !== songLibFilter) return false;
-      if (songLibSearch.trim()) {
-        const q = songLibSearch.trim().toLowerCase();
-        return s.title.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q) || (s.genre || "").toLowerCase().includes(q) || (s.album || "").toLowerCase().includes(q);
-      }
-      return true;
-    });
-  }, [allSongsMemo, songLibGenre, songLibFilter, songLibSearch]);
-  const songLibDiffCounts = useMemo(() => {
-    const genreFiltered = songLibGenre === "all" ? allSongsMemo : allSongsMemo.filter(s => s.genre === songLibGenre);
-    return { all: genreFiltered.length, Beginner: genreFiltered.filter(s => s.difficulty === "Beginner").length, Intermediate: genreFiltered.filter(s => s.difficulty === "Intermediate").length, Advanced: genreFiltered.filter(s => s.difficulty === "Advanced").length };
-  }, [allSongsMemo, songLibGenre]);
-
-  const filtered = songLibFiltered;
-  const diffCounts = songLibDiffCounts;
+  const allSongs = useMemo(() => [...SONG_LIBRARY, ...customSongs], [customSongs]);
+  const filtered = useFilteredSongs(allSongs, songLibSearch, songLibFilter, songLibGenres, songLibSort, songLibHasGP);
 
   return (
     <div className="animate-fade-in">
       <div className="font-heading text-xl font-bold text-[#D4A843] mb-4">Song Library</div>
 
-      {/* Genre tabs */}
-      <div className="flex gap-1 flex-wrap mb-3 overflow-x-auto scrollbar-hide">
-        <button onClick={() => { setSongLibGenre("all"); setSongLibLimit(20); }}
-          className={`font-label text-[10px] px-3 py-1 min-h-[44px] rounded-lg cursor-pointer border transition-all flex-shrink-0 ${songLibGenre === "all" ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>
-          All ({allSongsMemo.length})
-        </button>
-        {songGenres.map(g => {
-          const cnt = allSongsMemo.filter(s => s.genre === g).length;
-          return (
-            <button key={g} onClick={() => { setSongLibGenre(g); setSongLibLimit(20); }}
-              className={`font-label text-[10px] px-3 py-1 min-h-[44px] rounded-lg cursor-pointer border transition-all flex-shrink-0 ${songLibGenre === g ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>
-              {g} ({cnt})
-            </button>
-          );
-        })}
-      </div>
+      <SongFilterBar
+        allSongs={allSongs}
+        search={songLibSearch}
+        diffFilter={songLibFilter}
+        genres={songLibGenres}
+        sort={songLibSort}
+        hasGP={songLibHasGP}
+        setSearch={setSongLibSearch}
+        setDiffFilter={setSongLibFilter}
+        setGenres={setSongLibGenres}
+        setSort={setSongLibSort}
+        setHasGP={setSongLibHasGP}
+        onResetLimit={() => setSongLibLimit(20)}
+        filteredCount={Math.min(songLibLimit, filtered.length)}
+        totalCount={allSongs.length}
+      />
 
-      <input type="text" placeholder="Search song, artist, genre..." className="input w-full mb-3"
-        value={songLibSearch} onChange={e => { setSongLibSearch(e.target.value); setSongLibLimit(20); }} />
-
-      {/* Difficulty filter */}
-      <div className="flex gap-1 flex-wrap mb-4">
-        {([["all", "All", "#D4A843"], ["Beginner", "Beginner", "#22c55e"], ["Intermediate", "Intermediate", "#D4A843"], ["Advanced", "Advanced", "#ef4444"]] as const).map(([key, label, color]) => (
-          <button key={key} onClick={() => { setSongLibFilter(key as typeof songLibFilter); setSongLibLimit(20); }}
-            className="font-label text-[10px] px-3 py-1 min-h-[44px] rounded-lg cursor-pointer border transition-all"
-            style={songLibFilter === key ? { background: color, borderColor: color, color: "#121214" } : { borderColor: color + "40", color: color + "99" }}>
-            {label} ({diffCounts[key as keyof typeof diffCounts]})
-          </button>
-        ))}
-      </div>
       <div className="mb-4">
         <button onClick={() => setShowAddSong(!showAddSong)} className="btn-ghost !text-[10px] mb-2">
           {showAddSong ? "Close" : "+ Add Song"}
@@ -113,11 +89,6 @@ export default function SongsPage(props: SongsPageProps) {
             </div>
           </div>
         )}
-      </div>
-
-      {/* Showing count */}
-      <div className="font-readout text-[10px] text-[#555] mb-2">
-        Showing {Math.min(songLibLimit, filtered.length)} of {filtered.length} songs
       </div>
 
       {filtered.length === 0 && (
@@ -145,6 +116,12 @@ export default function SongsPage(props: SongsPageProps) {
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-heading text-[13px] !font-medium !normal-case !tracking-normal">{song.title}</span>
                       {song.difficulty && <span className="tag" style={{ border: `1px solid ${dc}60`, color: dc, background: dc + "15" }}>{song.difficulty}</span>}
+                      {(song.gp || song.gpPath) && (
+                        <span className="font-readout text-[8px] px-1.5 py-0.5 rounded bg-[#D4A843]/10 text-[#D4A843] border border-[#D4A843]/20">GP</span>
+                      )}
+                      {song.personal && (
+                        <span className="font-readout text-[8px] px-1.5 py-0.5 rounded bg-[#8b5cf6]/10 text-[#8b5cf6] border border-[#8b5cf6]/20">Personal</span>
+                      )}
                     </div>
                     <div className="font-readout text-[11px] text-[#666] mt-1">{song.artist}</div>
                     <div className="flex gap-2 mt-1 flex-wrap items-center">

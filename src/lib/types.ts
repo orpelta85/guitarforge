@@ -18,6 +18,7 @@ export interface Exercise {
   songName?: string;
   songUrl?: string;
   stageIdx?: number;
+  gpPath?: string;   // personal GP file path
 }
 
 export interface Song {
@@ -46,6 +47,7 @@ export interface SongEntry {
   artistTags?: string;
   gp?: boolean;
   gpPath?: string;
+  personal?: boolean;
 }
 
 export interface Stage {

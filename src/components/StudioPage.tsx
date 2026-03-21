@@ -544,7 +544,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
   // ── Add track helper ──
   const addTrack = useCallback(async (name: string, url: string, type: StudioTrack["type"], blob?: Blob) => {
     ctr.current++;
-    const id = ctr.current;
+    const id = Date.now() + ctr.current;
     const color = TRACK_COLORS[(id - 1) % TRACK_COLORS.length];
     const newTrack: StudioTrack = {
       id, name, color,
@@ -566,7 +566,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
   // ── Add Drum Machine track ──
   const addDrumTrack = useCallback(() => {
     ctr.current++;
-    const id = ctr.current;
+    const id = Date.now() + ctr.current;
     const color = TRACK_COLORS[(id - 1) % TRACK_COLORS.length];
     const newTrack: StudioTrack = {
       id, name: `Drums ${id}`, color,

@@ -70,6 +70,9 @@ export default function GuitarForgeApp() {
   const [libShowAll, setLibShowAll] = useState(false);
   const [libCollapsed, setLibCollapsed] = useState<Record<string, boolean>>(() => Object.fromEntries(Object.keys(CAT_GROUPS).map(g => [g, true])));
   const [songLibGenre, setSongLibGenre] = useState("all");
+  const [songLibGenres, setSongLibGenres] = useState<string[]>([]);
+  const [songLibSort, setSongLibSort] = useState<"popular" | "artist" | "title" | "recent">("popular");
+  const [songLibHasGP, setSongLibHasGP] = useState(false);
   const [songLibLimit, setSongLibLimit] = useState(20);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [sunoSuggestUrl, setSunoSuggestUrl] = useState<string | null>(null);
@@ -711,6 +714,9 @@ export default function GuitarForgeApp() {
             songLibSearch={songLibSearch}
             songLibFilter={songLibFilter}
             songLibGenre={songLibGenre}
+            songLibGenres={songLibGenres}
+            songLibSort={songLibSort}
+            songLibHasGP={songLibHasGP}
             songLibLimit={songLibLimit}
             showAddSong={showAddSong}
             newSongTitle={newSongTitle}
@@ -722,6 +728,9 @@ export default function GuitarForgeApp() {
             setSongLibSearch={setSongLibSearch}
             setSongLibFilter={setSongLibFilter}
             setSongLibGenre={setSongLibGenre}
+            setSongLibGenres={setSongLibGenres}
+            setSongLibSort={setSongLibSort}
+            setSongLibHasGP={setSongLibHasGP}
             setSongLibLimit={setSongLibLimit}
             setShowAddSong={setShowAddSong}
             setNewSongTitle={setNewSongTitle}
@@ -787,13 +796,17 @@ export default function GuitarForgeApp() {
             week={week} doneMap={doneMap} exEdits={exEdits}
             customSongs={customSongs} mySongs={mySongs}
             songLibSearch={songLibSearch} songLibFilter={songLibFilter}
-            songLibGenre={songLibGenre} songLibLimit={songLibLimit}
+            songLibGenre={songLibGenre} songLibGenres={songLibGenres}
+            songLibSort={songLibSort} songLibHasGP={songLibHasGP}
+            songLibLimit={songLibLimit}
             showAddSong={showAddSong} newSongTitle={newSongTitle} newSongArtist={newSongArtist}
             libTab={libTab} libFilter={libFilter} libSearch={libSearch}
             libShowAll={libShowAll} libCollapsed={libCollapsed} editingId={editingId}
             setView={setView} setExEdits={setExEdits} setCustomSongs={setCustomSongs}
             setMySongs={setMySongs} setSongLibSearch={setSongLibSearch}
             setSongLibFilter={setSongLibFilter} setSongLibGenre={setSongLibGenre}
+            setSongLibGenres={setSongLibGenres} setSongLibSort={setSongLibSort}
+            setSongLibHasGP={setSongLibHasGP}
             setSongLibLimit={setSongLibLimit} setShowAddSong={setShowAddSong}
             setNewSongTitle={setNewSongTitle} setNewSongArtist={setNewSongArtist}
             setLibTab={setLibTab} setLibFilter={setLibFilter} setLibSearch={setLibSearch}

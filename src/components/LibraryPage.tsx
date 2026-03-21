@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import type { Exercise, Song, DayExMap, BoolMap, ExEditMap, SongEntry } from "@/lib/types";
 import { CATS, COL, STYLES, CAT_GROUPS } from "@/lib/constants";
 import { EXERCISES } from "@/lib/exercises";
@@ -8,6 +8,8 @@ import LibraryEditor from "./LibraryEditor";
 import { getAllLibraryTracks, deleteFromLibrary } from "@/lib/suno";
 import type { LibraryTrack } from "@/lib/suno";
 import type { View } from "./Navbar";
+import SongFilterBar, { useFilteredSongs } from "./SongFilterBar";
+import type { SongSort, DifficultyFilter } from "./SongFilterBar";
 
 interface LibraryPageProps {
   week: number;
@@ -16,8 +18,11 @@ interface LibraryPageProps {
   customSongs: SongEntry[];
   mySongs: number[];
   songLibSearch: string;
-  songLibFilter: "all" | "Beginner" | "Intermediate" | "Advanced";
+  songLibFilter: DifficultyFilter;
   songLibGenre: string;
+  songLibGenres: string[];
+  songLibSort: SongSort;
+  songLibHasGP: boolean;
   songLibLimit: number;
   showAddSong: boolean;
   newSongTitle: string;
@@ -34,8 +39,11 @@ interface LibraryPageProps {
   setCustomSongs: React.Dispatch<React.SetStateAction<SongEntry[]>>;
   setMySongs: React.Dispatch<React.SetStateAction<number[]>>;
   setSongLibSearch: (s: string) => void;
-  setSongLibFilter: (f: "all" | "Beginner" | "Intermediate" | "Advanced") => void;
+  setSongLibFilter: (f: DifficultyFilter) => void;
   setSongLibGenre: (s: string) => void;
+  setSongLibGenres: (g: string[]) => void;
+  setSongLibSort: (s: SongSort) => void;
+  setSongLibHasGP: (b: boolean) => void;
   setSongLibLimit: React.Dispatch<React.SetStateAction<number>>;
   setShowAddSong: (b: boolean) => void;
   setNewSongTitle: (s: string) => void;
@@ -55,15 +63,21 @@ interface LibraryPageProps {
 export default function LibraryPage(props: LibraryPageProps) {
   const {
     week, doneMap, exEdits, customSongs, mySongs,
-    songLibSearch, songLibFilter, songLibGenre, songLibLimit, showAddSong,
+    songLibSearch, songLibFilter, songLibGenre, songLibGenres, songLibSort, songLibHasGP,
+    songLibLimit, showAddSong,
     newSongTitle, newSongArtist, libTab, libFilter, libSearch, libShowAll,
     libCollapsed, editingId,
     setView, setExEdits, setCustomSongs, setMySongs,
-    setSongLibSearch, setSongLibFilter, setSongLibGenre, setSongLibLimit,
+    setSongLibSearch, setSongLibFilter, setSongLibGenre, setSongLibGenres,
+    setSongLibSort, setSongLibHasGP, setSongLibLimit,
     setShowAddSong, setNewSongTitle, setNewSongArtist, setLibTab, setLibFilter,
     setLibSearch, setLibShowAll, setLibCollapsed, setEditingId,
     setModal, setSongModal, getEditedEx,
   } = props;
+
+  // Song library filtering (must be at top level since useFilteredSongs is a hook)
+  const songLibAllSongs = useMemo(() => [...SONG_LIBRARY, ...customSongs], [customSongs]);
+  const songLibFiltered = useFilteredSongs(songLibAllSongs, songLibSearch, songLibFilter, songLibGenres, songLibSort, songLibHasGP);
 
   // Library-local state
   const [libRecordings, setLibRecordings] = useState<{ id: string; name: string; date: string; duration: number; format: string }[]>([]);
@@ -515,49 +529,26 @@ export default function LibraryPage(props: LibraryPageProps) {
       })()}
 
       {/* Tab 6: Song Library */}
-      {libTab === "songlib" && (() => {
-        const allSongs = [...SONG_LIBRARY, ...customSongs];
-        const genres = [...new Set(allSongs.map(s => s.genre).filter((g): g is string => !!g))].sort();
-        const genreFiltered = songLibGenre === "all" ? allSongs : allSongs.filter(s => s.genre === songLibGenre);
-        const filtered = genreFiltered.filter(s => {
-          if (songLibFilter !== "all" && s.difficulty !== songLibFilter) return false;
-          if (songLibSearch.trim()) {
-            const q = songLibSearch.trim().toLowerCase();
-            return s.title.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q) || (s.genre || "").toLowerCase().includes(q) || (s.album || "").toLowerCase().includes(q);
-          }
-          return true;
-        });
-        const diffCounts = { all: genreFiltered.length, Beginner: genreFiltered.filter(s => s.difficulty === "Beginner").length, Intermediate: genreFiltered.filter(s => s.difficulty === "Intermediate").length, Advanced: genreFiltered.filter(s => s.difficulty === "Advanced").length };
-        return (
+      {libTab === "songlib" && (
           <div>
-            <div className="flex gap-1 flex-wrap mb-3 overflow-x-auto scrollbar-hide">
-              <button onClick={() => { setSongLibGenre("all"); setSongLibLimit(20); }}
-                className={`font-label text-[10px] px-3 py-1 rounded-lg cursor-pointer border transition-all flex-shrink-0 ${songLibGenre === "all" ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>
-                All ({allSongs.length})
-              </button>
-              {genres.map(g => {
-                const cnt = allSongs.filter(s => s.genre === g).length;
-                return (
-                  <button key={g} onClick={() => { setSongLibGenre(g); setSongLibLimit(20); }}
-                    className={`font-label text-[10px] px-3 py-1 rounded-lg cursor-pointer border transition-all flex-shrink-0 ${songLibGenre === g ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>
-                    {g} ({cnt})
-                  </button>
-                );
-              })}
-            </div>
-            <input type="text" placeholder="Search song, artist, genre..." className="input w-full mb-3"
-              value={songLibSearch} onChange={e => { setSongLibSearch(e.target.value); setSongLibLimit(20); }} />
-            <div className="flex gap-1 flex-wrap mb-4">
-              {([["all", "All", "#D4A843"], ["Beginner", "Beginner", "#22c55e"], ["Intermediate", "Intermediate", "#D4A843"], ["Advanced", "Advanced", "#ef4444"]] as const).map(([key, label, color]) => (
-                <button key={key} onClick={() => { setSongLibFilter(key as typeof songLibFilter); setSongLibLimit(20); }}
-                  className="font-label text-[10px] px-3 py-1 rounded-lg cursor-pointer border transition-all"
-                  style={songLibFilter === key ? { background: color, borderColor: color, color: "#121214" } : { borderColor: color + "40", color: color + "99" }}>
-                  {label} ({diffCounts[key as keyof typeof diffCounts]})
-                </button>
-              ))}
-            </div>
+            <SongFilterBar
+              allSongs={songLibAllSongs}
+              search={songLibSearch}
+              diffFilter={songLibFilter}
+              genres={songLibGenres}
+              sort={songLibSort}
+              hasGP={songLibHasGP}
+              setSearch={setSongLibSearch}
+              setDiffFilter={setSongLibFilter}
+              setGenres={setSongLibGenres}
+              setSort={setSongLibSort}
+              setHasGP={setSongLibHasGP}
+              onResetLimit={() => setSongLibLimit(20)}
+              filteredCount={Math.min(songLibLimit, songLibFiltered.length)}
+              totalCount={songLibAllSongs.length}
+            />
             <div className="mb-4">
-              <button onClick={() => setShowAddSong(!showAddSong)} className="btn-ghost !text-[10px] mb-2">
+              <button type="button" onClick={() => setShowAddSong(!showAddSong)} className="btn-ghost !text-[10px] mb-2">
                 {showAddSong ? "Close" : "+ Add Song"}
               </button>
               {showAddSong && (
@@ -565,7 +556,7 @@ export default function LibraryPage(props: LibraryPageProps) {
                   <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2">
                     <input placeholder="Song title..." value={newSongTitle} onChange={e => setNewSongTitle(e.target.value)} className="input min-w-0" />
                     <input placeholder="Artist..." value={newSongArtist} onChange={e => setNewSongArtist(e.target.value)} className="input min-w-0" />
-                    <button onClick={() => {
+                    <button type="button" onClick={() => {
                       if (!newSongTitle.trim() || !newSongArtist.trim()) return;
                       setCustomSongs(p => [...p, { id: Date.now(), title: newSongTitle.trim(), artist: newSongArtist.trim() }]);
                       setNewSongTitle(""); setNewSongArtist("");
@@ -574,14 +565,11 @@ export default function LibraryPage(props: LibraryPageProps) {
                 </div>
               )}
             </div>
-            <div className="font-readout text-[10px] text-[#555] mb-2">
-              Showing {Math.min(songLibLimit, filtered.length)} of {filtered.length} songs
-            </div>
-            {filtered.length === 0 && (
+            {songLibFiltered.length === 0 && (
               <div className="panel p-8 text-center"><div className="font-label text-sm text-[#444]">No songs found</div></div>
             )}
             {(() => {
-              const limited = filtered.slice(0, songLibLimit);
+              const limited = songLibFiltered.slice(0, songLibLimit);
               return (<>
                 {limited.map(song => {
                   const dc = song.difficulty ? ({ Beginner: "#22c55e", Intermediate: "#D4A843", Advanced: "#ef4444" }[song.difficulty] || "#888") : "#888";
@@ -595,6 +583,12 @@ export default function LibraryPage(props: LibraryPageProps) {
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-heading text-[13px] !font-medium !normal-case !tracking-normal">{song.title}</span>
                             {song.difficulty && <span className="tag" style={{ border: `1px solid ${dc}60`, color: dc, background: dc + "15" }}>{song.difficulty}</span>}
+                            {(song.gp || song.gpPath) && (
+                              <span className="font-readout text-[8px] px-1.5 py-0.5 rounded bg-[#D4A843]/10 text-[#D4A843] border border-[#D4A843]/20">GP</span>
+                            )}
+                            {song.personal && (
+                              <span className="font-readout text-[8px] px-1.5 py-0.5 rounded bg-[#8b5cf6]/10 text-[#8b5cf6] border border-[#8b5cf6]/20">Personal</span>
+                            )}
                           </div>
                           <div className="font-readout text-[11px] text-[#666] mt-1">{song.artist}</div>
                           <div className="flex gap-2 mt-1 flex-wrap">
@@ -623,16 +617,15 @@ export default function LibraryPage(props: LibraryPageProps) {
                     </div>
                   );
                 })}
-                {songLibLimit < filtered.length && (
+                {songLibLimit < songLibFiltered.length && (
                   <button type="button" onClick={() => setSongLibLimit(p => p + 20)} className="btn-ghost w-full mt-2 !text-[11px]">
-                    Load more ({filtered.length - songLibLimit} remaining)
+                    Load more ({songLibFiltered.length - songLibLimit} remaining)
                   </button>
                 )}
               </>);
             })()}
           </div>
-        );
-      })()}
+      )}
     </div>
   );
 }
