@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 
 type View = "dash" | "daily" | "lib" | "songs" | "learn" | "studio" | "jam" | "log" | "profile" | "coach" | "skills";
@@ -100,6 +101,26 @@ function IconProfile() {
   );
 }
 
+function IconMore() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="5" r="1.5" fill="currentColor" />
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+      <circle cx="12" cy="19" r="1.5" fill="currentColor" />
+    </svg>
+  );
+}
+
+function IconJam() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 12h2l2-5 3 10 3-7 2 4h2" />
+      <path d="M18 12h2" />
+      <circle cx="22" cy="12" r="1" />
+    </svg>
+  );
+}
+
 // ── Navigation data ──
 
 interface NavItem {
@@ -130,7 +151,15 @@ const MOBILE_TABS: NavItem[] = [
   { id: "lib", label: "Library", icon: IconLibrary },
 ];
 
+const MORE_DRAWER_ITEMS: NavItem[] = [
+  { id: "coach", label: "AI Coach", icon: IconCoach },
+  { id: "skills", label: "Skill Tree", icon: IconSkills },
+  { id: "jam", label: "Jam Mode", icon: IconJam },
+  { id: "suno", label: "Suno AI", icon: IconSuno },
+];
+
 export default function Navbar({ view, onViewChange }: NavbarProps) {
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const handleNav = (id: View | "suno") => {
     if (id === "suno") {
@@ -153,7 +182,7 @@ export default function Navbar({ view, onViewChange }: NavbarProps) {
         {/* Logo */}
         <div className="px-5 pt-5 pb-1">
           <div className="sidebar-logo font-heading text-lg font-black tracking-wide">GUITARFORGE</div>
-          <div className="text-[11px] font-label" style={{ color: "#555" }}>Practice Management</div>
+          <div className="text-[11px] font-label" style={{ color: "var(--text-muted)" }}>Practice Management</div>
         </div>
 
         {/* Main section */}
@@ -194,7 +223,7 @@ export default function Navbar({ view, onViewChange }: NavbarProps) {
             </div>
             <div className="flex flex-col items-start">
               <span className="text-[13px] font-medium" style={{ color: view === "profile" ? "#D4A843" : "#ccc" }}>orpelta85</span>
-              <span className="text-[10px]" style={{ color: "#555" }}>Profile & Settings</span>
+              <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Profile & Settings</span>
             </div>
           </button>
         </div>
@@ -204,15 +233,54 @@ export default function Navbar({ view, onViewChange }: NavbarProps) {
       <nav className="mobile-tab-bar fixed bottom-0 left-0 right-0 z-50 flex md:hidden">
         {MOBILE_TABS.map(({ id, label, icon: Icon }) => (
           <button
+            type="button"
             key={id}
-            onClick={() => handleNav(id)}
+            onClick={() => { handleNav(id); setMoreOpen(false); }}
             className={`mobile-tab-item ${isActive(id) ? "mobile-tab-item--active" : ""}`}
           >
             <Icon />
             <span>{label}</span>
           </button>
         ))}
+        <button
+          type="button"
+          onClick={() => setMoreOpen(!moreOpen)}
+          className={`mobile-tab-item ${moreOpen || ["coach", "skills", "jam"].includes(view) ? "mobile-tab-item--active" : ""}`}
+        >
+          <IconMore />
+          <span>More</span>
+        </button>
       </nav>
+
+      {/* ═══ Mobile "More" Drawer ═══ */}
+      {moreOpen && (
+        <div className="fixed inset-0 z-40 md:hidden" onClick={() => setMoreOpen(false)}>
+          <div className="absolute inset-0 bg-black/50" />
+          <div
+            className="absolute bottom-[56px] left-0 right-0 rounded-t-xl overflow-hidden"
+            style={{ background: "var(--bg-panel)", borderTop: "1px solid var(--border-panel)" }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="p-3 flex flex-col gap-1">
+              {MORE_DRAWER_ITEMS.map(({ id, label, icon: Icon }) => (
+                <button
+                  type="button"
+                  key={id}
+                  onClick={() => { handleNav(id); setMoreOpen(false); }}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left"
+                  style={{
+                    background: isActive(id) ? "rgba(212,168,67,0.1)" : "transparent",
+                    color: isActive(id) ? "var(--gold)" : "var(--text-secondary)",
+                  }}
+                >
+                  <Icon />
+                  <span className="text-sm font-medium">{label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

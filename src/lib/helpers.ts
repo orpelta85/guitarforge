@@ -2,6 +2,26 @@ import type { Exercise, Song, Stage } from "./types";
 import { EXERCISES } from "./exercises";
 import { STAGES } from "./constants";
 
+// Simplified song item — no stages, just the song as a practice exercise
+export function makeSongItemSimple(song: Song): Exercise {
+  return {
+    id: Number("99" + song.id),
+    c: "Songs",
+    n: song.name,
+    m: 20,
+    b: "",
+    d: "Practice " + song.name,
+    yt: song.name + " guitar tutorial",
+    t: "",
+    f: "Song",
+    bt: false,
+    ss: true,
+    songId: song.id,
+    songName: song.name,
+    songUrl: song.url || "",
+  };
+}
+
 export function ytSearch(q: string): string {
   if (q && (q.startsWith("http://") || q.startsWith("https://"))) return q;
   return "https://www.youtube.com/results?search_query=" + encodeURIComponent(q) + "&sp=EgIQAQ%3D%3D";

@@ -11,7 +11,7 @@ export const CATS = [
 ];
 
 export const COL: Record<string, string> = {
-  "Warm-Up": "#f59e0b",
+  "Warm-Up": "#D4A843",
   "Shred": "#ef4444",
   "Legato": "#a78bfa",
   "Bends": "#ec4899",

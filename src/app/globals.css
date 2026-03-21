@@ -70,7 +70,7 @@ body::after {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 9999;
+  z-index: 99;
   opacity: 0.022;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 256px 256px;
@@ -320,7 +320,6 @@ body::after {
   font-family: 'Oswald', sans-serif;
   font-weight: 500;
   font-size: 11px;
-  text-transform: uppercase;
   letter-spacing: 0.08em;
   background: rgba(255,255,255,0.02);
   transition: all 0.15s ease;
@@ -963,6 +962,10 @@ input[type="number"]::-webkit-outer-spin-button { opacity: 0.3; }
     border-radius: 6px;
   }
 }
+.modal-dark-header {
+  background: linear-gradient(180deg, #1e1c18 0%, #18181c 100%);
+  border-bottom: 1px solid var(--border-panel);
+}
 
 /* ══════════════════════════════════════════════════════════════
    PRACTICE PROGRESS BAR
@@ -1141,12 +1144,21 @@ input[type="number"]::-webkit-outer-spin-button { opacity: 0.3; }
   cursor: pointer;
   color: var(--text-muted);
   font-family: 'Source Sans 3', 'Inter', system-ui, sans-serif;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 600;
-  text-transform: uppercase;
   letter-spacing: 0.06em;
   transition: color 0.15s ease;
 }
+/* ── Focus-visible styles for accessibility ── */
+.btn-gold:focus-visible, .btn-ghost:focus-visible, .btn-danger:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+.sidebar-item:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: -2px;
+}
+
 .mobile-tab-item--active {
   color: var(--gold);
   text-shadow: 0 0 8px rgba(212,168,67,0.3);

@@ -617,7 +617,7 @@ function PianoKeyboard({ highlighted, onClick, disabled }: {
             onClick={() => { if (!disabled && onClick) onClick(k.midi); }}
             className={`absolute border border-[#333] rounded-b-sm flex items-end justify-center pb-1 text-[8px] font-bold transition-all ${!disabled && onClick ? "cursor-pointer hover:brightness-110" : ""}`}
             style={{ left: i * 40, top: 0, width: 38, height: 120,
-              background: isHl ? "#f59e0b" : "#e8e8e8",
+              background: isHl ? "#D4A843" : "#e8e8e8",
               color: isHl ? "#121214" : "#555" }}>
             {k.label}
           </div>
@@ -630,9 +630,9 @@ function PianoKeyboard({ highlighted, onClick, disabled }: {
             onClick={() => { if (!disabled && onClick) onClick(k.midi); }}
             className={`absolute rounded-b-sm flex items-end justify-center pb-1 text-[7px] font-bold z-10 transition-all ${!disabled && onClick ? "cursor-pointer hover:brightness-125" : ""}`}
             style={{ left: k.leftOffset, top: 0, width: 24, height: 80,
-              background: isHl ? "#f59e0b" : "#1a1a1a",
+              background: isHl ? "#D4A843" : "#1a1a1a",
               color: isHl ? "#121214" : "#666",
-              border: isHl ? "1px solid #f59e0b" : "1px solid #333" }}>
+              border: isHl ? "1px solid #D4A843" : "1px solid #333" }}>
             {k.label}
           </div>
         );
@@ -910,6 +910,12 @@ export default function LearningCenterPage() {
 
   /* ── Persistence ── */
   const [ls, setLs] = useState<LearnState>({ xp: 0, level: 1, bestStreak: 0, unlocked: [], history: {}, lessonsCompleted: [] });
+
+  /* ── Collapsible group state ── */
+  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set(["ear","fretboard","theory"]));
+  const [openToolGroups, setOpenToolGroups] = useState<Set<string>>(new Set(["reference","utilities"]));
+  const toggleGroup = (g: string) => setOpenGroups(p => { const n = new Set(p); if (n.has(g)) n.delete(g); else n.add(g); return n; });
+  const toggleToolGroup = (g: string) => setOpenToolGroups(p => { const n = new Set(p); if (n.has(g)) n.delete(g); else n.add(g); return n; });
 
   /* ── Refs ── */
   const ctxRef = useRef<AudioContext | null>(null);
@@ -1476,30 +1482,48 @@ export default function LearningCenterPage() {
          TAB 1: LESSONS
          ══════════════════════════════════════════════════════ */}
       {mainTab === "lessons" && (<>
-        {/* Category chips */}
-        <div className="flex gap-1 mb-3 flex-wrap">
-          {LESSON_CATS.map(cat => (
-            <button key={cat} onClick={() => { setLessonCat(cat); setOpenLesson(null); }}
-              className={`font-label text-[10px] px-3 py-2 sm:py-1.5 rounded-sm cursor-pointer transition-all min-h-[36px] ${lessonCat === cat ? "bg-[#D4A843] text-[#121214]" : "text-[#555] border border-[#222]"}`}>{cat}</button>
-          ))}
-        </div>
-
         {!activeLessonObj ? (
-          /* Lesson list */
-          <div className="space-y-1.5">
-            {filteredLessons.map(l => {
-              const done = ls.lessonsCompleted.includes(l.id);
+          /* Lesson list grouped by category */
+          <div className="space-y-2">
+            {LESSON_CATS.map(cat => {
+              const catLessons = LESSONS.filter(l => l.cat === cat);
+              if (catLessons.length === 0) return null;
+              const completedCount = catLessons.filter(l => ls.lessonsCompleted.includes(l.id)).length;
+              const isExpanded = lessonCat === cat;
               return (
-                <div key={l.id} onClick={() => { setOpenLesson(l.id); setQuizPicked(null); setCurrentStep(0); }}
-                  className={`panel p-3 sm:p-4 cursor-pointer hover:border-[#333] transition-all ${done ? "border-[#D4A843]/20" : ""}`}>
-                  <div className="flex items-center gap-3">
-                    <div className={`led ${done ? "led-gold" : "led-off"}`} />
-                    <div className="flex-1">
-                      <div className={`font-label text-[11px] ${done ? "text-[#D4A843]" : "text-[#ccc]"}`}>{l.title}</div>
-                      <div className="text-[10px] text-[#555]">{l.desc}</div>
+                <div key={cat} className={`panel overflow-hidden transition-all ${isExpanded ? "border-[#D4A843]/20" : ""}`}>
+                  <div className="flex items-center gap-3 p-3 cursor-pointer select-none hover:bg-[#111] transition-all"
+                    onClick={() => setLessonCat(isExpanded ? "" as LessonCategory : cat)}>
+                    <div className="flex-1 min-w-0">
+                      <div className={`font-heading text-[13px] font-semibold ${isExpanded ? "text-[#D4A843]" : "text-[#ccc]"}`}>{cat}</div>
+                      <div className="text-[10px] text-[#555]">{completedCount}/{catLessons.length} completed</div>
                     </div>
-                    {done && <span className="font-readout text-[9px] text-[#D4A843]">+50 XP</span>}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {completedCount === catLessons.length && <span className="text-[10px] text-[#22c55e]">{"✓"}</span>}
+                      <div className="w-16 h-1.5 bg-[#1a1a1a] rounded-full overflow-hidden">
+                        <div className="h-full bg-[#D4A843] rounded-full transition-all" style={{ width: `${catLessons.length > 0 ? (completedCount / catLessons.length) * 100 : 0}%` }} />
+                      </div>
+                      <span className={`text-[10px] transition-transform ${isExpanded ? "rotate-90" : ""} ${isExpanded ? "text-[#D4A843]" : "text-[#555]"}`}>{"\u25B6"}</span>
+                    </div>
                   </div>
+                  {isExpanded && (
+                    <div className="border-t border-[#1a1a1a] px-2 pb-2 pt-1 space-y-1">
+                      {catLessons.map(l => {
+                        const done = ls.lessonsCompleted.includes(l.id);
+                        return (
+                          <div key={l.id} onClick={() => { setOpenLesson(l.id); setQuizPicked(null); setCurrentStep(0); }}
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-sm cursor-pointer transition-all ${done ? "bg-[#D4A843]/5" : "hover:bg-[#111]"}`}>
+                            <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${done ? "bg-[#D4A843]" : "bg-[#333]"}`} />
+                            <div className="flex-1 min-w-0">
+                              <div className={`font-label text-[11px] ${done ? "text-[#D4A843]" : "text-[#ccc]"}`}>{l.title}</div>
+                              <div className="text-[9px] text-[#555]">{l.desc}</div>
+                            </div>
+                            {done && <span className="font-readout text-[9px] text-[#D4A843]">{"✓"}</span>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -1651,22 +1675,84 @@ export default function LearningCenterPage() {
          TAB 2: EXERCISES
          ══════════════════════════════════════════════════════ */}
       {mainTab === "exercises" && (<>
-        {/* Exercise mode chips */}
-        <div className="flex gap-1 mb-3 flex-wrap">
-          {([
-            ["intervals","Intervals"],["chords","Chords"],["scales","Scales"],["progressions","Progressions"],
-            ["fretboard","Fretboard"],["construction","Construction"],
-            ["fb-intervals","FB Intervals"],["fb-scales","FB Scales"],["fb-chords","FB Chords"],
-            ["note-ear","Note Ear"],["iv-construction","IV Build"],["chord-construction","Chord Build"],
-            ["kb-notes","KB Notes"],["kb-intervals","KB Intervals"],["kb-scales","KB Scales"],["kb-chords","KB Chords"],["kb-ear","KB Ear"],
-          ] as [ExMode,string][]).map(([m,lbl]) => (
-            <button key={m} onClick={() => { setExMode(m); setRevealed(false); setAnswer(null); setFbTarget(null); setFbExAnswer(null); setFbExRevealed(false); }}
-              className={`font-label text-[10px] px-3 py-2 sm:py-1.5 rounded-sm cursor-pointer transition-all min-h-[36px] ${exMode === m ? "bg-[#D4A843] text-[#121214]" : "text-[#555] border border-[#222]"}`}>{lbl}</button>
-          ))}
-        </div>
+        {/* Exercise groups - organized into 3 categories */}
+        {(() => {
+          const selectMode = (m: ExMode) => { setExMode(m); setSubTab("exercise"); setRevealed(false); setAnswer(null); setFbTarget(null); setFbExAnswer(null); setFbExRevealed(false); };
+          const EXERCISE_GROUPS: { id: string; title: string; desc: string; icon: string; items: [ExMode, string, string][] }[] = [
+            { id: "ear", title: "Ear Training", desc: "Train your ear to recognize intervals, chords, scales and progressions by sound", icon: "\u266A",
+              items: [
+                ["intervals", "Interval Recognition", "Identify intervals by ear"],
+                ["chords", "Chord Identification", "Major, minor, dim, aug and more"],
+                ["scales", "Scale Recognition", "Name the scale you hear"],
+                ["progressions", "Progression Hearing", "Identify chord progressions"],
+                ["note-ear", "Note Identification", "Name the single note played"],
+                ["kb-ear", "Piano Ear Training", "Click the key you hear"],
+              ]},
+            { id: "fretboard", title: "Fretboard Knowledge", desc: "Master the fretboard through visual quizzes and note finding exercises", icon: "\u2302",
+              items: [
+                ["fretboard", "Note Finder", "Find notes on the fretboard"],
+                ["fb-intervals", "Visual Intervals", "Identify intervals on the fretboard"],
+                ["fb-scales", "Visual Scales", "Identify scale patterns visually"],
+                ["fb-chords", "Visual Chords", "Identify chord shapes on the fretboard"],
+                ["kb-notes", "Piano Notes", "Identify highlighted piano keys"],
+              ]},
+            { id: "theory", title: "Theory Builders", desc: "Build scales, intervals and chords from scratch to reinforce music theory", icon: "\u2261",
+              items: [
+                ["construction", "Scale / Interval / Chord Builder", "Construct scales, intervals and chords note by note"],
+                ["iv-construction", "Interval Builder", "Find the note at a given interval"],
+                ["chord-construction", "Chord Builder", "Select all notes of a chord"],
+                ["kb-intervals", "Piano Intervals", "Identify intervals on the keyboard"],
+                ["kb-scales", "Piano Scales", "Identify scale patterns on keys"],
+                ["kb-chords", "Piano Chords", "Identify chord shapes on keys"],
+              ]},
+          ];
+          return (
+            <div className="space-y-2 mb-3">
+              {EXERCISE_GROUPS.map(group => {
+                const isOpen = openGroups.has(group.id);
+                const activeInGroup = group.items.some(([m]) => m === exMode);
+                return (
+                  <div key={group.id} className={`panel overflow-hidden transition-all ${activeInGroup ? "border-[#D4A843]/30" : ""}`}>
+                    <div className="flex items-center gap-3 p-3 cursor-pointer select-none hover:bg-[#111] transition-all"
+                      onClick={() => toggleGroup(group.id)}>
+                      <div className={`w-8 h-8 rounded-sm flex items-center justify-center text-base flex-shrink-0 ${activeInGroup ? "bg-[#D4A843]/15 text-[#D4A843]" : "bg-[#141414] text-[#555]"}`}>
+                        {group.icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className={`font-heading text-[13px] font-semibold ${activeInGroup ? "text-[#D4A843]" : "text-[#ccc]"}`}>{group.title}</div>
+                        <div className="text-[10px] text-[#555] leading-tight">{group.desc}</div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className="font-readout text-[9px] text-[#444]">{group.items.length}</span>
+                        <span className={`text-[10px] transition-transform ${isOpen ? "rotate-90" : ""} ${activeInGroup ? "text-[#D4A843]" : "text-[#555]"}`}>{"\u25B6"}</span>
+                      </div>
+                    </div>
+                    {isOpen && (
+                      <div className="border-t border-[#1a1a1a] px-2 pb-2 pt-1">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
+                          {group.items.map(([m, label, desc]) => (
+                            <div key={m}
+                              onClick={() => selectMode(m)}
+                              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-sm cursor-pointer transition-all ${exMode === m ? "bg-[#D4A843]/10 border border-[#D4A843]/30" : "hover:bg-[#111] border border-transparent"}`}>
+                              <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${exMode === m ? "bg-[#D4A843]" : "bg-[#333]"}`} />
+                              <div className="min-w-0">
+                                <div className={`font-label text-[11px] leading-tight ${exMode === m ? "text-[#D4A843]" : "text-[#bbb]"}`}>{label}</div>
+                                <div className="text-[9px] text-[#555] leading-tight">{desc}</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
 
         {/* Sub tabs */}
-        {hasSubTabs && (
+        {hasSubTabs && exMode !== "construction" && (
           <div className="flex gap-1 mb-3">
             {([["exercise","Exercise"],["achievements","Achievements"],["reference","Reference"]] as [SubTab,string][]).map(([t,lbl]) => (
               <button key={t} onClick={() => setSubTab(t)}
@@ -2499,13 +2585,69 @@ export default function LearningCenterPage() {
          TAB 3: TOOLS
          ══════════════════════════════════════════════════════ */}
       {mainTab === "tools" && (<>
-        {/* Tool selector */}
-        <div className="flex gap-1 mb-3 flex-wrap">
-          {([["scales","Scales"],["chords","Chords"],["fretboard","Fretboard"],["progressions","Progressions"],["circle","Circle of 5ths"],["intervals","Intervals"],["tempo","Tempo Tap"],["iv-calc","IV Calc"],["piano","Piano"],["tuner","Tuner"]] as [ToolTab,string][]).map(([t,lbl]) => (
-            <button key={t} onClick={() => setToolTab(t)}
-              className={`font-label text-[10px] px-3 py-1.5 rounded-sm cursor-pointer transition-all ${toolTab === t ? "bg-[#D4A843] text-[#121214]" : "text-[#555] border border-[#222]"}`}>{lbl}</button>
-          ))}
-        </div>
+        {/* Tool groups */}
+        {(() => {
+          const TOOL_GROUPS: { id: string; title: string; desc: string; items: { key: ToolTab; label: string; desc: string; icon: string }[] }[] = [
+            { id: "reference", title: "Reference & Exploration", desc: "Interactive reference tools for scales, chords, intervals and more",
+              items: [
+                { key: "scales", label: "Scale Explorer", desc: "All scales with fretboard visualization", icon: "\u2500" },
+                { key: "chords", label: "Chord Library", desc: "Chord voicings and diagrams", icon: "\u2302" },
+                { key: "fretboard", label: "Fretboard Visualizer", desc: "See notes, scales and chords on the neck", icon: "\u25A6" },
+                { key: "circle", label: "Circle of Fifths", desc: "Interactive circle of fifths diagram", icon: "\u25CB" },
+                { key: "intervals", label: "Interval Reference", desc: "All 12 intervals with audio playback", icon: "\u2195" },
+                { key: "progressions", label: "Progression Builder", desc: "Build and play chord progressions", icon: "\u266C" },
+              ]},
+            { id: "utilities", title: "Practice Utilities", desc: "Handy tools for daily practice sessions",
+              items: [
+                { key: "tempo", label: "Tempo Tapper", desc: "Tap to measure BPM", icon: "\u2261" },
+                { key: "iv-calc", label: "Interval Calculator", desc: "Calculate intervals between notes", icon: "\u00D7" },
+                { key: "piano", label: "Piano Keyboard", desc: "Interactive piano with scale highlighting", icon: "\u2399" },
+                { key: "tuner", label: "Chromatic Tuner", desc: "Real-time pitch detection via microphone", icon: "\u266A" },
+              ]},
+          ];
+          return (
+            <div className="space-y-2 mb-3">
+              {TOOL_GROUPS.map(group => {
+                const isOpen = openToolGroups.has(group.id);
+                const activeInGroup = group.items.some(i => i.key === toolTab);
+                return (
+                  <div key={group.id} className={`panel overflow-hidden transition-all ${activeInGroup ? "border-[#D4A843]/30" : ""}`}>
+                    <div className="flex items-center gap-3 p-3 cursor-pointer select-none hover:bg-[#111] transition-all"
+                      onClick={() => toggleToolGroup(group.id)}>
+                      <div className="flex-1 min-w-0">
+                        <div className={`font-heading text-[13px] font-semibold ${activeInGroup ? "text-[#D4A843]" : "text-[#ccc]"}`}>{group.title}</div>
+                        <div className="text-[10px] text-[#555] leading-tight">{group.desc}</div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className="font-readout text-[9px] text-[#444]">{group.items.length}</span>
+                        <span className={`text-[10px] transition-transform ${isOpen ? "rotate-90" : ""} ${activeInGroup ? "text-[#D4A843]" : "text-[#555]"}`}>{"\u25B6"}</span>
+                      </div>
+                    </div>
+                    {isOpen && (
+                      <div className="border-t border-[#1a1a1a] p-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
+                          {group.items.map(item => (
+                            <div key={item.key}
+                              onClick={() => setToolTab(item.key)}
+                              className={`flex items-center gap-3 px-3 py-3 rounded-sm cursor-pointer transition-all ${toolTab === item.key ? "bg-[#D4A843]/10 border border-[#D4A843]/30" : "hover:bg-[#111] border border-transparent"}`}>
+                              <div className={`w-8 h-8 rounded-sm flex items-center justify-center text-sm flex-shrink-0 ${toolTab === item.key ? "bg-[#D4A843]/20 text-[#D4A843]" : "bg-[#141414] text-[#555]"}`}>
+                                {item.icon}
+                              </div>
+                              <div className="min-w-0">
+                                <div className={`font-label text-[11px] leading-tight ${toolTab === item.key ? "text-[#D4A843]" : "text-[#bbb]"}`}>{item.label}</div>
+                                <div className="text-[9px] text-[#555] leading-tight">{item.desc}</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
 
         {/* Root selector (not for tempo tapper) */}
         {toolTab !== "tempo" && toolTab !== "piano" && toolTab !== "tuner" && (

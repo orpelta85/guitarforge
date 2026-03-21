@@ -1,9 +1,11 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import type { Exercise, Song, DayCats, DayHrs, DayExMap, BoolMap, StringMap, SongProgressMap, ExEditMap } from "@/lib/types";
-import { DAYS, CATS, COL, MODES, SCALES, STYLES, STAGES, DEFAULT_DAY_CATS, DEFAULT_DAY_HRS, CAT_GROUPS } from "@/lib/constants";
+import { DAYS, CATS, COL, MODES, SCALES, STYLES, DEFAULT_DAY_CATS, DEFAULT_DAY_HRS, CAT_GROUPS } from "@/lib/constants";
 import { EXERCISES } from "@/lib/exercises";
-import { autoFill, makeSongItem, ytSearch } from "@/lib/helpers";
+import { autoFill, makeSongItemSimple, ytSearch } from "@/lib/helpers";
+import MetronomeBox from "./MetronomeBox";
+import RecorderBox from "./RecorderBox";
 import ExerciseModal from "./ExerciseModal";
 import SongModal from "./SongModal";
 import Navbar from "./Navbar";
@@ -14,13 +16,14 @@ import WeeklyCharts from "./WeeklyCharts";
 import SongsterrSearch from "./SongsterrSearch";
 import ProfilePage from "./ProfilePage";
 import AiCoachPage from "./AiCoachPage";
+import DarkAudioPlayer from "./DarkAudioPlayer";
 import LibraryEditor from "./LibraryEditor";
 import ErrorBoundary from "./ErrorBoundary";
 import SkillTreePage from "./SkillTreePage";
 import JamModePage from "./JamModePage";
 import { SONG_LIBRARY } from "@/lib/songs-data";
 import type { SongEntry } from "@/lib/types";
-import { buildStyle, recordUsage, saveToLibrary } from "@/lib/suno";
+import { buildStyle, recordUsage, saveToLibrary, getAllLibraryTracks, deleteFromLibrary } from "@/lib/suno";
 import type { LibraryTrack } from "@/lib/suno";
 
 export default function GuitarForgeApp() {
@@ -48,7 +51,7 @@ export default function GuitarForgeApp() {
   const [exEdits, setExEdits] = useState<ExEditMap>({});
   const [editingId, setEditingId] = useState<number | null>(null);
   const [libSearch, setLibSearch] = useState("");
-  const [libTab, setLibTab] = useState<"exercises" | "styles" | "songs" | "songlib">("exercises");
+  const [libTab, setLibTab] = useState<"exercises" | "styles" | "mysongs" | "recordings" | "backing" | "songlib">("exercises");
   const [songModal, setSongModal] = useState<SongEntry | null>(null);
   const [customSongs, setCustomSongs] = useState<SongEntry[]>([]);
   const [songLibSearch, setSongLibSearch] = useState("");
@@ -69,6 +72,16 @@ export default function GuitarForgeApp() {
   const [sunoSuggestLoading, setSunoSuggestLoading] = useState(false);
   const [sunoSuggestDismissed, setSunoSuggestDismissed] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
+
+  // ── Library: My Songs, Recordings, Backing Tracks ──
+  const [mySongs, setMySongs] = useState<number[]>([]); // array of song IDs
+  const [libRecordings, setLibRecordings] = useState<{ id: string; name: string; date: string; duration: number; format: string }[]>([]);
+  const [libRecordingsLoaded, setLibRecordingsLoaded] = useState(false);
+  const [libBackingTracks, setLibBackingTracks] = useState<LibraryTrack[]>([]);
+  const [libBackingLoaded, setLibBackingLoaded] = useState(false);
+  const [playingRecId, setPlayingRecId] = useState<string | null>(null);
+  const [playingBackingId, setPlayingBackingId] = useState<string | null>(null);
+  const libAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // ── Onboarding wizard ──
   const [showWelcome, setShowWelcome] = useState(false);
@@ -92,10 +105,23 @@ export default function GuitarForgeApp() {
   const focusIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [viewKey, setViewKey] = useState(0);
 
+  // ── Session Timer ──
+  const [sessionSeconds, setSessionSeconds] = useState(0);
+  const [sessionRunning, setSessionRunning] = useState(false);
+  const sessionIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // ── Quick Tools toggles ──
+  const [showQuickMetronome, setShowQuickMetronome] = useState(false);
+  const [showQuickRecorder, setShowQuickRecorder] = useState(false);
+
+  // ── Song Picker (unified) ──
+  const [songPickerOpen, setSongPickerOpen] = useState(false);
+  const [songPickerSearch, setSongPickerSearch] = useState("");
+
   // Hash-based routing: #studio, #practice, etc.
-  const VALID_VIEWS = new Set<View>(["dash", "daily", "lib", "songs", "learn", "studio", "log", "profile", "coach"]);
+  const VALID_VIEWS = new Set<View>(["dash", "daily", "lib", "songs", "learn", "studio", "jam", "log", "profile", "coach", "skills"]);
   const hashToView = (hash: string): View | null => {
-    const map: Record<string, View> = { "#dashboard": "dash", "#dash": "dash", "#practice": "daily", "#daily": "daily", "#library": "lib", "#lib": "lib", "#songs": "songs", "#learn": "learn", "#learning": "learn", "#studio": "studio", "#report": "log", "#log": "log", "#profile": "profile", "#coach": "coach" };
+    const map: Record<string, View> = { "#home": "dash", "#dashboard": "dash", "#dash": "dash", "#practice": "daily", "#daily": "daily", "#library": "lib", "#lib": "lib", "#songs": "songs", "#learn": "learn", "#learning": "learn", "#studio": "studio", "#jam": "jam", "#report": "log", "#log": "log", "#profile": "profile", "#coach": "coach", "#skills": "skills" };
     const v = map[hash.toLowerCase()] || hash.replace("#", "") as View;
     return VALID_VIEWS.has(v) ? v : null;
   };
@@ -151,6 +177,8 @@ export default function GuitarForgeApp() {
       if (cr) setCalendarData(JSON.parse(cr));
       const slp = localStorage.getItem("gf-songlib-progress");
       if (slp) setSongLibProgress(JSON.parse(slp));
+      const ms = localStorage.getItem("gf-my-songs");
+      if (ms) setMySongs(JSON.parse(ms));
     } catch {}
     setReady(true);
     // Show onboarding wizard for first-time users
@@ -165,9 +193,10 @@ export default function GuitarForgeApp() {
       const data = { week, mode, scale, style, dayCats, dayHrs, dayExMap, doneMap, bpmLog, noteLog, songs, songProgress, exEdits, customSongs };
       try { localStorage.setItem("gf30", JSON.stringify(data)); } catch { /* quota */ }
       try { localStorage.setItem("gf-songlib-progress", JSON.stringify(songLibProgress)); } catch {}
+      try { localStorage.setItem("gf-my-songs", JSON.stringify(mySongs)); } catch {}
     }, 500);
     return () => clearTimeout(timer);
-  }, [ready, week, mode, scale, style, dayCats, dayHrs, dayExMap, doneMap, bpmLog, noteLog, songs, songProgress, exEdits, customSongs, songLibProgress]);
+  }, [ready, week, mode, scale, style, dayCats, dayHrs, dayExMap, doneMap, bpmLog, noteLog, songs, songProgress, exEdits, customSongs, songLibProgress, mySongs]);
 
   // ── Streak & Calendar update when exercise is marked done ──
   const updateStreakAndCalendar = useCallback((newDoneMap: BoolMap) => {
@@ -229,6 +258,21 @@ export default function GuitarForgeApp() {
     if (focusEx) { setFocusTimer(0); setFocusRunning(true); }
     else { setFocusRunning(false); setFocusTimer(0); }
   }, [focusEx]);
+
+  // ── Session Timer effect ──
+  useEffect(() => {
+    if (sessionRunning) {
+      sessionIntervalRef.current = setInterval(() => setSessionSeconds(t => t + 1), 1000);
+    } else {
+      if (sessionIntervalRef.current) clearInterval(sessionIntervalRef.current);
+    }
+    return () => { if (sessionIntervalRef.current) clearInterval(sessionIntervalRef.current); };
+  }, [sessionRunning]);
+
+  const fmtTimer = (s: number) => {
+    const m = Math.floor(s / 60), sec = s % 60;
+    return String(m).padStart(2, "0") + ":" + String(sec).padStart(2, "0");
+  };
 
   // ── Smart suggestions generator ──
   const getSuggestions = useCallback(() => {
@@ -315,11 +359,7 @@ export default function GuitarForgeApp() {
   function getEditedEx(ex: Exercise): Exercise { return exEdits[ex.id] ? { ...ex, ...exEdits[ex.id] } : ex; }
 
   function getSongItems(): Exercise[] {
-    return songs.map((song) => {
-      let ns = 0;
-      for (let i = 0; i < STAGES.length; i++) { if (songProgress[week + "-" + song.id + "-" + i]?.done) ns = i + 1; else break; }
-      return makeSongItem(song, Math.min(ns, STAGES.length - 1));
-    });
+    return songs.map((song) => makeSongItemSimple(song));
   }
 
   function buildDay(day: string) {
@@ -653,14 +693,14 @@ export default function GuitarForgeApp() {
               {/* Genre tabs */}
               <div className="flex gap-1 flex-wrap mb-3 overflow-x-auto scrollbar-hide">
                 <button onClick={() => { setSongLibGenre("all"); setSongLibLimit(20); }}
-                  className={`font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border transition-all flex-shrink-0 ${songLibGenre === "all" ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>
+                  className={`font-label text-[10px] px-3 py-1 rounded-lg cursor-pointer border transition-all flex-shrink-0 ${songLibGenre === "all" ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>
                   All ({allSongs.length})
                 </button>
                 {genres.map(g => {
                   const cnt = allSongs.filter(s => s.genre === g).length;
                   return (
                     <button key={g} onClick={() => { setSongLibGenre(g); setSongLibLimit(20); }}
-                      className={`font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border transition-all flex-shrink-0 ${songLibGenre === g ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>
+                      className={`font-label text-[10px] px-3 py-1 rounded-lg cursor-pointer border transition-all flex-shrink-0 ${songLibGenre === g ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>
                       {g} ({cnt})
                     </button>
                   );
@@ -672,9 +712,9 @@ export default function GuitarForgeApp() {
 
               {/* Difficulty filter */}
               <div className="flex gap-1 flex-wrap mb-4">
-                {([["all", "All", "#D4A843"], ["Beginner", "Beginner", "#22c55e"], ["Intermediate", "Intermediate", "#f59e0b"], ["Advanced", "Advanced", "#ef4444"]] as const).map(([key, label, color]) => (
+                {([["all", "All", "#D4A843"], ["Beginner", "Beginner", "#22c55e"], ["Intermediate", "Intermediate", "#D4A843"], ["Advanced", "Advanced", "#ef4444"]] as const).map(([key, label, color]) => (
                   <button key={key} onClick={() => { setSongLibFilter(key as typeof songLibFilter); setSongLibLimit(20); }}
-                    className="font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border transition-all"
+                    className="font-label text-[10px] px-3 py-1 rounded-lg cursor-pointer border transition-all"
                     style={songLibFilter === key ? { background: color, borderColor: color, color: "#121214" } : { borderColor: color + "40", color: color + "99" }}>
                     {label} ({diffCounts[key as keyof typeof diffCounts]})
                   </button>
@@ -717,7 +757,7 @@ export default function GuitarForgeApp() {
                 const limited = filtered.slice(0, songLibLimit);
                 return (<>
                   {limited.map(song => {
-                    const dc = song.difficulty ? ({ Beginner: "#22c55e", Intermediate: "#f59e0b", Advanced: "#ef4444" }[song.difficulty] || "#888") : "#888";
+                    const dc = song.difficulty ? ({ Beginner: "#22c55e", Intermediate: "#D4A843", Advanced: "#ef4444" }[song.difficulty] || "#888") : "#888";
                     const isCustom = song.id >= 1000000000;
                     return (
                       <div key={song.id} onClick={() => setSongModal(song)}
@@ -769,20 +809,7 @@ export default function GuitarForgeApp() {
                                 )}
                               </button>
                             )}
-                            {(() => {
-                              const stages = songLibProgress[song.id] || 0;
-                              return (
-                                <div className="flex items-center gap-1">
-                                  <div className="flex gap-[2px]">
-                                    {[0,1,2,3,4,5].map(i => (
-                                      <div key={i} className="rounded-[1px]" style={{ width: 8, height: 4, background: i < stages ? "#D4A843" : "#1a1a1a" }}
-                                        onClick={(e) => { e.stopPropagation(); setSongLibProgress(p => ({ ...p, [song.id]: i < stages ? i : i + 1 })); }} />
-                                    ))}
-                                  </div>
-                                  <span className="font-readout text-[8px] text-[#444]">{stages}/6</span>
-                                </div>
-                              );
-                            })()}
+                            {/* Stage pills removed -- simplified */}
                           </div>
                         </div>
                       </div>
@@ -804,21 +831,28 @@ export default function GuitarForgeApp() {
           {/* -- 1. Hero Card -- */}
           {(() => {
             const dayPct = curExList.length > 0 ? Math.round((curDone / curExList.length) * 100) : 0;
+            const todayDate = new Date();
+            const dayName = todayDate.toLocaleDateString("en-US", { weekday: "long" });
+            const dateStr = todayDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+            const todayCats = curCats.length > 0 ? curCats.join(", ") : "Rest Day";
             return (
               <div className="p-5 sm:p-6 mb-4" style={{ background: "linear-gradient(135deg, #1a1708, #121214)", border: "1px solid #D4A84330", borderRadius: 12 }}>
                 <div className="flex justify-between items-start mb-3">
                   <div>
                     <div className="font-heading text-lg sm:text-xl font-bold text-[#eee]">Today&apos;s Practice</div>
                     <div className="font-readout text-[11px] text-[#666] mt-1">
+                      {dayName}, {dateStr}
+                    </div>
+                    <div className="font-readout text-[11px] text-[#666] mt-0.5">
                       {curExList.length} Exercises &middot; {curMin} min
                     </div>
                     <div className="font-readout text-[10px] text-[#555] mt-0.5">
-                      {style} &middot; {scale} {mode}
+                      Today: {todayCats}
                     </div>
                   </div>
                   {streak.currentStreak > 0 && (
                     <div className="flex items-center gap-1.5 bg-[#D4A843]/10 px-3 py-1.5 rounded-full">
-                      <span className="text-lg">🔥</span>
+                      <span className="text-lg">&#x1F525;</span>
                       <span className="font-stat text-[14px] text-[#D4A843]">{streak.currentStreak} Day Streak</span>
                     </div>
                   )}
@@ -841,7 +875,26 @@ export default function GuitarForgeApp() {
             );
           })()}
 
-          {/* -- 2. Stats Row -- */}
+          {/* -- 2. Quick Start -- */}
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-4">
+            {([
+              { label: "Start Practice", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="#D4A843" stroke="none"><path d="M8 5v14l11-7z"/></svg>, target: "daily" as View },
+              { label: "Open Studio", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2m11-11h-2M3 12H1m17.36 6.36l-1.41-1.41M7.05 7.05L5.64 5.64m12.73 0l-1.42 1.41M7.05 16.95l-1.41 1.41"/></svg>, target: "studio" as View },
+              { label: "Jam Mode", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5"><path d="M9 19c0 1.1-1.3 2-3 2s-3-.9-3-2 1.3-2 3-2 3 .9 3 2zM9 19V5l12-4v14m0 0c0 1.1-1.3 2-3 2s-3-.9-3-2 1.3-2 3-2 3 .9 3 2z"/></svg>, target: "jam" as View },
+              { label: "Browse Library", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>, target: "lib" as View },
+              { label: "AI Coach", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5"><path d="M12 2a3 3 0 00-3 3v4a3 3 0 006 0V5a3 3 0 00-3-3z"/><path d="M19 10v1a7 7 0 01-14 0v-1"/><path d="M12 18v4m-4 0h8"/></svg>, target: "coach" as View },
+              { label: "Skill Tree", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5"><path d="M12 2l3 7h7l-5.5 4.5 2 7.5L12 17l-6.5 4 2-7.5L2 9h7l3-7z"/></svg>, target: "skills" as View },
+            ] as const).map(({ label, icon, target }) => (
+              <button key={target} type="button" onClick={() => setView(target)}
+                className="flex flex-col items-center gap-2 p-3 sm:p-4 rounded-lg transition-all hover:border-[#D4A843]/40 hover:bg-[#1a1708]"
+                style={{ background: "#141416", border: "1px solid #1a1a1e" }}>
+                {icon}
+                <span className="font-label text-[9px] sm:text-[10px] text-[#888]">{label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* -- 3. Stats Row -- */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
             {[
               { value: String(streak.currentStreak), label: "Streak" },
@@ -849,14 +902,14 @@ export default function GuitarForgeApp() {
               { value: String(wMin), label: "Minutes" },
               { value: DAYS.filter(d => (dayExMap[d] || []).some(e => doneMap[week + "-" + d + "-" + e.id])).length + "/7", label: "Days Active" },
             ].map(({ value, label }) => (
-              <div key={label} className="p-3 text-center" style={{ background: "#1a1a1e", borderRadius: 10 }}>
+              <div key={label} className="p-3 text-center" style={{ background: "#1a1a1e", borderRadius: 8 }}>
                 <div className="font-stat text-xl sm:text-2xl text-[#D4A843]">{value}</div>
                 <div className="font-label text-[9px] text-[#555] mt-0.5">{label}</div>
               </div>
             ))}
           </div>
 
-          {/* -- 3. Weekly Schedule (simplified) -- */}
+          {/* -- 4. Weekly Schedule -- */}
           <div className="panel-primary p-4 sm:p-5 mb-4" style={{ borderRadius: 8 }}>
             <div className="flex justify-between items-center mb-4">
               <span className="font-label text-[11px] text-[#D4A843] flex items-center gap-2"><div className="led led-gold" /> Week {week} Schedule</span>
@@ -951,14 +1004,14 @@ export default function GuitarForgeApp() {
             </div>
           </div>
 
-          {/* -- 4. Smart Suggestions -- */}
+          {/* -- 5. Smart Suggestions -- */}
           {(() => {
             const suggestions = getSuggestions();
             if (suggestions.length === 0) return null;
             return (
               <div className="panel-secondary p-4 mb-4" style={{ borderRadius: 8 }}>
                 <div className="font-label text-[10px] text-[#666] mb-2 flex items-center gap-2">
-                  💡 Suggestions
+                  &#x1F4A1; Suggestions
                 </div>
                 <div className="flex flex-col gap-2">
                   {suggestions.map((s, i) => (
@@ -972,74 +1025,38 @@ export default function GuitarForgeApp() {
             );
           })()}
 
-          {/* -- 5. Setlist -- */}
+          {/* -- 6. Setlist (simplified) -- */}
           <div className="panel p-3 sm:p-5 mb-4" style={{ borderColor: "#1a3a2a", borderRadius: 8 }}>
             <div className="font-label text-[11px] text-[#33CC33] mb-3 flex items-center gap-2">
               <div className="led led-on" /> Setlist
             </div>
-            {songs.map((song) => {
-              const dn = STAGES.filter((_, si) => songProgress[week + "-" + song.id + "-" + si]?.done).length;
-              return (
-                <div key={song.id} className="flex items-center gap-3 px-3 py-2.5 bg-[#121214] border border-[#1a1a1a] rounded-lg mb-1.5">
-                  <div className="flex-1">
-                    <div className="font-heading text-sm !font-medium !normal-case !tracking-normal">{song.name}</div>
-                    <div className="font-readout text-[10px] text-[#555]">{dn}/6</div>
-                  </div>
-                  {song.url && <a href={song.url} target="_blank" rel="noopener noreferrer" className="font-label text-[9px] text-[#D4A843] no-underline hover:text-[#DFBD69]">Tab</a>}
-                  <button onClick={() => setSongs((p) => p.filter((s) => s.id !== song.id))} className="btn-ghost !px-2 !py-1 !text-[10px] !text-[#C41E3A] !border-[#333]">Remove</button>
+            {songs.length === 0 && (
+              <div className="text-center py-4 text-[12px] text-[#444]">No songs in your setlist yet. Add one below.</div>
+            )}
+            {songs.map((song) => (
+              <div key={song.id} className="flex items-center gap-3 px-3 py-2.5 bg-[#121214] border border-[#1a1a1a] rounded-lg mb-1.5">
+                <div className="flex-1 min-w-0">
+                  <div className="font-heading text-sm !font-medium !normal-case !tracking-normal truncate">{song.name}</div>
                 </div>
-              );
-            })}
+                {song.url && <a href={song.url} target="_blank" rel="noopener noreferrer" className="font-label text-[9px] text-[#D4A843] no-underline hover:text-[#DFBD69] flex-shrink-0">Tab</a>}
+                <button onClick={() => setSongs((p) => p.filter((s) => s.id !== song.id))} className="btn-ghost !px-2 !py-1 !text-[10px] !text-[#C41E3A] !border-[#333] flex-shrink-0">Remove</button>
+              </div>
+            ))}
             <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2 mt-3">
               <input placeholder="Song name..." value={newSongName} onChange={(e) => setNewSongName(e.target.value)} className="input min-w-0" />
               <input placeholder="Tab URL..." value={newSongUrl} onChange={(e) => setNewSongUrl(e.target.value)} className="input min-w-0" />
-              <button onClick={() => { if (!newSongName.trim()) return; setSongs((p) => [...p, { name: newSongName.trim(), url: newSongUrl.trim(), id: Date.now() }]); setNewSongName(""); setNewSongUrl(""); }} className="btn-gold">Add</button>
+              <button onClick={() => { if (!newSongName.trim()) return; setSongs((p) => [...p, { name: newSongName.trim(), url: newSongUrl.trim(), id: Date.now() }]); setNewSongName(""); setNewSongUrl(""); }} className="btn-gold">Add Song</button>
             </div>
             <SongsterrSearch onSelect={(name, url) => {
               setSongs((p) => [...p, { name, url, id: Date.now() }]);
             }} />
           </div>
 
-          {/* -- 6. Suno Backing Track -- */}
-          {!sunoSuggestDismissed && !sunoSuggestUrl && (
-            <div className="panel-secondary p-3 mb-4 flex items-center gap-3" style={{ borderRadius: 8 }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2" className="flex-shrink-0">
-                <path d="M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 19V5l12-4v14m0 0c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" />
-              </svg>
-              <div className="flex-1">
-                <div className="font-label text-[10px] text-[#D4A843]">AI Backing Track</div>
-                <div className="font-readout text-[9px] text-[#555]">{scale} {mode} · {style} · Generate a practice track with Suno AI</div>
-              </div>
-              <button type="button" onClick={async () => {
-                setSunoSuggestLoading(true);
-                try {
-                  const res = await fetch("/api/suno", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scale, mode, style, bpm: 120, title: `${scale} ${mode} ${style} Practice` }) });
-                  const data = await res.json();
-                  if (data.tracks?.[0]?.audioUrl) setSunoSuggestUrl(data.tracks[0].audioUrl);
-                } catch {} finally { setSunoSuggestLoading(false); }
-              }} className="btn-gold !text-[9px] !px-3 flex-shrink-0" disabled={sunoSuggestLoading}>
-                {sunoSuggestLoading ? "Generating..." : "Generate"}
-              </button>
-              <button type="button" aria-label="Dismiss" title="Dismiss" onClick={() => setSunoSuggestDismissed(true)} className="text-[#333] hover:text-[#666] flex-shrink-0">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
-              </button>
-            </div>
-          )}
-          {sunoSuggestUrl && (
-            <div className="panel-secondary p-3 mb-4" style={{ borderRadius: 8 }}>
-              <div className="flex items-center gap-2 mb-2">
-                <div className="font-label text-[10px] text-[#D4A843]">AI Backing Track</div>
-                <span className="font-readout text-[9px] text-[#555]">{scale} {mode} · {style}</span>
-              </div>
-              <audio src={sunoSuggestUrl} controls loop className="w-full" style={{ height: 32 }} />
-            </div>
-          )}
-
-          {/* -- 7. Channel Settings (collapsible) -- */}
+          {/* -- 7. Weekly Focus (was Channel Settings) -- */}
           <div className="panel-secondary mb-4" style={{ borderRadius: 8 }}>
             <button onClick={() => setSettingsOpen(p => !p)} className="panel-header flex items-center gap-2 w-full cursor-pointer bg-transparent border-0 text-left">
               <div className="led led-gold" />
-              <span className="flex-1">Channel Settings</span>
+              <span className="flex-1">Weekly Focus</span>
               <span className="font-readout text-[10px] text-[#555]">
                 {!settingsOpen && `W${week} · ${mode} · ${scale} · ${style}`}
               </span>
@@ -1048,18 +1065,56 @@ export default function GuitarForgeApp() {
               </svg>
             </button>
             {settingsOpen && (
-              <div className="p-3 sm:p-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
-                {[
-                  { l: "Week", v: <div className="segment-display text-center mt-1"><input type="number" value={week} min={1} onChange={(e) => setWeek(Number(e.target.value))} className="bg-transparent border-none outline-none text-center w-full font-mono font-bold text-[#D4A843]" style={{ boxShadow: 'none' }} /></div> },
-                  { l: "Mode", v: <select value={mode} onChange={(e) => setMode(e.target.value)} className="input w-full text-[12px] sm:text-[14px]">{MODES.map((m) => <option key={m}>{m}</option>)}</select> },
-                  { l: "Key", v: <select value={scale} onChange={(e) => setScale(e.target.value)} className="input w-full">{SCALES.map((s) => <option key={s}>{s}</option>)}</select> },
-                  { l: "Style", v: <select value={style} onChange={(e) => setStyle(e.target.value)} className="input w-full text-[12px] sm:text-[14px]">{STYLES.map((s) => <option key={s}>{s}</option>)}</select> },
-                ].map(({ l, v }) => <label key={l} className="font-label text-[11px] text-[#666]">{l}<div className="mt-1">{v}</div></label>)}
+              <div className="p-3 sm:p-5">
+                <div className="font-readout text-[10px] text-[#555] mb-3">What are you focusing on this week?</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+                  {[
+                    { l: "Week", v: <div className="segment-display text-center mt-1"><input type="number" value={week} min={1} onChange={(e) => setWeek(Number(e.target.value))} className="bg-transparent border-none outline-none text-center w-full font-mono font-bold text-[#D4A843]" style={{ boxShadow: 'none' }} /></div> },
+                    { l: "Mode", v: <select value={mode} onChange={(e) => setMode(e.target.value)} className="input w-full text-[12px] sm:text-[14px]">{MODES.map((m) => <option key={m}>{m}</option>)}</select> },
+                    { l: "Key", v: <select value={scale} onChange={(e) => setScale(e.target.value)} className="input w-full">{SCALES.map((s) => <option key={s}>{s}</option>)}</select> },
+                    { l: "Style", v: <select value={style} onChange={(e) => setStyle(e.target.value)} className="input w-full text-[12px] sm:text-[14px]">{STYLES.map((s) => <option key={s}>{s}</option>)}</select> },
+                  ].map(({ l, v }) => <label key={l} className="font-label text-[11px] text-[#666]">{l}<div className="mt-1">{v}</div></label>)}
+                </div>
               </div>
             )}
           </div>
 
-          {/* -- 8. Week Analytics (merged from Report) -- */}
+          {/* -- 8. Recent Activity -- */}
+          {(() => {
+            const recentItems: { name: string; bpm: string; day: string }[] = [];
+            for (const d of DAYS) {
+              const exs = dayExMap[d] || [];
+              for (const ex of exs) {
+                const k = week + "-" + d + "-" + ex.id;
+                if (doneMap[k]) {
+                  recentItems.push({ name: ex.n, bpm: bpmLog[k] || "", day: d });
+                }
+              }
+            }
+            const recent = recentItems.slice(-10).reverse();
+            if (recent.length === 0) return null;
+            return (
+              <div className="panel-secondary p-4 mb-4" style={{ borderRadius: 8 }}>
+                <div className="font-label text-[10px] text-[#666] mb-3 flex items-center gap-2">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                  Recent Activity
+                </div>
+                <div className="flex flex-col gap-1">
+                  {recent.map((item, i) => (
+                    <div key={i} className="flex items-center gap-3 px-3 py-2 bg-[#121214] rounded-lg">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[12px] text-[#ccc] truncate">{item.name}</div>
+                      </div>
+                      <span className="font-readout text-[9px] text-[#555] flex-shrink-0">{item.day}</span>
+                      {item.bpm && <span className="font-readout text-[9px] text-[#D4A843] flex-shrink-0">{item.bpm} BPM</span>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* -- 9. Week Analytics (collapsible) -- */}
           <div className="panel-secondary mb-4" style={{ borderRadius: 8 }}>
             <button onClick={() => setShowAnalytics(p => !p)} className="panel-header flex items-center gap-2 w-full cursor-pointer bg-transparent border-0 text-left">
               <span className="text-[14px]">📊</span>
@@ -1154,50 +1209,132 @@ export default function GuitarForgeApp() {
               </div>
             )}
           </div>
+
+          {/* -- 10. Suno Backing Track -- */}
+          {!sunoSuggestDismissed && !sunoSuggestUrl && (
+            <div className="panel-secondary p-3 mb-4 flex items-center gap-3" style={{ borderRadius: 8 }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2" className="flex-shrink-0">
+                <path d="M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 19V5l12-4v14m0 0c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" />
+              </svg>
+              <div className="flex-1">
+                <div className="font-label text-[10px] text-[#D4A843]">AI Backing Track</div>
+                <div className="font-readout text-[9px] text-[#555]">{scale} {mode} &middot; {style} &middot; Generate a practice track with Suno AI</div>
+              </div>
+              <button type="button" onClick={async () => {
+                setSunoSuggestLoading(true);
+                try {
+                  const res = await fetch("/api/suno", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scale, mode, style, bpm: 120, title: `${scale} ${mode} ${style} Practice` }) });
+                  const data = await res.json();
+                  if (data.tracks?.[0]?.audioUrl) setSunoSuggestUrl(data.tracks[0].audioUrl);
+                } catch {} finally { setSunoSuggestLoading(false); }
+              }} className="btn-gold !text-[9px] !px-3 flex-shrink-0" disabled={sunoSuggestLoading}>
+                {sunoSuggestLoading ? "Generating..." : "Generate"}
+              </button>
+              <button type="button" aria-label="Dismiss" title="Dismiss" onClick={() => setSunoSuggestDismissed(true)} className="text-[#333] hover:text-[#666] flex-shrink-0">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+              </button>
+            </div>
+          )}
+          {sunoSuggestUrl && (
+            <div className="panel-secondary p-3 mb-4" style={{ borderRadius: 8 }}>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="font-label text-[10px] text-[#D4A843]">AI Backing Track</div>
+                <span className="font-readout text-[9px] text-[#555]">{scale} {mode} &middot; {style}</span>
+              </div>
+              <DarkAudioPlayer src={sunoSuggestUrl} title={`${scale} ${mode} · ${style}`} loop />
+            </div>
+          )}
         </div>)}
 
         {/* ══ PRACTICE ══ */}
         {view === "daily" && (<div className="animate-fade-in">
-          {/* Streak in practice header */}
-          {streak.currentStreak > 0 && (
-            <div className="flex items-center gap-2 mb-3 text-[12px] text-[#888]">
-              <span>🔥</span>
-              <span className="font-stat text-[#D4A843]">{streak.currentStreak} Day Streak!</span>
+          {/* Session Timer Bar */}
+          <div className="panel p-3 mb-4" style={{ borderColor: "#D4A843" + "30", background: "linear-gradient(135deg, rgba(212,168,67,0.06) 0%, transparent 60%)" }}>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="font-stat text-2xl text-[#D4A843] tabular-nums" style={{ minWidth: 72 }}>{fmtTimer(sessionSeconds)}</div>
+                <div className="font-label text-[10px] text-[#666]">Session</div>
+                {streak.currentStreak > 0 && (
+                  <span className="font-label text-[10px] text-[#D4A843]">Day {streak.currentStreak}</span>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button type="button" onClick={() => setSessionRunning(!sessionRunning)}
+                  className={`font-label text-[10px] px-3 py-1.5 rounded-lg border transition-all ${sessionRunning ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#D4A843]/40 text-[#D4A843]"}`}>
+                  {sessionRunning ? "Pause" : "Start"}
+                </button>
+                <button type="button" onClick={() => { setSessionSeconds(0); setSessionRunning(false); }}
+                  className="btn-ghost !px-2 !py-1.5 !text-[10px]">Reset</button>
+              </div>
             </div>
-          )}
-          {/* Task 4: Practice progress bar */}
-          {curExList.length > 0 && (
-            <div className="mb-4">
-              <div className="flex justify-between items-center mb-1.5">
-                <span className="font-label text-[10px] text-[#666]">{curDone}/{curExList.length} exercises</span>
-                <span className={`font-readout text-[11px] font-bold ${curDone === curExList.length && curExList.length > 0 ? "text-[#33CC33]" : "text-[#D4A843]"}`}>
-                  {curExList.length > 0 ? Math.round((curDone / curExList.length) * 100) : 0}%
-                </span>
+            {curExList.length > 0 && (
+              <div className="mt-2">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="font-label text-[10px] text-[#666]">{curDone}/{curExList.length} exercises</span>
+                  <span className={`font-readout text-[11px] font-bold ${curDone === curExList.length && curExList.length > 0 ? "text-[#33CC33]" : "text-[#D4A843]"}`}>
+                    {curExList.length > 0 ? Math.round((curDone / curExList.length) * 100) : 0}%
+                  </span>
+                </div>
+                <div className="practice-progress-bar">
+                  <div className="practice-progress-fill" style={{ width: (curExList.length > 0 ? Math.round((curDone / curExList.length) * 100) : 0) + "%" }} />
+                </div>
               </div>
-              <div className="practice-progress-bar">
-                <div className="practice-progress-fill" style={{ width: (curExList.length > 0 ? Math.round((curDone / curExList.length) * 100) : 0) + "%" }} />
-              </div>
+            )}
+          </div>
+
+          {/* Quick Tools Row */}
+          <div className="flex gap-2 mb-4">
+            <button type="button" onClick={() => { setShowQuickMetronome(!showQuickMetronome); setShowQuickRecorder(false); }}
+              className={`flex items-center gap-1.5 font-label text-[11px] px-3 py-2 rounded-lg border transition-all ${showQuickMetronome ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#888] hover:border-[#555]"}`}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="10" strokeDasharray="4 2"/></svg>
+              Metronome
+            </button>
+            <button type="button" onClick={() => setView("learn")}
+              className="flex items-center gap-1.5 font-label text-[11px] px-3 py-2 rounded-lg border border-[#333] text-[#888] hover:border-[#555] transition-all">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 00-3 3v7a3 3 0 006 0V5a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg>
+              Tuner
+            </button>
+            <button type="button" onClick={() => { setShowQuickRecorder(!showQuickRecorder); setShowQuickMetronome(false); }}
+              className={`flex items-center gap-1.5 font-label text-[11px] px-3 py-2 rounded-lg border transition-all ${showQuickRecorder ? "bg-[#C41E3A] text-white border-[#C41E3A]" : "border-[#333] text-[#888] hover:border-[#555]"}`}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>
+              Record
+            </button>
+          </div>
+
+          {/* Inline Metronome */}
+          {showQuickMetronome && (
+            <div className="panel p-4 mb-4" style={{ borderColor: "#D4A843" + "30" }}>
+              <MetronomeBox standalone />
             </div>
           )}
 
+          {/* Inline Recorder */}
+          {showQuickRecorder && (
+            <div className="panel p-4 mb-4" style={{ borderColor: "#C41E3A" + "30" }}>
+              <RecorderBox storageKey={week + "-" + selDay + "-session"} />
+            </div>
+          )}
+
+          {/* Day Selector */}
           <div className="flex gap-1 mb-4 overflow-x-auto scrollbar-hide pb-1">
             {DAYS.map((day) => (
               <button key={day} onClick={() => setSelDay(day)}
-                className={`font-label text-[11px] px-3 py-1.5 rounded-sm cursor-pointer transition-all flex-shrink-0 ${
+                className={`font-label text-[11px] px-3 py-1.5 rounded-lg cursor-pointer transition-all flex-shrink-0 ${
                   selDay === day ? "bg-[#D4A843] text-[#121214]" : "text-[#555] hover:text-[#aaa]"
                 }`}><span className="sm:hidden">{day.slice(0, 3)}</span><span className="hidden sm:inline">{day}</span></button>
             ))}
           </div>
 
+          {/* Day Header */}
           <div className="panel p-3 sm:p-5 mb-4">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
               <div>
                 <div className="font-heading text-lg sm:text-xl font-bold text-[#D4A843]">{selDay}</div>
                 <div className="font-readout text-[10px] sm:text-[11px] text-[#555] mt-0.5">
                   <span>{curExList.length} exercises</span>
-                  <span className="mx-1">·</span>
+                  <span className="mx-1">&middot;</span>
                   <span>{curMin} min</span>
-                  <span className="mx-1">·</span>
+                  <span className="mx-1">&middot;</span>
                   <span>{curDone} done</span>
                 </div>
                 <div className="flex gap-1 mt-2 flex-wrap">
@@ -1209,18 +1346,17 @@ export default function GuitarForgeApp() {
                 <button onClick={() => buildDay(selDay)} className="btn-ghost">Auto Fill</button>
                 <button type="button" onClick={() => { setExPickerOpen(true); setExPickerSearch(""); setExPickerCat("All"); }} className="btn-ghost">+ Exercise</button>
                 {songs.length > 0 && (
-                  <select title="Add song stage" onChange={(e) => { if (!e.target.value) return; const [sid, sidx] = e.target.value.split("x").map(Number); const song = songs.find((s) => s.id === sid); if (song) setDayExMap((p) => ({ ...p, [selDay]: [...(p[selDay] || []), makeSongItem(song, sidx)] })); e.target.value = ""; }} className="input w-full sm:!w-auto !py-1.5 text-[11px]" style={{ borderColor: "#1a3a2a" }} defaultValue="">
-                    <option value="" disabled>+ Song</option>
-                    {songs.map((song) => <optgroup key={song.id} label={song.name}>{STAGES.map((st, si) => <option key={si} value={song.id + "x" + si}>{songProgress[week + "-" + song.id + "-" + si]?.done ? "✓ " : ""}{song.name} - {st.name} ({st.m}m)</option>)}</optgroup>)}
-                  </select>
+                  <button type="button" onClick={() => { setSongPickerOpen(true); setSongPickerSearch(""); }} className="btn-ghost" style={{ borderColor: "#1a3a2a", color: "#33CC33" }}>+ Song</button>
                 )}
               </div>
-              {/* Fix #3: Searchable exercise picker */}
+
+              {/* Unified Exercise Picker */}
               {exPickerOpen && (
                 <div className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh]" onClick={() => setExPickerOpen(false)}>
                   <div className="absolute inset-0 bg-black/60" />
-                  <div className="relative w-full max-w-[520px] mx-2 rounded-sm overflow-hidden" style={{ background: "#111", border: "1px solid #333", maxHeight: "70vh", display: "flex", flexDirection: "column" }} onClick={e => e.stopPropagation()}>
+                  <div className="relative w-full max-w-[520px] mx-2 rounded-lg overflow-hidden" style={{ background: "var(--bg-panel)", border: "1px solid var(--border-panel)", maxHeight: "70vh", display: "flex", flexDirection: "column" }} onClick={e => e.stopPropagation()}>
                     <div className="p-3 border-b border-[#222]">
+                      <div className="font-label text-[11px] text-[#D4A843] mb-2">Add Exercise</div>
                       <input type="text" placeholder="Search exercises..." className="input w-full mb-2" autoFocus
                         value={exPickerSearch} onChange={e => setExPickerSearch(e.target.value)} />
                       <div className="flex gap-1 flex-wrap">
@@ -1245,11 +1381,11 @@ export default function GuitarForgeApp() {
                         <button type="button" key={ex.id} onClick={() => {
                           setDayExMap(p => ({ ...p, [selDay]: [...(p[selDay] || []), ex] }));
                           setExPickerOpen(false);
-                        }} className="w-full text-left px-3 py-2 border-b border-[#1a1a1a] hover:bg-[#1a1a1a] transition-colors flex items-center gap-2">
-                          <span className="tag flex-shrink-0 !text-[8px]" style={{ border: `1px solid ${COL[ex.c] || "#888"}40`, color: COL[ex.c] || "#888" }}>{ex.c}</span>
+                        }} className="w-full text-left px-3 py-2.5 border-b border-[#1a1a1a] hover:bg-[#1a1a1a] transition-colors flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: COL[ex.c] || "#888" }} />
                           <div className="flex-1 min-w-0">
                             <div className="text-[12px] text-[#ccc] truncate">{ex.n}</div>
-                            <div className="font-readout text-[9px] text-[#555]">{ex.m}min {ex.b ? "· " + ex.b : ""}</div>
+                            <div className="font-readout text-[9px] text-[#555]">{ex.c} &middot; {ex.m}min {ex.b ? "&middot; " + ex.b : ""}</div>
                           </div>
                         </button>
                       ))}
@@ -1260,10 +1396,42 @@ export default function GuitarForgeApp() {
                   </div>
                 </div>
               )}
+
+              {/* Unified Song Picker */}
+              {songPickerOpen && (
+                <div className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh]" onClick={() => setSongPickerOpen(false)}>
+                  <div className="absolute inset-0 bg-black/60" />
+                  <div className="relative w-full max-w-[520px] mx-2 rounded-lg overflow-hidden" style={{ background: "var(--bg-panel)", border: "1px solid var(--border-panel)", maxHeight: "70vh", display: "flex", flexDirection: "column" }} onClick={e => e.stopPropagation()}>
+                    <div className="p-3 border-b border-[#222]">
+                      <div className="font-label text-[11px] text-[#33CC33] mb-2">Add Song</div>
+                      <input type="text" placeholder="Search songs..." className="input w-full" autoFocus
+                        value={songPickerSearch} onChange={e => setSongPickerSearch(e.target.value)} />
+                    </div>
+                    <div className="overflow-y-auto flex-1" style={{ maxHeight: "50vh" }}>
+                      {songs.filter(s => !songPickerSearch.trim() || s.name.toLowerCase().includes(songPickerSearch.trim().toLowerCase())).map(song => (
+                        <button type="button" key={song.id} onClick={() => {
+                          setDayExMap(p => ({ ...p, [selDay]: [...(p[selDay] || []), makeSongItemSimple(song)] }));
+                          setSongPickerOpen(false);
+                        }} className="w-full text-left px-3 py-2.5 border-b border-[#1a1a1a] hover:bg-[#1a1a1a] transition-colors flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: COL["Songs"] || "#33CC33" }} />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[12px] text-[#ccc] truncate">{song.name}</div>
+                            <div className="font-readout text-[9px] text-[#555]">Song &middot; 20min</div>
+                          </div>
+                        </button>
+                      ))}
+                      {songs.length === 0 && <div className="p-6 text-center text-[12px] text-[#555]">No songs in setlist. Add from Dashboard.</div>}
+                    </div>
+                    <div className="p-2 border-t border-[#222] text-center">
+                      <button type="button" onClick={() => setSongPickerOpen(false)} className="btn-ghost !text-[10px]">Close</button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Improved empty state */}
+          {/* Empty state */}
           {!curExList.length && <div className="panel p-8 sm:p-12 text-center" style={{ background: "linear-gradient(180deg, rgba(212,168,67,0.04) 0%, transparent 60%)" }}>
             <svg width="72" height="72" viewBox="0 0 24 24" fill="none" className="mx-auto mb-5">
               <path d="M9 19V6l12-3v13" stroke="#D4A843" strokeWidth="0.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.5"/>
@@ -1284,125 +1452,113 @@ export default function GuitarForgeApp() {
             </div>
           </div>}
 
+          {/* Exercise list -- unified cards */}
           {curExList.map((rawEx, idx) => {
             const ex = typeof rawEx.id === "number" && rawEx.id < 1000 ? getEditedEx(rawEx) : rawEx;
             const done = doneMap[week + "-" + selDay + "-" + ex.id], cc = COL[ex.c] || "#888", isSong = ex.c === "Songs";
             return (
-              <div key={String(ex.id) + "-" + idx} className={`flex items-start gap-2 sm:gap-3 px-2 sm:px-4 py-2.5 sm:py-3 mb-2 rounded-sm transition-all ${isSong ? "bg-[#0a110a] border border-[#1a3a2a]" : "panel"}`} style={{ opacity: done ? 0.4 : 1 }}>
-                <button type="button" aria-label={done ? "Mark undone" : "Mark done"} onClick={() => {
-                  const k = week + "-" + selDay + "-" + ex.id; toggleDone(k);
-                  if (isSong && ex.songId !== undefined && ex.stageIdx !== undefined) setSongProgress((p) => ({ ...p, [week + "-" + ex.songId + "-" + ex.stageIdx]: { ...p[week + "-" + ex.songId + "-" + ex.stageIdx], done: !done } }));
-                }} className="cursor-pointer mt-1.5 flex-shrink-0 bg-transparent border-none p-0">
-                  <div className={`led ${done ? "led-on" : "led-off"}`} style={{ width: 10, height: 10 }} />
-                </button>
-                <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setModal(ex)}>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="tag flex-shrink-0" style={{ border: `1px solid ${cc}40`, color: cc }}>{ex.c}</span>
-                    <span className="font-heading text-[13px] sm:text-sm !font-medium !normal-case !tracking-normal leading-snug">{ex.n}</span>
+              <div key={String(ex.id) + "-" + idx} className="panel mb-2 rounded-lg transition-all" style={{ opacity: done ? 0.45 : 1 }}>
+                <div className="flex items-center gap-3 px-3 sm:px-4 py-3">
+                  <button type="button" aria-label={done ? "Mark undone" : "Mark done"} onClick={() => {
+                    toggleDone(week + "-" + selDay + "-" + ex.id);
+                  }} className="cursor-pointer flex-shrink-0 bg-transparent border-none p-0">
+                    <div className="w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all"
+                      style={{ borderColor: done ? "#33CC33" : cc + "60", background: done ? "#33CC33" : "transparent" }}>
+                      {done && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#121214" strokeWidth="3"><path d="M20 6L9 17l-5-5"/></svg>}
+                    </div>
+                  </button>
+                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: cc }} />
+                  <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setModal(ex)}>
+                    <div className="font-heading text-[13px] sm:text-sm !font-medium !normal-case !tracking-normal leading-snug">{ex.n}</div>
+                    <div className="font-readout text-[10px] text-[#555] mt-0.5">{isSong ? "Song" : ex.c} &middot; {ex.m}min {ex.b ? "&middot; " + ex.b + " BPM" : ""}</div>
                   </div>
-                  <div className="font-readout text-[10px] text-[#444] mt-1 line-clamp-1">{ex.m}min {ex.b ? "· " + ex.b + " BPM" : ""} · {ex.f}</div>
-                </div>
-                <div className="hidden sm:flex flex-col gap-1 flex-shrink-0">
-                  <div className="flex gap-0.5">
+                  <div className="hidden sm:flex items-center gap-1 flex-shrink-0">
                     <button onClick={() => { if (!idx) return; setDayExMap((p) => { const l = (p[selDay] || []).slice(); [l[idx], l[idx-1]] = [l[idx-1], l[idx]]; return { ...p, [selDay]: l }; }); }}
-                      className="btn-ghost !px-1.5 !py-0.5 !text-[9px]" style={{ opacity: idx === 0 ? 0.2 : 1 }}>UP</button>
+                      className="btn-ghost !px-1.5 !py-1 !text-[9px]" style={{ opacity: idx === 0 ? 0.2 : 1 }}>UP</button>
                     <button onClick={() => { if (idx >= curExList.length - 1) return; setDayExMap((p) => { const l = (p[selDay] || []).slice(); [l[idx], l[idx+1]] = [l[idx+1], l[idx]]; return { ...p, [selDay]: l }; }); }}
-                      className="btn-ghost !px-1.5 !py-0.5 !text-[9px]" style={{ opacity: idx >= curExList.length - 1 ? 0.2 : 1 }}>DN</button>
-                  </div>
-                  <div className="flex gap-0.5">
-                    <button type="button" onClick={() => setFocusEx({ ex, idx })} className="btn-ghost !px-1.5 !py-0.5 !text-[9px]">Focus</button>
+                      className="btn-ghost !px-1.5 !py-1 !text-[9px]" style={{ opacity: idx >= curExList.length - 1 ? 0.2 : 1 }}>DN</button>
+                    <button type="button" onClick={() => setFocusEx({ ex, idx })} className="btn-ghost !px-1.5 !py-1 !text-[9px]">Focus</button>
                     {!isSong && <button onClick={() => { const pool = EXERCISES.filter((e) => e.c === ex.c && e.id !== ex.id); if (!pool.length) return; setDayExMap((p) => { const l = (p[selDay] || []).slice(); l[idx] = pool[Math.floor(Math.random() * pool.length)]; return { ...p, [selDay]: l }; }); }}
-                      className="btn-ghost !px-1.5 !py-0.5 !text-[9px]">Swap</button>}
+                      className="btn-ghost !px-1.5 !py-1 !text-[9px]">Swap</button>}
                     <button type="button" onClick={() => setDayExMap((p) => { const l = (p[selDay] || []).slice(); l.splice(idx, 1); return { ...p, [selDay]: l }; })}
-                      className="btn-ghost !px-1.5 !py-0.5 !text-[9px] !text-[#C41E3A]">Del</button>
+                      className="btn-ghost !px-1.5 !py-1 !text-[9px] !text-[#C41E3A]">Del</button>
                   </div>
-                </div>
-                {/* Task 6: Mobile compact action row */}
-                <div className="mobile-action-row flex-shrink-0 mt-1">
-                  <button type="button" onClick={(e) => { e.stopPropagation(); setFocusEx({ ex, idx }); }}
-                    className="btn-ghost !px-2 !py-1 !text-[9px]" aria-label="Focus">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
-                  </button>
-                  {!isSong && <button type="button" onClick={(e) => { e.stopPropagation(); const pool = EXERCISES.filter((x) => x.c === ex.c && x.id !== ex.id); if (!pool.length) return; setDayExMap((p) => { const l = (p[selDay] || []).slice(); l[idx] = pool[Math.floor(Math.random() * pool.length)]; return { ...p, [selDay]: l }; }); }}
-                    className="btn-ghost !px-2 !py-1 !text-[9px]" aria-label="Swap">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                  </button>}
-                  <button type="button" onClick={(e) => { e.stopPropagation(); setDayExMap((p) => { const l = (p[selDay] || []).slice(); l.splice(idx, 1); return { ...p, [selDay]: l }; }); }}
-                    className="btn-ghost !px-2 !py-1 !text-[9px] !text-[#C41E3A] !border-[#C41E3A]/20" aria-label="Delete">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                  </button>
+                  <div className="mobile-action-row flex-shrink-0">
+                    <button type="button" onClick={(e) => { e.stopPropagation(); setFocusEx({ ex, idx }); }}
+                      className="btn-ghost !px-2 !py-1 !text-[9px]" aria-label="Focus">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                    {!isSong && <button type="button" onClick={(e) => { e.stopPropagation(); const pool = EXERCISES.filter((x) => x.c === ex.c && x.id !== ex.id); if (!pool.length) return; setDayExMap((p) => { const l = (p[selDay] || []).slice(); l[idx] = pool[Math.floor(Math.random() * pool.length)]; return { ...p, [selDay]: l }; }); }}
+                      className="btn-ghost !px-2 !py-1 !text-[9px]" aria-label="Swap">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    </button>}
+                    <button type="button" onClick={(e) => { e.stopPropagation(); setDayExMap((p) => { const l = (p[selDay] || []).slice(); l.splice(idx, 1); return { ...p, [selDay]: l }; }); }}
+                      className="btn-ghost !px-2 !py-1 !text-[9px] !text-[#C41E3A] !border-[#C41E3A]/20" aria-label="Delete">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
+                  </div>
                 </div>
               </div>
             );
           })}
 
-          {/* Fix #2: Quick Stats + Suggested Exercises when few exercises */}
+          {/* Suggested Exercises */}
           {curExList.length > 0 && curExList.length <= 4 && (() => {
-            const todayBpms = curExList.map(e => bpmLog[week + "-" + selDay + "-" + e.id]).filter(Boolean);
             const curIds = new Set(curExList.map(e => e.id));
             const suggested = EXERCISES.filter(e => curCats.includes(e.c) && !curIds.has(e.id)).slice(0, 5);
-            return (<>
-              <div className="panel p-4 mb-3 mt-3">
-                <div className="font-label text-[10px] text-[#D4A843] mb-2">Quick Stats</div>
-                <div className="grid grid-cols-3 gap-3 text-center">
-                  <div>
-                    <div className="font-stat text-lg text-[#D4A843]">{curDone}/{curExList.length}</div>
-                    <div className="font-label text-[9px] text-[#555]">Done Today</div>
-                  </div>
-                  <div>
-                    <div className="font-stat text-lg text-[#D4A843]">{curMin}m</div>
-                    <div className="font-label text-[9px] text-[#555]">Total Time</div>
-                  </div>
-                  <div>
-                    <div className="font-stat text-lg text-[#D4A843]">{todayBpms.length > 0 ? todayBpms[todayBpms.length - 1] : "--"}</div>
-                    <div className="font-label text-[9px] text-[#555]">Last BPM</div>
-                  </div>
-                </div>
+            return suggested.length > 0 ? (
+              <div className="panel p-4 mb-3 mt-2">
+                <div className="font-label text-[10px] text-[#666] mb-2">Suggested Exercises</div>
+                {suggested.map(ex => (
+                  <button type="button" key={ex.id} onClick={() => setDayExMap(p => ({ ...p, [selDay]: [...(p[selDay] || []), ex] }))}
+                    className="w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-[#1a1a1a] transition-colors">
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: COL[ex.c] || "#888" }} />
+                    <span className="text-[11px] text-[#888] flex-1 truncate">{ex.n}</span>
+                    <span className="font-readout text-[9px] text-[#444]">{ex.m}m</span>
+                    <span className="text-[10px] text-[#D4A843]">+</span>
+                  </button>
+                ))}
               </div>
-              {suggested.length > 0 && (
-                <div className="panel p-4 mb-3">
-                  <div className="font-label text-[10px] text-[#666] mb-2">Suggested Exercises</div>
-                  {suggested.map(ex => (
-                    <button type="button" key={ex.id} onClick={() => setDayExMap(p => ({ ...p, [selDay]: [...(p[selDay] || []), ex] }))}
-                      className="w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-[#1a1a1a] transition-colors">
-                      <span className="tag !text-[8px]" style={{ border: `1px solid ${COL[ex.c] || "#888"}40`, color: COL[ex.c] || "#888" }}>{ex.c}</span>
-                      <span className="text-[11px] text-[#888] flex-1 truncate">{ex.n}</span>
-                      <span className="font-readout text-[9px] text-[#444]">{ex.m}m</span>
-                      <span className="text-[10px] text-[#D4A843]">+</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </>);
+            ) : null;
           })()}
         </div>)}
 
+
         {/* ══ LIBRARY ══ */}
         {view === "lib" && (<div className="animate-fade-in">
-          {/* Sub-tabs */}
-          <div className="flex gap-1 mb-4 overflow-x-auto scrollbar-hide">
-            {([["exercises", "Exercises"], ["styles", "Styles"], ["songs", "Songs"], ["songlib", "Song Library +"]] as const).map(([key, label]) => (
-              <button key={key} onClick={() => setLibTab(key)}
-                className={`font-label text-[11px] px-4 py-1.5 rounded-sm cursor-pointer border transition-all flex-shrink-0 ${libTab === key ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>{label}</button>
+          {/* Sub-tabs — 6 tabs, horizontal scroll on mobile */}
+          <div className="flex gap-1 mb-4 overflow-x-auto scrollbar-hide pb-1">
+            {([
+              ["exercises", "Exercises", "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4"],
+              ["styles", "Styles", "M9 19V6l12-3v13"],
+              ["mysongs", "My Songs", "M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"],
+              ["recordings", "Recordings", "M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m-4-1h8M12 4a3 3 0 00-3 3v4a3 3 0 006 0V7a3 3 0 00-3-3z"],
+              ["backing", "Backing Tracks", "M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z"],
+              ["songlib", "Song Library", "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"],
+            ] as const).map(([key, label, iconPath]) => (
+              <button type="button" key={key} onClick={() => setLibTab(key as typeof libTab)}
+                className={`font-label text-[11px] px-3 py-2 rounded-lg cursor-pointer border transition-all flex-shrink-0 flex items-center gap-1.5 ${libTab === key ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666] hover:border-[#555] hover:text-[#888]"}`}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={iconPath} /></svg>
+                {label}
+              </button>
             ))}
           </div>
 
-          {/* Exercises tab */}
+          {/* ── Tab 1: Exercises ── */}
           {libTab === "exercises" && (<>
             <input type="text" placeholder="Search exercise..." className="input w-full mb-3"
               value={libSearch} onChange={e => setLibSearch(e.target.value)} />
 
             <div className="flex gap-1 flex-wrap mb-4">
-              <button onClick={() => setLibFilter("All")} className={`font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border ${libFilter === "All" ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>All ({EXERCISES.length})</button>
+              <button onClick={() => setLibFilter("All")} className={`font-label text-[10px] px-3 py-1 rounded-lg cursor-pointer border ${libFilter === "All" ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>All ({EXERCISES.length})</button>
               {CATS.filter((c) => c !== "Songs").map((cat) => {
                 const cnt = EXERCISES.filter((e) => e.c === cat).length, c = COL[cat];
                 if (!cnt) return null;
-                return <button key={cat} onClick={() => setLibFilter(cat)} className="font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border transition-all"
+                return <button key={cat} onClick={() => setLibFilter(cat)} className="font-label text-[10px] px-3 py-1 rounded-lg cursor-pointer border transition-all"
                   style={libFilter === cat ? { background: c, borderColor: c, color: "#121214" } : { borderColor: c + "40", color: c + "99" }}>{cat} ({cnt})</button>;
               })}
             </div>
 
-            {/* Toggle: grouped vs flat */}
             <div className="flex items-center gap-2 mb-3">
               <button onClick={() => setLibShowAll(!libShowAll)} className="btn-ghost !text-[10px]">
                 {libShowAll ? "Group by Category" : "Show Flat List"}
@@ -1420,30 +1576,34 @@ export default function GuitarForgeApp() {
               });
               const isSearching = libSearch.trim().length > 0;
 
-              if (libShowAll) {
-                // Flat list mode
-                return (<>
-                  {filtered.map((rawEx) => {
-                    const ex = getEditedEx(rawEx), c = COL[ex.c], isEd = editingId === ex.id;
-                    return (
-                      <div key={ex.id} className={`panel mb-1.5 overflow-hidden ${isEd ? "!border-[#D4A843]/30" : ""}`}>
-                        <div onClick={() => setEditingId(isEd ? null : ex.id)} className="flex items-center gap-3 px-4 py-3 cursor-pointer">
-                          <span className="tag min-w-[48px] text-center" style={{ border: `1px solid ${c}40`, color: c }}>{ex.c}</span>
-                          <div className="flex-1">
-                            <div className="font-heading text-[13px] !font-medium !normal-case !tracking-normal">{ex.n}</div>
-                            <div className="font-readout text-[10px] text-[#444]">{ex.f} · {ex.m}min {ex.b ? "· " + ex.b : ""}</div>
-                          </div>
-                          <span className="text-[10px] text-[#333]">{isEd ? "−" : "+"}</span>
-                        </div>
-                        {isEd && <LibraryEditor ex={ex} exEdits={exEdits} setExEdits={setExEdits} />}
+              const renderExCard = (rawEx: Exercise) => {
+                const ex = getEditedEx(rawEx), c = COL[ex.c], isEd = editingId === ex.id;
+                const practiceCount = Object.keys(doneMap).filter(k => k.includes("-" + ex.id) && doneMap[k]).length;
+                return (
+                  <div key={ex.id} className={`panel mb-1.5 overflow-hidden ${isEd ? "!border-[#D4A843]/30" : ""}`}>
+                    <div onClick={() => setEditingId(isEd ? null : ex.id)} className="flex items-center gap-3 px-4 py-3 cursor-pointer">
+                      <span className="tag min-w-[48px] text-center" style={{ border: `1px solid ${c}40`, color: c }}>{ex.c}</span>
+                      <div className="flex-1">
+                        <div className="font-heading text-[13px] !font-medium !normal-case !tracking-normal">{ex.n}</div>
+                        <div className="font-readout text-[10px] text-[#444]">{ex.f} · {ex.m}min {ex.b ? "· " + ex.b : ""}</div>
                       </div>
-                    );
-                  })}
+                      {practiceCount > 0 && (
+                        <span className="font-readout text-[9px] px-1.5 py-0.5 rounded-sm bg-[#D4A843]/10 text-[#D4A843] border border-[#D4A843]/20">{practiceCount}x</span>
+                      )}
+                      <span className="text-[10px] text-[#333]">{isEd ? "−" : "+"}</span>
+                    </div>
+                    {isEd && <LibraryEditor ex={ex} exEdits={exEdits} setExEdits={setExEdits} />}
+                  </div>
+                );
+              };
+
+              if (libShowAll) {
+                return (<>
+                  {filtered.map(renderExCard)}
                   <div className="font-readout text-[10px] text-[#444] text-center mt-2">{filtered.length} exercises</div>
                 </>);
               }
 
-              // Grouped mode
               return (<>
                 {Object.entries(CAT_GROUPS).map(([groupName, groupCats]) => {
                   const groupExercises = filtered.filter(e => groupCats.includes(e.c));
@@ -1463,24 +1623,7 @@ export default function GuitarForgeApp() {
                         <span className="font-readout text-[10px] px-2 py-0.5 rounded-sm bg-[#1a1a1a] text-[#D4A843] border border-[#D4A843]/20">{groupExercises.length}</span>
                       </div>
                       {!isCollapsed && (
-                        <div className="mt-1">
-                          {groupExercises.map((rawEx) => {
-                            const ex = getEditedEx(rawEx), c = COL[ex.c], isEd = editingId === ex.id;
-                            return (
-                              <div key={ex.id} className={`panel mb-1.5 overflow-hidden ${isEd ? "!border-[#D4A843]/30" : ""}`}>
-                                <div onClick={() => setEditingId(isEd ? null : ex.id)} className="flex items-center gap-3 px-4 py-3 cursor-pointer">
-                                  <span className="tag min-w-[48px] text-center" style={{ border: `1px solid ${c}40`, color: c }}>{ex.c}</span>
-                                  <div className="flex-1">
-                                    <div className="font-heading text-[13px] !font-medium !normal-case !tracking-normal">{ex.n}</div>
-                                    <div className="font-readout text-[10px] text-[#444]">{ex.f} · {ex.m}min {ex.b ? "· " + ex.b : ""}</div>
-                                  </div>
-                                  <span className="text-[10px] text-[#333]">{isEd ? "−" : "+"}</span>
-                                </div>
-                                {isEd && <LibraryEditor ex={ex} exEdits={exEdits} setExEdits={setExEdits} />}
-                              </div>
-                            );
-                          })}
-                        </div>
+                        <div className="mt-1">{groupExercises.map(renderExCard)}</div>
                       )}
                     </div>
                   );
@@ -1489,57 +1632,339 @@ export default function GuitarForgeApp() {
             })()}
           </>)}
 
-          {/* Styles tab */}
-          {libTab === "styles" && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {STYLES.map((s) => {
-                const cnt = EXERCISES.filter((e) => e.styles?.includes(s)).length;
-                return (
-                  <div key={s} className="panel p-4 text-center">
-                    <div className="font-heading text-sm font-bold text-[#D4A843]">{s}</div>
-                    <div className="font-readout text-[11px] text-[#555] mt-1">{cnt} exercises</div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          {/* ── Tab 2: Styles ── */}
+          {libTab === "styles" && (() => {
+            const STYLE_DATA: Record<string, { color: string; icon: string; techniques: string[]; scales: string[] }> = {
+              "Metal": { color: "#ef4444", icon: "M13 10V3L4 14h7v7l9-11h-7z", techniques: ["Palm Muting", "Tremolo Picking", "Sweep Picking", "Gallop Rhythm"], scales: ["Aeolian", "Phrygian", "Harmonic Minor"] },
+              "Hard Rock": { color: "#f97316", icon: "M13 10V3L4 14h7v7l9-11h-7z", techniques: ["Power Chords", "Bends", "Vibrato", "Hammer-ons"], scales: ["Pentatonic Minor", "Aeolian", "Mixolydian"] },
+              "Classic Rock": { color: "#eab308", icon: "M9 19V6l12-3v13", techniques: ["Bends", "Double Stops", "Rhythm Guitar", "Riffs"], scales: ["Pentatonic Minor", "Pentatonic Major", "Dorian"] },
+              "Blues": { color: "#3b82f6", icon: "M9 19V6l12-3v13", techniques: ["Bends", "Vibrato", "Slides", "Call & Response"], scales: ["Blues Scale", "Pentatonic Minor", "Mixolydian"] },
+              "Jazz": { color: "#8b5cf6", icon: "M9 19V6l12-3v13", techniques: ["Chord Melody", "Arpeggios", "Walking Bass", "Comping"], scales: ["Dorian", "Mixolydian", "Lydian", "Altered"] },
+              "Grunge": { color: "#6b7280", icon: "M13 10V3L4 14h7v7l9-11h-7z", techniques: ["Power Chords", "Drop D", "Dynamics", "Feedback"], scales: ["Pentatonic Minor", "Aeolian", "Phrygian"] },
+              "Stoner Rock": { color: "#a3e635", icon: "M13 10V3L4 14h7v7l9-11h-7z", techniques: ["Heavy Riffs", "Down Tuning", "Fuzz Tone", "Slow Bends"], scales: ["Pentatonic Minor", "Blues Scale", "Dorian"] },
+              "Punk Rock": { color: "#ec4899", icon: "M13 10V3L4 14h7v7l9-11h-7z", techniques: ["Power Chords", "Fast Strumming", "Palm Muting"], scales: ["Aeolian", "Pentatonic Minor"] },
+              "Neo-Classical": { color: "#c084fc", icon: "M9 19V6l12-3v13", techniques: ["Sweep Picking", "Alternate Picking", "Arpeggios", "Sequences"], scales: ["Harmonic Minor", "Phrygian Dominant", "Diminished"] },
+              "Funk": { color: "#14b8a6", icon: "M9 19V6l12-3v13", techniques: ["Muted Strumming", "Wah Pedal", "Octaves", "Slap"], scales: ["Mixolydian", "Dorian", "Pentatonic Minor"] },
+              "Country": { color: "#fbbf24", icon: "M9 19V6l12-3v13", techniques: ["Chicken Picking", "Bends", "Pedal Steel Licks", "Hybrid Picking"], scales: ["Pentatonic Major", "Mixolydian", "Major"] },
+              "Flamenco": { color: "#f43f5e", icon: "M9 19V6l12-3v13", techniques: ["Rasgueado", "Picado", "Tremolo", "Golpe"], scales: ["Phrygian", "Phrygian Dominant", "Harmonic Minor"] },
+              "Acoustic": { color: "#22c55e", icon: "M9 19V6l12-3v13", techniques: ["Fingerpicking", "Strumming", "Harmonics", "Percussive"], scales: ["Major", "Pentatonic Major", "Aeolian"] },
+              "Progressive Metal": { color: "#6366f1", icon: "M13 10V3L4 14h7v7l9-11h-7z", techniques: ["Odd Time Signatures", "Polyrhythms", "Tapping", "Sweep Picking"], scales: ["Lydian", "Phrygian", "Whole Tone", "Diminished"] },
+              "Djent": { color: "#0ea5e9", icon: "M13 10V3L4 14h7v7l9-11h-7z", techniques: ["Palm Muting", "Polyrhythms", "Extended Range", "Staccato"], scales: ["Aeolian", "Phrygian", "Lydian"] },
+              "Death Metal": { color: "#991b1b", icon: "M13 10V3L4 14h7v7l9-11h-7z", techniques: ["Tremolo Picking", "Blast Beats", "Dissonance", "Sweep Picking"], scales: ["Phrygian", "Locrian", "Chromatic", "Whole Tone"] },
+              "Fusion": { color: "#d946ef", icon: "M9 19V6l12-3v13", techniques: ["Legato", "Tapping", "Hybrid Picking", "Chord Extensions"], scales: ["Lydian", "Dorian", "Altered", "Melodic Minor"] },
+            };
+            const [activeStyle, setActiveStyle] = useState<string | null>(null);
+            const styleExercises = activeStyle ? EXERCISES.filter(e => e.styles?.includes(activeStyle)) : [];
+            const allSongsForStyle = activeStyle ? [...SONG_LIBRARY, ...customSongs].filter(s => s.genre?.toLowerCase().includes(activeStyle.toLowerCase())) : [];
 
-          {/* Songs tab */}
-          {libTab === "songs" && (
-            <div>
-              {songs.length === 0 && <div className="panel p-8 sm:p-12 text-center">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#33CC33" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-4 opacity-30">
-                  <path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z"/>
-                </svg>
-                <div className="font-heading text-lg text-[#33CC33] mb-2">No Songs</div>
-                <div className="font-readout text-[11px] text-[#444] mb-4">Add songs from the Dashboard</div>
-                <button type="button" onClick={() => setView("dash")} className="btn-ghost">Dashboard</button>
-              </div>}
-              {songs.map((song) => {
-                const dn = STAGES.filter((_, si) => songProgress[week + "-" + song.id + "-" + si]?.done).length;
-                return (
-                  <div key={song.id} className="panel p-4 mb-1.5">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <div className="font-heading text-sm !font-medium !normal-case !tracking-normal">{song.name}</div>
-                        <div className="font-readout text-[10px] text-[#555] mt-1">Stage {dn + 1} of {STAGES.length}</div>
+            return (
+              <div>
+                {!activeStyle ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {STYLES.map((s) => {
+                      const cnt = EXERCISES.filter((e) => e.styles?.includes(s)).length;
+                      const sd = STYLE_DATA[s];
+                      const songCnt = [...SONG_LIBRARY, ...customSongs].filter(se => se.genre?.toLowerCase().includes(s.toLowerCase())).length;
+                      return (
+                        <div key={s} onClick={() => setActiveStyle(s)}
+                          className="panel p-4 text-center cursor-pointer hover:border-[#D4A843]/30 transition-all group">
+                          <div className="w-10 h-10 rounded-full mx-auto mb-2 flex items-center justify-center" style={{ background: (sd?.color || "#D4A843") + "20", border: `1px solid ${sd?.color || "#D4A843"}40` }}>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={sd?.color || "#D4A843"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={sd?.icon || "M9 19V6l12-3v13"} /></svg>
+                          </div>
+                          <div className="font-heading text-sm font-bold" style={{ color: sd?.color || "#D4A843" }}>{s}</div>
+                          <div className="font-readout text-[10px] text-[#555] mt-1">{cnt} exercises</div>
+                          {songCnt > 0 && <div className="font-readout text-[10px] text-[#444] mt-0.5">{songCnt} songs</div>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div>
+                    <button type="button" onClick={() => setActiveStyle(null)} className="btn-ghost !text-[10px] mb-4 flex items-center gap-1">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
+                      All Styles
+                    </button>
+                    <div className="panel p-4 mb-4">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: (STYLE_DATA[activeStyle]?.color || "#D4A843") + "20", border: `1px solid ${STYLE_DATA[activeStyle]?.color || "#D4A843"}40` }}>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={STYLE_DATA[activeStyle]?.color || "#D4A843"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={STYLE_DATA[activeStyle]?.icon || "M9 19V6l12-3v13"} /></svg>
+                        </div>
+                        <div>
+                          <div className="font-heading text-lg font-bold" style={{ color: STYLE_DATA[activeStyle]?.color || "#D4A843" }}>{activeStyle}</div>
+                          <div className="font-readout text-[10px] text-[#555]">{styleExercises.length} exercises · {allSongsForStyle.length} songs</div>
+                        </div>
                       </div>
-                      <div className="font-readout text-lg font-bold text-[#D4A843]">{dn}/{STAGES.length}</div>
+                      {STYLE_DATA[activeStyle]?.techniques.length > 0 && (
+                        <div className="mb-3">
+                          <div className="font-label text-[10px] text-[#666] mb-1.5">Key Techniques</div>
+                          <div className="flex gap-1.5 flex-wrap">
+                            {STYLE_DATA[activeStyle].techniques.map(t => (
+                              <span key={t} className="font-readout text-[10px] px-2 py-1 rounded-sm border border-[#333] text-[#888]">{t}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {STYLE_DATA[activeStyle]?.scales.length > 0 && (
+                        <div>
+                          <div className="font-label text-[10px] text-[#666] mb-1.5">Recommended Scales</div>
+                          <div className="flex gap-1.5 flex-wrap">
+                            {STYLE_DATA[activeStyle].scales.map(s => (
+                              <span key={s} className="font-readout text-[10px] px-2 py-1 rounded-sm border border-[#D4A843]/20 text-[#D4A843]">{s}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div className="vu mt-2 !h-[3px]"><div className="vu-fill" style={{ width: Math.round((dn / STAGES.length) * 100) + "%" }} /></div>
-                    <div className="flex gap-1 mt-2 flex-wrap">
-                      {STAGES.map((st, si) => {
-                        const done = songProgress[week + "-" + song.id + "-" + si]?.done;
-                        return <span key={si} className="font-label text-[9px] px-2 py-0.5 rounded-sm border" style={{ borderColor: done ? "#33CC33" + "40" : "#222", color: done ? "#33CC33" : "#444" }}>{st.name}</span>;
-                      })}
-                    </div>
+                    {styleExercises.length > 0 && (
+                      <div className="mb-4">
+                        <div className="font-label text-[11px] text-[#666] mb-2">Exercises for {activeStyle}</div>
+                        {styleExercises.map(ex => {
+                          const c = COL[ex.c];
+                          return (
+                            <div key={ex.id} onClick={() => setModal(ex)} className="panel p-3 mb-1.5 cursor-pointer hover:border-[#D4A843]/30 transition-all">
+                              <div className="flex items-center gap-3">
+                                <span className="tag min-w-[48px] text-center" style={{ border: `1px solid ${c}40`, color: c }}>{ex.c}</span>
+                                <div className="flex-1">
+                                  <div className="font-heading text-[13px] !font-medium !normal-case !tracking-normal">{ex.n}</div>
+                                  <div className="font-readout text-[10px] text-[#444]">{ex.m}min {ex.b ? "· " + ex.b : ""}</div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {allSongsForStyle.length > 0 && (
+                      <div>
+                        <div className="font-label text-[11px] text-[#666] mb-2">Songs ({allSongsForStyle.length})</div>
+                        {allSongsForStyle.slice(0, 10).map(song => (
+                          <div key={song.id} onClick={() => setSongModal(song)} className="panel p-3 mb-1.5 cursor-pointer hover:border-[#D4A843]/30 transition-all">
+                            <div className="font-heading text-[13px] !font-medium !normal-case !tracking-normal">{song.title}</div>
+                            <div className="font-readout text-[10px] text-[#555]">{song.artist}</div>
+                          </div>
+                        ))}
+                        {allSongsForStyle.length > 10 && (
+                          <button type="button" onClick={() => { setLibTab("songlib"); setSongLibGenre(allSongsForStyle[0]?.genre || "all"); }} className="btn-ghost w-full mt-1 !text-[10px]">
+                            View all {allSongsForStyle.length} songs
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
-                );
-              })}
-            </div>
-          )}
+                )}
+              </div>
+            );
+          })()}
 
-          {/* Song Library tab */}
+          {/* ── Tab 3: My Songs ── */}
+          {libTab === "mysongs" && (() => {
+            const allSongsLookup = [...SONG_LIBRARY, ...customSongs];
+            const savedSongs = mySongs.map(id => allSongsLookup.find(s => s.id === id)).filter((s): s is SongEntry => !!s);
+            return (
+              <div>
+                {savedSongs.length === 0 ? (
+                  <div className="panel p-8 sm:p-12 text-center">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-4 opacity-30">
+                      <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    </svg>
+                    <div className="font-heading text-lg text-[#D4A843] mb-2">No Songs Saved</div>
+                    <div className="font-readout text-[11px] text-[#444] mb-4">Browse the Song Library and tap the heart to save songs here.</div>
+                    <button type="button" onClick={() => setLibTab("songlib")} className="btn-ghost">Browse Song Library</button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="font-readout text-[10px] text-[#555] mb-3">{savedSongs.length} saved songs</div>
+                    {savedSongs.map(song => {
+                      const dc = song.difficulty ? ({ Beginner: "#22c55e", Intermediate: "#D4A843", Advanced: "#ef4444" }[song.difficulty] || "#888") : "#888";
+                      return (
+                        <div key={song.id} className="panel p-4 mb-1.5 cursor-pointer hover:border-[#D4A843]/30 transition-all">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1 min-w-0" onClick={() => setSongModal(song)}>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-heading text-[13px] !font-medium !normal-case !tracking-normal">{song.title}</span>
+                                {song.difficulty && <span className="tag" style={{ border: `1px solid ${dc}60`, color: dc, background: dc + "15" }}>{song.difficulty}</span>}
+                              </div>
+                              <div className="font-readout text-[11px] text-[#666] mt-1">{song.artist}</div>
+                              <div className="flex gap-2 mt-1 flex-wrap">
+                                {song.genre && <span className="font-readout text-[9px] text-[#555]">{song.genre}</span>}
+                                {song.key && <span className="font-readout text-[9px] text-[#555]">Key: {song.key}</span>}
+                                {song.tempo && <span className="font-readout text-[9px] text-[#555]">{song.tempo} BPM</span>}
+                              </div>
+                            </div>
+                            <button type="button" onClick={(e) => { e.stopPropagation(); setMySongs(p => p.filter(id => id !== song.id)); }}
+                              className="flex-shrink-0 p-1.5 rounded-lg hover:bg-[#1a1a1a] transition-colors" title="Remove from My Songs">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="#ef4444" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* ── Tab 4: My Recordings ── */}
+          {libTab === "recordings" && (() => {
+            if (!libRecordingsLoaded) {
+              try {
+                const raw = localStorage.getItem("gf-recordings");
+                if (raw) setLibRecordings(JSON.parse(raw));
+              } catch {}
+              setLibRecordingsLoaded(true);
+            }
+            const playRecording = async (id: string) => {
+              if (playingRecId === id) { libAudioRef.current?.pause(); setPlayingRecId(null); return; }
+              try {
+                const dbReq = indexedDB.open("gf-studio", 2);
+                dbReq.onsuccess = () => {
+                  const db = dbReq.result;
+                  const tx = db.transaction("recordings", "readonly");
+                  const req = tx.objectStore("recordings").get(id);
+                  req.onsuccess = () => {
+                    const rec = req.result;
+                    if (rec?.blob) {
+                      if (libAudioRef.current) { libAudioRef.current.pause(); URL.revokeObjectURL(libAudioRef.current.src); }
+                      const url = URL.createObjectURL(rec.blob);
+                      const audio = new Audio(url);
+                      audio.onended = () => setPlayingRecId(null);
+                      audio.play();
+                      libAudioRef.current = audio;
+                      setPlayingRecId(id);
+                    }
+                  };
+                };
+              } catch {}
+            };
+            const deleteRecording = async (id: string) => {
+              try {
+                const dbReq = indexedDB.open("gf-studio", 2);
+                dbReq.onsuccess = () => {
+                  const db = dbReq.result;
+                  const tx = db.transaction("recordings", "readwrite");
+                  tx.objectStore("recordings").delete(id);
+                  tx.oncomplete = () => {
+                    const updated = libRecordings.filter(r => r.id !== id);
+                    setLibRecordings(updated);
+                    try { localStorage.setItem("gf-recordings", JSON.stringify(updated)); } catch {}
+                  };
+                };
+              } catch {}
+              if (playingRecId === id) { libAudioRef.current?.pause(); setPlayingRecId(null); }
+            };
+            return (
+              <div>
+                {libRecordings.length === 0 ? (
+                  <div className="panel p-8 sm:p-12 text-center">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-4 opacity-30">
+                      <path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m-4-1h8M12 4a3 3 0 00-3 3v4a3 3 0 006 0V7a3 3 0 00-3-3z"/>
+                    </svg>
+                    <div className="font-heading text-lg text-[#D4A843] mb-2">No Recordings</div>
+                    <div className="font-readout text-[11px] text-[#444] mb-4">Record yourself in any exercise or the Studio to see recordings here.</div>
+                    <button type="button" onClick={() => setView("studio")} className="btn-ghost">Open Studio</button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="font-readout text-[10px] text-[#555] mb-3">{libRecordings.length} recordings</div>
+                    {libRecordings.map(rec => (
+                      <div key={rec.id} className="panel p-4 mb-1.5">
+                        <div className="flex items-center gap-3">
+                          <button type="button" onClick={() => playRecording(rec.id)}
+                            className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border transition-all"
+                            style={{ borderColor: playingRecId === rec.id ? "#D4A843" : "#333", background: playingRecId === rec.id ? "#D4A843" + "20" : "transparent" }}>
+                            {playingRecId === rec.id ? (
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="#D4A843"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                            ) : (
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="#D4A843"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                            )}
+                          </button>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-heading text-[13px] !font-medium !normal-case !tracking-normal truncate">{rec.name}</div>
+                            <div className="font-readout text-[10px] text-[#444]">
+                              {new Date(rec.date).toLocaleDateString()} · {Math.round(rec.duration)}s · {rec.format?.toUpperCase() || "WAV"}
+                            </div>
+                          </div>
+                          <button type="button" onClick={() => deleteRecording(rec.id)}
+                            className="btn-ghost !px-2 !py-1 !text-[9px] !text-[#C41E3A] !border-[#333] flex-shrink-0">Delete</button>
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* ── Tab 5: My Backing Tracks ── */}
+          {libTab === "backing" && (() => {
+            if (!libBackingLoaded) {
+              setLibBackingLoaded(true);
+              getAllLibraryTracks().then(tracks => setLibBackingTracks(tracks)).catch(() => {});
+            }
+            const playBacking = (track: LibraryTrack) => {
+              if (playingBackingId === track.id) { libAudioRef.current?.pause(); setPlayingBackingId(null); return; }
+              if (libAudioRef.current) { libAudioRef.current.pause(); URL.revokeObjectURL(libAudioRef.current.src); }
+              const audio = new Audio(track.audioUrl);
+              audio.onended = () => setPlayingBackingId(null);
+              audio.play();
+              libAudioRef.current = audio;
+              setPlayingBackingId(track.id);
+            };
+            const deleteBacking = async (id: string) => {
+              try { await deleteFromLibrary(id); setLibBackingTracks(p => p.filter(t => t.id !== id)); } catch {}
+              if (playingBackingId === id) { libAudioRef.current?.pause(); setPlayingBackingId(null); }
+            };
+            return (
+              <div>
+                {libBackingTracks.length === 0 ? (
+                  <div className="panel p-8 sm:p-12 text-center">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-4 opacity-30">
+                      <path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z"/>
+                    </svg>
+                    <div className="font-heading text-lg text-[#D4A843] mb-2">No Backing Tracks</div>
+                    <div className="font-readout text-[11px] text-[#444] mb-4">Generate a backing track in any exercise or the Studio.</div>
+                    <button type="button" onClick={() => setView("studio")} className="btn-ghost">Open Studio</button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="font-readout text-[10px] text-[#555] mb-3">{libBackingTracks.length} backing tracks</div>
+                    {libBackingTracks.map(track => (
+                      <div key={track.id} className="panel p-4 mb-1.5">
+                        <div className="flex items-center gap-3">
+                          <button type="button" onClick={() => playBacking(track)}
+                            className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border transition-all"
+                            style={{ borderColor: playingBackingId === track.id ? "#D4A843" : "#333", background: playingBackingId === track.id ? "#D4A843" + "20" : "transparent" }}>
+                            {playingBackingId === track.id ? (
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="#D4A843"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                            ) : (
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="#D4A843"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                            )}
+                          </button>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-heading text-[13px] !font-medium !normal-case !tracking-normal truncate">{track.title}</div>
+                            <div className="font-readout text-[10px] text-[#444]">
+                              {track.params.style} · {track.params.scale} {track.params.mode} · {track.params.bpm} BPM
+                            </div>
+                            <div className="font-readout text-[9px] text-[#333] mt-0.5">
+                              {new Date(track.createdAt).toLocaleDateString()} · {Math.round(track.duration)}s
+                            </div>
+                          </div>
+                          {track.favorite && <span className="text-[#D4A843] text-xs flex-shrink-0">★</span>}
+                          <button type="button" onClick={() => deleteBacking(track.id)}
+                            className="btn-ghost !px-2 !py-1 !text-[9px] !text-[#C41E3A] !border-[#333] flex-shrink-0">Delete</button>
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* ── Tab 6: Song Library ── */}
           {libTab === "songlib" && (() => {
             const allSongs = [...SONG_LIBRARY, ...customSongs];
             const genres = [...new Set(allSongs.map(s => s.genre).filter((g): g is string => !!g))].sort();
@@ -1555,39 +1980,32 @@ export default function GuitarForgeApp() {
             const diffCounts = { all: genreFiltered.length, Beginner: genreFiltered.filter(s => s.difficulty === "Beginner").length, Intermediate: genreFiltered.filter(s => s.difficulty === "Intermediate").length, Advanced: genreFiltered.filter(s => s.difficulty === "Advanced").length };
             return (
               <div>
-                {/* Genre tabs */}
                 <div className="flex gap-1 flex-wrap mb-3 overflow-x-auto scrollbar-hide">
                   <button onClick={() => { setSongLibGenre("all"); setSongLibLimit(20); }}
-                    className={`font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border transition-all flex-shrink-0 ${songLibGenre === "all" ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>
+                    className={`font-label text-[10px] px-3 py-1 rounded-lg cursor-pointer border transition-all flex-shrink-0 ${songLibGenre === "all" ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>
                     All ({allSongs.length})
                   </button>
                   {genres.map(g => {
                     const cnt = allSongs.filter(s => s.genre === g).length;
                     return (
                       <button key={g} onClick={() => { setSongLibGenre(g); setSongLibLimit(20); }}
-                        className={`font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border transition-all flex-shrink-0 ${songLibGenre === g ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>
+                        className={`font-label text-[10px] px-3 py-1 rounded-lg cursor-pointer border transition-all flex-shrink-0 ${songLibGenre === g ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>
                         {g} ({cnt})
                       </button>
                     );
                   })}
                 </div>
-
-                {/* Search */}
                 <input type="text" placeholder="Search song, artist, genre..." className="input w-full mb-3"
                   value={songLibSearch} onChange={e => { setSongLibSearch(e.target.value); setSongLibLimit(20); }} />
-
-                {/* Difficulty filter */}
                 <div className="flex gap-1 flex-wrap mb-4">
-                  {([["all", "All", "#D4A843"], ["Beginner", "Beginner", "#22c55e"], ["Intermediate", "Intermediate", "#f59e0b"], ["Advanced", "Advanced", "#ef4444"]] as const).map(([key, label, color]) => (
+                  {([["all", "All", "#D4A843"], ["Beginner", "Beginner", "#22c55e"], ["Intermediate", "Intermediate", "#D4A843"], ["Advanced", "Advanced", "#ef4444"]] as const).map(([key, label, color]) => (
                     <button key={key} onClick={() => { setSongLibFilter(key as typeof songLibFilter); setSongLibLimit(20); }}
-                      className="font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border transition-all"
+                      className="font-label text-[10px] px-3 py-1 rounded-lg cursor-pointer border transition-all"
                       style={songLibFilter === key ? { background: color, borderColor: color, color: "#121214" } : { borderColor: color + "40", color: color + "99" }}>
                       {label} ({diffCounts[key as keyof typeof diffCounts]})
                     </button>
                   ))}
                 </div>
-
-                {/* Add custom song */}
                 <div className="mb-4">
                   <button onClick={() => setShowAddSong(!showAddSong)} className="btn-ghost !text-[10px] mb-2">
                     {showAddSong ? "Close" : "+ Add Song"}
@@ -1606,24 +2024,19 @@ export default function GuitarForgeApp() {
                     </div>
                   )}
                 </div>
-
-                {/* Showing count */}
                 <div className="font-readout text-[10px] text-[#555] mb-2">
                   Showing {Math.min(songLibLimit, filtered.length)} of {filtered.length} songs
                 </div>
-
-                {/* Song cards */}
                 {filtered.length === 0 && (
-                  <div className="panel p-8 text-center">
-                    <div className="font-label text-sm text-[#444]">No songs found</div>
-                  </div>
+                  <div className="panel p-8 text-center"><div className="font-label text-sm text-[#444]">No songs found</div></div>
                 )}
                 {(() => {
                   const limited = filtered.slice(0, songLibLimit);
                   return (<>
                     {limited.map(song => {
-                      const dc = song.difficulty ? ({ Beginner: "#22c55e", Intermediate: "#f59e0b", Advanced: "#ef4444" }[song.difficulty] || "#888") : "#888";
+                      const dc = song.difficulty ? ({ Beginner: "#22c55e", Intermediate: "#D4A843", Advanced: "#ef4444" }[song.difficulty] || "#888") : "#888";
                       const isCustom = song.id >= 1000000000;
+                      const isSaved = mySongs.includes(song.id);
                       return (
                         <div key={song.id} onClick={() => setSongModal(song)}
                           className="panel p-4 mb-1.5 cursor-pointer hover:border-[#D4A843]/30 transition-all">
@@ -1641,10 +2054,21 @@ export default function GuitarForgeApp() {
                                 {song.tuning && song.tuning !== "Standard" && <span className="font-readout text-[9px] text-[#555]">{song.tuning}</span>}
                               </div>
                             </div>
-                            {isCustom && (
-                              <button onClick={(e) => { e.stopPropagation(); setCustomSongs(p => p.filter(s => s.id !== song.id)); }}
-                                className="btn-ghost !px-2 !py-1 !text-[9px] !text-[#C41E3A] !border-[#333] flex-shrink-0 mr-2">Remove</button>
-                            )}
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              <button type="button" onClick={(e) => {
+                                e.stopPropagation();
+                                if (isSaved) setMySongs(p => p.filter(id => id !== song.id));
+                                else setMySongs(p => [...p, song.id]);
+                              }} className="p-1.5 rounded-lg hover:bg-[#1a1a1a] transition-colors" title={isSaved ? "Remove from My Songs" : "Add to My Songs"}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill={isSaved ? "#ef4444" : "none"} stroke={isSaved ? "#ef4444" : "#555"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                                </svg>
+                              </button>
+                              {isCustom && (
+                                <button type="button" onClick={(e) => { e.stopPropagation(); setCustomSongs(p => p.filter(s => s.id !== song.id)); }}
+                                  className="btn-ghost !px-2 !py-1 !text-[9px] !text-[#C41E3A] !border-[#333]">Remove</button>
+                              )}
+                            </div>
                           </div>
                         </div>
                       );
@@ -1698,17 +2122,12 @@ export default function GuitarForgeApp() {
           {songs.length > 0 && (
             <div className="panel p-5 mb-4">
               <div className="font-label text-[11px] text-[#33CC33] mb-3 flex items-center gap-2"><div className="led led-on" /> Songs</div>
-              {songs.map((song) => {
-                const sd = STAGES.map((st, si) => ({ name: st.name, idx: si, ...(songProgress[week + "-" + song.id + "-" + si] || {}) }));
-                const dn = sd.filter((s) => s.done).length;
-                return (
-                  <div key={song.id} className="p-3 bg-[#121214] rounded-sm mb-2 border border-[#1a1a1a]">
-                    <div className="flex justify-between mb-2"><span className="font-medium text-sm">{song.name}</span><span className="font-readout text-[11px] text-[#555]">{dn}/6</span></div>
-                    <div className="vu vu-green !h-[3px] mb-2"><div className="vu-fill" style={{ width: Math.round((dn / 6) * 100) + "%" }} /></div>
-                    {sd.map((s) => <div key={s.idx} className="flex gap-2 text-[11px] py-0.5"><div className={`led ${s.done ? "led-on" : "led-off"}`} style={{ width: 6, height: 6, marginTop: 5 }} /><span style={{ color: s.done ? "#ccc" : "#444" }}>{s.name}</span></div>)}
+              {songs.map((song) => (
+                  <div key={song.id} className="p-3 bg-[#121214] rounded-lg mb-2 border border-[#1a1a1a]">
+                    <span className="font-medium text-sm">{song.name}</span>
+                    {song.url && <a href={song.url} target="_blank" rel="noopener noreferrer" className="font-label text-[9px] text-[#D4A843] ml-2 no-underline">Tab</a>}
                   </div>
-                );
-              })}
+              ))}
             </div>
           )}
 

@@ -310,6 +310,7 @@ export default function JamModePage() {
   const bassSynthRef = useRef<InstanceType<typeof import("tone").Synth> | null>(null);
   const hihatSynthRef = useRef<InstanceType<typeof import("tone").NoiseSynth> | null>(null);
   const kickSynthRef = useRef<InstanceType<typeof import("tone").MembraneSynth> | null>(null);
+  const snareSynthRef = useRef<InstanceType<typeof import("tone").NoiseSynth> | null>(null);
   const loopRef = useRef<InstanceType<typeof import("tone").Loop> | null>(null);
   const beatCountRef = useRef(0);
   const chordIdxRef = useRef(0);
@@ -396,6 +397,13 @@ export default function JamModePage() {
     }).toDestination();
     kickSynthRef.current.volume.value = volToDb(settingsRef.current.drumVol);
 
+    // Bug fix #3: Add snare synth (was missing — only kick + hihat existed)
+    snareSynthRef.current = new Tone.NoiseSynth({
+      noise: { type: "white" },
+      envelope: { attack: 0.001, decay: 0.15, sustain: 0, release: 0.05 },
+    }).toDestination();
+    snareSynthRef.current.volume.value = volToDb(settingsRef.current.drumVol) - 3;
+
     setToneLoaded(true);
   }, []);
 
@@ -410,6 +418,7 @@ export default function JamModePage() {
     if (bassSynthRef.current) bassSynthRef.current.volume.value = volToDb(settings.bassVol);
     if (hihatSynthRef.current) hihatSynthRef.current.volume.value = volToDb(settings.drumVol) - 6;
     if (kickSynthRef.current) kickSynthRef.current.volume.value = volToDb(settings.drumVol);
+    if (snareSynthRef.current) snareSynthRef.current.volume.value = volToDb(settings.drumVol) - 3;
   }, [settings.metronomeVol, settings.bassVol, settings.drumVol]);
 
   // Update BPM live
@@ -467,17 +476,29 @@ export default function JamModePage() {
         metronomeSynthRef.current.triggerAttackRelease(pitch, "16n", time);
       }
 
-      // Bass on beat 1 of each chord
-      if (bassSynthRef.current && s.bassEnabled && s.bassVol > 0 && beatInChord === 0) {
+      // Bug fix #4: Bass root on beat 1, fifth on beat 3 (was only root on beat 1)
+      if (bassSynthRef.current && s.bassEnabled && s.bassVol > 0) {
         const rootNote = cds[chIdx].root + "2";
-        bassSynthRef.current.triggerAttackRelease(rootNote, "2n", time);
+        if (beatInChord === 0) {
+          bassSynthRef.current.triggerAttackRelease(rootNote, "4n", time);
+        } else if (beatInChord === 2) {
+          // Play the fifth above root
+          const rootIdx = NOTE_NAMES.indexOf(cds[chIdx].root);
+          const fifthIdx = rootIdx >= 0 ? (rootIdx + 7) % 12 : -1;
+          const fifthNote = fifthIdx >= 0 ? NOTE_NAMES[fifthIdx] + "2" : rootNote;
+          bassSynthRef.current.triggerAttackRelease(fifthNote, "4n", time);
+        }
       }
 
-      // Drums
+      // Drums — Bug fix #3: added snare on beats 2 and 4
       if (s.drumEnabled && s.drumVol > 0) {
         // Kick on 1 and 3
         if (beatInChord % 2 === 0 && kickSynthRef.current) {
           kickSynthRef.current.triggerAttackRelease("C1", "8n", time);
+        }
+        // Snare on 2 and 4
+        if (beatInChord % 2 === 1 && snareSynthRef.current) {
+          snareSynthRef.current.triggerAttackRelease("8n", time);
         }
         // Hihat on every beat
         if (hihatSynthRef.current) {
@@ -565,6 +586,7 @@ export default function JamModePage() {
       bassSynthRef.current?.dispose();
       hihatSynthRef.current?.dispose();
       kickSynthRef.current?.dispose();
+      snareSynthRef.current?.dispose();
     };
   }, []);
 
@@ -601,7 +623,7 @@ export default function JamModePage() {
 
       {/* Settings Panel */}
       {showSettings && (
-        <div className="rounded-lg p-3 sm:p-4 mb-4 sm:mb-6" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="panel-secondary rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             {/* Key */}
             <div>
@@ -609,8 +631,7 @@ export default function JamModePage() {
               <select
                 value={settings.key}
                 onChange={e => updateSetting("key", e.target.value)}
-                className="w-full rounded px-2 py-1.5 text-xs text-[#e8e4dc] font-label"
-                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
+                className="input w-full !rounded !px-2 !py-1.5 !text-xs font-label"
               >
                 {KEYS.map(k => (
                   <optgroup key={k} label={k}>
@@ -627,8 +648,7 @@ export default function JamModePage() {
               <select
                 value={settings.genre}
                 onChange={e => { updateSetting("genre", e.target.value); updateSetting("progressionIndex", 0); }}
-                className="w-full rounded px-2 py-1.5 text-xs text-[#e8e4dc] font-label"
-                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
+                className="input w-full !rounded !px-2 !py-1.5 !text-xs font-label"
               >
                 {GENRES.map(g => <option key={g} value={g}>{g}</option>)}
               </select>
@@ -640,8 +660,7 @@ export default function JamModePage() {
               <select
                 value={settings.progressionIndex}
                 onChange={e => updateSetting("progressionIndex", Number(e.target.value))}
-                className="w-full rounded px-2 py-1.5 text-xs text-[#e8e4dc] font-label"
-                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
+                className="input w-full !rounded !px-2 !py-1.5 !text-xs font-label"
               >
                 {filteredProgressions.map((p, i) => (
                   <option key={i} value={i}>{p.name}</option>
@@ -945,7 +964,7 @@ export default function JamModePage() {
       </div>
 
       {/* ── Scale Guide ── */}
-      <div className="mt-4 sm:mt-6 rounded-lg p-3 sm:p-4" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+      <div className="panel-secondary mt-4 sm:mt-6 rounded-lg p-3 sm:p-4">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-bold text-[#e8e4dc] font-heading">Scale Guide</h2>
           <div className="flex gap-1">
@@ -1002,7 +1021,7 @@ export default function JamModePage() {
 
       {/* ── Progression Info ── */}
       {currentProgression && (
-        <div className="mt-4 sm:mt-6 rounded-lg p-3 sm:p-4" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="panel-secondary mt-4 sm:mt-6 rounded-lg p-3 sm:p-4">
           <h2 className="text-sm font-bold text-[#e8e4dc] font-heading mb-2">Progression Details</h2>
           <div className="flex flex-wrap gap-x-6 gap-y-1 text-[11px]">
             <div>

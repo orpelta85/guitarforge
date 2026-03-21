@@ -40,6 +40,11 @@ export interface SongEntry {
   songsterrUrl?: string;
   gpFileName?: string;
   ytTutorial?: string;
+  popularity?: number;
+  durationMs?: number;
+  artistCountry?: string;
+  artistTags?: string;
+  gp?: boolean;
 }
 
 export interface Stage {

@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Guitar practice management platform for metal/rock guitarists",
     start_url: "/",
     display: "standalone",
-    background_color: "#0a0a0a",
-    theme_color: "#0a0a0a",
+    background_color: "#121214",
+    theme_color: "#121214",
     orientation: "any",
     categories: ["music", "education", "productivity"],
     icons: [

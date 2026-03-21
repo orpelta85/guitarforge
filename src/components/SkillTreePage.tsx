@@ -348,16 +348,16 @@ export default function SkillTreePage() {
           <h1 className="text-2xl font-bold tracking-tight" style={{ fontFamily: "Oswald, system-ui, sans-serif", color: "#D4A843" }}>
             Skill Tree
           </h1>
-          <p className="text-sm text-neutral-400 mt-1">Track your guitar mastery across {BRANCHES.length} skill branches</p>
+          <p className="text-sm text-[#8A8478] mt-1">Track your guitar mastery across {BRANCHES.length} skill branches</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="amp-panel px-3 py-1.5 rounded text-sm flex items-center gap-2">
-            <span className="text-neutral-400">Skills:</span>
+          <div className="panel-secondary px-3 py-1.5 rounded text-sm flex items-center gap-2">
+            <span className="text-[#8A8478]">Skills:</span>
             <span className="font-semibold" style={{ color: "#D4A843" }}>{stats.completed}/{stats.total}</span>
           </div>
           {stats.mastered > 0 && (
-            <div className="amp-panel px-3 py-1.5 rounded text-sm flex items-center gap-2">
-              <span className="text-neutral-400">Mastered:</span>
+            <div className="panel-secondary px-3 py-1.5 rounded text-sm flex items-center gap-2">
+              <span className="text-[#8A8478]">Mastered:</span>
               <span className="font-semibold text-green-400">{stats.mastered}</span>
             </div>
           )}
@@ -365,12 +365,12 @@ export default function SkillTreePage() {
       </div>
 
       {/* Progress Bar */}
-      <div className="amp-panel rounded-lg p-3 mb-4">
+      <div className="panel-secondary rounded-lg p-3 mb-4">
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-xs text-neutral-400">Overall Progress</span>
+          <span className="text-xs text-[#8A8478]">Overall Progress</span>
           <span className="text-xs font-medium" style={{ color: "#D4A843" }}>{Math.round((stats.completed / stats.total) * 100)}%</span>
         </div>
-        <div className="h-2 bg-neutral-800 rounded-full overflow-hidden">
+        <div className="h-2 bg-[#1a1a1e] rounded-full overflow-hidden">
           <div
             className="h-full rounded-full transition-all duration-700 ease-out"
             style={{
@@ -382,8 +382,8 @@ export default function SkillTreePage() {
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-x-4 gap-y-1.5 mb-3 text-xs text-neutral-400">
-        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full border border-neutral-600 bg-neutral-800 inline-block" /> Locked</span>
+      <div className="flex flex-wrap gap-x-4 gap-y-1.5 mb-3 text-xs text-[#8A8478]">
+        <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full border border-[#3D3A34] bg-[#1a1a1e] inline-block" /> Locked</span>
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full border-2 inline-block" style={{ borderColor: "#D4A843" }} /> Available</span>
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full inline-block" style={{ background: "#D4A843" }} /> Completed</span>
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full inline-block" style={{ background: "#22c55e", boxShadow: "0 0 6px #22c55e" }} /> Mastered</span>
@@ -392,7 +392,7 @@ export default function SkillTreePage() {
       {/* Tree Canvas */}
       <div
         ref={containerRef}
-        className="amp-panel rounded-lg overflow-hidden relative select-none"
+        className="panel-secondary rounded-lg overflow-hidden relative select-none"
         style={{ touchAction: "none" }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -487,12 +487,12 @@ export default function SkillTreePage() {
           }).length;
           const color = branchNodes[0] ? getNodeColor(branchNodes[0]) : "#D4A843";
           return (
-            <div key={b.id} className="amp-panel rounded-lg p-3">
+            <div key={b.id} className="panel-secondary rounded-lg p-3">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-semibold" style={{ color }}>{b.label}</span>
-                <span className="text-xs text-neutral-400">{done}/{branchNodes.length}</span>
+                <span className="text-xs text-[#8A8478]">{done}/{branchNodes.length}</span>
               </div>
-              <div className="h-1.5 bg-neutral-800 rounded-full overflow-hidden">
+              <div className="h-1.5 bg-[#1a1a1e] rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{ width: `${branchNodes.length > 0 ? (done / branchNodes.length) * 100 : 0}%`, background: color }}
@@ -543,7 +543,7 @@ function NodeDetailPanel({
   }[state];
 
   return (
-    <div className="amp-panel rounded-lg p-4 mt-4 border" style={{ borderColor: color + "40" }}>
+    <div className="panel-secondary rounded-lg p-4 mt-4 border" style={{ borderColor: color + "40" }}>
       <div className="flex items-start justify-between mb-3">
         <div>
           <h3 className="text-lg font-bold" style={{ fontFamily: "Oswald, system-ui, sans-serif", color }}>
@@ -558,23 +558,23 @@ function NodeDetailPanel({
             </span>
           </div>
         </div>
-        <button onClick={onClose} className="text-neutral-500 hover:text-white transition-colors p-1">
+        <button onClick={onClose} className="text-[#5C5852] hover:text-white transition-colors p-1">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M18 6L6 18M6 6l12 12" />
           </svg>
         </button>
       </div>
 
-      <p className="text-sm text-neutral-300 mb-3">{node.description}</p>
+      <p className="text-sm text-[#9a9590] mb-3">{node.description}</p>
 
       {node.requires.length > 0 && (
         <div className="mb-3">
-          <span className="text-xs text-neutral-500 uppercase tracking-wider">Requires</span>
+          <span className="text-xs text-[#5C5852] uppercase tracking-wider">Requires</span>
           <div className="flex flex-wrap gap-1.5 mt-1">
             {node.requires.map(reqId => {
               const req = SKILL_NODES.find(n => n.id === reqId);
               return req ? (
-                <span key={reqId} className="text-xs px-2 py-0.5 bg-neutral-800 rounded text-neutral-300">
+                <span key={reqId} className="text-xs px-2 py-0.5 bg-[#1a1a1e] rounded text-[#9a9590]">
                   {req.name}
                 </span>
               ) : null;
@@ -584,13 +584,13 @@ function NodeDetailPanel({
       )}
 
       <div>
-        <span className="text-xs text-neutral-500 uppercase tracking-wider">Linked Exercises</span>
+        <span className="text-xs text-[#5C5852] uppercase tracking-wider">Linked Exercises</span>
         <div className="mt-1.5 space-y-1.5">
           {exercises.map(ex => {
             const count = exerciseCompletionCount[ex.id] || 0;
             const done = count > 0;
             return (
-              <div key={ex.id} className="flex items-center justify-between p-2 rounded bg-neutral-800/50">
+              <div key={ex.id} className="flex items-center justify-between p-2 rounded bg-[#1a1a1e]/50">
                 <div className="flex items-center gap-2">
                   {done ? (
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5">
@@ -601,9 +601,9 @@ function NodeDetailPanel({
                       <circle cx="12" cy="12" r="9" />
                     </svg>
                   )}
-                  <span className={`text-sm ${done ? "text-neutral-200" : "text-neutral-500"}`}>{ex.n}</span>
+                  <span className={`text-sm ${done ? "text-[#e8e4dc]" : "text-[#5C5852]"}`}>{ex.n}</span>
                 </div>
-                <span className="text-xs text-neutral-500">{count > 0 ? `${count}x` : "—"}</span>
+                <span className="text-xs text-[#5C5852]">{count > 0 ? `${count}x` : "—"}</span>
               </div>
             );
           })}

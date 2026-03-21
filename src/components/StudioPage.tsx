@@ -359,8 +359,11 @@ function createEmptyDrumPattern(): boolean[][] {
   return DRUM_INSTRUMENTS.map(() => Array(DRUM_STEPS).fill(false));
 }
 
-function synthDrumHit(ctx: AudioContext, instrument: number, time: number) {
+// Bug fix #2: route all drum sounds through an output node instead of ctx.destination
+// so track volume/pan/mute/solo controls work on drum tracks
+function synthDrumHit(ctx: AudioContext | OfflineAudioContext, instrument: number, time: number, output?: AudioNode) {
   const t = time;
+  const dest = output || ctx.destination;
   switch (instrument) {
     case 0: { // Kick: sine pitch drop
       const osc = ctx.createOscillator();
@@ -370,12 +373,12 @@ function synthDrumHit(ctx: AudioContext, instrument: number, time: number) {
       osc.frequency.exponentialRampToValueAtTime(50, t + 0.12);
       gain.gain.setValueAtTime(1, t);
       gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
-      osc.connect(gain).connect(ctx.destination);
+      osc.connect(gain).connect(dest);
       osc.start(t); osc.stop(t + 0.25);
       break;
     }
     case 1: { // Snare: noise burst + sine
-      const bufSize = ctx.sampleRate * 0.15;
+      const bufSize = Math.ceil(ctx.sampleRate * 0.15);
       const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
       const data = buf.getChannelData(0);
       for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
@@ -384,19 +387,19 @@ function synthDrumHit(ctx: AudioContext, instrument: number, time: number) {
       const ng = ctx.createGain();
       ng.gain.setValueAtTime(0.6, t);
       ng.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
-      noise.connect(ng).connect(ctx.destination);
+      noise.connect(ng).connect(dest);
       noise.start(t); noise.stop(t + 0.15);
       const osc = ctx.createOscillator();
       const og = ctx.createGain();
       osc.type = "sine"; osc.frequency.value = 180;
       og.gain.setValueAtTime(0.7, t);
       og.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
-      osc.connect(og).connect(ctx.destination);
+      osc.connect(og).connect(dest);
       osc.start(t); osc.stop(t + 0.1);
       break;
     }
     case 2: { // HiHat Closed: short HP noise
-      const bufSize = ctx.sampleRate * 0.05;
+      const bufSize = Math.ceil(ctx.sampleRate * 0.05);
       const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
       const data = buf.getChannelData(0);
       for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
@@ -407,12 +410,12 @@ function synthDrumHit(ctx: AudioContext, instrument: number, time: number) {
       const g = ctx.createGain();
       g.gain.setValueAtTime(0.3, t);
       g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
-      noise.connect(hp).connect(g).connect(ctx.destination);
+      noise.connect(hp).connect(g).connect(dest);
       noise.start(t); noise.stop(t + 0.05);
       break;
     }
     case 3: { // HiHat Open: longer HP noise
-      const bufSize = ctx.sampleRate * 0.2;
+      const bufSize = Math.ceil(ctx.sampleRate * 0.2);
       const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
       const data = buf.getChannelData(0);
       for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
@@ -423,12 +426,12 @@ function synthDrumHit(ctx: AudioContext, instrument: number, time: number) {
       const g = ctx.createGain();
       g.gain.setValueAtTime(0.3, t);
       g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
-      noise.connect(hp).connect(g).connect(ctx.destination);
+      noise.connect(hp).connect(g).connect(dest);
       noise.start(t); noise.stop(t + 0.2);
       break;
     }
     case 4: { // Clap: noise burst
-      const bufSize = ctx.sampleRate * 0.1;
+      const bufSize = Math.ceil(ctx.sampleRate * 0.1);
       const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
       const data = buf.getChannelData(0);
       for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
@@ -439,7 +442,7 @@ function synthDrumHit(ctx: AudioContext, instrument: number, time: number) {
       const g = ctx.createGain();
       g.gain.setValueAtTime(0.5, t);
       g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
-      noise.connect(bp).connect(g).connect(ctx.destination);
+      noise.connect(bp).connect(g).connect(dest);
       noise.start(t); noise.stop(t + 0.1);
       break;
     }
@@ -449,9 +452,9 @@ function synthDrumHit(ctx: AudioContext, instrument: number, time: number) {
       osc.type = "triangle"; osc.frequency.value = 800;
       og.gain.setValueAtTime(0.15, t);
       og.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
-      osc.connect(og).connect(ctx.destination);
+      osc.connect(og).connect(dest);
       osc.start(t); osc.stop(t + 0.4);
-      const bufSize = ctx.sampleRate * 0.3;
+      const bufSize = Math.ceil(ctx.sampleRate * 0.3);
       const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
       const d = buf.getChannelData(0);
       for (let i = 0; i < bufSize; i++) d[i] = Math.random() * 2 - 1;
@@ -462,7 +465,7 @@ function synthDrumHit(ctx: AudioContext, instrument: number, time: number) {
       const ng = ctx.createGain();
       ng.gain.setValueAtTime(0.1, t);
       ng.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
-      noise.connect(hp).connect(ng).connect(ctx.destination);
+      noise.connect(hp).connect(ng).connect(dest);
       noise.start(t); noise.stop(t + 0.3);
       break;
     }
@@ -474,7 +477,7 @@ function synthDrumHit(ctx: AudioContext, instrument: number, time: number) {
       osc.frequency.exponentialRampToValueAtTime(60, t + 0.15);
       g.gain.setValueAtTime(0.8, t);
       g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
-      osc.connect(g).connect(ctx.destination);
+      osc.connect(g).connect(dest);
       osc.start(t); osc.stop(t + 0.25);
       break;
     }
@@ -486,11 +489,40 @@ function synthDrumHit(ctx: AudioContext, instrument: number, time: number) {
       osc.frequency.exponentialRampToValueAtTime(100, t + 0.12);
       g.gain.setValueAtTime(0.8, t);
       g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
-      osc.connect(g).connect(ctx.destination);
+      osc.connect(g).connect(dest);
       osc.start(t); osc.stop(t + 0.2);
       break;
     }
   }
+}
+
+// Render a drum pattern to an AudioBuffer for export (Bug fix #5)
+async function renderDrumPatternAsync(
+  pattern: boolean[][],
+  bpm: number,
+  durationSec: number,
+  sampleRate = 44100,
+): Promise<AudioBuffer> {
+  const stepDuration = (60 / bpm) / 4;
+  const stepsPerLoop = DRUM_STEPS;
+  const loopDuration = stepsPerLoop * stepDuration;
+  const loops = Math.max(1, Math.ceil(durationSec / loopDuration));
+  const totalDuration = loops * loopDuration + 0.5;
+  const length = Math.ceil(totalDuration * sampleRate);
+  const offCtx = new OfflineAudioContext(2, length, sampleRate);
+  const gain = offCtx.createGain();
+  gain.connect(offCtx.destination);
+  for (let loop = 0; loop < loops; loop++) {
+    for (let step = 0; step < DRUM_STEPS; step++) {
+      const t = (loop * DRUM_STEPS + step) * stepDuration;
+      for (let i = 0; i < DRUM_INSTRUMENTS.length; i++) {
+        if (pattern[i][step]) {
+          synthDrumHit(offCtx, i, t, gain);
+        }
+      }
+    }
+  }
+  return offCtx.startRendering();
 }
 
 function computePeaks(buffer: AudioBuffer, width: number): number[] {
@@ -609,6 +641,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
   const [ampPreset, setAmpPreset] = useState("highgain");
   const [ampKnobs, setAmpKnobs] = useState({ gain: 8, bass: 6, mid: 5, treble: 6, presence: 6, master: 4 });
   const [showRightPanel, setShowRightPanel] = useState(false);
+  const [contextSidebarTab, setContextSidebarTab] = useState<"library" | "effects" | "suno" | "recordings">("library");
   const [projectKey, setProjectKey] = useState("Am");
   const [showKeyPicker, setShowKeyPicker] = useState(false);
   const [colorPickerTrackId, setColorPickerTrackId] = useState<number | null>(null);
@@ -637,10 +670,15 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
   } | null>(null);
   const [drumPlaying, setDrumPlaying] = useState(false);
   const [drumStep, setDrumStep] = useState(-1);
+  const [drumGridExpanded, setDrumGridExpanded] = useState(true);
   const [soundsTab, setSoundsTab] = useState<"recordings" | "sounds">("recordings");
   const [soundsSubTab, setSoundsSubTab] = useState<"files" | "presets" | "loops">("files");
   const drumAudioCtxRef = useRef<AudioContext | null>(null);
   const drumTimerRef = useRef<number | null>(null);
+  const drumGainRef = useRef<GainNode | null>(null);
+  const drumPanRef = useRef<StereoPannerNode | null>(null);
+  const drumNextNoteTimeRef = useRef(0);
+  const drumCurrentStepRef = useRef(0);
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
   const regionCanvasRefs = useRef<Record<string, HTMLCanvasElement | null>>({});
   const audioBuffersRef = useRef<Record<number, AudioBuffer>>({});
@@ -811,7 +849,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
       container,
       waveColor: track.color + "66",
       progressColor: track.color,
-      cursorColor: "#f59e0b",
+      cursorColor: "#D4A843",
       cursorWidth: 2,
       height: 56,
       barWidth: 2,
@@ -932,33 +970,77 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
     }));
   }, []);
 
-  // ── Drum playback ──
-  const startDrumPlayback = useCallback((pattern: boolean[][]) => {
+  // ── Drum playback (Bug fix #1: look-ahead scheduler, Bug fix #2: mixer routing) ──
+  const DRUM_LOOKAHEAD_MS = 25;
+  const DRUM_SCHEDULE_AHEAD_S = 0.1;
+
+  const startDrumPlayback = useCallback((pattern: boolean[][], trackId?: number) => {
     if (!drumAudioCtxRef.current) drumAudioCtxRef.current = new AudioContext();
     const ctx = drumAudioCtxRef.current;
+
+    // Bug fix #2: create gain + pan nodes so track controls affect drum output
+    const gainNode = ctx.createGain();
+    const panNode = ctx.createStereoPanner();
+    gainNode.connect(panNode).connect(ctx.destination);
+    drumGainRef.current = gainNode;
+    drumPanRef.current = panNode;
+
+    // Apply current track settings
+    if (trackId !== undefined) {
+      const track = tracks.find(t => t.id === trackId);
+      if (track) {
+        const hasSolo = tracks.some(t => t.solo);
+        const audible = hasSolo ? track.solo : !track.muted;
+        gainNode.gain.value = audible ? track.volume / 100 : 0;
+        panNode.pan.value = track.pan / 100;
+      }
+    }
+
     const stepDuration = (60 / bpm) / 4; // 16th notes
-    let step = 0;
+    drumCurrentStepRef.current = 0;
+    drumNextNoteTimeRef.current = ctx.currentTime;
     setDrumPlaying(true);
     setDrumStep(0);
-    const tick = () => {
-      const currentPattern = pattern;
-      for (let i = 0; i < DRUM_INSTRUMENTS.length; i++) {
-        if (currentPattern[i][step]) {
-          synthDrumHit(ctx, i, ctx.currentTime);
+
+    const scheduler = () => {
+      while (drumNextNoteTimeRef.current < ctx.currentTime + DRUM_SCHEDULE_AHEAD_S) {
+        const step = drumCurrentStepRef.current;
+        for (let i = 0; i < DRUM_INSTRUMENTS.length; i++) {
+          if (pattern[i][step]) {
+            synthDrumHit(ctx, i, drumNextNoteTimeRef.current, gainNode);
+          }
         }
+        // Schedule UI update close to the actual note time
+        const delay = Math.max(0, (drumNextNoteTimeRef.current - ctx.currentTime) * 1000);
+        const stepSnap = step;
+        setTimeout(() => setDrumStep(stepSnap), delay);
+
+        drumNextNoteTimeRef.current += stepDuration;
+        drumCurrentStepRef.current = (step + 1) % DRUM_STEPS;
       }
-      setDrumStep(step);
-      step = (step + 1) % DRUM_STEPS;
-      drumTimerRef.current = window.setTimeout(tick, stepDuration * 1000);
+      drumTimerRef.current = window.setTimeout(scheduler, DRUM_LOOKAHEAD_MS);
     };
-    tick();
-  }, [bpm]);
+    scheduler();
+  }, [bpm, tracks]);
 
   const stopDrumPlayback = useCallback(() => {
     if (drumTimerRef.current !== null) { clearTimeout(drumTimerRef.current); drumTimerRef.current = null; }
+    if (drumGainRef.current) { drumGainRef.current.disconnect(); drumGainRef.current = null; }
+    if (drumPanRef.current) { drumPanRef.current.disconnect(); drumPanRef.current = null; }
     setDrumPlaying(false);
     setDrumStep(-1);
   }, []);
+
+  // Keep drum gain/pan in sync with track controls during playback
+  useEffect(() => {
+    if (!drumPlaying || !drumGainRef.current) return;
+    const selTrack = tracks.find(t => t.id === selectedTrackId && t.type === "drum");
+    if (!selTrack) return;
+    const hasSolo = tracks.some(t => t.solo);
+    const audible = hasSolo ? selTrack.solo : !selTrack.muted;
+    drumGainRef.current.gain.value = audible ? selTrack.volume / 100 : 0;
+    if (drumPanRef.current) drumPanRef.current.pan.value = selTrack.pan / 100;
+  }, [tracks, drumPlaying, selectedTrackId]);
 
   // Fix #9: Save drum patterns to localStorage
   useEffect(() => {
@@ -1312,12 +1394,12 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
 
   // Fetch credits + library when suno panel opens
   useEffect(() => {
-    if (showPanel === "suno") {
+    if (showPanel === "suno" || contextSidebarTab === "suno") {
       fetchSunoCredits();
       loadSunoLibrary();
       setSunoDailyUsage(getDailyUsage());
     }
-  }, [showPanel, fetchSunoCredits, loadSunoLibrary]);
+  }, [showPanel, contextSidebarTab, fetchSunoCredits, loadSunoLibrary]);
 
   // Refresh daily usage when credits tab is active
   useEffect(() => {
@@ -1417,7 +1499,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
     addTrack(title || "AI Track", url, "suno");
   }, [addTrack]);
 
-  // ── Export/Mixdown ──
+  // ── Export/Mixdown (Bug fix #5: include drum tracks) ──
   const exportMix = useCallback(async () => {
     if (tracks.length === 0) return;
     setExporting(true);
@@ -1427,15 +1509,42 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
       const ws = wsRef.current[t.id];
       return ws ? ws.getDuration() : 0;
     }), 1);
+
+    // Pre-render drum patterns to AudioBuffers
+    const drumBuffers: Record<number, AudioBuffer> = {};
+    const drumTracks = tracks.filter(t => t.type === "drum" && t.drumPattern);
+    for (const dt of drumTracks) {
+      if (!dt.drumPattern) continue;
+      const hasSolo = tracks.some(t => t.solo);
+      const audible = hasSolo ? dt.solo : !dt.muted;
+      if (!audible) continue;
+      drumBuffers[dt.id] = await renderDrumPatternAsync(dt.drumPattern, bpm, maxDur);
+    }
+    setExportProgress(15);
+
     try {
       setExportProgress(20);
       const buffer = await Tone.Offline(async ({ transport }) => {
         const offGain = new Tone.Gain(masterVol / 100).toDestination();
         for (const track of tracks) {
-          if (!track.audioUrl) continue;
           const hasSolo = tracks.some((t) => t.solo);
           const audible = hasSolo ? track.solo : !track.muted;
           if (!audible) continue;
+
+          // Drum track: use pre-rendered buffer
+          if (track.type === "drum" && drumBuffers[track.id]) {
+            const toneBuffer = new Tone.ToneAudioBuffer(drumBuffers[track.id]);
+            const player = new Tone.Player(toneBuffer);
+            const chan = new Tone.Channel(
+              track.volume > 0 ? 20 * Math.log10(track.volume / 100) : -Infinity,
+              track.pan / 100,
+            );
+            player.chain(chan, offGain);
+            player.start(0);
+            continue;
+          }
+
+          if (!track.audioUrl) continue;
           const player = new Tone.Player(track.audioUrl);
           const eq = new Tone.EQ3(
             track.effects.eq.enabled ? track.effects.eq.low : 0,
@@ -1475,9 +1584,9 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
     }
     setExporting(false);
     setExportProgress(0);
-  }, [tracks, masterVol, ensureTone, projectName]);
+  }, [tracks, masterVol, ensureTone, projectName, bpm]);
 
-  // ── Export MP3 ──
+  // ── Export MP3 (Bug fix #5: include drum tracks) ──
   const exportMp3 = useCallback(async () => {
     if (tracks.length === 0) return;
     setExporting(true);
@@ -1487,15 +1596,41 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
       const ws = wsRef.current[t.id];
       return ws ? ws.getDuration() : 0;
     }), 1);
+
+    // Pre-render drum patterns
+    const drumBuffers: Record<number, AudioBuffer> = {};
+    const drumTracks = tracks.filter(t => t.type === "drum" && t.drumPattern);
+    for (const dt of drumTracks) {
+      if (!dt.drumPattern) continue;
+      const hasSolo = tracks.some(t => t.solo);
+      const audible = hasSolo ? dt.solo : !dt.muted;
+      if (!audible) continue;
+      drumBuffers[dt.id] = await renderDrumPatternAsync(dt.drumPattern, bpm, maxDur);
+    }
+
     try {
       setExportProgress(20);
       const buffer = await Tone.Offline(async ({ transport }) => {
         const offGain = new Tone.Gain(masterVol / 100).toDestination();
         for (const track of tracks) {
-          if (!track.audioUrl) continue;
           const hasSolo = tracks.some((t) => t.solo);
           const audible = hasSolo ? track.solo : !track.muted;
           if (!audible) continue;
+
+          // Drum track: use pre-rendered buffer
+          if (track.type === "drum" && drumBuffers[track.id]) {
+            const toneBuffer = new Tone.ToneAudioBuffer(drumBuffers[track.id]);
+            const player = new Tone.Player(toneBuffer);
+            const chan = new Tone.Channel(
+              track.volume > 0 ? 20 * Math.log10(track.volume / 100) : -Infinity,
+              track.pan / 100,
+            );
+            player.chain(chan, offGain);
+            player.start(0);
+            continue;
+          }
+
+          if (!track.audioUrl) continue;
           const player = new Tone.Player(track.audioUrl);
           const eq = new Tone.EQ3(
             track.effects.eq.enabled ? track.effects.eq.low : 0,
@@ -1535,7 +1670,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
     }
     setExporting(false);
     setExportProgress(0);
-  }, [tracks, masterVol, ensureTone, projectName]);
+  }, [tracks, masterVol, ensureTone, projectName, bpm]);
 
   // ── WAV encoder ──
   function audioBufferToWav(buffer: { numberOfChannels: number; sampleRate: number; length: number; getChannelData: (ch: number) => Float32Array }): Blob {
@@ -1610,7 +1745,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
     idbLoadRecordings().then(setSavedRecordings).catch(() => {});
   }, []);
 
-  // ── Save to library ──
+  // ── Save to library (Bug fix #5: include drum tracks) ──
   const saveToLibrary = useCallback(async () => {
     if (tracks.length === 0) return;
     setSavingToLibrary(true);
@@ -1619,14 +1754,40 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
       const ws = wsRef.current[t.id];
       return ws ? ws.getDuration() : 0;
     }), 1);
+
+    // Pre-render drum patterns
+    const drumBuffers: Record<number, AudioBuffer> = {};
+    const drumTracks = tracks.filter(t => t.type === "drum" && t.drumPattern);
+    for (const dt of drumTracks) {
+      if (!dt.drumPattern) continue;
+      const hasSolo = tracks.some(t => t.solo);
+      const audible = hasSolo ? dt.solo : !dt.muted;
+      if (!audible) continue;
+      drumBuffers[dt.id] = await renderDrumPatternAsync(dt.drumPattern, bpm, maxDur);
+    }
+
     try {
       const buffer = await Tone.Offline(async ({ transport }) => {
         const offGain = new Tone.Gain(masterVol / 100).toDestination();
         for (const track of tracks) {
-          if (!track.audioUrl) continue;
           const hasSolo = tracks.some((t) => t.solo);
           const audible = hasSolo ? track.solo : !track.muted;
           if (!audible) continue;
+
+          // Drum track: use pre-rendered buffer
+          if (track.type === "drum" && drumBuffers[track.id]) {
+            const toneBuffer = new Tone.ToneAudioBuffer(drumBuffers[track.id]);
+            const player = new Tone.Player(toneBuffer);
+            const chan = new Tone.Channel(
+              track.volume > 0 ? 20 * Math.log10(track.volume / 100) : -Infinity,
+              track.pan / 100,
+            );
+            player.chain(chan, offGain);
+            player.start(0);
+            continue;
+          }
+
+          if (!track.audioUrl) continue;
           const player = new Tone.Player(track.audioUrl);
           const eq = new Tone.EQ3(
             track.effects.eq.enabled ? track.effects.eq.low : 0,
@@ -1662,7 +1823,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
     }
     setSavingToLibrary(false);
     setShowExportMenu(false);
-  }, [tracks, masterVol, ensureTone, projectName]);
+  }, [tracks, masterVol, ensureTone, projectName, bpm]);
 
   // ── Recordings panel helpers ──
   const previewRecording = useCallback(async (id: string) => {
@@ -2048,10 +2209,10 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
               onChange={(e) => setProjectName(e.target.value)}
               onBlur={() => setEditingProjectName(false)}
               onKeyDown={(e) => e.key === "Enter" && setEditingProjectName(false)}
-              className="bg-[#1a1a1a] border border-[#f59e0b] rounded px-2 py-0.5 text-xs text-[#eee] outline-none w-32"
+              className="bg-[#1a1a1a] border border-[#D4A843] rounded px-2 py-0.5 text-xs text-[#eee] outline-none w-32"
             />
           ) : (
-            <span className="text-xs text-[#ccc] font-medium cursor-pointer hover:text-[#f59e0b] transition-colors truncate max-w-[100px] sm:max-w-[160px]"
+            <span className="text-xs text-[#ccc] font-medium cursor-pointer hover:text-[#D4A843] transition-colors truncate max-w-[100px] sm:max-w-[160px]"
               onClick={() => setEditingProjectName(true)}>
               {projectName}
             </span>
@@ -2064,8 +2225,9 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
           <div className="relative">
             <button onClick={async () => { await setupMetronome(); setMetronomeOn(!metronomeOn); }}
               title="Metronome (M)"
-              className={`w-8 h-8 sm:w-7 sm:h-7 rounded flex items-center justify-center transition-all cursor-pointer ${metronomeOn ? "text-[#f59e0b] bg-[#f59e0b15]" : "text-[#555] hover:text-[#888]"}`}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L8 22h8L12 2z"/><path d="M12 8l6-3"/></svg>
+              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer ${metronomeOn ? "text-[#D4A843]" : "text-[#555] hover:text-[#888]"}`}
+              style={{ background: metronomeOn ? "#2a2418" : "transparent", border: metronomeOn ? "1px solid #D4A84333" : "1px solid transparent" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L8 22h8L12 2z"/><path d="M12 8l6-3"/></svg>
             </button>
             <button onClick={() => setShowMetronomeSettings(!showMetronomeSettings)}
               className="absolute -right-1 -bottom-0.5 w-3 h-3 rounded-full bg-[#1a1a1a] border border-[#333] text-[#555] text-[6px] flex items-center justify-center cursor-pointer hover:border-[#555]">
@@ -2078,7 +2240,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                   Volume
                   <input type="range" min={0} max={100} value={metronomeVol}
                     onChange={(e) => setMetronomeVol(Number(e.target.value))}
-                    className="flex-1 accent-[#f59e0b] h-1" />
+                    className="flex-1 accent-[#D4A843] h-1" />
                   <span className="text-[#888] w-6 text-right">{metronomeVol}</span>
                 </label>
                 <button onClick={() => setShowMetronomeSettings(false)} className="mt-2 text-[8px] text-[#555] hover:text-[#888] cursor-pointer">Close</button>
@@ -2092,7 +2254,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
           <div className="flex items-center gap-1">
             <input type="number" min={40} max={300} value={bpm}
               onChange={(e) => setBpm(Number(e.target.value))}
-              className="w-11 h-6 bg-transparent border border-[#2a2a2a] rounded text-[#f59e0b] text-[11px] text-center font-mono focus:border-[#f59e0b] outline-none hover:border-[#444] transition-colors" />
+              className="w-11 h-6 bg-transparent border border-[#2a2a2a] rounded text-[#D4A843] text-[11px] text-center font-mono focus:border-[#D4A843] outline-none hover:border-[#444] transition-colors" />
             <span className="text-[9px] text-[#444] font-medium">bpm</span>
           </div>
 
@@ -2110,7 +2272,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
               <div className="absolute top-8 left-0 z-50 bg-[#1a1a1a] border border-[#333] rounded-lg shadow-xl py-1 min-w-[64px]">
                 {TIME_SIGS.map(([n, d], idx) => (
                   <button key={idx} onClick={() => { setTimeSigIdx(idx); setShowTimeSigPicker(false); }}
-                    className={`w-full text-center text-[11px] font-mono px-3 py-1 cursor-pointer transition-colors ${idx === timeSigIdx ? "text-[#f59e0b] bg-[#f59e0b11]" : "text-[#888] hover:bg-[#222] hover:text-[#ccc]"}`}>
+                    className={`w-full text-center text-[11px] font-mono px-3 py-1 cursor-pointer transition-colors ${idx === timeSigIdx ? "text-[#D4A843] bg-[#D4A84311]" : "text-[#888] hover:bg-[#222] hover:text-[#ccc]"}`}>
                     {n}/{d}
                   </button>
                 ))}
@@ -2133,7 +2295,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                 <div className="grid grid-cols-4 gap-0.5 mb-2">
                   {MUSICAL_KEYS.map((k) => (
                     <button key={k} onClick={() => { setProjectKey(k + (projectKey.includes("m") ? "m" : "")); }}
-                      className={`text-[9px] py-0.5 rounded cursor-pointer transition-colors ${projectKey.startsWith(k) ? "bg-[#f59e0b] text-[#111] font-bold" : "text-[#888] hover:bg-[#222]"}`}>{k}</button>
+                      className={`text-[9px] py-0.5 rounded cursor-pointer transition-colors ${projectKey.startsWith(k) ? "bg-[#D4A843] text-[#111] font-bold" : "text-[#888] hover:bg-[#222]"}`}>{k}</button>
                   ))}
                 </div>
                 <div className="grid grid-cols-2 gap-0.5">
@@ -2151,43 +2313,42 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
         <div className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5 flex-wrap">
           {/* Rewind */}
           <button onClick={rewindToStart} title={`Rewind (${SHORTCUT_HINTS.rewind})`} aria-label="Rewind"
-            className="w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer group hover:shadow-[0_0_10px_rgba(255,255,255,0.06)]"
-            style={{ background: "linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%)", border: "1px solid #333", boxShadow: "0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)" }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-[#888] group-hover:text-[#ccc] transition-colors">
+            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer group"
+            style={{ background: "#1e1e1e", border: "1px solid #2a2a2a" }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-[#888] group-hover:text-[#ccc] transition-colors">
               <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
             </svg>
           </button>
 
           {/* Stop */}
           <button onClick={stopAll} title="Stop" aria-label="Stop"
-            className="w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer group hover:shadow-[0_0_10px_rgba(255,255,255,0.06)]"
-            style={{ background: "linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%)", border: "1px solid #333", boxShadow: "0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)" }}>
-            <div className="w-3 h-3 rounded-[2px] bg-[#888] group-hover:bg-[#ccc] transition-colors" />
+            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer group"
+            style={{ background: "#1e1e1e", border: "1px solid #2a2a2a" }}>
+            <div className="w-3.5 h-3.5 rounded-[2px] bg-[#888] group-hover:bg-[#ccc] transition-colors" />
           </button>
 
           {/* Play */}
           {!playing ? (
             <button onClick={playAll} title={`Play (${SHORTCUT_HINTS.play})`} aria-label="Play"
-              className="w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer group hover:shadow-[0_0_14px_rgba(34,197,94,0.25)]"
+              className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer group"
               disabled={tracks.length === 0}
               style={{
-                background: tracks.length > 0 ? "linear-gradient(180deg, #2a8a2a 0%, #1a6a1a 100%)" : "linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%)",
-                border: tracks.length > 0 ? "1px solid #33aa33" : "1px solid #333",
-                boxShadow: tracks.length > 0 ? "0 0 12px rgba(34,197,94,0.2), 0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)" : "0 2px 4px rgba(0,0,0,0.3)",
+                background: tracks.length > 0 ? "#1a3a1a" : "#1e1e1e",
+                border: tracks.length > 0 ? "1px solid #33aa3366" : "1px solid #2a2a2a",
               }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className={`ml-0.5 ${tracks.length > 0 ? "text-[#4ade80]" : "text-[#555]"} group-hover:text-white transition-colors`}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className={`ml-0.5 ${tracks.length > 0 ? "text-[#4ade80]" : "text-[#555]"} group-hover:text-white transition-colors`}>
                 <path d="M8 5v14l11-7z"/>
               </svg>
             </button>
           ) : (
             <button onClick={stopAll} title={`Pause (${SHORTCUT_HINTS.play})`} aria-label="Pause"
-              className="w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer hover:shadow-[0_0_14px_rgba(34,197,94,0.3)]"
+              className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer"
               style={{
-                background: "linear-gradient(180deg, #2a8a2a 0%, #1a6a1a 100%)",
+                background: "#1a3a1a",
                 border: "1px solid #22c55e",
-                boxShadow: "0 0 16px rgba(34,197,94,0.3), 0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15)",
+                boxShadow: "0 0 8px rgba(34,197,94,0.2)",
               }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" className="text-white">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-white">
                 <path d="M6 4h4v16H6zM14 4h4v16h-4z"/>
               </svg>
             </button>
@@ -2196,35 +2357,31 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
           {/* Record */}
           {!isRec ? (
             <button onClick={startRec} title={`Record (${SHORTCUT_HINTS.record})`} aria-label="Record"
-              className="w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer group hover:shadow-[0_0_12px_rgba(196,30,58,0.3)]"
-              style={{
-                background: "linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%)",
-                border: "1px solid #333",
-                boxShadow: "0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)",
-              }}>
+              className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer group"
+              style={{ background: "#1e1e1e", border: "1px solid #2a2a2a" }}>
               <div className="w-3.5 h-3.5 rounded-full group-hover:brightness-125 transition-all" style={{ background: "radial-gradient(circle at 40% 35%, #ff4466 0%, #C41E3A 50%, #8a1525 100%)" }} />
             </button>
           ) : (
             <button onClick={stopRec} title="Stop Recording" aria-label="Stop Recording"
-              className="w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer"
+              className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer"
               style={{
-                background: "linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%)",
+                background: "#1e1e1e",
                 border: "1px solid #ee3355",
-                boxShadow: "0 0 16px rgba(196,30,58,0.5), 0 0 32px rgba(196,30,58,0.2), 0 2px 4px rgba(0,0,0,0.3)",
+                boxShadow: "0 0 12px rgba(196,30,58,0.4)",
                 animation: "pulse 1.5s ease-in-out infinite",
               }}>
-              <div className="w-3.5 h-3.5 rounded-full" style={{ background: "radial-gradient(circle at 40% 35%, #ff6688 0%, #ee3355 40%, #C41E3A 100%)", boxShadow: "0 0 8px rgba(238,51,85,0.6)" }} />
+              <div className="w-3.5 h-3.5 rounded-full" style={{ background: "radial-gradient(circle at 40% 35%, #ff6688 0%, #ee3355 40%, #C41E3A 100%)", boxShadow: "0 0 6px rgba(238,51,85,0.5)" }} />
             </button>
           )}
 
           {/* Loop */}
           <button onClick={() => setLooping(!looping)} title={`Loop (${SHORTCUT_HINTS.loop})`} aria-label="Loop"
-            className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer hover:shadow-[0_0_10px_rgba(245,158,11,0.15)] ${looping ? "shadow-[0_0_10px_rgba(245,158,11,0.25)]" : ""}`}
+            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer"
             style={{
-              background: looping ? "linear-gradient(180deg, #3a3020 0%, #2a2010 100%)" : "linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%)",
-              border: looping ? "1px solid #f59e0b66" : "1px solid #333",
+              background: looping ? "#2a2418" : "#1e1e1e",
+              border: looping ? "1px solid #D4A84355" : "1px solid #2a2a2a",
             }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={looping ? "#f59e0b" : "#666"} strokeWidth="2" style={looping ? { filter: "drop-shadow(0 0 3px rgba(245,158,11,0.4))" } : {}}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={looping ? "#D4A843" : "#666"} strokeWidth="2" style={looping ? { filter: "drop-shadow(0 0 2px rgba(212,168,67,0.3))" } : {}}>
               <path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/>
             </svg>
           </button>
@@ -2234,8 +2391,8 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
           {/* Time Display — segment-display style */}
           <div className="px-2 sm:px-3 py-1 rounded font-mono text-sm flex items-center min-w-[100px] sm:min-w-[120px] justify-center relative overflow-hidden"
             style={{ background: "#050505", border: "1px solid #1a1a1a", boxShadow: "inset 0 1px 4px rgba(0,0,0,0.5)" }}>
-            <span className="text-[#f59e0b33] absolute tracking-[2px]" style={{ fontFamily: "'Courier New', monospace", fontSize: "15px" }}>88:88.8</span>
-            <span className="text-[#f59e0b] relative tracking-[2px]" style={{ fontFamily: "'Courier New', monospace", fontSize: "15px", textShadow: "0 0 8px rgba(245,158,11,0.4), 0 0 2px rgba(245,158,11,0.6)" }}>{fmtTime(currentTime)}</span>
+            <span className="text-[#D4A84333] absolute tracking-[2px]" style={{ fontFamily: "'Courier New', monospace", fontSize: "15px" }}>88:88.8</span>
+            <span className="text-[#D4A843] relative tracking-[2px]" style={{ fontFamily: "'Courier New', monospace", fontSize: "15px", textShadow: "0 0 8px rgba(212,168,67,0.4), 0 0 2px rgba(212,168,67,0.6)" }}>{fmtTime(currentTime)}</span>
           </div>
 
           {/* Recording indicator */}
@@ -2256,7 +2413,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
             </svg>
             <input type="range" min={0} max={100} value={masterVol}
               onChange={(e) => setMasterVol(Number(e.target.value))}
-              className="w-20 accent-[#f59e0b] h-1 cursor-pointer" />
+              className="w-20 accent-[#D4A843] h-1 cursor-pointer" />
             <span className="font-mono text-[9px] text-[#666] w-12 text-right">{dbDisplay(masterVol)} dB</span>
           </div>
 
@@ -2268,10 +2425,10 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
               title="Export / Save"
               className="text-[10px] font-semibold px-3 py-1.5 rounded-md transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
               style={{
-                background: tracks.length > 0 ? "linear-gradient(180deg, #f59e0b 0%, #d48a08 100%)" : "transparent",
+                background: tracks.length > 0 ? "linear-gradient(180deg, #D4A843 0%, #B8922E 100%)" : "transparent",
                 color: tracks.length > 0 ? "#111" : "#555",
                 border: tracks.length > 0 ? "none" : "1px solid #333",
-                boxShadow: tracks.length > 0 ? "0 2px 8px rgba(245,158,11,0.2)" : "none",
+                boxShadow: tracks.length > 0 ? "0 2px 8px rgba(212,168,67,0.2)" : "none",
               }}>
               {exporting ? `${exportProgress}%` : "Export"}
               <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
@@ -2297,7 +2454,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                     <div className="text-[8px] text-[#666]">{exporting ? `${exportProgress}%` : "Lossless audio file"}</div>
                     {exporting && (
                       <div className="w-full h-[3px] bg-[#222] rounded-full mt-1 overflow-hidden">
-                        <div className="h-full bg-[#f59e0b] rounded-full transition-all duration-300" style={{ width: `${exportProgress}%` }} />
+                        <div className="h-full bg-[#D4A843] rounded-full transition-all duration-300" style={{ width: `${exportProgress}%` }} />
                       </div>
                     )}
                   </div>
@@ -2315,25 +2472,17 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
             )}
           </div>
 
-          {/* Recordings panel toggle */}
-          <button onClick={() => { setShowRecordingsPanel(!showRecordingsPanel); if (!showRecordingsPanel) setShowRightPanel(false); }}
-            className={`w-8 h-8 sm:w-7 sm:h-7 rounded flex items-center justify-center cursor-pointer transition-colors relative ${showRecordingsPanel ? "text-[#f59e0b] bg-[#f59e0b11]" : "text-[#555] hover:text-[#888]"}`}
-            title="My Recordings">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/>
-            </svg>
-            {savedRecordings.length > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-[#f59e0b] text-[#111] text-[6px] font-bold rounded-full flex items-center justify-center">{savedRecordings.length > 9 ? "9+" : savedRecordings.length}</span>
-            )}
-          </button>
-
-          {/* Right panel toggle */}
-          <button onClick={() => { setShowRightPanel(!showRightPanel); if (!showRightPanel) setShowRecordingsPanel(false); }}
-            className={`w-8 h-8 sm:w-7 sm:h-7 rounded flex items-center justify-center cursor-pointer transition-colors ${showRightPanel ? "text-[#f59e0b] bg-[#f59e0b11]" : "text-[#555] hover:text-[#888]"}`}
-            title="Import Sources">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          {/* Context sidebar toggle */}
+          <button onClick={() => { const isOpen = showRightPanel || showRecordingsPanel; if (isOpen) { setShowRightPanel(false); setShowRecordingsPanel(false); } else { setShowRightPanel(true); setShowRecordingsPanel(false); } }}
+            className={`w-8 h-8 rounded-lg flex items-center justify-center cursor-pointer transition-colors relative ${(showRightPanel || showRecordingsPanel) ? "text-[#D4A843]" : "text-[#555] hover:text-[#888]"}`}
+            style={{ background: (showRightPanel || showRecordingsPanel) ? "#2a2418" : "#1e1e1e", border: (showRightPanel || showRecordingsPanel) ? "1px solid #D4A84333" : "1px solid #2a2a2a" }}
+            title="Sidebar (Library / Suno / Recordings)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18"/>
             </svg>
+            {savedRecordings.length > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-[#D4A843] text-[#111] text-[6px] font-bold rounded-full flex items-center justify-center">{savedRecordings.length > 9 ? "9+" : savedRecordings.length}</span>
+            )}
           </button>
         </div>
       </div>
@@ -2346,7 +2495,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
           <div className="flex items-center h-[26px] px-2 gap-1 flex-shrink-0" style={{ background: "#181818", borderBottom: "1px solid #1e1e1e" }}>
             <div className="relative">
               <button onClick={() => setShowAddTrackMenu(!showAddTrackMenu)}
-                className="flex items-center gap-1 text-[9px] text-[#888] hover:text-[#f59e0b] transition-colors cursor-pointer px-1.5 py-0.5 rounded hover:bg-[#f59e0b08]">
+                className="flex items-center gap-1 text-[9px] text-[#888] hover:text-[#D4A843] transition-colors cursor-pointer px-1.5 py-0.5 rounded hover:bg-[#D4A84308]">
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>
                 <span>Add Track</span>
               </button>
@@ -2396,7 +2545,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
 
             {/* Snap */}
             <button onClick={() => setSnapToGrid(!snapToGrid)} title="Snap to Grid (G)"
-              className={`w-5 h-5 rounded flex items-center justify-center cursor-pointer text-[8px] transition-colors ${snapToGrid ? "text-[#f59e0b] bg-[#f59e0b11]" : "text-[#444]"}`}>
+              className={`w-5 h-5 rounded flex items-center justify-center cursor-pointer text-[8px] transition-colors ${snapToGrid ? "text-[#D4A843] bg-[#D4A84311]" : "text-[#444]"}`}>
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
             </button>
           </div>
@@ -2425,7 +2574,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                       <input autoFocus defaultValue={tr.name}
                         onBlur={(e) => { renameTrack(tr.id, e.target.value || tr.name); setEditingTrackName(null); }}
                         onKeyDown={(e) => { if (e.key === "Enter") { renameTrack(tr.id, (e.target as HTMLInputElement).value || tr.name); setEditingTrackName(null); } }}
-                        className="flex-1 bg-[#121214] border border-[#f59e0b] rounded px-1 py-0 text-[10px] text-[#ccc] outline-none min-w-0"
+                        className="flex-1 bg-[#121214] border border-[#D4A843] rounded px-1 py-0 text-[10px] text-[#ccc] outline-none min-w-0"
                         onClick={(e) => e.stopPropagation()}
                       />
                     ) : (
@@ -2438,7 +2587,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                     {/* Gear icon for mic/recording tracks */}
                     {(tr.type === "mic" || tr.type === "recording") && (
                       <button onClick={(e) => { e.stopPropagation(); setInputSettingsTrackId(inputSettingsTrackId === tr.id ? null : tr.id); }}
-                        className={`w-4 h-4 flex items-center justify-center cursor-pointer transition-colors rounded hover:bg-[#ffffff08] ${inputSettingsTrackId === tr.id ? "text-[#f59e0b]" : "text-[#3a3a3a] hover:text-[#888]"}`}
+                        className={`w-4 h-4 flex items-center justify-center cursor-pointer transition-colors rounded hover:bg-[#ffffff08] ${inputSettingsTrackId === tr.id ? "text-[#D4A843]" : "text-[#3a3a3a] hover:text-[#888]"}`}
                         title="Input Settings">
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
                       </button>
@@ -2469,7 +2618,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                         </button>
                         {/* Solo */}
                         <button onClick={(e) => { e.stopPropagation(); toggleSolo(tr.id); }}
-                          className={`text-[7px] font-bold w-[18px] h-[15px] rounded-[3px] cursor-pointer flex items-center justify-center transition-all ${tr.solo ? "bg-[#f59e0b] text-[#111] shadow-[0_0_4px_rgba(245,158,11,0.3)]" : "bg-transparent border border-[#2a2a2a] text-[#555] hover:border-[#444] hover:text-[#888]"}`}
+                          className={`text-[7px] font-bold w-[18px] h-[15px] rounded-[3px] cursor-pointer flex items-center justify-center transition-all ${tr.solo ? "bg-[#D4A843] text-[#111] shadow-[0_0_4px_rgba(212,168,67,0.3)]" : "bg-transparent border border-[#2a2a2a] text-[#555] hover:border-[#444] hover:text-[#888]"}`}
                           title="Solo">
                           S
                         </button>
@@ -2548,7 +2697,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                                   const g = Number(e.target.value);
                                   setTracks((p) => p.map((t) => t.id === tr.id ? { ...t, inputSettings: { ...(t.inputSettings || { deviceId: "", channel: "stereo" as const, gain: 100, monitoring: false }), gain: g } } : t));
                                 }}
-                                className="flex-1 accent-[#f59e0b] h-[2px] cursor-pointer" />
+                                className="flex-1 accent-[#D4A843] h-[2px] cursor-pointer" />
                               <span className="text-[7px] text-[#666] font-mono w-6 text-right">{tr.inputSettings?.gain ?? 100}%</span>
                             </div>
                           </label>
@@ -2558,7 +2707,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                               const cur = tr.inputSettings?.monitoring ?? false;
                               setTracks((p) => p.map((t) => t.id === tr.id ? { ...t, inputSettings: { ...(t.inputSettings || { deviceId: "", channel: "stereo" as const, gain: 100, monitoring: false }), monitoring: !cur } } : t));
                             }}
-                              className={`w-7 h-[14px] rounded-full transition-all cursor-pointer relative ${tr.inputSettings?.monitoring ? "bg-[#f59e0b]" : "bg-[#2a2a2a]"}`}>
+                              className={`w-7 h-[14px] rounded-full transition-all cursor-pointer relative ${tr.inputSettings?.monitoring ? "bg-[#D4A843]" : "bg-[#2a2a2a]"}`}>
                               <div className={`absolute top-[2px] w-[10px] h-[10px] rounded-full bg-white transition-all shadow-sm ${tr.inputSettings?.monitoring ? "left-[13px]" : "left-[2px]"}`} />
                             </button>
                           </div>
@@ -2619,10 +2768,10 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
           </div>
 
           {/* Master track section at bottom — visually distinct */}
-          <div style={{ background: "linear-gradient(180deg, #181614 0%, #141210 100%)", borderTop: "2px solid #f59e0b22" }}>
+          <div style={{ background: "linear-gradient(180deg, #181614 0%, #141210 100%)", borderTop: "2px solid #D4A84322" }}>
             <div className="flex items-center gap-1.5 px-2 pt-2 pb-1">
-              <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: "radial-gradient(circle at 40% 35%, #fbbf24, #f59e0b, #d48a08)", boxShadow: "0 0 6px rgba(245,158,11,0.3)" }} />
-              <span className="text-[9px] text-[#f59e0b] font-bold tracking-wider uppercase">Master Track</span>
+              <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: "radial-gradient(circle at 40% 35%, #EDCF72, #D4A843, #B8922E)", boxShadow: "0 0 6px rgba(212,168,67,0.3)" }} />
+              <span className="text-[9px] text-[#D4A843] font-bold tracking-wider uppercase">Master Track</span>
               <div className="flex-1" />
               {/* Stereo Master VU */}
               <div className="flex gap-[2px]">
@@ -2643,15 +2792,15 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
             <div className="flex items-center gap-1 px-2 pb-2">
               <input type="range" min={0} max={100} value={masterVol}
                 onChange={(e) => setMasterVol(Number(e.target.value))}
-                className="flex-1 accent-[#f59e0b] h-[3px] cursor-pointer" />
-              <span className="font-mono text-[8px] text-[#f59e0b] w-7 text-right">{dbDisplay(masterVol)}</span>
+                className="flex-1 accent-[#D4A843] h-[3px] cursor-pointer" />
+              <span className="font-mono text-[8px] text-[#D4A843] w-7 text-right">{dbDisplay(masterVol)}</span>
             </div>
           </div>
         </div>
 
         {/* ═══════════════════ Sidebar Resize Handle ═══════════════════ */}
         <div
-          className="w-[3px] cursor-col-resize hover:bg-[#f59e0b33] active:bg-[#f59e0b55] transition-colors flex-shrink-0"
+          className="w-[3px] cursor-col-resize hover:bg-[#D4A84333] active:bg-[#D4A84355] transition-colors flex-shrink-0"
           style={{ background: "#1a1a1a" }}
           onMouseDown={() => { sidebarDragRef.current = true; document.body.style.cursor = "col-resize"; document.body.style.userSelect = "none"; }}
         />
@@ -2682,8 +2831,8 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
             </div>
             {/* Playhead on ruler */}
             <div className="absolute top-0 h-full z-10 pointer-events-none" style={{ transform: `translateX(${currentTime * pxPerSec}px)`, left: 0, willChange: playing ? 'transform' : 'auto' }}>
-              <div className="w-px h-full bg-[#f59e0b]" style={{ boxShadow: "0 0 4px rgba(245,158,11,0.3)" }} />
-              <div className="absolute top-0 -translate-x-1/2 w-3 h-3 bg-[#f59e0b]" style={{ clipPath: "polygon(0 0, 100% 0, 50% 100%)", filter: "drop-shadow(0 1px 2px rgba(245,158,11,0.4))" }} />
+              <div className="w-px h-full bg-[#D4A843]" style={{ boxShadow: "0 0 4px rgba(212,168,67,0.3)" }} />
+              <div className="absolute top-0 -translate-x-1/2 w-3 h-3 bg-[#D4A843]" style={{ clipPath: "polygon(0 0, 100% 0, 50% 100%)", filter: "drop-shadow(0 1px 2px rgba(212,168,67,0.4))" }} />
             </div>
           </div>
 
@@ -2717,7 +2866,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                       className="h-full rounded transition-all duration-75"
                       style={{
                         width: `${Math.min(100, recLevel * 100)}%`,
-                        background: recLevel > 0.8 ? "linear-gradient(90deg, #22c55e 0%, #f59e0b 60%, #ef4444 100%)" : recLevel > 0.4 ? "linear-gradient(90deg, #22c55e 0%, #f59e0b 100%)" : "linear-gradient(90deg, #22c55e 0%, #22c55e 100%)",
+                        background: recLevel > 0.8 ? "linear-gradient(90deg, #22c55e 0%, #D4A843 60%, #ef4444 100%)" : recLevel > 0.4 ? "linear-gradient(90deg, #22c55e 0%, #D4A843 100%)" : "linear-gradient(90deg, #22c55e 0%, #22c55e 100%)",
                         boxShadow: recLevel > 0.1 ? `0 0 8px rgba(34,197,94,${recLevel * 0.5})` : "none",
                       }}
                     />
@@ -2734,8 +2883,8 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
             {/* Empty state — BandLab style */}
             {tracks.length === 0 && !isRec && (
               <div className="flex items-center justify-center h-full"
-                onDragOver={(e) => { e.preventDefault(); e.currentTarget.querySelector<HTMLDivElement>(".drop-zone")?.classList.add("border-[#f59e0b44]"); }}
-                onDragLeave={(e) => { e.currentTarget.querySelector<HTMLDivElement>(".drop-zone")?.classList.remove("border-[#f59e0b44]"); }}>
+                onDragOver={(e) => { e.preventDefault(); e.currentTarget.querySelector<HTMLDivElement>(".drop-zone")?.classList.add("border-[#D4A84344]"); }}
+                onDragLeave={(e) => { e.currentTarget.querySelector<HTMLDivElement>(".drop-zone")?.classList.remove("border-[#D4A84344]"); }}>
                 <div className="drop-zone border-2 border-dashed rounded-2xl px-20 py-16 text-center transition-all"
                   style={{ borderColor: "#333", maxWidth: "420px" }}>
                   <div className="text-[48px] leading-none mb-4 opacity-20" style={{ color: "#555" }}>{"\u266A"}</div>
@@ -2865,12 +3014,12 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
 
             {/* Vertical playhead across all waveforms */}
             {(duration > 0 || currentTime > 0) && (
-              <div className="absolute top-0 bottom-0 w-px bg-[#f59e0b] z-10 pointer-events-none"
+              <div className="absolute top-0 bottom-0 w-px bg-[#D4A843] z-10 pointer-events-none"
                 style={{
                   transform: `translateX(${currentTime * pxPerSec}px)`,
                   left: 0,
                   willChange: playing ? 'transform' : 'auto',
-                  boxShadow: "0 0 6px rgba(245,158,11,0.4)",
+                  boxShadow: "0 0 6px rgba(212,168,67,0.4)",
                 }} />
             )}
 
@@ -2909,7 +3058,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                 className="h-[5px] cursor-row-resize flex-shrink-0 group relative"
                 style={{ background: "#111" }}
                 onMouseDown={() => { bottomDragRef.current = true; document.body.style.cursor = "row-resize"; document.body.style.userSelect = "none"; }}>
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-[2px] rounded-full bg-[#2a2a2a] group-hover:bg-[#f59e0b55] transition-colors" />
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-[2px] rounded-full bg-[#2a2a2a] group-hover:bg-[#D4A84355] transition-colors" />
               </div>
 
               {/* Bottom panel tabs */}
@@ -2986,7 +3135,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                               M
                             </button>
                             <button onClick={(e) => { e.stopPropagation(); toggleSolo(tr.id); }}
-                              className={`text-[7px] font-bold w-[16px] h-[13px] rounded-[2px] cursor-pointer flex items-center justify-center transition-all ${tr.solo ? "bg-[#f59e0b] text-[#111] shadow-[0_0_4px_rgba(245,158,11,0.3)]" : "border border-[#2a2a2a] text-[#555] hover:border-[#444]"}`}>
+                              className={`text-[7px] font-bold w-[16px] h-[13px] rounded-[2px] cursor-pointer flex items-center justify-center transition-all ${tr.solo ? "bg-[#D4A843] text-[#111] shadow-[0_0_4px_rgba(212,168,67,0.3)]" : "border border-[#2a2a2a] text-[#555] hover:border-[#444]"}`}>
                               S
                             </button>
                           </div>
@@ -2998,7 +3147,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                       );
                     })}
                     {/* Master channel — visually distinct */}
-                    <div className="flex flex-col items-center px-3 py-2 min-w-[76px]" style={{ background: "linear-gradient(180deg, #161410 0%, #121008 100%)", borderLeft: "2px solid #f59e0b33" }}>
+                    <div className="flex flex-col items-center px-3 py-2 min-w-[76px]" style={{ background: "linear-gradient(180deg, #161410 0%, #121008 100%)", borderLeft: "2px solid #D4A84333" }}>
                       <div className="mb-1.5" />
                       <div className="flex items-end gap-[3px] flex-1 mb-1">
                         <div className="w-[5px] rounded-[1px] overflow-hidden flex flex-col-reverse" style={{ height: "100%", background: "#060606", border: "1px solid #181818" }}>
@@ -3010,7 +3159,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                         <div className="flex flex-col items-center" style={{ height: "100%" }}>
                           <input type="range" min={0} max={100} value={masterVol}
                             onChange={(e) => setMasterVol(Number(e.target.value))}
-                            className="cursor-pointer accent-[#f59e0b]"
+                            className="cursor-pointer accent-[#D4A843]"
                             style={{ writingMode: "vertical-lr", direction: "rtl", width: "16px", height: "100%" }} />
                         </div>
                         <div className="w-[5px] rounded-[1px] overflow-hidden flex flex-col-reverse" style={{ height: "100%", background: "#060606", border: "1px solid #181818" }}>
@@ -3020,9 +3169,9 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                           }} />
                         </div>
                       </div>
-                      <span className="font-mono text-[7px] text-[#f59e0b] mb-1">{dbDisplay(masterVol)}</span>
-                      <span className="text-[8px] text-[#f59e0b] font-bold mt-0.5">MASTER</span>
-                      <div className="w-full h-[3px] rounded-full mt-0.5 bg-[#f59e0b]" />
+                      <span className="font-mono text-[7px] text-[#D4A843] mb-1">{dbDisplay(masterVol)}</span>
+                      <span className="text-[8px] text-[#D4A843] font-bold mt-0.5">MASTER</span>
+                      <div className="w-full h-[3px] rounded-full mt-0.5 bg-[#D4A843]" />
                     </div>
                     {tracks.length === 0 && (
                       <div className="flex-1 flex items-center justify-center">
@@ -3132,14 +3281,14 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                 {/* ── EDITOR TAB ── */}
                 {bottomTab === "editor" && fxTrack && fxTrack.type === "drum" && fxTrack.drumPattern && (
                   <div className="p-3 overflow-auto">
-                    <div className="flex items-center gap-3 mb-3">
+                    <div className="flex items-center gap-3 mb-2">
                       <button
                         onClick={() => {
                           if (drumPlaying) stopDrumPlayback();
-                          else if (fxTrack.drumPattern) startDrumPlayback(fxTrack.drumPattern);
+                          else if (fxTrack.drumPattern) startDrumPlayback(fxTrack.drumPattern, fxTrack.id);
                         }}
-                        className={`flex items-center gap-1.5 px-3 py-1 rounded text-[10px] font-medium cursor-pointer transition-colors ${
-                          drumPlaying ? "bg-[#ef4444] text-white" : "bg-[#f59e0b] text-[#111]"
+                        className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-[10px] font-medium cursor-pointer transition-colors ${
+                          drumPlaying ? "bg-[#ef4444] text-white" : "bg-[#D4A843] text-[#111]"
                         }`}>
                         {drumPlaying ? (
                           <><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>Stop</>
@@ -3169,13 +3318,20 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                           <option key={p.name} value={i}>{p.name}</option>
                         ))}
                       </select>
+                      <div className="flex-1" />
+                      <button onClick={() => setDrumGridExpanded(!drumGridExpanded)}
+                        className="text-[9px] text-[#555] hover:text-[#888] cursor-pointer transition-colors flex items-center gap-1">
+                        {drumGridExpanded ? "Collapse" : "Expand"} Grid
+                        <span className="text-[7px]">{drumGridExpanded ? "\u25B2" : "\u25BC"}</span>
+                      </button>
                     </div>
                     {/* Step numbers */}
+                    {drumGridExpanded && (
                     <div className="inline-block" style={{ minWidth: "fit-content" }}>
                     <div className="flex items-center mb-1" style={{ paddingLeft: 72 }}>
                       {Array.from({ length: DRUM_STEPS }, (_, i) => (
                         <div key={i} className={`w-6 h-4 flex items-center justify-center text-[7px] font-mono ${
-                          drumStep === i ? "text-[#f59e0b]" : i % 4 === 0 ? "text-[#555]" : "text-[#333]"
+                          drumStep === i ? "text-[#D4A843]" : i % 4 === 0 ? "text-[#555]" : "text-[#333]"
                         }`}>{i + 1}</div>
                       ))}
                     </div>
@@ -3189,14 +3345,14 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                             onClick={() => toggleDrumCell(fxTrack.id, instrIdx, stepIdx)}
                             className={`w-6 h-6 rounded-sm cursor-pointer transition-all border ${
                               on
-                                ? "border-[#f59e0b66]"
+                                ? "border-[#D4A84366]"
                                 : stepIdx % 4 === 0
                                   ? "border-[#2a2a2a] hover:border-[#444]"
                                   : "border-[#1e1e1e] hover:border-[#333]"
                             }`}
                             style={{
                               background: on
-                                ? drumStep === stepIdx ? "#f59e0b" : "#f59e0b99"
+                                ? drumStep === stepIdx ? "#D4A843" : "#D4A84399"
                                 : drumStep === stepIdx ? "#222" : stepIdx % 4 === 0 ? "#181818" : "#141414",
                             }}
                           />
@@ -3204,6 +3360,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                       </div>
                     ))}
                     </div>
+                    )}
                   </div>
                 )}
                 {bottomTab === "editor" && fxTrack && fxTrack.type !== "drum" && (
@@ -3247,7 +3404,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                         <span className="text-[9px] text-[#555] uppercase tracking-wider font-medium block mb-2">Input Device</span>
                         <select value={selectedInputDevice}
                           onChange={(e) => setSelectedInputDevice(e.target.value)}
-                          className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-md px-2 py-1.5 text-[10px] text-[#aaa] outline-none focus:border-[#f59e0b] transition-colors cursor-pointer">
+                          className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-md px-2 py-1.5 text-[10px] text-[#aaa] outline-none focus:border-[#D4A843] transition-colors cursor-pointer">
                           {inputDevices.map((d) => (
                             <option key={d.deviceId} value={d.deviceId}>{d.label || `Microphone (${d.deviceId.slice(0, 8)}...)`}</option>
                           ))}
@@ -3264,7 +3421,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                               if (inputs.length > 0) setSelectedInputDevice(inputs[0].deviceId);
                             } catch { /* denied */ }
                           }}
-                            className="mt-1 text-[9px] text-[#f59e0b] hover:text-[#fbbf24] cursor-pointer transition-colors">
+                            className="mt-1 text-[9px] text-[#D4A843] hover:text-[#EDCF72] cursor-pointer transition-colors">
                             Request microphone access
                           </button>
                         )}
@@ -3289,10 +3446,10 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                       <div className="flex items-center gap-3">
                         <span className="text-[9px] text-[#555] uppercase tracking-wider font-medium">Monitoring</span>
                         <button onClick={() => setMonitoring(!monitoring)}
-                          className={`w-9 h-[18px] rounded-full transition-all cursor-pointer relative ${monitoring ? "bg-[#f59e0b]" : "bg-[#2a2a2a]"}`}>
+                          className={`w-9 h-[18px] rounded-full transition-all cursor-pointer relative ${monitoring ? "bg-[#D4A843]" : "bg-[#2a2a2a]"}`}>
                           <div className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white transition-all shadow-sm ${monitoring ? "left-[19px]" : "left-[2px]"}`} />
                         </button>
-                        <span className={`text-[8px] font-medium ${monitoring ? "text-[#f59e0b]" : "text-[#444]"}`}>{monitoring ? "ON" : "OFF"}</span>
+                        <span className={`text-[8px] font-medium ${monitoring ? "text-[#D4A843]" : "text-[#444]"}`}>{monitoring ? "ON" : "OFF"}</span>
                       </div>
 
                       <div className="flex gap-6">
@@ -3317,60 +3474,68 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
           )}
         </div>
 
-        {/* ═══════════════════ RIGHT PANEL: Import Sources ═══════════════════ */}
-        {showRightPanel && (
-          <div className="flex-shrink-0 flex flex-col overflow-hidden" style={{ width: 260, background: "#131313", borderLeft: "1px solid #1e1e1e" }}>
-            <div className="flex items-center h-7 px-3 flex-shrink-0" style={{ background: "#181818", borderBottom: "1px solid #1e1e1e" }}>
-              <span className="text-[9px] text-[#888] font-medium uppercase tracking-wider">Import Sources</span>
-              <div className="flex-1" />
-              <button onClick={() => setShowRightPanel(false)}
-                className="text-[#444] hover:text-[#888] text-xs cursor-pointer">&#10005;</button>
+        {/* ═══════════════════ RIGHT PANEL: Unified Context Sidebar ═══════════════════ */}
+        {(showRightPanel || showRecordingsPanel) && (
+          <div className="flex-shrink-0 flex flex-col overflow-hidden" style={{ width: 280, background: "#131313", borderLeft: "1px solid #1e1e1e" }}>
+            {/* Sidebar Tab Bar */}
+            <div className="flex items-center h-8 px-1 gap-0 flex-shrink-0" style={{ background: "#161616", borderBottom: "1px solid #1e1e1e" }}>
+              {(["library", "suno", "recordings"] as const).map((tab) => (
+                <button key={tab} onClick={() => { setContextSidebarTab(tab); if (tab === "suno") { fetchSunoCredits(); loadSunoLibrary(); } }}
+                  className="flex-1 text-[9px] py-1.5 font-medium transition-all cursor-pointer rounded-t"
+                  style={{
+                    color: contextSidebarTab === tab ? "#D4A843" : "#555",
+                    background: contextSidebarTab === tab ? "#1e1e1e" : "transparent",
+                    borderBottom: contextSidebarTab === tab ? "2px solid #D4A843" : "2px solid transparent",
+                  }}>
+                  {tab === "library" ? "Library" : tab === "suno" ? "Suno AI" : `Recordings${savedRecordings.length > 0 ? ` (${savedRecordings.length})` : ""}`}
+                </button>
+              ))}
+              <button onClick={() => { setShowRightPanel(false); setShowRecordingsPanel(false); }}
+                className="text-[#444] hover:text-[#888] text-xs cursor-pointer w-6 h-6 flex items-center justify-center rounded hover:bg-[#222] ml-1 transition-colors flex-shrink-0">&#10005;</button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-3 space-y-3">
-              {/* File import */}
-              <div className="rounded-lg p-3" style={{ background: "#1a1a1a", border: "1px solid #222" }}>
-                <div className="flex items-center gap-2 mb-2">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                  <span className="text-[10px] text-[#aaa] font-medium">Import File</span>
-                </div>
-                <button onClick={() => fileRef.current?.click()}
-                  className="w-full text-[9px] py-2 rounded-md border border-dashed border-[#333] text-[#666] hover:text-[#aaa] hover:border-[#555] transition-all cursor-pointer">
-                  Choose audio file...
-                </button>
-              </div>
-
-              {/* YouTube */}
-              <div className="rounded-lg p-3" style={{ background: "#1a1a1a", border: "1px solid #222" }}>
-                <div className="flex items-center gap-2 mb-2">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="#C41E3A"><path d="M23.5 6.2a3 3 0 00-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6a3 3 0 00-2.1 2.1C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 002.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 002.1-2.1c.5-1.9.5-5.8.5-5.8s0-3.9-.5-5.8zM9.5 15.6V8.4l6.3 3.6-6.3 3.6z"/></svg>
-                  <span className="text-[10px] text-[#aaa] font-medium">YouTube</span>
-                </div>
-                <div className="flex gap-1 mb-2">
-                  <input value={ytQuery} onChange={(e) => setYtQuery(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && loadYt()}
-                    placeholder="Paste URL..."
-                    className="flex-1 bg-[#0e0e0e] border border-[#2a2a2a] rounded px-2 py-1 text-[9px] text-[#aaa] outline-none focus:border-[#C41E3A] transition-colors" />
-                  <button onClick={loadYt} className="text-[8px] px-2 py-1 bg-[#C41E3A] text-white rounded hover:brightness-110 cursor-pointer transition-all">Load</button>
-                </div>
-                {ytVideoId && (
-                  <div className="aspect-video w-full rounded overflow-hidden bg-black mb-2">
-                    <iframe src={`https://www.youtube.com/embed/${ytVideoId}?modestbranding=1&rel=0`}
-                      className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen title="YouTube" />
+            {/* ── TAB: Library (Import Sources) ── */}
+            {contextSidebarTab === "library" && (
+              <div className="flex-1 overflow-y-auto p-3 space-y-3" style={{ scrollbarWidth: "thin", scrollbarColor: "#333 transparent" }}>
+                {/* File import */}
+                <div className="rounded-lg p-3" style={{ background: "#1a1a1a", border: "1px solid #222" }}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <span className="text-[10px] text-[#aaa] font-medium">Import File</span>
                   </div>
-                )}
-                <div className="flex gap-1 flex-wrap">
-                  {["Metal Backing", "Blues Jam", "Rock Track"].map((q) => (
-                    <button key={q} onClick={() => window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(q + " backing track")}`, "_blank")}
-                      className="text-[7px] px-1.5 py-0.5 rounded border border-[#222] text-[#444] hover:text-[#888] hover:border-[#333] cursor-pointer transition-colors">{q}</button>
-                  ))}
+                  <button onClick={() => fileRef.current?.click()}
+                    className="w-full text-[9px] py-2 rounded-md border border-dashed border-[#333] text-[#666] hover:text-[#aaa] hover:border-[#555] transition-all cursor-pointer">
+                    Choose audio file...
+                  </button>
+                </div>
+
+                {/* YouTube */}
+                <div className="rounded-lg p-3" style={{ background: "#1a1a1a", border: "1px solid #222" }}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#C41E3A"><path d="M23.5 6.2a3 3 0 00-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6a3 3 0 00-2.1 2.1C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 002.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 002.1-2.1c.5-1.9.5-5.8.5-5.8s0-3.9-.5-5.8zM9.5 15.6V8.4l6.3 3.6-6.3 3.6z"/></svg>
+                    <span className="text-[10px] text-[#aaa] font-medium">YouTube</span>
+                  </div>
+                  <div className="flex gap-1 mb-2">
+                    <input value={ytQuery} onChange={(e) => setYtQuery(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && loadYt()}
+                      placeholder="Paste URL..."
+                      className="flex-1 bg-[#0e0e0e] border border-[#2a2a2a] rounded px-2 py-1 text-[9px] text-[#aaa] outline-none focus:border-[#C41E3A] transition-colors" />
+                    <button onClick={loadYt} className="text-[8px] px-2 py-1 bg-[#C41E3A] text-white rounded hover:brightness-110 cursor-pointer transition-all">Load</button>
+                  </div>
+                  {ytVideoId && (
+                    <div className="aspect-video w-full rounded overflow-hidden bg-black mb-2">
+                      <iframe src={`https://www.youtube.com/embed/${ytVideoId}?modestbranding=1&rel=0`}
+                        className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen title="YouTube" />
+                    </div>
+                  )}
                 </div>
               </div>
+            )}
 
-              {/* ═══ Suno AI — Tabbed Panel ═══ */}
-              <div className="rounded-lg overflow-hidden" style={{ background: "#1a1a1a", border: "1px solid #222" }}>
-                {/* Header */}
-                <div className="flex items-center justify-between px-3 py-2" style={{ background: "#151515", borderBottom: "1px solid #222" }}>
+            {/* ── TAB: Suno AI ── */}
+            {contextSidebarTab === "suno" && (
+              <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex items-center justify-between px-3 py-2 flex-shrink-0" style={{ background: "#151515", borderBottom: "1px solid #222" }}>
                   <div className="flex items-center gap-2">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                     <span className="text-[10px] text-[#ccc] font-medium" style={{ fontFamily: "Oswald, sans-serif", letterSpacing: "0.05em" }}>SUNO AI</span>
@@ -3381,9 +3546,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                     </span>
                   )}
                 </div>
-
-                {/* Tab Bar */}
-                <div className="flex" style={{ borderBottom: "1px solid #222" }}>
+                <div className="flex flex-shrink-0" style={{ borderBottom: "1px solid #222" }}>
                   {(["generate", "library", "credits"] as const).map((tab) => (
                     <button key={tab} onClick={() => setSunoTab(tab)}
                       className="flex-1 text-[9px] py-1.5 font-medium transition-all cursor-pointer"
@@ -3398,14 +3561,9 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                     </button>
                   ))}
                 </div>
-
-                {/* Tab Content */}
-                <div className="p-3">
-
-                  {/* ── TAB: Generate ── */}
+                <div className="flex-1 overflow-y-auto p-3" style={{ scrollbarWidth: "thin", scrollbarColor: "#333 transparent" }}>
                   {sunoTab === "generate" && (
                     <div className="space-y-2">
-                      {/* Custom prompt toggle */}
                       <div className="flex items-center justify-between">
                         <span className="text-[8px] text-[#555]">Prompt mode</span>
                         <button onClick={() => { setSunoCustomPrompt(!sunoCustomPrompt); setSunoGeneratedTracks([]); }}
@@ -3414,10 +3572,8 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                           {sunoCustomPrompt ? "Custom" : "Builder"}
                         </button>
                       </div>
-
                       {!sunoCustomPrompt ? (
                         <>
-                          {/* Scale + Mode */}
                           <div className="flex gap-1.5">
                             <label className="flex-1">
                               <span className="text-[7px] text-[#555] block mb-0.5" style={{ fontFamily: "Oswald, sans-serif" }}>KEY</span>
@@ -3434,7 +3590,6 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                               </select>
                             </label>
                           </div>
-                          {/* Style */}
                           <label className="block">
                             <span className="text-[7px] text-[#555] block mb-0.5" style={{ fontFamily: "Oswald, sans-serif" }}>STYLE</span>
                             <select value={sunoStyle} onChange={(e) => setSunoStyle(e.target.value)}
@@ -3442,7 +3597,6 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                               {STYLES.map((s) => <option key={s} value={s}>{s}</option>)}
                             </select>
                           </label>
-                          {/* BPM */}
                           <label className="block">
                             <span className="text-[7px] text-[#555] block mb-0.5" style={{ fontFamily: "Oswald, sans-serif" }}>BPM</span>
                             <input type="number" value={sunoBpm} min={40} max={300}
@@ -3464,16 +3618,12 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                           </div>
                         </div>
                       )}
-
-                      {/* Prompt Preview */}
                       <div className="rounded p-2" style={{ background: "#0e0e0e", border: "1px solid #1e1e1e" }}>
                         <span className="text-[7px] text-[#444] block mb-1" style={{ fontFamily: "Oswald, sans-serif" }}>PROMPT PREVIEW</span>
                         <div className="text-[8px] text-[#777] leading-relaxed" style={{ fontFamily: "JetBrains Mono, monospace" }}>
                           {sunoStylePreview || <span className="text-[#333] italic">Enter a prompt...</span>}
                         </div>
                       </div>
-
-                      {/* Generate / Confirm */}
                       {!sunoConfirm ? (
                         <button onClick={() => setSunoConfirm(true)} disabled={sunoLoading || (sunoCustomPrompt && !sunoPromptText.trim())}
                           className="w-full text-[9px] py-2 rounded-md text-white hover:brightness-110 disabled:opacity-40 cursor-pointer transition-all font-medium"
@@ -3507,15 +3657,12 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                           </div>
                         </div>
                       )}
-
                       {sunoError && (
                         <div className="flex items-center gap-1.5 text-[9px] text-[#ef4444] bg-[#ef444410] rounded p-2">
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
                           {sunoError}
                         </div>
                       )}
-
-                      {/* Generated Tracks */}
                       {sunoGeneratedTracks.length > 0 && (
                         <div className="space-y-1.5">
                           <span className="text-[7px] text-[#555] block" style={{ fontFamily: "Oswald, sans-serif" }}>GENERATED TRACKS</span>
@@ -3545,20 +3692,15 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                       )}
                     </div>
                   )}
-
-                  {/* ── TAB: Library ── */}
                   {sunoTab === "library" && (
                     <div className="space-y-2">
-                      {/* Search */}
                       <div className="relative">
                         <svg className="absolute left-2 top-1/2 -translate-y-1/2" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#444" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                         <input value={sunoLibSearch} onChange={(e) => setSunoLibSearch(e.target.value)}
                           placeholder="Search tracks..."
                           className="w-full bg-[#0e0e0e] border border-[#2a2a2a] rounded pl-7 pr-2 py-1.5 text-[9px] text-[#aaa] outline-none focus:border-[#D4A843] placeholder:text-[#333]" />
                       </div>
-
-                      {/* Track List */}
-                      <div className="space-y-1 max-h-[280px] overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "#333 transparent" }}>
+                      <div className="space-y-1 max-h-[400px] overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "#333 transparent" }}>
                         {(() => {
                           const filtered = sunoLibrary.filter((t) => !sunoLibSearch || t.title.toLowerCase().includes(sunoLibSearch.toLowerCase()));
                           const favs = filtered.filter((t) => t.favorite);
@@ -3574,7 +3716,6 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                           return sorted.map((t) => (
                             <div key={t.id} className="rounded p-2 group" style={{ background: "#111", border: "1px solid #1e1e1e" }}>
                               <div className="flex items-center gap-2">
-                                {/* Play button */}
                                 <button onClick={() => sunoPlayTrack(t.audioUrl, t.id)}
                                   className="w-6 h-6 rounded-full flex items-center justify-center cursor-pointer transition-all shrink-0"
                                   style={{ background: sunoPlayingId === t.id ? "#D4A843" : "#1a1a1a", border: `1px solid ${sunoPlayingId === t.id ? "#D4A843" : "#2a2a2a"}` }}>
@@ -3584,7 +3725,6 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                                     <svg width="8" height="8" viewBox="0 0 24 24" fill="#666"><polygon points="5,3 19,12 5,21"/></svg>
                                   )}
                                 </button>
-                                {/* Info */}
                                 <div className="flex-1 min-w-0">
                                   <div className="text-[9px] text-[#ccc] truncate">{t.title}</div>
                                   <div className="flex items-center gap-2 text-[7px] text-[#444]" style={{ fontFamily: "JetBrains Mono, monospace" }}>
@@ -3592,9 +3732,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                                     {t.params?.bpm && <span>{t.params.bpm}bpm</span>}
                                     {t.duration > 0 && <span>{Math.floor(t.duration / 60)}:{String(Math.floor(t.duration % 60)).padStart(2, "0")}</span>}
                                   </div>
-                                  <div className="text-[7px] text-[#333]">{new Date(t.createdAt).toLocaleDateString()}</div>
                                 </div>
-                                {/* Actions */}
                                 <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                                   <button onClick={() => sunoToggleFavorite(t.id, t.favorite)} title={t.favorite ? "Unfavorite" : "Favorite"}
                                     className="w-5 h-5 flex items-center justify-center rounded cursor-pointer hover:bg-[#222] transition-colors">
@@ -3616,78 +3754,16 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                           ));
                         })()}
                       </div>
-
-                      {/* Stats */}
-                      <div className="flex items-center justify-center gap-3 pt-1" style={{ borderTop: "1px solid #1e1e1e" }}>
-                        <span className="text-[8px] text-[#444]" style={{ fontFamily: "JetBrains Mono, monospace" }}>
-                          {sunoLibStats.count} track{sunoLibStats.count !== 1 ? "s" : ""}
-                        </span>
-                        <span className="text-[8px] text-[#333]">|</span>
-                        <span className="text-[8px] text-[#444]" style={{ fontFamily: "JetBrains Mono, monospace" }}>
-                          {sunoLibStats.totalBytes < 1024 * 1024
-                            ? `${Math.round(sunoLibStats.totalBytes / 1024)} KB`
-                            : `${(sunoLibStats.totalBytes / (1024 * 1024)).toFixed(1)} MB`} stored
-                        </span>
-                      </div>
                     </div>
                   )}
-
-                  {/* ── TAB: Credits ── */}
                   {sunoTab === "credits" && (
                     <div className="space-y-3">
-                      {/* Credits Remaining */}
                       <div className="text-center py-2">
                         <div className="text-[28px] font-bold" style={{ color: "#D4A843", fontFamily: "Oswald, sans-serif" }}>
                           {sunoCreditsLoading ? "..." : (sunoCredits ?? "--")}
                         </div>
                         <div className="text-[9px] text-[#555]">credits remaining</div>
                       </div>
-
-                      {/* Daily Usage */}
-                      <div className="rounded p-2.5 space-y-2" style={{ background: "#111", border: "1px solid #1e1e1e" }}>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[8px] text-[#555]" style={{ fontFamily: "Oswald, sans-serif" }}>DAILY USAGE</span>
-                          <span className="text-[8px] text-[#444]" style={{ fontFamily: "JetBrains Mono, monospace" }}>{sunoDailyUsage.date || "today"}</span>
-                        </div>
-                        {/* Usage bar */}
-                        <div>
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-[8px] text-[#666]" style={{ fontFamily: "JetBrains Mono, monospace" }}>{sunoDailyUsage.used} / 50 credits</span>
-                            <span className="text-[8px] text-[#555]">{sunoDailyUsage.generations} gen{sunoDailyUsage.generations !== 1 ? "s" : ""}</span>
-                          </div>
-                          <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: "#1a1a1a" }}>
-                            <div className="h-full rounded-full transition-all duration-500"
-                              style={{
-                                width: `${Math.min(100, (sunoDailyUsage.used / 50) * 100)}%`,
-                                background: sunoDailyUsage.used >= 40 ? "linear-gradient(90deg, #D4A843, #ef4444)" : "linear-gradient(90deg, #D4A843, #B8922E)",
-                              }} />
-                          </div>
-                        </div>
-                        {/* Per-generation cost */}
-                        <div className="flex items-center gap-2 text-[8px] text-[#444]">
-                          <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-                          ~10 credits per generation (2 tracks)
-                        </div>
-                      </div>
-
-                      {/* Tips */}
-                      <div className="rounded p-2.5 space-y-1.5" style={{ background: "#0e0e0e", border: "1px solid #1a1a1a" }}>
-                        <span className="text-[8px] text-[#555] block" style={{ fontFamily: "Oswald, sans-serif" }}>TIPS</span>
-                        <div className="flex items-start gap-1.5 text-[8px] text-[#444]">
-                          <span className="text-[#D4A843] mt-px shrink-0">*</span>
-                          <span>Cache-first strategy saves credits -- tracks are stored locally after generation</span>
-                        </div>
-                        <div className="flex items-start gap-1.5 text-[8px] text-[#444]">
-                          <span className="text-[#D4A843] mt-px shrink-0">*</span>
-                          <span>Each generation produces 2 tracks. Pick the one you like, favorite it for quick access</span>
-                        </div>
-                        <div className="flex items-start gap-1.5 text-[8px] text-[#444]">
-                          <span className="text-[#D4A843] mt-px shrink-0">*</span>
-                          <span>Check Library tab -- your track might already be there from a previous session</span>
-                        </div>
-                      </div>
-
-                      {/* Refresh button */}
                       <button onClick={fetchSunoCredits} disabled={sunoCreditsLoading}
                         className="w-full text-[8px] py-1.5 rounded cursor-pointer transition-all disabled:opacity-50"
                         style={{ background: "#1a1a1a", color: "#666", border: "1px solid #222" }}>
@@ -3697,179 +3773,109 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                   )}
                 </div>
               </div>
-            </div>
-          </div>
-        )}
+            )}
 
-        {/* ═══════════════════ RIGHT PANEL: My Recordings / Sounds ═══════════════════ */}
-        {showRecordingsPanel && (
-          <div className="flex-shrink-0 flex flex-col overflow-hidden" style={{ width: 260, background: "#141414", borderLeft: "1px solid #1e1e1e" }}>
-            <div className="flex items-center h-7 px-3 flex-shrink-0" style={{ background: "#181818", borderBottom: "1px solid #1e1e1e" }}>
-              <div className="flex items-center gap-0.5 flex-1">
-                <button onClick={() => setSoundsTab("recordings")}
-                  className={`text-[9px] px-2 py-0.5 rounded cursor-pointer transition-colors font-medium ${soundsTab === "recordings" ? "text-[#f59e0b] bg-[#f59e0b11]" : "text-[#555] hover:text-[#888]"}`}>
-                  Recordings
-                </button>
-                <button onClick={() => setSoundsTab("sounds")}
-                  className={`text-[9px] px-2 py-0.5 rounded cursor-pointer transition-colors font-medium ${soundsTab === "sounds" ? "text-[#f59e0b] bg-[#f59e0b11]" : "text-[#555] hover:text-[#888]"}`}>
-                  Sounds
-                </button>
-              </div>
-              <button onClick={() => setShowRecordingsPanel(false)}
-                className="text-[#444] hover:text-[#888] text-xs cursor-pointer">&#10005;</button>
-            </div>
-
-            {/* Sounds tab */}
-            {soundsTab === "sounds" && (
+            {/* ── TAB: Recordings ── */}
+            {contextSidebarTab === "recordings" && (
               <div className="flex-1 flex flex-col overflow-hidden">
-                <div className="flex items-center gap-0.5 px-2 pt-2 pb-1 flex-shrink-0">
-                  {(["files", "presets", "loops"] as const).map((tab) => (
-                    <button key={tab} onClick={() => setSoundsSubTab(tab)}
-                      className={`text-[8px] px-2 py-1 rounded cursor-pointer transition-colors ${soundsSubTab === tab ? "bg-[#f59e0b22] text-[#f59e0b]" : "text-[#555] hover:text-[#888]"}`}>
-                      {tab === "files" ? "My Files" : tab === "presets" ? "Presets" : "Loops"}
-                    </button>
-                  ))}
+                <div className="px-3 pt-2 pb-1 flex-shrink-0">
+                  <div className="relative">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" className="absolute left-2 top-1/2 -translate-y-1/2">
+                      <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+                    </svg>
+                    <input
+                      value={recSearchQuery}
+                      onChange={(e) => setRecSearchQuery(e.target.value)}
+                      placeholder="Search recordings..."
+                      className="w-full bg-[#0e0e0e] border border-[#2a2a2a] rounded px-2 pl-7 py-1 text-[9px] text-[#aaa] outline-none focus:border-[#D4A84333] transition-colors"
+                    />
+                  </div>
                 </div>
-                <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
-                  {soundsSubTab === "files" && (
-                    <>
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="1.5" className="mb-2">
-                        <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/>
+                <div className="flex-1 overflow-y-auto px-2 pb-2" style={{ scrollbarWidth: "thin", scrollbarColor: "#333 transparent" }}>
+                  {filteredRecordings.length === 0 && (
+                    <div className="flex flex-col items-center justify-center h-full text-center py-8">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="1.5" className="mb-2">
+                        <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
                       </svg>
-                      <span className="text-[10px] text-[#444]">No files</span>
-                      <span className="text-[8px] text-[#333] mt-1">Drag audio files here</span>
-                    </>
+                      <span className="text-[10px] text-[#444]">No saved recordings</span>
+                      <span className="text-[8px] text-[#333] mt-1">Export &gt; Save to Library</span>
+                    </div>
                   )}
-                  {soundsSubTab === "presets" && (
-                    <>
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="1.5" className="mb-2">
-                        <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
-                      </svg>
-                      <span className="text-[10px] text-[#555]">Coming soon...</span>
-                      <span className="text-[8px] text-[#333] mt-1">Presets ready</span>
-                    </>
-                  )}
-                  {soundsSubTab === "loops" && (
-                    <>
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="1.5" className="mb-2">
-                        <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/>
-                      </svg>
-                      <span className="text-[10px] text-[#555]">Coming soon...</span>
-                      <span className="text-[8px] text-[#333] mt-1">Loops ready</span>
-                    </>
-                  )}
+                  {filteredRecordings.map((rec) => {
+                    const isPreviewing = previewingRecId === rec.id;
+                    const isEditing = editingRecId === rec.id;
+                    const date = new Date(rec.date);
+                    const dateStr = `${date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+                    const durMin = Math.floor(rec.duration / 60);
+                    const durSec = Math.floor(rec.duration % 60);
+                    const durStr = `${durMin}:${String(durSec).padStart(2, "0")}`;
+                    return (
+                      <div key={rec.id}
+                        className="rounded-lg mt-1.5 p-2 transition-all hover:bg-[#1e1e1e] group"
+                        style={{
+                          background: "#161616",
+                          borderLeft: isPreviewing ? "2px solid #D4A843" : "2px solid transparent",
+                        }}>
+                        <div className="flex items-start gap-1.5">
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill={isPreviewing ? "#D4A843" : "#555"} className="mt-0.5 flex-shrink-0">
+                            <path d="M9 18V5l12-2v13M6 18a3 3 0 100-6 3 3 0 000 6zM18 16a3 3 0 100-6 3 3 0 000 6z"/>
+                          </svg>
+                          <div className="flex-1 min-w-0">
+                            {isEditing ? (
+                              <input
+                                autoFocus
+                                defaultValue={rec.name}
+                                onBlur={(e) => renameRecordingItem(rec.id, e.target.value || rec.name)}
+                                onKeyDown={(e) => { if (e.key === "Enter") renameRecordingItem(rec.id, (e.target as HTMLInputElement).value || rec.name); if (e.key === "Escape") setEditingRecId(null); }}
+                                onClick={(e) => e.stopPropagation()}
+                                className="w-full bg-[#121214] border border-[#D4A843] rounded px-1 py-0 text-[9px] text-[#ccc] outline-none"
+                              />
+                            ) : (
+                              <div className="text-[9px] text-[#ccc] font-medium truncate">{rec.name}</div>
+                            )}
+                            <div className="text-[7px] text-[#555] mt-0.5 flex items-center gap-1.5">
+                              <span>{durStr}</span>
+                              <span>{"\u00B7"}</span>
+                              <span>{dateStr}</span>
+                              <span>{"\u00B7"}</span>
+                              <span className="uppercase">{rec.format}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-0.5 mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                          <button onClick={() => previewRecording(rec.id)}
+                            title={isPreviewing ? "Stop" : "Preview"}
+                            className={`w-5 h-5 rounded flex items-center justify-center transition-colors cursor-pointer ${isPreviewing ? "text-[#D4A843] bg-[#D4A84311]" : "text-[#555] hover:text-[#D4A843]"}`}>
+                            {isPreviewing ? (
+                              <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                            ) : (
+                              <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                            )}
+                          </button>
+                          <button onClick={() => setEditingRecId(rec.id)} title="Rename"
+                            className="w-5 h-5 rounded flex items-center justify-center text-[#555] hover:text-[#D4A843] transition-colors cursor-pointer">
+                            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                          </button>
+                          <button onClick={() => downloadRecording(rec)} title="Download"
+                            className="w-5 h-5 rounded flex items-center justify-center text-[#555] hover:text-[#D4A843] transition-colors cursor-pointer">
+                            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                          </button>
+                          <button onClick={() => importRecordingToProject(rec)} title="Add to project"
+                            className="w-5 h-5 rounded flex items-center justify-center text-[#555] hover:text-[#22c55e] transition-colors cursor-pointer">
+                            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                          </button>
+                          <div className="flex-1" />
+                          <button onClick={() => removeRecording(rec.id)} title="Delete"
+                            className="w-5 h-5 rounded flex items-center justify-center text-[#444] hover:text-[#ef4444] transition-colors cursor-pointer">
+                            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
-
-            {/* Recordings tab */}
-            {soundsTab === "recordings" && <>
-            {/* Search */}
-            <div className="px-3 pt-2 pb-1 flex-shrink-0">
-              <div className="relative">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" className="absolute left-2 top-1/2 -translate-y-1/2">
-                  <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
-                </svg>
-                <input
-                  value={recSearchQuery}
-                  onChange={(e) => setRecSearchQuery(e.target.value)}
-                  placeholder="Search..."
-                  className="w-full bg-[#0e0e0e] border border-[#2a2a2a] rounded px-2 pl-7 py-1 text-[9px] text-[#aaa] outline-none focus:border-[#f59e0b33] transition-colors"
-                  style={{ boxShadow: "inset 0 1px 3px rgba(0,0,0,0.3)" }}
-                />
-              </div>
-            </div>
-
-            {/* Recordings list */}
-            <div className="flex-1 overflow-y-auto px-2 pb-2" style={{ scrollbarWidth: "thin", scrollbarColor: "#333 transparent" }}>
-              {filteredRecordings.length === 0 && (
-                <div className="flex flex-col items-center justify-center h-full text-center py-8">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="1.5" className="mb-2">
-                    <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
-                  </svg>
-                  <span className="text-[10px] text-[#444]">No saved recordings</span>
-                  <span className="text-[8px] text-[#333] mt-1">Export &gt; Save to Library</span>
-                </div>
-              )}
-              {filteredRecordings.map((rec) => {
-                const isPreviewing = previewingRecId === rec.id;
-                const isEditing = editingRecId === rec.id;
-                const date = new Date(rec.date);
-                const dateStr = `${date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
-                const durMin = Math.floor(rec.duration / 60);
-                const durSec = Math.floor(rec.duration % 60);
-                const durStr = `${durMin}:${String(durSec).padStart(2, "0")}`;
-                return (
-                  <div key={rec.id}
-                    className="rounded-lg mt-1.5 p-2 transition-all hover:bg-[#222] group"
-                    style={{
-                      background: "#1a1a1a",
-                      borderLeft: isPreviewing ? "2px solid #f59e0b" : "2px solid transparent",
-                    }}>
-                    <div className="flex items-start gap-1.5">
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill={isPreviewing ? "#f59e0b" : "#555"} className="mt-0.5 flex-shrink-0">
-                        <path d="M9 18V5l12-2v13M6 18a3 3 0 100-6 3 3 0 000 6zM18 16a3 3 0 100-6 3 3 0 000 6z"/>
-                      </svg>
-                      <div className="flex-1 min-w-0">
-                        {isEditing ? (
-                          <input
-                            autoFocus
-                            defaultValue={rec.name}
-                            onBlur={(e) => renameRecordingItem(rec.id, e.target.value || rec.name)}
-                            onKeyDown={(e) => { if (e.key === "Enter") renameRecordingItem(rec.id, (e.target as HTMLInputElement).value || rec.name); if (e.key === "Escape") setEditingRecId(null); }}
-                            onClick={(e) => e.stopPropagation()}
-                            className="w-full bg-[#121214] border border-[#f59e0b] rounded px-1 py-0 text-[9px] text-[#ccc] outline-none"
-                          />
-                        ) : (
-                          <div className="text-[9px] text-[#ccc] font-medium truncate">{rec.name}</div>
-                        )}
-                        <div className="text-[7px] text-[#555] mt-0.5 flex items-center gap-1.5">
-                          <span>{durStr}</span>
-                          <span>{"\u00B7"}</span>
-                          <span>{dateStr}</span>
-                          <span>{"\u00B7"}</span>
-                          <span className="uppercase">{rec.format}</span>
-                        </div>
-                      </div>
-                    </div>
-                    {/* Action buttons */}
-                    <div className="flex items-center gap-0.5 mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                      <button onClick={() => previewRecording(rec.id)}
-                        title={isPreviewing ? "Stop" : "Preview"}
-                        className={`w-5 h-5 rounded flex items-center justify-center transition-colors cursor-pointer ${isPreviewing ? "text-[#f59e0b] bg-[#f59e0b11]" : "text-[#555] hover:text-[#f59e0b]"}`}>
-                        {isPreviewing ? (
-                          <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-                        ) : (
-                          <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                        )}
-                      </button>
-                      <button onClick={() => setEditingRecId(rec.id)}
-                        title="Rename"
-                        className="w-5 h-5 rounded flex items-center justify-center text-[#555] hover:text-[#f59e0b] transition-colors cursor-pointer">
-                        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                      </button>
-                      <button onClick={() => downloadRecording(rec)}
-                        title="Download"
-                        className="w-5 h-5 rounded flex items-center justify-center text-[#555] hover:text-[#f59e0b] transition-colors cursor-pointer">
-                        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                      </button>
-                      <button onClick={() => importRecordingToProject(rec)}
-                        title="Add to project"
-                        className="w-5 h-5 rounded flex items-center justify-center text-[#555] hover:text-[#22c55e] transition-colors cursor-pointer">
-                        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>
-                      </button>
-                      <div className="flex-1" />
-                      <button onClick={() => removeRecording(rec.id)}
-                        title="Delete"
-                        className="w-5 h-5 rounded flex items-center justify-center text-[#444] hover:text-[#ef4444] transition-colors cursor-pointer">
-                        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            </>}
           </div>
         )}
       </div>
@@ -3878,7 +3884,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
       <div className="flex items-center h-5 px-3 flex-shrink-0" style={{ background: "#0e0e0e", borderTop: "1px solid #1a1a1a" }}>
         <div className="flex items-center gap-3">
           <button onClick={() => { if (bottomTab === "mixer") setBottomTab("none"); else setBottomTab("mixer"); }}
-            className={`text-[8px] cursor-pointer transition-colors ${bottomTab === "mixer" ? "text-[#f59e0b]" : "text-[#444] hover:text-[#888]"}`}>
+            className={`text-[8px] cursor-pointer transition-colors ${bottomTab === "mixer" ? "text-[#D4A843]" : "text-[#444] hover:text-[#888]"}`}>
             Mixer
           </button>
           <button onClick={() => { if (bottomTab === "fx") setBottomTab("none"); else setBottomTab("fx"); }}
@@ -3886,17 +3892,17 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
             Effects
           </button>
           <button onClick={() => { if (bottomTab === "editor") setBottomTab("none"); else setBottomTab("editor"); }}
-            className={`text-[8px] cursor-pointer transition-colors ${bottomTab === "editor" ? "text-[#f59e0b]" : "text-[#444] hover:text-[#888]"}`}>
+            className={`text-[8px] cursor-pointer transition-colors ${bottomTab === "editor" ? "text-[#D4A843]" : "text-[#444] hover:text-[#888]"}`}>
             Editor
           </button>
           <button onClick={() => { if (bottomTab === "input") setBottomTab("none"); else setBottomTab("input"); }}
-            className={`text-[8px] cursor-pointer transition-colors ${bottomTab === "input" ? "text-[#f59e0b]" : "text-[#444] hover:text-[#888]"}`}>
+            className={`text-[8px] cursor-pointer transition-colors ${bottomTab === "input" ? "text-[#D4A843]" : "text-[#444] hover:text-[#888]"}`}>
             I/O
           </button>
           <div className="w-px h-3 bg-[#222]" />
-          <button onClick={() => { setShowRecordingsPanel(!showRecordingsPanel); if (!showRecordingsPanel) setShowRightPanel(false); }}
-            className={`text-[8px] cursor-pointer transition-colors ${showRecordingsPanel ? "text-[#f59e0b]" : "text-[#444] hover:text-[#888]"}`}>
-            Library {savedRecordings.length > 0 ? `(${savedRecordings.length})` : ""}
+          <button onClick={() => { const isOpen = showRightPanel || showRecordingsPanel; if (isOpen) { setShowRightPanel(false); setShowRecordingsPanel(false); } else { setShowRightPanel(true); } }}
+            className={`text-[8px] cursor-pointer transition-colors ${(showRightPanel || showRecordingsPanel) ? "text-[#D4A843]" : "text-[#444] hover:text-[#888]"}`}>
+            Sidebar {savedRecordings.length > 0 ? `(${savedRecordings.length})` : ""}
           </button>
         </div>
         <div className="flex-1" />
@@ -3906,7 +3912,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
           <span>{projectKey}</span>
           <span>{tracks.length} tracks</span>
           {snapToGrid && <span className="text-[#444]">SNAP</span>}
-          {looping && <span className="text-[#f59e0b44]">LOOP</span>}
+          {looping && <span className="text-[#D4A84344]">LOOP</span>}
         </div>
       </div>
     </div>
@@ -3927,7 +3933,7 @@ function EffectSection({ title, enabled, onToggle, children }: {
       {/* Card header */}
       <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-t-lg" style={{ background: enabled ? "#151512" : "#0e0e0e", borderBottom: `1px solid ${enabled ? "#222" : "#1a1a1a"}` }}>
         <button onClick={onToggle}
-          className={`w-[16px] h-[16px] rounded-[4px] cursor-pointer flex items-center justify-center transition-all text-[8px] font-bold ${enabled ? "bg-[#f59e0b] text-[#111] shadow-[0_0_6px_rgba(245,158,11,0.2)]" : "border border-[#333] text-transparent hover:border-[#555]"}`}>
+          className={`w-[16px] h-[16px] rounded-[4px] cursor-pointer flex items-center justify-center transition-all text-[8px] font-bold ${enabled ? "bg-[#D4A843] text-[#111] shadow-[0_0_6px_rgba(212,168,67,0.2)]" : "border border-[#333] text-transparent hover:border-[#555]"}`}>
           {enabled ? "\u2713" : ""}
         </button>
         <span className={`text-[10px] font-semibold transition-colors ${enabled ? "text-[#ccc]" : "text-[#555]"}`}>{title}</span>
@@ -3970,7 +3976,7 @@ function FxKnob({ label, value, min, max, step, onChange }: {
     <div className="flex flex-col items-center gap-0.5 min-w-[48px]">
       <span className="text-[7px] text-[#555] font-medium">{label}</span>
       <div
-        className="w-8 h-8 rounded-full cursor-grab active:cursor-grabbing relative transition-all hover:shadow-[0_0_8px_rgba(245,158,11,0.15)]"
+        className="w-8 h-8 rounded-full cursor-grab active:cursor-grabbing relative transition-all hover:shadow-[0_0_8px_rgba(212,168,67,0.15)]"
         style={{ background: "linear-gradient(180deg, #222 0%, #1a1a1a 100%)", border: "2px solid #333" }}
         onMouseDown={(e) => { dragRef.current = { startY: e.clientY, startVal: value }; document.body.style.cursor = "grabbing"; }}
         onDoubleClick={() => onChange(min + (max - min) / 2)}>
@@ -3980,14 +3986,14 @@ function FxKnob({ label, value, min, max, step, onChange }: {
             strokeDasharray={`${pct * 75.4} 999`}
             strokeDashoffset="-18.85"
             transform="rotate(-225 16 16)" />
-          <circle cx="16" cy="16" r="12" fill="none" stroke="#f59e0b" strokeWidth="2"
+          <circle cx="16" cy="16" r="12" fill="none" stroke="#D4A843" strokeWidth="2"
             strokeDasharray={`${pct * 75.4} 999`}
             strokeDashoffset="-18.85"
             transform="rotate(-225 16 16)"
             opacity="0.6" />
         </svg>
         {/* Pointer */}
-        <div className="absolute top-[3px] left-1/2 w-[2px] h-[8px] bg-[#f59e0b] rounded-full"
+        <div className="absolute top-[3px] left-1/2 w-[2px] h-[8px] bg-[#D4A843] rounded-full"
           style={{ transform: `translateX(-50%) rotate(${angle}deg)`, transformOrigin: "50% 950%" }} />
       </div>
       <span className="font-mono text-[7px] text-[#555]">

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import type { SavedRecording } from "@/lib/types";
+import DarkAudioPlayer from "./DarkAudioPlayer";
 
 interface RecorderBoxProps { storageKey: string; }
 
@@ -226,18 +227,15 @@ export default function RecorderBox({ storageKey }: RecorderBoxProps) {
       {micError && <div className="font-label text-[10px] text-[#C41E3A] mb-2">{micError}</div>}
 
       {audioUrl && (
-        /* eslint-disable-next-line jsx-a11y/media-has-caption */
-        <audio controls src={audioUrl} className="w-full h-8 mb-2" />
+        <DarkAudioPlayer src={audioUrl} title="Recording" compact className="mb-2" />
       )}
 
       {savedList.length > 0 && (
         <div>
           <div className="font-label text-[9px] text-[#444] mb-1">Recordings ({savedList.length})</div>
           {savedList.map((item, idx) => (
-            <div key={idx} className="flex items-center gap-2 mb-0.5">
-              <span className="font-readout text-[9px] text-[#333] min-w-[80px]">{item.dt}</span>
-              {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-              <audio controls src={item.d} className="h-[24px] flex-1" />
+            <div key={idx} className="mb-1">
+              <DarkAudioPlayer src={item.d} title={item.dt} compact />
             </div>
           ))}
         </div>
