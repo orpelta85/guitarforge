@@ -1,19 +1,80 @@
 "use client";
-import { useState } from "react";
-import type { Exercise, Song, DayExMap, BoolMap, StringMap, ExEditMap } from "@/lib/types";
-import { DAYS, CATS, COL } from "@/lib/constants";
+import { useState, useRef, useEffect, useCallback } from "react";
+import type { Exercise, Song, DayCats, DayHrs, DayExMap, BoolMap, StringMap, ExEditMap } from "@/lib/types";
+import { DAYS, CATS, COL, CAT_GROUPS } from "@/lib/constants";
 import { EXERCISES } from "@/lib/exercises";
 import { autoFill, makeSongItemSimple } from "@/lib/helpers";
 import MetronomeBox from "./MetronomeBox";
 import RecorderBox from "./RecorderBox";
 import type { View } from "./Navbar";
 
+// ── Note detection constants ──
+const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+const GUITAR_STRINGS = [
+  { note: "E4", freq: 329.63, label: "1st (E4)" },
+  { note: "B3", freq: 246.94, label: "2nd (B3)" },
+  { note: "G3", freq: 196.00, label: "3rd (G3)" },
+  { note: "D3", freq: 146.83, label: "4th (D3)" },
+  { note: "A2", freq: 110.00, label: "5th (A2)" },
+  { note: "E2", freq: 82.41, label: "6th (E2)" },
+];
+
+function freqToNote(freq: number): { note: string; octave: number; cents: number } {
+  const noteNum = 12 * (Math.log2(freq / 440));
+  const roundedNote = Math.round(noteNum);
+  const cents = Math.round((noteNum - roundedNote) * 100);
+  const noteIdx = ((roundedNote % 12) + 12) % 12;
+  const octave = Math.floor((roundedNote + 9) / 12) + 4;
+  return { note: NOTE_NAMES[noteIdx], octave, cents };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function autoCorrelate(inputBuf: any, sampleRate: number): number {
+  let SIZE = inputBuf.length;
+  let rms = 0;
+  for (let i = 0; i < SIZE; i++) rms += inputBuf[i] * inputBuf[i];
+  rms = Math.sqrt(rms / SIZE);
+  if (rms < 0.01) return -1;
+
+  let r1 = 0, r2 = SIZE - 1;
+  const thres = 0.2;
+  for (let i = 0; i < SIZE / 2; i++) { if (Math.abs(inputBuf[i]) < thres) { r1 = i; break; } }
+  for (let i = 1; i < SIZE / 2; i++) { if (Math.abs(inputBuf[SIZE - i]) < thres) { r2 = SIZE - i; break; } }
+
+  const trimmed = Array.prototype.slice.call(inputBuf, r1, r2) as number[];
+  const buf = new Float32Array(trimmed);
+  SIZE = buf.length;
+
+  const c = new Float32Array(SIZE);
+  for (let i = 0; i < SIZE; i++) {
+    let val = 0;
+    for (let j = 0; j < SIZE - i; j++) val += buf[j] * buf[j + i];
+    c[i] = val;
+  }
+
+  let d = 0;
+  while (c[d] > c[d + 1]) d++;
+
+  let maxval = -1, maxpos = -1;
+  for (let i = d; i < SIZE; i++) {
+    if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
+  }
+
+  let T0 = maxpos;
+  const x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
+  const a = (x1 + x3 - 2 * x2) / 2;
+  const b = (x3 - x1) / 2;
+  if (a) T0 = T0 - b / (2 * a);
+
+  return sampleRate / T0;
+}
+
 interface PracticePageProps {
   week: number;
   selDay: string;
   style: string;
-  dayCats: import("@/lib/types").DayCats;
-  dayHrs: import("@/lib/types").DayHrs;
+  dayCats: DayCats;
+  dayHrs: DayHrs;
   dayExMap: DayExMap;
   doneMap: BoolMap;
   bpmLog: StringMap;
@@ -37,6 +98,8 @@ interface PracticePageProps {
   // Setters
   setView: (v: View) => void;
   setSelDay: (s: string) => void;
+  setDayCats: React.Dispatch<React.SetStateAction<DayCats>>;
+  setDayHrs: React.Dispatch<React.SetStateAction<DayHrs>>;
   setDayExMap: React.Dispatch<React.SetStateAction<DayExMap>>;
   setSessionRunning: (b: boolean) => void;
   setSessionSeconds: (n: number) => void;
@@ -61,7 +124,7 @@ export default function PracticePage(props: PracticePageProps) {
     streak, sessionSeconds, sessionRunning, showQuickMetronome, showQuickRecorder,
     exPickerOpen, exPickerSearch, exPickerCat, songPickerOpen, songPickerSearch,
     curExList, curDone, curMin, curCats,
-    setView, setSelDay, setDayExMap,
+    setView, setSelDay, setDayCats, setDayHrs, setDayExMap,
     setSessionRunning, setSessionSeconds, setShowQuickMetronome, setShowQuickRecorder,
     setExPickerOpen, setExPickerSearch, setExPickerCat,
     setSongPickerOpen, setSongPickerSearch,
@@ -69,80 +132,114 @@ export default function PracticePage(props: PracticePageProps) {
     toggleDone, getEditedEx, buildDay,
   } = props;
 
+  // ── Local state ──
+  const [showDayEditor, setShowDayEditor] = useState(false);
+  const [showTuner, setShowTuner] = useState(false);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+
+  // ── Tuner state ──
+  const [tunerNote, setTunerNote] = useState("");
+  const [tunerOctave, setTunerOctave] = useState(0);
+  const [tunerCents, setTunerCents] = useState(0);
+  const [tunerFreq, setTunerFreq] = useState(0);
+  const [tunerActive, setTunerActive] = useState(false);
+  const tunerCtxRef = useRef<AudioContext | null>(null);
+  const tunerStreamRef = useRef<MediaStream | null>(null);
+  const tunerAnimRef = useRef<number>(0);
+  const tunerAnalyserRef = useRef<AnalyserNode | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const tunerBufRef = useRef<any>(null);
+
+  const startTuner = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+      });
+      const ctx = new AudioContext();
+      const source = ctx.createMediaStreamSource(stream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 4096;
+      source.connect(analyser);
+      const buf = new Float32Array(analyser.fftSize);
+
+      tunerCtxRef.current = ctx;
+      tunerStreamRef.current = stream;
+      tunerAnalyserRef.current = analyser;
+      tunerBufRef.current = buf;
+      setTunerActive(true);
+
+      const detect = () => {
+        if (!tunerAnalyserRef.current || !tunerBufRef.current) return;
+        tunerAnalyserRef.current.getFloatTimeDomainData(tunerBufRef.current);
+        const freq = autoCorrelate(tunerBufRef.current, ctx.sampleRate);
+        if (freq > 0 && freq < 2000) {
+          const { note, octave, cents } = freqToNote(freq);
+          setTunerNote(note);
+          setTunerOctave(octave);
+          setTunerCents(cents);
+          setTunerFreq(Math.round(freq * 10) / 10);
+        }
+        tunerAnimRef.current = requestAnimationFrame(detect);
+      };
+      detect();
+    } catch {
+      // Microphone access denied
+    }
+  }, []);
+
+  const stopTuner = useCallback(() => {
+    if (tunerAnimRef.current) cancelAnimationFrame(tunerAnimRef.current);
+    if (tunerStreamRef.current) tunerStreamRef.current.getTracks().forEach(t => t.stop());
+    if (tunerCtxRef.current) tunerCtxRef.current.close();
+    tunerCtxRef.current = null;
+    tunerStreamRef.current = null;
+    tunerAnalyserRef.current = null;
+    tunerBufRef.current = null;
+    setTunerActive(false);
+    setTunerNote("");
+    setTunerCents(0);
+    setTunerFreq(0);
+  }, []);
+
+  useEffect(() => {
+    return () => { stopTuner(); };
+  }, [stopTuner]);
+
+  useEffect(() => {
+    if (showTuner && !tunerActive) startTuner();
+    if (!showTuner && tunerActive) stopTuner();
+  }, [showTuner, tunerActive, startTuner, stopTuner]);
+
   const fmtTimer = (s: number) => {
     const m = Math.floor(s / 60), sec = s % 60;
     return String(m).padStart(2, "0") + ":" + String(sec).padStart(2, "0");
   };
 
+  // ── Drag & Drop handlers ──
+  const handleDragStart = (idx: number) => { setDragIdx(idx); };
+  const handleDragOver = (e: React.DragEvent, idx: number) => { e.preventDefault(); setDragOverIdx(idx); };
+  const handleDragLeave = () => { setDragOverIdx(null); };
+  const handleDrop = (idx: number) => {
+    if (dragIdx === null || dragIdx === idx) { setDragIdx(null); setDragOverIdx(null); return; }
+    setDayExMap(p => {
+      const l = (p[selDay] || []).slice();
+      const [item] = l.splice(dragIdx, 1);
+      l.splice(idx, 0, item);
+      return { ...p, [selDay]: l };
+    });
+    setDragIdx(null);
+    setDragOverIdx(null);
+  };
+  const handleDragEnd = () => { setDragIdx(null); setDragOverIdx(null); };
+
+  // Closest guitar string for tuner
+  const closestString = tunerFreq > 0 ? GUITAR_STRINGS.reduce((prev, curr) =>
+    Math.abs(curr.freq - tunerFreq) < Math.abs(prev.freq - tunerFreq) ? curr : prev
+  ) : null;
+
   return (
     <div className="animate-fade-in">
-      {/* Session Timer Bar */}
-      <div className="panel p-3 mb-4" style={{ borderColor: "#D4A843" + "30", background: "linear-gradient(135deg, rgba(212,168,67,0.06) 0%, transparent 60%)" }}>
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="font-stat text-2xl text-[#D4A843] tabular-nums" style={{ minWidth: 72 }}>{fmtTimer(sessionSeconds)}</div>
-            <div className="font-label text-[10px] text-[#666]">Session</div>
-            {streak.currentStreak > 0 && (
-              <span className="font-label text-[10px] text-[#D4A843]">Day {streak.currentStreak}</span>
-            )}
-          </div>
-          <div className="flex items-center gap-1.5">
-            <button type="button" onClick={() => setSessionRunning(!sessionRunning)}
-              className={`font-label text-[10px] px-3 py-1.5 rounded-lg border transition-all ${sessionRunning ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#D4A843]/40 text-[#D4A843]"}`}>
-              {sessionRunning ? "Pause" : "Start"}
-            </button>
-            <button type="button" onClick={() => { setSessionSeconds(0); setSessionRunning(false); }}
-              className="btn-ghost !px-2 !py-1.5 !text-[10px]">Reset</button>
-          </div>
-        </div>
-        {curExList.length > 0 && (
-          <div className="mt-2">
-            <div className="flex justify-between items-center mb-1">
-              <span className="font-label text-[10px] text-[#666]">{curDone}/{curExList.length} exercises</span>
-              <span className={`font-readout text-[11px] font-bold ${curDone === curExList.length && curExList.length > 0 ? "text-[#33CC33]" : "text-[#D4A843]"}`}>
-                {curExList.length > 0 ? Math.round((curDone / curExList.length) * 100) : 0}%
-              </span>
-            </div>
-            <div className="practice-progress-bar">
-              <div className="practice-progress-fill" style={{ width: (curExList.length > 0 ? Math.round((curDone / curExList.length) * 100) : 0) + "%" }} />
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Quick Tools Row */}
-      <div className="flex gap-2 mb-4">
-        <button type="button" onClick={() => { setShowQuickMetronome(!showQuickMetronome); setShowQuickRecorder(false); }}
-          className={`flex items-center gap-1.5 font-label text-[11px] px-3 py-2 rounded-lg border transition-all ${showQuickMetronome ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#888] hover:border-[#555]"}`}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="10" strokeDasharray="4 2"/></svg>
-          Metronome
-        </button>
-        <button type="button" onClick={() => setView("learn")}
-          className="flex items-center gap-1.5 font-label text-[11px] px-3 py-2 rounded-lg border border-[#333] text-[#888] hover:border-[#555] transition-all">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 00-3 3v7a3 3 0 006 0V5a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg>
-          Tuner
-        </button>
-        <button type="button" onClick={() => { setShowQuickRecorder(!showQuickRecorder); setShowQuickMetronome(false); }}
-          className={`flex items-center gap-1.5 font-label text-[11px] px-3 py-2 rounded-lg border transition-all ${showQuickRecorder ? "bg-[#C41E3A] text-white border-[#C41E3A]" : "border-[#333] text-[#888] hover:border-[#555]"}`}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>
-          Record
-        </button>
-      </div>
-
-      {/* Inline Metronome */}
-      {showQuickMetronome && (
-        <div className="panel p-4 mb-4" style={{ borderColor: "#D4A843" + "30" }}>
-          <MetronomeBox standalone />
-        </div>
-      )}
-
-      {/* Inline Recorder */}
-      {showQuickRecorder && (
-        <div className="panel p-4 mb-4" style={{ borderColor: "#C41E3A" + "30" }}>
-          <RecorderBox storageKey={week + "-" + selDay + "-session"} />
-        </div>
-      )}
-
       {/* Day Selector */}
       <div className="flex gap-1 mb-4 overflow-x-auto scrollbar-hide pb-1">
         {DAYS.map((day) => (
@@ -157,7 +254,15 @@ export default function PracticePage(props: PracticePageProps) {
       <div className="panel p-3 sm:p-5 mb-4">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
           <div>
-            <div className="font-heading text-lg sm:text-xl font-bold text-[#D4A843]">{selDay}</div>
+            <div className="flex items-center gap-2">
+              <div className="font-heading text-lg sm:text-xl font-bold text-[#D4A843]">{selDay}</div>
+              <button type="button" onClick={() => setShowDayEditor(!showDayEditor)}
+                className="text-[#555] hover:text-[#D4A843] transition-colors bg-transparent border-none cursor-pointer p-0.5" title="Edit day schedule">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+            </div>
             <div className="font-readout text-[10px] sm:text-[11px] text-[#555] mt-0.5">
               <span>{curExList.length} exercises</span>
               <span className="mx-1">&middot;</span>
@@ -257,7 +362,182 @@ export default function PracticePage(props: PracticePageProps) {
             </div>
           )}
         </div>
+
+        {/* Inline Day Schedule Editor (Issue #2) */}
+        {showDayEditor && (() => {
+          const ac = dayCats[selDay] || [];
+          const hrs = dayHrs[selDay] || 0;
+          return (
+            <div className="mt-4 pt-4 border-t border-[#1a1a1a]">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="font-label text-[10px] text-[#888]">Practice Time</span>
+                <input type="number" value={hrs} min={0} max={8} step={0.5} title="Practice hours"
+                  onChange={(e) => setDayHrs((p) => ({ ...p, [selDay]: Number(e.target.value) }))}
+                  className="input input-gold w-16 text-center !py-1" />
+                <span className="font-label text-[9px] text-[#444]">hours</span>
+              </div>
+              <div className="font-label text-[10px] text-[#888] mb-2">Categories</div>
+              {Object.entries(CAT_GROUPS).map(([group, cats]) => (
+                <div key={group} className="mb-2">
+                  <div className="font-label text-[9px] text-[#555] mb-1">{group}</div>
+                  <div className="flex flex-wrap gap-1">
+                    {cats.map((cat) => {
+                      const on = ac.includes(cat), c = COL[cat] || "#888";
+                      return (
+                        <span key={cat} onClick={() => setDayCats((p) => {
+                          const a = (p[selDay] || []).slice(), i = a.indexOf(cat);
+                          i >= 0 ? a.splice(i, 1) : a.push(cat); return { ...p, [selDay]: a };
+                        })} className="tag cursor-pointer transition-all" style={{
+                          border: `1px solid ${on ? c : "#2a2a2a"}`, color: on ? c : "#444",
+                          background: on ? c + "10" : "transparent",
+                        }}>{cat}</span>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+              <div className="flex gap-2 mt-3 pt-3 border-t border-[#1a1a1a]">
+                <button onClick={() => { buildDay(selDay); setShowDayEditor(false); }} className="btn-gold !text-[10px]">Apply & Fill</button>
+                <button onClick={() => setShowDayEditor(false)} className="btn-ghost !text-[10px]">Close</button>
+              </div>
+            </div>
+          );
+        })()}
       </div>
+
+      {/* Session Timer + Tools (moved UNDER day header - Issue #3) */}
+      <div className="panel p-3 mb-4" style={{ borderColor: "#D4A843" + "30", background: "linear-gradient(135deg, rgba(212,168,67,0.06) 0%, transparent 60%)" }}>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="font-stat text-2xl text-[#D4A843] tabular-nums" style={{ minWidth: 72 }}>{fmtTimer(sessionSeconds)}</div>
+            <div className="font-label text-[10px] text-[#666]">Session</div>
+            {streak.currentStreak > 0 && (
+              <span className="font-label text-[10px] text-[#D4A843]">Day {streak.currentStreak}</span>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button type="button" onClick={() => setSessionRunning(!sessionRunning)}
+              className={`font-label text-[10px] px-3 py-1.5 rounded-lg border transition-all ${sessionRunning ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#D4A843]/40 text-[#D4A843]"}`}>
+              {sessionRunning ? "Pause" : "Start"}
+            </button>
+            <button type="button" onClick={() => { setSessionSeconds(0); setSessionRunning(false); }}
+              className="btn-ghost !px-2 !py-1.5 !text-[10px]">Reset</button>
+          </div>
+        </div>
+        {curExList.length > 0 && (
+          <div className="mt-2">
+            <div className="flex justify-between items-center mb-1">
+              <span className="font-label text-[10px] text-[#666]">{curDone}/{curExList.length} exercises</span>
+              <span className={`font-readout text-[11px] font-bold ${curDone === curExList.length && curExList.length > 0 ? "text-[#33CC33]" : "text-[#D4A843]"}`}>
+                {curExList.length > 0 ? Math.round((curDone / curExList.length) * 100) : 0}%
+              </span>
+            </div>
+            <div className="practice-progress-bar">
+              <div className="practice-progress-fill" style={{ width: (curExList.length > 0 ? Math.round((curDone / curExList.length) * 100) : 0) + "%" }} />
+            </div>
+          </div>
+        )}
+
+        {/* Tool Buttons Row */}
+        <div className="flex gap-2 mt-3 pt-3 border-t border-[#ffffff08]">
+          <button type="button" onClick={() => { setShowQuickMetronome(!showQuickMetronome); setShowQuickRecorder(false); setShowTuner(false); }}
+            className={`flex items-center gap-1.5 font-label text-[11px] px-3 py-2 rounded-lg border transition-all ${showQuickMetronome ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#888] hover:border-[#555]"}`}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="10" strokeDasharray="4 2"/></svg>
+            Metronome
+          </button>
+          <button type="button" onClick={() => { setShowTuner(!showTuner); setShowQuickMetronome(false); setShowQuickRecorder(false); }}
+            className={`flex items-center gap-1.5 font-label text-[11px] px-3 py-2 rounded-lg border transition-all ${showTuner ? "bg-[#818cf8] text-[#121214] border-[#818cf8]" : "border-[#333] text-[#888] hover:border-[#555]"}`}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M2 10V5a2 2 0 012-2h3.5"/><path d="M22 10V5a2 2 0 00-2-2h-3.5"/><path d="M2 14v5a2 2 0 002 2h3.5"/><path d="M22 14v5a2 2 0 01-2 2h-3.5"/>
+              <line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+            </svg>
+            Tuner
+          </button>
+          <button type="button" onClick={() => { setShowQuickRecorder(!showQuickRecorder); setShowQuickMetronome(false); setShowTuner(false); }}
+            className={`flex items-center gap-1.5 font-label text-[11px] px-3 py-2 rounded-lg border transition-all ${showQuickRecorder ? "bg-[#C41E3A] text-white border-[#C41E3A]" : "border-[#333] text-[#888] hover:border-[#555]"}`}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>
+            Record
+          </button>
+        </div>
+      </div>
+
+      {/* Inline Metronome */}
+      {showQuickMetronome && (
+        <div className="panel p-4 mb-4" style={{ borderColor: "#D4A843" + "30" }}>
+          <MetronomeBox standalone />
+        </div>
+      )}
+
+      {/* Inline Tuner (Issue #5) */}
+      {showTuner && (
+        <div className="panel p-4 mb-4" style={{ borderColor: "#818cf8" + "30" }}>
+          <div className="font-label text-[10px] text-[#818cf8] mb-3 flex items-center gap-2">
+            <div className={`led ${tunerActive ? "led-green" : "led-off"}`} />
+            Guitar Tuner
+          </div>
+
+          <div className="text-center py-4">
+            {tunerNote ? (
+              <>
+                <div className="font-heading text-5xl font-bold text-white mb-1">{tunerNote}{tunerOctave}</div>
+                <div className="font-readout text-[12px] text-[#666] mb-4">{tunerFreq} Hz</div>
+
+                {/* Cents indicator bar */}
+                <div className="relative mx-auto max-w-[300px] mb-4">
+                  <div className="h-2 bg-[#1a1a1a] rounded-full relative overflow-hidden">
+                    <div className="absolute top-0 left-1/2 w-px h-full bg-[#33CC33]" />
+                    <div className="absolute top-0 h-full w-2 rounded-full transition-all duration-100"
+                      style={{
+                        left: `${50 + tunerCents / 2}%`,
+                        transform: "translateX(-50%)",
+                        background: Math.abs(tunerCents) < 5 ? "#33CC33" : Math.abs(tunerCents) < 15 ? "#D4A843" : "#C41E3A",
+                      }} />
+                  </div>
+                  <div className="flex justify-between mt-1">
+                    <span className="font-readout text-[9px] text-[#444]">-50</span>
+                    <span className={`font-readout text-[11px] font-bold ${Math.abs(tunerCents) < 5 ? "text-[#33CC33]" : Math.abs(tunerCents) < 15 ? "text-[#D4A843]" : "text-[#C41E3A]"}`}>
+                      {tunerCents > 0 ? "+" : ""}{tunerCents} cents
+                    </span>
+                    <span className="font-readout text-[9px] text-[#444]">+50</span>
+                  </div>
+                </div>
+
+                {/* In tune indicator */}
+                {Math.abs(tunerCents) < 5 && (
+                  <div className="font-label text-[11px] text-[#33CC33] mb-3">In Tune</div>
+                )}
+              </>
+            ) : (
+              <div className="py-6">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="1.5" className="mx-auto mb-3" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2a3 3 0 00-3 3v7a3 3 0 006 0V5a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/>
+                </svg>
+                <div className="font-readout text-[12px] text-[#555]">Play a note to detect pitch...</div>
+              </div>
+            )}
+          </div>
+
+          {/* Guitar strings reference */}
+          <div className="grid grid-cols-6 gap-1 mt-2">
+            {GUITAR_STRINGS.map((gs) => {
+              const isClosest = closestString?.note === gs.note && tunerNote !== "";
+              return (
+                <div key={gs.note} className={`text-center p-2 rounded-lg border transition-all ${isClosest ? "border-[#818cf8]/60 bg-[#818cf8]/10" : "border-[#1a1a1a]"}`}>
+                  <div className={`font-heading text-[13px] font-bold ${isClosest ? "text-[#818cf8]" : "text-[#666]"}`}>{gs.note}</div>
+                  <div className="font-readout text-[8px] text-[#444]">{Math.round(gs.freq)} Hz</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Inline Recorder */}
+      {showQuickRecorder && (
+        <div className="panel p-4 mb-4" style={{ borderColor: "#C41E3A" + "30" }}>
+          <RecorderBox storageKey={week + "-" + selDay + "-session"} />
+        </div>
+      )}
 
       {/* Empty state */}
       {!curExList.length && <div className="panel p-8 sm:p-12 text-center" style={{ background: "linear-gradient(180deg, rgba(212,168,67,0.04) 0%, transparent 60%)" }}>
@@ -271,22 +551,39 @@ export default function PracticePage(props: PracticePageProps) {
         <div className="font-readout text-[12px] text-[#666] mb-6 max-w-[340px] mx-auto leading-relaxed">
           {curCats.length > 0
             ? "Your categories are set. Hit Auto Fill to generate a personalized routine for today."
-            : "Set your categories in Dashboard > Schedule first, then come back to build your practice session."}
+            : "Set your categories using the edit button above, then Auto Fill to build your session."}
         </div>
         <div className="flex gap-3 justify-center">
           {curCats.length > 0 && <button type="button" onClick={() => buildDay(selDay)} className="btn-gold">Auto Fill</button>}
           <button type="button" onClick={() => { setExPickerOpen(true); setExPickerSearch(""); setExPickerCat("All"); }} className="btn-ghost">+ Add Exercise</button>
-          {curCats.length === 0 && <button type="button" onClick={() => setView("dash")} className="btn-gold">Go to Dashboard</button>}
+          {curCats.length === 0 && <button type="button" onClick={() => setShowDayEditor(true)} className="btn-gold">Set Up Day</button>}
         </div>
       </div>}
 
-      {/* Exercise list -- unified cards */}
+      {/* Exercise list -- unified cards with drag & drop (Issue #6) */}
       {curExList.map((rawEx, idx) => {
         const ex = typeof rawEx.id === "number" && rawEx.id < 1000 ? getEditedEx(rawEx) : rawEx;
         const done = doneMap[week + "-" + selDay + "-" + ex.id], cc = COL[ex.c] || "#888", isSong = ex.c === "Songs";
+        const isDragging = dragIdx === idx;
+        const isDragOver = dragOverIdx === idx;
         return (
-          <div key={String(ex.id) + "-" + idx} className="panel mb-2 rounded-lg transition-all" style={{ opacity: done ? 0.45 : 1 }}>
+          <div key={String(ex.id) + "-" + idx}
+            draggable
+            onDragStart={() => handleDragStart(idx)}
+            onDragOver={(e) => handleDragOver(e, idx)}
+            onDragLeave={handleDragLeave}
+            onDrop={() => handleDrop(idx)}
+            onDragEnd={handleDragEnd}
+            className={`panel mb-2 rounded-lg transition-all ${isDragOver ? "!border-[#D4A843]/60" : ""}`}
+            style={{
+              opacity: isDragging ? 0.4 : done ? 0.45 : 1,
+              borderTop: isDragOver ? "2px solid #D4A843" : undefined,
+            }}>
             <div className="flex items-center gap-3 px-3 sm:px-4 py-3">
+              {/* Drag handle */}
+              <div className="cursor-grab active:cursor-grabbing flex-shrink-0 text-[#333] hover:text-[#666] transition-colors hidden sm:block" title="Drag to reorder">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
+              </div>
               <button type="button" aria-label={done ? "Mark undone" : "Mark done"} onClick={() => {
                 toggleDone(week + "-" + selDay + "-" + ex.id);
               }} className="cursor-pointer flex-shrink-0 bg-transparent border-none p-0">
@@ -302,10 +599,13 @@ export default function PracticePage(props: PracticePageProps) {
               </div>
               <div className="hidden sm:flex items-center gap-1 flex-shrink-0">
                 <button onClick={() => { if (!idx) return; setDayExMap((p) => { const l = (p[selDay] || []).slice(); [l[idx], l[idx-1]] = [l[idx-1], l[idx]]; return { ...p, [selDay]: l }; }); }}
-                  className="btn-ghost !px-1.5 !py-1 !text-[9px]" style={{ opacity: idx === 0 ? 0.2 : 1 }}>UP</button>
+                  className="btn-ghost !px-1.5 !py-1 !text-[9px]" style={{ opacity: idx === 0 ? 0.2 : 1 }} title="Move up">UP</button>
                 <button onClick={() => { if (idx >= curExList.length - 1) return; setDayExMap((p) => { const l = (p[selDay] || []).slice(); [l[idx], l[idx+1]] = [l[idx+1], l[idx]]; return { ...p, [selDay]: l }; }); }}
-                  className="btn-ghost !px-1.5 !py-1 !text-[9px]" style={{ opacity: idx >= curExList.length - 1 ? 0.2 : 1 }}>DN</button>
-                <button type="button" onClick={() => setFocusEx({ ex, idx })} className="btn-ghost !px-1.5 !py-1 !text-[9px]">Focus</button>
+                  className="btn-ghost !px-1.5 !py-1 !text-[9px]" style={{ opacity: idx >= curExList.length - 1 ? 0.2 : 1 }} title="Move down">DN</button>
+                <button type="button" onClick={() => setFocusEx({ ex, idx })} className="btn-ghost !px-1.5 !py-1 !text-[9px]" title="Enter focus mode: full-screen timer for this exercise">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="inline mr-0.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+                  Focus
+                </button>
                 {!isSong && <button onClick={() => { const pool = EXERCISES.filter((e) => e.c === ex.c && e.id !== ex.id); if (!pool.length) return; setDayExMap((p) => { const l = (p[selDay] || []).slice(); l[idx] = pool[Math.floor(Math.random() * pool.length)]; return { ...p, [selDay]: l }; }); }}
                   className="btn-ghost !px-1.5 !py-1 !text-[9px]">Swap</button>}
                 <button type="button" onClick={() => setDayExMap((p) => { const l = (p[selDay] || []).slice(); l.splice(idx, 1); return { ...p, [selDay]: l }; })}
@@ -313,7 +613,7 @@ export default function PracticePage(props: PracticePageProps) {
               </div>
               <div className="mobile-action-row flex-shrink-0">
                 <button type="button" onClick={(e) => { e.stopPropagation(); setFocusEx({ ex, idx }); }}
-                  className="btn-ghost !px-2 !py-1 !text-[9px]" aria-label="Focus">
+                  className="btn-ghost !px-2 !py-1 !text-[9px]" aria-label="Focus mode: full-screen timer" title="Focus mode">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
                 </button>
                 {!isSong && <button type="button" onClick={(e) => { e.stopPropagation(); const pool = EXERCISES.filter((x) => x.c === ex.c && x.id !== ex.id); if (!pool.length) return; setDayExMap((p) => { const l = (p[selDay] || []).slice(); l[idx] = pool[Math.floor(Math.random() * pool.length)]; return { ...p, [selDay]: l }; }); }}

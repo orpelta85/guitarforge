@@ -780,7 +780,7 @@ export default function GuitarForgeApp() {
             exPickerOpen={exPickerOpen} exPickerSearch={exPickerSearch} exPickerCat={exPickerCat}
             songPickerOpen={songPickerOpen} songPickerSearch={songPickerSearch}
             curExList={curExList} curDone={curDone} curMin={curMin} curCats={curCats}
-            setView={setView} setSelDay={setSelDay} setDayExMap={setDayExMap}
+            setView={setView} setSelDay={setSelDay} setDayCats={setDayCats} setDayHrs={setDayHrs} setDayExMap={setDayExMap}
             setSessionRunning={setSessionRunning} setSessionSeconds={setSessionSeconds}
             setShowQuickMetronome={setShowQuickMetronome} setShowQuickRecorder={setShowQuickRecorder}
             setExPickerOpen={setExPickerOpen} setExPickerSearch={setExPickerSearch}

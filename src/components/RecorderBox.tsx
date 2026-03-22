@@ -174,12 +174,20 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes }:
 
         const idx = nextIdxRef.current++;
         const newItem: SavedRecording = { dt: new Date().toLocaleString("en-US"), d: url };
+        blobMapRef.current.set(idx, blob);
+
         setSavedList((prev) => {
           const next = [newItem, ...prev].slice(0, 10);
-          blobMapRef.current.set(idx, blob);
-          // Save to IndexedDB
-          const metaList = next.map((r, i) => ({ dt: r.dt, idx: i === 0 ? idx : Array.from(blobMapRef.current.keys())[i] || i }));
-          idbSaveRecording(storageKey, next, blobMapRef.current).catch(() => {});
+          // Build a clean index-to-blob mapping for the kept recordings
+          const allKeys = Array.from(blobMapRef.current.keys()).sort((a, b) => b - a);
+          const keptKeys = allKeys.slice(0, next.length);
+          const metaList = next.map((r, i) => ({ dt: r.dt, idx: keptKeys[i] ?? i }));
+          const keptBlobs = new Map<number, Blob>();
+          for (const k of keptKeys) {
+            const b = blobMapRef.current.get(k);
+            if (b) keptBlobs.set(k, b);
+          }
+          idbSaveRecording(storageKey, next, keptBlobs).catch(() => {});
           return next;
         });
       };

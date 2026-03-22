@@ -1,9 +1,9 @@
 "use client";
-import { useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import type { Exercise, Song, DayCats, DayHrs, DayExMap, BoolMap, StringMap, ExEditMap, SongEntry } from "@/lib/types";
 import { DAYS, CATS, COL, MODES, SCALES, STYLES, CAT_GROUPS } from "@/lib/constants";
 import { EXERCISES } from "@/lib/exercises";
-import SongsterrSearch from "./SongsterrSearch";
+import { SONG_LIBRARY } from "@/lib/songs-data";
 import WeeklyCharts from "./WeeklyCharts";
 import DarkAudioPlayer from "./DarkAudioPlayer";
 import type { View } from "./Navbar";
@@ -88,6 +88,78 @@ export default function HomePage(props: HomePageProps) {
     buildAll, getSuggestions,
   } = props;
 
+  // Song library search state
+  const [songSearchQuery, setSongSearchQuery] = useState("");
+  const [songSearchResults, setSongSearchResults] = useState<SongEntry[]>([]);
+  const [songSearchActive, setSongSearchActive] = useState(false);
+
+  // Quick Jam state
+  const [jamStyle, setJamStyle] = useState(style);
+  const [jamScale, setJamScale] = useState(scale);
+  const [jamKey, setJamKey] = useState("Am");
+  const [jamYtUrl, setJamYtUrl] = useState<string | null>(null);
+  const [jamYtLoading, setJamYtLoading] = useState(false);
+  const [jamSunoLoading, setJamSunoLoading] = useState(false);
+  const [jamOpen, setJamOpen] = useState(false);
+
+  const KEYS_LIST = ["C", "Cm", "C#", "C#m", "D", "Dm", "Eb", "Ebm", "E", "Em", "F", "Fm", "F#", "F#m", "G", "Gm", "Ab", "Abm", "A", "Am", "Bb", "Bbm", "B", "Bm"];
+
+  // Song library search handler
+  const handleSongSearch = useCallback((q: string) => {
+    setSongSearchQuery(q);
+    if (!q.trim()) {
+      setSongSearchResults([]);
+      setSongSearchActive(false);
+      return;
+    }
+    setSongSearchActive(true);
+    const lower = q.toLowerCase();
+    const results = SONG_LIBRARY.filter(s =>
+      s.title.toLowerCase().includes(lower) ||
+      s.artist.toLowerCase().includes(lower) ||
+      (s.genre && s.genre.toLowerCase().includes(lower))
+    ).slice(0, 15);
+    setSongSearchResults(results);
+  }, []);
+
+  const addSongFromLibrary = useCallback((song: SongEntry) => {
+    setSongs(prev => {
+      if (prev.some(s => s.name === `${song.artist} - ${song.title}`)) return prev;
+      return [...prev, {
+        name: `${song.artist} - ${song.title}`,
+        url: song.songsterrUrl || "",
+        id: Date.now() + Math.random(),
+      }];
+    });
+    setSongSearchQuery("");
+    setSongSearchResults([]);
+    setSongSearchActive(false);
+  }, [setSongs]);
+
+  // Quick Jam YouTube search
+  const searchJamBacking = useCallback(async () => {
+    setJamYtLoading(true);
+    const query = `${jamKey} ${jamScale} ${jamStyle} backing track guitar`;
+    const url = "https://www.youtube.com/results?search_query=" + encodeURIComponent(query);
+    window.open(url, "_blank");
+    setJamYtLoading(false);
+  }, [jamKey, jamScale, jamStyle]);
+
+  // Quick Jam Suno generate
+  const generateJamSuno = useCallback(async () => {
+    setJamSunoLoading(true);
+    try {
+      const res = await fetch("/api/suno", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scale: jamKey, mode: jamScale, style: jamStyle, bpm: 120, title: `${jamKey} ${jamScale} ${jamStyle} Jam` }),
+      });
+      const data = await res.json();
+      if (data.tracks?.[0]?.audioUrl) setSunoSuggestUrl(data.tracks[0].audioUrl);
+    } catch { /* network error */ }
+    finally { setJamSunoLoading(false); }
+  }, [jamKey, jamScale, jamStyle, setSunoSuggestUrl]);
+
   return (
     <div className="animate-fade-in">
       {/* Auth banner for guests */}
@@ -105,73 +177,310 @@ export default function HomePage(props: HomePageProps) {
           </div>
         </div>
       )}
-      {/* -- 1. Hero Card -- */}
-      {(() => {
-        const dayPct = curExList.length > 0 ? Math.round((curDone / curExList.length) * 100) : 0;
-        const todayDate = new Date();
-        const dayName = todayDate.toLocaleDateString("en-US", { weekday: "long" });
-        const dateStr = todayDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-        const todayCats = curCats.length > 0 ? curCats.join(", ") : "Rest Day";
-        return (
-          <div className="p-5 sm:p-6 mb-4" style={{ background: "linear-gradient(135deg, #1a1708, #121214)", border: "1px solid #D4A84330", borderRadius: 12 }}>
-            <div className="flex justify-between items-start mb-3">
-              <div>
-                <div className="font-heading text-lg sm:text-xl font-bold text-[#eee]">Today&apos;s Practice</div>
-                <div className="font-readout text-[11px] text-[#666] mt-1">
-                  {dayName}, {dateStr}
-                </div>
-                <div className="font-readout text-[11px] text-[#666] mt-0.5">
-                  {curExList.length} Exercises &middot; {curMin} min
-                </div>
-                <div className="font-readout text-[10px] text-[#555] mt-0.5">
-                  Today: {todayCats}
-                </div>
-              </div>
-              {streak.currentStreak > 0 && (
-                <div className="flex items-center gap-1.5 bg-[#D4A843]/10 px-3 py-1.5 rounded-full">
-                  <span className="text-lg">&#x1F525;</span>
-                  <span className="font-stat text-[14px] text-[#D4A843]">{streak.currentStreak} Day Streak</span>
-                </div>
-              )}
-            </div>
-            <div className="flex items-center gap-3 mt-4">
-              <button type="button" onClick={() => { setView("daily"); }}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-label text-[13px] font-semibold text-[#121214] transition-all hover:brightness-110"
-                style={{ background: "linear-gradient(135deg, #D4A843, #DFBD69)" }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                Start Practice
-              </button>
-              <span className={`font-readout text-[13px] font-bold ${dayPct >= 100 && curExList.length > 0 ? "text-[#33CC33]" : "text-[#D4A843]"}`}>
-                {dayPct}% complete
-              </span>
-            </div>
-            <div className="mt-3 h-[6px] rounded-full overflow-hidden" style={{ background: "#ffffff08" }}>
-              <div className="h-full rounded-full transition-all duration-500" style={{ width: dayPct + "%", background: dayPct >= 100 && curExList.length > 0 ? "#33CC33" : "linear-gradient(90deg, #D4A843, #DFBD69)" }} />
-            </div>
-          </div>
-        );
-      })()}
 
-      {/* -- 2. Quick Start -- */}
+      {/* ================================================================ */}
+      {/* SECTION 1: Quick Shortcuts (moved first - short & general)      */}
+      {/* ================================================================ */}
       <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-4">
         {([
-          { label: "Start Practice", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="#D4A843" stroke="none"><path d="M8 5v14l11-7z"/></svg>, target: "daily" as View },
-          { label: "Open Studio", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2m11-11h-2M3 12H1m17.36 6.36l-1.41-1.41M7.05 7.05L5.64 5.64m12.73 0l-1.42 1.41M7.05 16.95l-1.41 1.41"/></svg>, target: "studio" as View },
-          { label: "Jam Mode", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5"><path d="M9 19c0 1.1-1.3 2-3 2s-3-.9-3-2 1.3-2 3-2 3 .9 3 2zM9 19V5l12-4v14m0 0c0 1.1-1.3 2-3 2s-3-.9-3-2 1.3-2 3-2 3 .9 3 2z"/></svg>, target: "jam" as View },
-          { label: "Browse Library", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>, target: "lib" as View },
-          { label: "AI Coach", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5"><path d="M12 2a3 3 0 00-3 3v4a3 3 0 006 0V5a3 3 0 00-3-3z"/><path d="M19 10v1a7 7 0 01-14 0v-1"/><path d="M12 18v4m-4 0h8"/></svg>, target: "coach" as View },
-          { label: "Skill Tree", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5"><path d="M12 2l3 7h7l-5.5 4.5 2 7.5L12 17l-6.5 4 2-7.5L2 9h7l3-7z"/></svg>, target: "skills" as View },
+          { label: "Start Practice", icon: (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+          ), target: "daily" as View },
+          { label: "Open Studio", icon: (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/>
+            </svg>
+          ), target: "studio" as View },
+          { label: "Jam Mode", icon: (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+            </svg>
+          ), target: "jam" as View },
+          { label: "Song Library", icon: (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
+            </svg>
+          ), target: "lib" as View },
+          { label: "AI Coach", icon: (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+            </svg>
+          ), target: "coach" as View },
+          { label: "Skill Tree", icon: (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/>
+            </svg>
+          ), target: "skills" as View },
         ] as const).map(({ label, icon, target }) => (
           <button key={target} type="button" onClick={() => setView(target)}
-            className="flex flex-col items-center gap-2 p-3 sm:p-4 rounded-lg transition-all hover:border-[#D4A843]/40 hover:bg-[#1a1708]"
+            className="flex flex-col items-center gap-2.5 p-4 rounded-lg transition-all hover:border-[#D4A843]/40 hover:bg-[#1a1708]"
             style={{ background: "#141416", border: "1px solid #1a1a1e" }}>
             {icon}
-            <span className="font-label text-[9px] sm:text-[10px] text-[#888]">{label}</span>
+            <span className="font-label text-[11px] sm:text-[12px] text-[#999]">{label}</span>
           </button>
         ))}
       </div>
 
-      {/* -- 3. Stats Row -- */}
+      {/* ================================================================ */}
+      {/* SECTION 2: Main Practice Hub (amber-bordered unified box)       */}
+      {/* ================================================================ */}
+      <div className="mb-4" style={{ border: "1px solid #D4A84340", borderRadius: 12, overflow: "hidden" }}>
+
+        {/* --- Today's Practice --- */}
+        {(() => {
+          const dayPct = curExList.length > 0 ? Math.round((curDone / curExList.length) * 100) : 0;
+          const todayDate = new Date();
+          const dayName = todayDate.toLocaleDateString("en-US", { weekday: "long" });
+          const dateStr = todayDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+          const todayCats = curCats.length > 0 ? curCats.join(", ") : "Rest Day";
+          return (
+            <div className="p-5 sm:p-6" style={{ background: "linear-gradient(135deg, #1a1708, #121214)" }}>
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <div className="font-heading text-lg sm:text-xl font-bold text-[#eee]">Today&apos;s Practice</div>
+                  <div className="font-readout text-[11px] text-[#666] mt-1">
+                    {dayName}, {dateStr}
+                  </div>
+                  <div className="font-readout text-[11px] text-[#666] mt-0.5">
+                    {curExList.length} Exercises &middot; {curMin} min
+                  </div>
+                  <div className="font-readout text-[10px] text-[#555] mt-0.5">
+                    Today: {todayCats}
+                  </div>
+                </div>
+                {streak.currentStreak > 0 && (
+                  <div className="flex items-center gap-1.5 bg-[#D4A843]/10 px-3 py-1.5 rounded-full">
+                    <span className="text-lg">&#x1F525;</span>
+                    <span className="font-stat text-[14px] text-[#D4A843]">{streak.currentStreak} Day Streak</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-3 mt-4">
+                <button type="button" onClick={() => { setView("daily"); }}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-label text-[13px] font-semibold text-[#121214] transition-all hover:brightness-110"
+                  style={{ background: "linear-gradient(135deg, #D4A843, #DFBD69)" }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                  Start Practice
+                </button>
+                <span className={`font-readout text-[13px] font-bold ${dayPct >= 100 && curExList.length > 0 ? "text-[#33CC33]" : "text-[#D4A843]"}`}>
+                  {dayPct}% complete
+                </span>
+              </div>
+              <div className="mt-3 h-[6px] rounded-full overflow-hidden" style={{ background: "#ffffff08" }}>
+                <div className="h-full rounded-full transition-all duration-500" style={{ width: dayPct + "%", background: dayPct >= 100 && curExList.length > 0 ? "#33CC33" : "linear-gradient(90deg, #D4A843, #DFBD69)" }} />
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* --- Weekly Focus (inline, below Today's Practice) --- */}
+        <div className="border-t border-[#D4A84320]" style={{ background: "#121214" }}>
+          <button onClick={() => setSettingsOpen(p => !p)} className="flex items-center gap-2 w-full cursor-pointer bg-transparent border-0 text-left px-5 py-3">
+            <div className="led led-gold" />
+            <span className="font-label text-[11px] text-[#D4A843] flex-1">Weekly Focus</span>
+            <span className="font-readout text-[10px] text-[#555]">
+              {!settingsOpen && `W${week} \u00B7 ${mode} \u00B7 ${scale} \u00B7 ${style}`}
+            </span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" className={`transition-transform ${settingsOpen ? "rotate-180" : ""}`}>
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </button>
+          {settingsOpen && (
+            <div className="px-5 pb-4">
+              <div className="font-readout text-[10px] text-[#555] mb-3">What are you focusing on this week?</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+                {[
+                  { l: "Week", v: <div className="segment-display text-center mt-1"><input type="number" value={week} min={1} onChange={(e) => setWeek(Number(e.target.value))} className="bg-transparent border-none outline-none text-center w-full font-mono font-bold text-[#D4A843]" style={{ boxShadow: 'none' }} /></div> },
+                  { l: "Mode", v: <select value={mode} onChange={(e) => setMode(e.target.value)} className="input w-full text-[12px] sm:text-[14px]">{MODES.map((m) => <option key={m}>{m}</option>)}</select> },
+                  { l: "Key", v: <select value={scale} onChange={(e) => setScale(e.target.value)} className="input w-full">{SCALES.map((s) => <option key={s}>{s}</option>)}</select> },
+                  { l: "Style", v: <select value={style} onChange={(e) => setStyle(e.target.value)} className="input w-full text-[12px] sm:text-[14px]">{STYLES.map((s) => <option key={s}>{s}</option>)}</select> },
+                ].map(({ l, v }) => <label key={l} className="font-label text-[11px] text-[#666]">{l}<div className="mt-1">{v}</div></label>)}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* --- Songs for the Week (merged setlist) --- */}
+        <div className="border-t border-[#D4A84320] px-5 py-4" style={{ background: "#121214" }}>
+          <div className="font-label text-[11px] text-[#D4A843] mb-3 flex items-center gap-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+            </svg>
+            Songs for This Week
+            <span className="font-readout text-[9px] text-[#555]">({songs.length} songs)</span>
+          </div>
+          {songs.length === 0 && (
+            <div className="text-center py-3 text-[12px] text-[#444]">No songs added yet. Search your library below.</div>
+          )}
+          {songs.map((song) => (
+            <div key={song.id} className="flex items-center gap-3 px-3 py-2 bg-[#0e0e10] border border-[#1a1a1a] rounded-lg mb-1.5">
+              <div className="flex-1 min-w-0">
+                <div className="font-heading text-[13px] !font-medium !normal-case !tracking-normal truncate text-[#ccc]">{song.name}</div>
+              </div>
+              {song.url && <a href={song.url} target="_blank" rel="noopener noreferrer" className="font-label text-[9px] text-[#D4A843] no-underline hover:text-[#DFBD69] flex-shrink-0">Tab</a>}
+              <button onClick={() => setSongs((p) => p.filter((s) => s.id !== song.id))} className="text-[10px] text-[#666] hover:text-[#C41E3A] transition-colors flex-shrink-0">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
+          ))}
+
+          {/* Song search from library */}
+          <div className="mt-3">
+            <div className="relative">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              <input
+                type="text"
+                placeholder="Search songs from library..."
+                value={songSearchQuery}
+                onChange={(e) => handleSongSearch(e.target.value)}
+                className="input w-full !pl-9 !text-[12px]"
+              />
+            </div>
+            {songSearchActive && songSearchResults.length > 0 && (
+              <div className="mt-1 max-h-[200px] overflow-y-auto bg-[#0e0e10] border border-[#1a1a1a] rounded-lg">
+                {songSearchResults.map((song) => (
+                  <button key={song.id} type="button"
+                    onClick={() => addSongFromLibrary(song)}
+                    className="flex items-center gap-3 w-full text-left px-3 py-2.5 hover:bg-[#1a1708] transition-colors border-b border-[#111] last:border-0">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[12px] text-[#ccc] truncate">{song.title}</div>
+                      <div className="text-[10px] text-[#555]">{song.artist} {song.genre ? `\u00B7 ${song.genre}` : ""}</div>
+                    </div>
+                    {song.difficulty && (
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded ${song.difficulty === "Beginner" ? "text-[#22c55e] bg-[#22c55e10]" : song.difficulty === "Intermediate" ? "text-[#D4A843] bg-[#D4A84310]" : "text-[#ef4444] bg-[#ef444410]"}`}>
+                        {song.difficulty}
+                      </span>
+                    )}
+                    {song.gp && (
+                      <span className="text-[8px] text-[#D4A843] bg-[#D4A84310] px-1 py-0.5 rounded">GP</span>
+                    )}
+                    <span className="font-label text-[10px] text-[#D4A843] flex-shrink-0">+ Add</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {songSearchActive && songSearchResults.length === 0 && songSearchQuery.trim() && (
+              <div className="mt-1 text-center py-3 text-[11px] text-[#444] bg-[#0e0e10] border border-[#1a1a1a] rounded-lg">No songs found for &ldquo;{songSearchQuery}&rdquo;</div>
+            )}
+          </div>
+
+          {/* Manual add (collapsed) */}
+          <details className="mt-2">
+            <summary className="text-[10px] text-[#444] cursor-pointer hover:text-[#666] transition-colors">Add manually...</summary>
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2 mt-2">
+              <input placeholder="Song name..." value={newSongName} onChange={(e) => setNewSongName(e.target.value)} className="input min-w-0 !text-[12px]" />
+              <input placeholder="Tab URL (optional)..." value={newSongUrl} onChange={(e) => setNewSongUrl(e.target.value)} className="input min-w-0 !text-[12px]" />
+              <button onClick={() => { if (!newSongName.trim()) return; setSongs((p) => [...p, { name: newSongName.trim(), url: newSongUrl.trim(), id: Date.now() }]); setNewSongName(""); setNewSongUrl(""); }} className="btn-gold !text-[11px]">Add</button>
+            </div>
+          </details>
+        </div>
+
+        {/* --- Week Schedule --- */}
+        <div className="border-t border-[#D4A84320] px-5 py-4" style={{ background: "#121214" }}>
+          <div className="flex justify-between items-center mb-3">
+            <span className="font-label text-[11px] text-[#D4A843] flex items-center gap-2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+              </svg>
+              Week {week} Schedule
+            </span>
+            <button onClick={() => setShowEditor(!showEditor)} className="font-readout text-[10px] text-[#555] hover:text-[#888] transition-colors flex items-center gap-1 bg-transparent border-0 cursor-pointer p-0">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              {showEditor ? "Close" : "Edit"}
+            </button>
+          </div>
+
+          {showEditor && (
+            <div className="mb-4 p-4 bg-[#0e0e10] border border-[#1a1a1a] rounded-lg">
+              {DAYS.map((day) => {
+                const ac = dayCats[day] || [], hrs = dayHrs[day] || 0;
+                return (
+                  <div key={day} className="mb-3 pb-3 border-b border-[#1a1a1a] last:border-0 last:mb-0 last:pb-0">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="font-label text-[11px] w-[50px] text-[#aaa]">{day}</span>
+                      <input type="number" value={hrs} min={0} max={8} step={0.5}
+                        onChange={(e) => setDayHrs((p) => ({ ...p, [day]: Number(e.target.value) }))}
+                        className="input input-gold w-14 text-center !py-1" />
+                      <span className="font-label text-[9px] text-[#444]">hrs</span>
+                    </div>
+                    <div className="pr-[62px]">
+                      {Object.entries(CAT_GROUPS).map(([group, cats]) => {
+                        const isCollapsed = collapsedGroups[group] === true;
+                        return (
+                          <div key={group} className="mb-1.5">
+                            <button onClick={() => setCollapsedGroups((p) => ({ ...p, [group]: !isCollapsed }))}
+                              className="flex items-center gap-1 mb-0.5 cursor-pointer text-[9px] font-semibold text-[#666] hover:text-[#aaa] transition-colors bg-transparent border-0 p-0">
+                              <span className="text-[8px]">{isCollapsed ? "\u25B6" : "\u25BC"}</span> {group}
+                            </button>
+                            {!isCollapsed && (
+                              <div className="flex flex-wrap gap-1 mr-3">
+                                {cats.map((cat) => {
+                                  const on = ac.includes(cat), c = COL[cat] || "#888";
+                                  return (
+                                    <span key={cat} onClick={() => setDayCats((p) => {
+                                      const a = (p[day] || []).slice(), i = a.indexOf(cat);
+                                      i >= 0 ? a.splice(i, 1) : a.push(cat); return { ...p, [day]: a };
+                                    })} className="tag cursor-pointer transition-all" style={{
+                                      border: `1px solid ${on ? c : "#2a2a2a"}`, color: on ? c : "#444",
+                                      background: on ? c + "10" : "transparent",
+                                    }}>{cat}</span>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+              <div className="flex gap-2 mt-4 pt-3 border-t border-[#1a1a1a]">
+                <button onClick={buildAll} className="btn-gold !text-[10px]">Build Routine</button>
+                <button onClick={() => {
+                  try {
+                    const archive = JSON.parse(localStorage.getItem("gf-archive") || "[]");
+                    archive.push({ week, mode, scale, style, doneMap, bpmLog, dayExMap, date: new Date().toLocaleDateString("he-IL") });
+                    localStorage.setItem("gf-archive", JSON.stringify(archive.slice(-52)));
+                  } catch {}
+                  setWeek(week + 1); setDoneMap({}); setBpmLog({});
+                }} className="btn-ghost !text-[10px]">Finish Week &amp; Archive</button>
+                <button onClick={() => { setWeek(week + 1); setDoneMap({}); setBpmLog({}); setDayExMap({}); }}
+                  className="btn-ghost !text-[10px] !text-[#C41E3A] !border-[#C41E3A]/30">Reset All</button>
+              </div>
+            </div>
+          )}
+
+          {/* Day grid */}
+          <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
+            {DAYS.map((day) => {
+              const ac = dayCats[day] || [], hrs = dayHrs[day] || 0, exs = dayExMap[day] || [];
+              const d2 = exs.filter((e) => doneMap[week + "-" + day + "-" + e.id]).length;
+              const off = !ac.length, pct = exs.length ? Math.round((d2 / exs.length) * 100) : 0;
+              return (
+                <div key={day} onClick={() => { setSelDay(day); setView("daily"); }}
+                  className={`p-2 cursor-pointer text-center transition-all ${off ? "bg-[#0e0e10] border border-[#1a1a1a]" : "panel hover:border-[#D4A843]/30"} ${selDay === day ? "!border-[#D4A843] ring-1 ring-[#D4A843]/30 !bg-[#1a1708]" : ""}`}
+                  style={{ borderRadius: 8 }}>
+                  <div className={`font-label text-[10px] ${off ? "text-[#444]" : selDay === day ? "text-[#D4A843]" : "text-[#bbb]"}`}>
+                    <span className="sm:hidden">{day.slice(0, 3)}</span><span className="hidden sm:inline">{day}</span>
+                  </div>
+                  <div className="font-readout text-[9px] text-[#555]">{hrs}h</div>
+                  {exs.length > 0 && <>
+                    <div className="vu mt-1 !h-[3px]"><div className="vu-fill" style={{ width: pct + "%" }} /></div>
+                    <div className={`font-readout text-[8px] mt-0.5 ${pct >= 100 ? "text-[#33CC33]" : "text-[#666]"}`}>{d2}/{exs.length}</div>
+                  </>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* ================================================================ */}
+      {/* Stats Row                                                        */}
+      {/* ================================================================ */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
         {[
           { value: String(streak.currentStreak), label: "Streak" },
@@ -186,214 +495,14 @@ export default function HomePage(props: HomePageProps) {
         ))}
       </div>
 
-      {/* -- 4. Weekly Schedule -- */}
-      <div className="panel-primary p-4 sm:p-5 mb-4" style={{ borderRadius: 8 }}>
-        <div className="flex justify-between items-center mb-4">
-          <span className="font-label text-[11px] text-[#D4A843] flex items-center gap-2"><div className="led led-gold" /> Week {week} Schedule</span>
-          <button onClick={() => setShowEditor(!showEditor)} className="font-readout text-[10px] text-[#555] hover:text-[#888] transition-colors flex items-center gap-1 bg-transparent border-0 cursor-pointer p-0">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707"/><circle cx="12" cy="12" r="3"/></svg>
-            {showEditor ? "Close editor" : "Edit schedule"}
-          </button>
-        </div>
-
-        {showEditor && (
-          <div className="mb-4 p-4 bg-[#121214] border border-[#1a1a1a] rounded-lg">
-            {DAYS.map((day) => {
-              const ac = dayCats[day] || [], hrs = dayHrs[day] || 0;
-              return (
-                <div key={day} className="mb-3 pb-3 border-b border-[#1a1a1a] last:border-0 last:mb-0 last:pb-0">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="font-label text-[11px] w-[50px] text-[#aaa]">{day}</span>
-                    <input type="number" value={hrs} min={0} max={8} step={0.5}
-                      onChange={(e) => setDayHrs((p) => ({ ...p, [day]: Number(e.target.value) }))}
-                      className="input input-gold w-14 text-center !py-1" />
-                    <span className="font-label text-[9px] text-[#444]">hrs</span>
-                  </div>
-                  <div className="pr-[62px]">
-                    {Object.entries(CAT_GROUPS).map(([group, cats]) => {
-                      const isCollapsed = collapsedGroups[group] === true;
-                      return (
-                        <div key={group} className="mb-1.5">
-                          <button onClick={() => setCollapsedGroups((p) => ({ ...p, [group]: !isCollapsed }))}
-                            className="flex items-center gap-1 mb-0.5 cursor-pointer text-[9px] font-semibold text-[#666] hover:text-[#aaa] transition-colors bg-transparent border-0 p-0">
-                            <span className="text-[8px]">{isCollapsed ? "\u25B6" : "\u25BC"}</span> {group}
-                          </button>
-                          {!isCollapsed && (
-                            <div className="flex flex-wrap gap-1 mr-3">
-                              {cats.map((cat) => {
-                                const on = ac.includes(cat), c = COL[cat] || "#888";
-                                return (
-                                  <span key={cat} onClick={() => setDayCats((p) => {
-                                    const a = (p[day] || []).slice(), i = a.indexOf(cat);
-                                    i >= 0 ? a.splice(i, 1) : a.push(cat); return { ...p, [day]: a };
-                                  })} className="tag cursor-pointer transition-all" style={{
-                                    border: `1px solid ${on ? c : "#2a2a2a"}`, color: on ? c : "#444",
-                                    background: on ? c + "10" : "transparent",
-                                  }}>{cat}</span>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-            <div className="flex gap-2 mt-4 pt-3 border-t border-[#1a1a1a]">
-              <button onClick={buildAll} className="btn-gold !text-[10px]">Build Routine</button>
-              <button onClick={() => {
-                try {
-                  const archive = JSON.parse(localStorage.getItem("gf-archive") || "[]");
-                  archive.push({ week, mode, scale, style, doneMap, bpmLog, dayExMap, date: new Date().toLocaleDateString("he-IL") });
-                  localStorage.setItem("gf-archive", JSON.stringify(archive.slice(-52)));
-                } catch {}
-                setWeek(week + 1); setDoneMap({}); setBpmLog({});
-              }} className="btn-ghost !text-[10px]">Finish Week &amp; Archive</button>
-              <button onClick={() => { setWeek(week + 1); setDoneMap({}); setBpmLog({}); setDayExMap({}); }}
-                className="btn-ghost !text-[10px] !text-[#C41E3A] !border-[#C41E3A]/30">Reset All</button>
-            </div>
-          </div>
-        )}
-
-        <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
-          {DAYS.map((day) => {
-            const ac = dayCats[day] || [], hrs = dayHrs[day] || 0, exs = dayExMap[day] || [];
-            const d2 = exs.filter((e) => doneMap[week + "-" + day + "-" + e.id]).length;
-            const off = !ac.length, pct = exs.length ? Math.round((d2 / exs.length) * 100) : 0;
-            return (
-              <div key={day} onClick={() => { setSelDay(day); setView("daily"); }}
-                className={`p-2 cursor-pointer text-center transition-all ${off ? "bg-[#121214] border border-[#1a1a1a]" : "panel hover:border-[#D4A843]/30"} ${selDay === day ? "!border-[#D4A843] ring-1 ring-[#D4A843]/30 !bg-[#1a1708]" : ""}`}
-                style={{ borderRadius: 8 }}>
-                <div className={`font-label text-[10px] ${off ? "text-[#444]" : selDay === day ? "text-[#D4A843]" : "text-[#bbb]"}`}>
-                  <span className="sm:hidden">{day.slice(0, 3)}</span><span className="hidden sm:inline">{day}</span>
-                </div>
-                <div className="font-readout text-[9px] text-[#555]">{hrs}h</div>
-                {exs.length > 0 && <>
-                  <div className="vu mt-1 !h-[3px]"><div className="vu-fill" style={{ width: pct + "%" }} /></div>
-                  <div className={`font-readout text-[8px] mt-0.5 ${pct >= 100 ? "text-[#33CC33]" : "text-[#666]"}`}>{d2}/{exs.length}</div>
-                </>}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* -- 5. Smart Suggestions -- */}
-      {(() => {
-        const suggestions = getSuggestions();
-        if (suggestions.length === 0) return null;
-        return (
-          <div className="panel-secondary p-4 mb-4" style={{ borderRadius: 8 }}>
-            <div className="font-label text-[10px] text-[#666] mb-2 flex items-center gap-2">
-              &#x1F4A1; Suggestions
-            </div>
-            <div className="flex flex-col gap-2">
-              {suggestions.map((s, i) => (
-                <div key={i} className="flex items-start gap-2 text-[12px] text-[#888]">
-                  <span className="flex-shrink-0">{s.icon}</span>
-                  <span>{s.text}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-      })()}
-
-      {/* -- 6. Setlist (simplified) -- */}
-      <div className="panel p-3 sm:p-5 mb-4" style={{ borderColor: "#1a3a2a", borderRadius: 8 }}>
-        <div className="font-label text-[11px] text-[#33CC33] mb-3 flex items-center gap-2">
-          <div className="led led-on" /> Setlist
-        </div>
-        {songs.length === 0 && (
-          <div className="text-center py-4 text-[12px] text-[#444]">No songs in your setlist yet. Add one below.</div>
-        )}
-        {songs.map((song) => (
-          <div key={song.id} className="flex items-center gap-3 px-3 py-2.5 bg-[#121214] border border-[#1a1a1a] rounded-lg mb-1.5">
-            <div className="flex-1 min-w-0">
-              <div className="font-heading text-sm !font-medium !normal-case !tracking-normal truncate">{song.name}</div>
-            </div>
-            {song.url && <a href={song.url} target="_blank" rel="noopener noreferrer" className="font-label text-[9px] text-[#D4A843] no-underline hover:text-[#DFBD69] flex-shrink-0">Tab</a>}
-            <button onClick={() => setSongs((p) => p.filter((s) => s.id !== song.id))} className="btn-ghost !px-2 !py-1 !text-[10px] !text-[#C41E3A] !border-[#333] flex-shrink-0">Remove</button>
-          </div>
-        ))}
-        <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2 mt-3">
-          <input placeholder="Song name..." value={newSongName} onChange={(e) => setNewSongName(e.target.value)} className="input min-w-0" />
-          <input placeholder="Tab URL..." value={newSongUrl} onChange={(e) => setNewSongUrl(e.target.value)} className="input min-w-0" />
-          <button onClick={() => { if (!newSongName.trim()) return; setSongs((p) => [...p, { name: newSongName.trim(), url: newSongUrl.trim(), id: Date.now() }]); setNewSongName(""); setNewSongUrl(""); }} className="btn-gold">Add Song</button>
-        </div>
-        <SongsterrSearch onSelect={(name, url) => {
-          setSongs((p) => [...p, { name, url, id: Date.now() }]);
-        }} />
-      </div>
-
-      {/* -- 7. Weekly Focus (was Channel Settings) -- */}
-      <div className="panel-secondary mb-4" style={{ borderRadius: 8 }}>
-        <button onClick={() => setSettingsOpen(p => !p)} className="panel-header flex items-center gap-2 w-full cursor-pointer bg-transparent border-0 text-left">
-          <div className="led led-gold" />
-          <span className="flex-1">Weekly Focus</span>
-          <span className="font-readout text-[10px] text-[#555]">
-            {!settingsOpen && `W${week} \u00B7 ${mode} \u00B7 ${scale} \u00B7 ${style}`}
-          </span>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" className={`transition-transform ${settingsOpen ? "rotate-180" : ""}`}>
-            <path d="M6 9l6 6 6-6" />
-          </svg>
-        </button>
-        {settingsOpen && (
-          <div className="p-3 sm:p-5">
-            <div className="font-readout text-[10px] text-[#555] mb-3">What are you focusing on this week?</div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
-              {[
-                { l: "Week", v: <div className="segment-display text-center mt-1"><input type="number" value={week} min={1} onChange={(e) => setWeek(Number(e.target.value))} className="bg-transparent border-none outline-none text-center w-full font-mono font-bold text-[#D4A843]" style={{ boxShadow: 'none' }} /></div> },
-                { l: "Mode", v: <select value={mode} onChange={(e) => setMode(e.target.value)} className="input w-full text-[12px] sm:text-[14px]">{MODES.map((m) => <option key={m}>{m}</option>)}</select> },
-                { l: "Key", v: <select value={scale} onChange={(e) => setScale(e.target.value)} className="input w-full">{SCALES.map((s) => <option key={s}>{s}</option>)}</select> },
-                { l: "Style", v: <select value={style} onChange={(e) => setStyle(e.target.value)} className="input w-full text-[12px] sm:text-[14px]">{STYLES.map((s) => <option key={s}>{s}</option>)}</select> },
-              ].map(({ l, v }) => <label key={l} className="font-label text-[11px] text-[#666]">{l}<div className="mt-1">{v}</div></label>)}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* -- 8. Recent Activity -- */}
-      {(() => {
-        const recentItems: { name: string; bpm: string; day: string }[] = [];
-        for (const d of DAYS) {
-          const exs = dayExMap[d] || [];
-          for (const ex of exs) {
-            const k = week + "-" + d + "-" + ex.id;
-            if (doneMap[k]) {
-              recentItems.push({ name: ex.n, bpm: bpmLog[k] || "", day: d });
-            }
-          }
-        }
-        const recent = recentItems.slice(-10).reverse();
-        if (recent.length === 0) return null;
-        return (
-          <div className="panel-secondary p-4 mb-4" style={{ borderRadius: 8 }}>
-            <div className="font-label text-[10px] text-[#666] mb-3 flex items-center gap-2">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-              Recent Activity
-            </div>
-            <div className="flex flex-col gap-1">
-              {recent.map((item, i) => (
-                <div key={i} className="flex items-center gap-3 px-3 py-2 bg-[#121214] rounded-lg">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[12px] text-[#ccc] truncate">{item.name}</div>
-                  </div>
-                  <span className="font-readout text-[9px] text-[#555] flex-shrink-0">{item.day}</span>
-                  {item.bpm && <span className="font-readout text-[9px] text-[#D4A843] flex-shrink-0">{item.bpm} BPM</span>}
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-      })()}
-
-      {/* -- 9. Week Analytics (collapsible) -- */}
+      {/* ================================================================ */}
+      {/* SECTION 3: Week Analytics                                        */}
+      {/* ================================================================ */}
       <div className="panel-secondary mb-4" style={{ borderRadius: 8 }}>
         <button onClick={() => setShowAnalytics(p => !p)} className="panel-header flex items-center gap-2 w-full cursor-pointer bg-transparent border-0 text-left">
-          <span className="text-[14px]">&#x1F4CA;</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 20V10M12 20V4M6 20v-6"/>
+          </svg>
           <span className="flex-1">Week Analytics</span>
           <span className="font-readout text-[10px] text-[#555]">
             {!showAnalytics && `${wDn}/${wTot} done \u00B7 ${wPct}%`}
@@ -486,31 +595,69 @@ export default function HomePage(props: HomePageProps) {
         )}
       </div>
 
-      {/* -- 10. Suno Backing Track -- */}
-      {!sunoSuggestDismissed && !sunoSuggestUrl && (
-        <div className="panel-secondary p-3 mb-4 flex items-center gap-3" style={{ borderRadius: 8 }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2" className="flex-shrink-0">
-            <path d="M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 19V5l12-4v14m0 0c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" />
+      {/* ================================================================ */}
+      {/* SECTION 4: Quick Jam                                             */}
+      {/* ================================================================ */}
+      <div className="panel-secondary mb-4" style={{ borderRadius: 8 }}>
+        <button onClick={() => setJamOpen(p => !p)} className="panel-header flex items-center gap-2 w-full cursor-pointer bg-transparent border-0 text-left">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
           </svg>
-          <div className="flex-1">
-            <div className="font-label text-[10px] text-[#D4A843]">AI Backing Track</div>
-            <div className="font-readout text-[9px] text-[#555]">{scale} {mode} &middot; {style} &middot; Generate a practice track with Suno AI</div>
+          <span className="flex-1">Quick Jam</span>
+          <span className="font-readout text-[10px] text-[#555]">
+            {!jamOpen && `${jamKey} ${jamScale} \u00B7 ${jamStyle}`}
+          </span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" className={`transition-transform ${jamOpen ? "rotate-180" : ""}`}>
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+        {jamOpen && (
+          <div className="p-4 sm:p-5">
+            <div className="font-readout text-[10px] text-[#555] mb-3">Find a backing track to jam over</div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 mb-4">
+              <label className="font-label text-[11px] text-[#666]">
+                Style
+                <select value={jamStyle} onChange={(e) => setJamStyle(e.target.value)} className="input w-full mt-1 text-[12px]">
+                  {STYLES.map(s => <option key={s}>{s}</option>)}
+                </select>
+              </label>
+              <label className="font-label text-[11px] text-[#666]">
+                Scale
+                <select value={jamScale} onChange={(e) => setJamScale(e.target.value)} className="input w-full mt-1 text-[12px]">
+                  {MODES.map(m => <option key={m}>{m}</option>)}
+                </select>
+              </label>
+              <label className="font-label text-[11px] text-[#666]">
+                Key
+                <select value={jamKey} onChange={(e) => setJamKey(e.target.value)} className="input w-full mt-1 text-[12px]">
+                  {KEYS_LIST.map(k => <option key={k}>{k}</option>)}
+                </select>
+              </label>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button onClick={searchJamBacking} disabled={jamYtLoading}
+                className="btn-gold !text-[11px] flex items-center gap-2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                {jamYtLoading ? "Searching..." : "Search YouTube"}
+              </button>
+              <button onClick={generateJamSuno} disabled={jamSunoLoading}
+                className="btn-ghost !text-[11px] flex items-center gap-2 !border-[#D4A843]/30 !text-[#D4A843]">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M12 6v6l4 2"/>
+                </svg>
+                {jamSunoLoading ? "Generating..." : "Generate with Suno AI"}
+              </button>
+              <button onClick={() => setView("jam")}
+                className="btn-ghost !text-[11px] flex items-center gap-2">
+                Open Full Jam Mode
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </button>
+            </div>
           </div>
-          <button type="button" onClick={async () => {
-            setSunoSuggestLoading(true);
-            try {
-              const res = await fetch("/api/suno", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scale, mode, style, bpm: 120, title: `${scale} ${mode} ${style} Practice` }) });
-              const data = await res.json();
-              if (data.tracks?.[0]?.audioUrl) setSunoSuggestUrl(data.tracks[0].audioUrl);
-            } catch {} finally { setSunoSuggestLoading(false); }
-          }} className="btn-gold !text-[9px] !px-3 flex-shrink-0" disabled={sunoSuggestLoading}>
-            {sunoSuggestLoading ? "Generating..." : "Generate"}
-          </button>
-          <button type="button" aria-label="Dismiss" title="Dismiss" onClick={() => setSunoSuggestDismissed(true)} className="text-[#333] hover:text-[#666] flex-shrink-0">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
-          </button>
-        </div>
-      )}
+        )}
+      </div>
+
+      {/* Suno player (if generated) */}
       {sunoSuggestUrl && (
         <div className="panel-secondary p-3 mb-4" style={{ borderRadius: 8 }}>
           <div className="flex items-center gap-2 mb-2">
@@ -520,6 +667,69 @@ export default function HomePage(props: HomePageProps) {
           <DarkAudioPlayer src={sunoSuggestUrl} title={`${scale} ${mode} \u00B7 ${style}`} loop />
         </div>
       )}
+
+      {/* ================================================================ */}
+      {/* Smart Suggestions                                                */}
+      {/* ================================================================ */}
+      {(() => {
+        const suggestions = getSuggestions();
+        if (suggestions.length === 0) return null;
+        return (
+          <div className="panel-secondary p-4 mb-4" style={{ borderRadius: 8 }}>
+            <div className="font-label text-[10px] text-[#666] mb-2 flex items-center gap-2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 18h6M10 22h4M12 2a7 7 0 015 11.9V17H7v-3.1A7 7 0 0112 2z"/>
+              </svg>
+              Suggestions
+            </div>
+            <div className="flex flex-col gap-2">
+              {suggestions.map((s, i) => (
+                <div key={i} className="flex items-start gap-2 text-[12px] text-[#888]">
+                  <span className="flex-shrink-0">{s.icon}</span>
+                  <span>{s.text}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ================================================================ */}
+      {/* Recent Activity                                                  */}
+      {/* ================================================================ */}
+      {(() => {
+        const recentItems: { name: string; bpm: string; day: string }[] = [];
+        for (const d of DAYS) {
+          const exs = dayExMap[d] || [];
+          for (const ex of exs) {
+            const k = week + "-" + d + "-" + ex.id;
+            if (doneMap[k]) {
+              recentItems.push({ name: ex.n, bpm: bpmLog[k] || "", day: d });
+            }
+          }
+        }
+        const recent = recentItems.slice(-10).reverse();
+        if (recent.length === 0) return null;
+        return (
+          <div className="panel-secondary p-4 mb-4" style={{ borderRadius: 8 }}>
+            <div className="font-label text-[10px] text-[#666] mb-3 flex items-center gap-2">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              Recent Activity
+            </div>
+            <div className="flex flex-col gap-1">
+              {recent.map((item, i) => (
+                <div key={i} className="flex items-center gap-3 px-3 py-2 bg-[#121214] rounded-lg">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[12px] text-[#ccc] truncate">{item.name}</div>
+                  </div>
+                  <span className="font-readout text-[9px] text-[#555] flex-shrink-0">{item.day}</span>
+                  {item.bpm && <span className="font-readout text-[9px] text-[#D4A843] flex-shrink-0">{item.bpm} BPM</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
