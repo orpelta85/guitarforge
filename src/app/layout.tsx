@@ -3,12 +3,12 @@ import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "GuitarForge",
+  title: "Guitar Practice",
   description: "Guitar practice management platform for metal/rock guitarists",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "GuitarForge",
+    title: "Guitar Practice",
   },
   icons: {
     icon: "/icons/icon-192.svg",

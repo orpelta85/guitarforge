@@ -24,7 +24,8 @@ export async function GET(req: NextRequest) {
           channel: (item.snippet as Record<string, unknown>)?.channelTitle,
           thumbnail: ((item.snippet as Record<string, Record<string, Record<string, string>>>)?.thumbnails?.medium?.url) || "",
         }));
-        return NextResponse.json({ items, fallback: false });
+        const results = items.map((i: { videoId: string }) => i.videoId).filter(Boolean);
+        return NextResponse.json({ items, results, fallback: false });
       }
     } catch {}
   }
@@ -51,6 +52,7 @@ export async function GET(req: NextRequest) {
 
       return NextResponse.json({
         items: ids.map((id) => ({ videoId: id, title: "", channel: "", thumbnail: `https://img.youtube.com/vi/${id}/mqdefault.jpg` })),
+        results: ids,
         fallback: true,
         searchUrl: `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`,
       });

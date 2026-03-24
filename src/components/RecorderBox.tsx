@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import type { SavedRecording } from "@/lib/types";
+import { openRecorderDB, idbSaveRecording, idbLoadRecordings } from "@/lib/recorderIdb";
 import DarkAudioPlayer from "./DarkAudioPlayer";
 import AudioAnalyzer from "./AudioAnalyzer";
 
@@ -8,82 +9,8 @@ interface RecorderBoxProps {
   storageKey: string;
   exerciseName?: string;
   expectedNotes?: string[];
-}
-
-const IDB_NAME = "gf-recorder";
-const IDB_STORE = "recordings";
-
-function openRecorderDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(IDB_NAME, 1);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-async function idbSaveRecording(key: string, list: SavedRecording[], blobs: Map<number, Blob>): Promise<void> {
-  const db = await openRecorderDB();
-  const metaList = list.map((r, i) => ({ dt: r.dt, idx: i }));
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(IDB_STORE, "readwrite");
-    const store = tx.objectStore(IDB_STORE);
-    // Save metadata list
-    store.put(JSON.stringify(metaList), `meta-${key}`);
-    // Save each blob
-    for (const [idx, blob] of blobs.entries()) {
-      store.put(blob, `blob-${key}-${idx}`);
-    }
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
-}
-
-async function idbLoadRecordings(key: string): Promise<{ list: SavedRecording[]; blobs: Map<number, Blob> }> {
-  const db = await openRecorderDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(IDB_STORE, "readonly");
-    const store = tx.objectStore(IDB_STORE);
-    const metaReq = store.get(`meta-${key}`);
-    metaReq.onsuccess = () => {
-      if (!metaReq.result) {
-        resolve({ list: [], blobs: new Map() });
-        return;
-      }
-      const metaList: { dt: string; idx: number }[] = JSON.parse(metaReq.result);
-      const blobs = new Map<number, Blob>();
-      const list: SavedRecording[] = [];
-      let loaded = 0;
-      if (metaList.length === 0) { resolve({ list, blobs }); return; }
-      for (const meta of metaList) {
-        const blobReq = store.get(`blob-${key}-${meta.idx}`);
-        blobReq.onsuccess = () => {
-          if (blobReq.result instanceof Blob) {
-            blobs.set(meta.idx, blobReq.result);
-            list.push({ dt: meta.dt, d: URL.createObjectURL(blobReq.result) });
-          }
-          loaded++;
-          if (loaded === metaList.length) resolve({ list, blobs });
-        };
-        blobReq.onerror = () => { loaded++; if (loaded === metaList.length) resolve({ list, blobs }); };
-      }
-    };
-    metaReq.onerror = () => reject(metaReq.error);
-  });
-}
-
-async function idbDeleteRecording(key: string, idx: number, totalCount: number): Promise<void> {
-  const db = await openRecorderDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(IDB_STORE, "readwrite");
-    const store = tx.objectStore(IDB_STORE);
-    store.delete(`blob-${key}-${idx}`);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
+  compact?: boolean;
+  onRecordSaved?: () => void;
 }
 
 async function migrateFromLocalStorage(key: string): Promise<SavedRecording[] | null> {
@@ -93,16 +20,14 @@ async function migrateFromLocalStorage(key: string): Promise<SavedRecording[] | 
     const oldList: SavedRecording[] = JSON.parse(raw);
     if (!oldList.length) return null;
 
-    // Migrate: convert base64 data URLs to blobs in IndexedDB
     const db = await openRecorderDB();
     const metaList: { dt: string; idx: number }[] = [];
-    const tx = db.transaction(IDB_STORE, "readwrite");
-    const store = tx.objectStore(IDB_STORE);
+    const tx = db.transaction("recordings", "readwrite");
+    const store = tx.objectStore("recordings");
 
     for (let i = 0; i < oldList.length; i++) {
       const item = oldList[i];
       metaList.push({ dt: item.dt, idx: i });
-      // Convert base64 data URL to blob
       try {
         const resp = await fetch(item.d);
         const blob = await resp.blob();
@@ -118,7 +43,6 @@ async function migrateFromLocalStorage(key: string): Promise<SavedRecording[] | 
       tx.onerror = () => reject(tx.error);
     });
 
-    // Remove old localStorage data after successful migration
     localStorage.removeItem("rec-" + key);
     return oldList;
   } catch {
@@ -126,7 +50,7 @@ async function migrateFromLocalStorage(key: string): Promise<SavedRecording[] | 
   }
 }
 
-export default function RecorderBox({ storageKey, exerciseName, expectedNotes }: RecorderBoxProps) {
+export default function RecorderBox({ storageKey, exerciseName, expectedNotes, compact, onRecordSaved }: RecorderBoxProps) {
   const [isRec, setIsRec] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [savedList, setSavedList] = useState<SavedRecording[]>([]);
@@ -141,16 +65,15 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes }:
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      // Try migration from localStorage first
       const migrated = await migrateFromLocalStorage(storageKey);
       if (cancelled) return;
 
-      // Load from IndexedDB
       const { list, blobs } = await idbLoadRecordings(storageKey);
       if (cancelled) return;
       setSavedList(list);
       blobMapRef.current = blobs;
-      nextIdxRef.current = Math.max(0, ...Array.from(blobs.keys())) + 1;
+      const existingKeys = Array.from(blobs.keys());
+      nextIdxRef.current = existingKeys.length === 0 ? 0 : Math.max(...existingKeys) + 1;
     })();
     return () => { cancelled = true; };
   }, [storageKey]);
@@ -178,16 +101,14 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes }:
 
         setSavedList((prev) => {
           const next = [newItem, ...prev].slice(0, 10);
-          // Build a clean index-to-blob mapping for the kept recordings
           const allKeys = Array.from(blobMapRef.current.keys()).sort((a, b) => b - a);
           const keptKeys = allKeys.slice(0, next.length);
-          const metaList = next.map((r, i) => ({ dt: r.dt, idx: keptKeys[i] ?? i }));
           const keptBlobs = new Map<number, Blob>();
           for (const k of keptKeys) {
             const b = blobMapRef.current.get(k);
             if (b) keptBlobs.set(k, b);
           }
-          idbSaveRecording(storageKey, next, keptBlobs).catch(() => {});
+          idbSaveRecording(storageKey, next, keptBlobs).then(() => onRecordSaved?.()).catch(() => {});
           return next;
         });
       };
@@ -216,6 +137,25 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes }:
 
   const fmt = Math.floor(recTime / 60) + ":" + String(recTime % 60).padStart(2, "0");
 
+  if (compact) {
+    return (
+      <div className="flex items-center gap-2">
+        {!isRec ? (
+          <button type="button" onClick={startRecording} className="w-10 h-10 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95 flex-shrink-0"
+            style={{ background: "radial-gradient(circle at 40% 40%, #C41E3A, #7f1d1d 80%)", border: "2px solid #555", boxShadow: "0 2px 6px rgba(0,0,0,0.4)" }}
+            title="Record" />
+        ) : (
+          <button type="button" onClick={stopRecording} className="w-10 h-10 rounded-full cursor-pointer flex items-center justify-center flex-shrink-0"
+            style={{ background: "radial-gradient(circle at 40% 40%, #444, #222 80%)", border: "2px solid #555" }}
+            title="Stop recording">
+            <div className="w-3.5 h-3.5 bg-[#888] rounded-sm" />
+          </button>
+        )}
+        {isRec && <span className="font-readout text-[14px] text-[#C41E3A]">{fmt}</span>}
+      </div>
+    );
+  }
+
   return (
     <div className={`panel p-4 mb-3 ${isRec ? "!border-[#C41E3A]/40" : ""}`}>
       <div className="font-label text-[10px] text-[#C41E3A] mb-3 flex items-center gap-2">
@@ -225,10 +165,10 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes }:
 
       <div className="flex gap-3 items-center mb-3">
         {!isRec ? (
-          <button onClick={startRecording} className="w-10 h-10 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95"
+          <button type="button" title="Record" onClick={startRecording} className="w-10 h-10 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95"
             style={{ background: "radial-gradient(circle at 40% 40%, #C41E3A, #7f1d1d 80%)", border: "2px solid #555", boxShadow: "0 2px 6px rgba(0,0,0,0.4)" }} />
         ) : (
-          <button onClick={stopRecording} className="w-10 h-10 rounded-full cursor-pointer flex items-center justify-center"
+          <button type="button" title="Stop recording" onClick={stopRecording} className="w-10 h-10 rounded-full cursor-pointer flex items-center justify-center"
             style={{ background: "radial-gradient(circle at 40% 40%, #444, #222 80%)", border: "2px solid #555" }}>
             <div className="w-3.5 h-3.5 bg-[#888] rounded-sm" />
           </button>

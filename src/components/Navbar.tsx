@@ -184,14 +184,55 @@ export default function Navbar({ view, onViewChange, onShowAuth, lastSynced, syn
     <>
       {/* ═══ Desktop Sidebar ═══ */}
       <aside className="sidebar hidden md:flex flex-col h-screen w-[220px] flex-shrink-0 sticky top-0">
-        {/* Logo */}
-        <div className="px-5 pt-5 pb-1">
-          <div className="sidebar-logo font-heading text-lg font-black tracking-wide">GUITARFORGE</div>
-          <div className="text-[11px] font-label" style={{ color: "var(--text-muted)" }}>Practice Management</div>
+        {/* Logo + Profile (Suno-style top section) */}
+        <div className="pt-1 pb-0">
+          <Image src="/logo.png" alt="Guitar Practice" width={220} height={260} className="object-contain logo-blend w-full" priority />
+          {/* Profile under logo */}
+          <button
+            type="button"
+            onClick={() => onViewChange("profile")}
+            className="flex items-center gap-2 w-full mt-0.5 px-1 py-1 rounded-lg transition-colors hover:bg-white/5"
+          >
+            {user ? (
+              <>
+                {user.user_metadata?.avatar_url ? (
+                  <img src={user.user_metadata.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0" referrerPolicy="no-referrer" />
+                ) : (
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg, #D4A843, #a07c2e)" }}>
+                    <span className="text-[10px] font-bold text-black">{(user.user_metadata?.full_name || user.email || "U")[0].toUpperCase()}</span>
+                  </div>
+                )}
+                <div className="flex flex-col items-start overflow-hidden">
+                  <span className="text-[13px] font-medium truncate w-full" style={{ color: "#ccc" }}>
+                    {user.user_metadata?.full_name || user.email?.split("@")[0] || "User"}
+                  </span>
+                  {syncing ? (
+                    <span className="text-[10px] flex items-center gap-1" style={{ color: "var(--text-muted)" }}><span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />Syncing...</span>
+                  ) : lastSynced ? (
+                    <span className="text-[10px] flex items-center gap-1" style={{ color: "var(--text-muted)" }}><span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500" />Synced</span>
+                  ) : (
+                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{user.email}</span>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.08)" }}>
+                  <IconProfile />
+                </div>
+                <div className="flex flex-col items-start">
+                  <span className="text-[13px] font-medium" style={{ color: "#ccc" }}>Guest</span>
+                  <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Sign in to sync</span>
+                </div>
+              </>
+            )}
+          </button>
         </div>
 
+        <div className="mx-4 border-t" style={{ borderColor: "var(--border-panel)" }} />
+
         {/* Main section */}
-        <nav className="flex-1 px-3 pt-5 flex flex-col gap-0.5">
+        <nav className="flex-1 px-3 pt-3 flex flex-col gap-0.5">
           <div className="sidebar-section-label">Main</div>
           {MAIN_NAV.map(({ id, label, icon: Icon }) => (
             <button
@@ -221,72 +262,28 @@ export default function Navbar({ view, onViewChange, onShowAuth, lastSynced, syn
           ))}
         </nav>
 
-        {/* Profile at bottom */}
-        <div className="sidebar-profile">
+        {/* Bottom actions */}
+        <div className="px-4 py-3">
           {user ? (
-            <div className="flex flex-col gap-1 w-full">
-              <button
-                onClick={() => onViewChange("profile")}
-                className={`sidebar-profile-btn ${view === "profile" ? "sidebar-item--active" : ""}`}
-              >
-                {user.user_metadata?.avatar_url ? (
-                  <img src={user.user_metadata.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
-                ) : (
-                  <div className="sidebar-avatar">
-                    <IconProfile />
-                  </div>
-                )}
-                <div className="flex flex-col items-start overflow-hidden">
-                  <span className="text-[13px] font-medium truncate w-full" style={{ color: view === "profile" ? "#D4A843" : "#ccc" }}>
-                    {user.user_metadata?.full_name || user.email?.split("@")[0] || "User"}
-                  </span>
-                  <span className="text-[10px] truncate w-full" style={{ color: "var(--text-muted)" }}>{user.email}</span>
-                </div>
-              </button>
-              {/* Cloud sync indicator */}
-              <div className="text-[9px] font-label px-3 mt-0.5" style={{ color: "var(--text-muted)" }}>
-                {syncing ? (
-                  <span className="flex items-center gap-1"><span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />Syncing...</span>
-                ) : lastSynced ? (
-                  <span className="flex items-center gap-1"><span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500" />Synced {lastSynced.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
-                ) : null}
-              </div>
-              <button
-                onClick={() => logout()}
-                className="text-[11px] px-3 py-1.5 rounded-md transition-colors text-left"
-                style={{ color: "#888" }}
-                onMouseEnter={e => (e.currentTarget.style.color = "#ef4444")}
-                onMouseLeave={e => (e.currentTarget.style.color = "#888")}
-                aria-label="Sign out"
-              >
-                Sign Out
-              </button>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-1 w-full">
-              <button
-                onClick={() => onViewChange("profile")}
-                className={`sidebar-profile-btn ${view === "profile" ? "sidebar-item--active" : ""}`}
-              >
-                <div className="sidebar-avatar">
-                  <IconProfile />
-                </div>
-                <div className="flex flex-col items-start">
-                  <span className="text-[13px] font-medium" style={{ color: view === "profile" ? "#D4A843" : "#ccc" }}>Guest</span>
-                  <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Profile & Settings</span>
-                </div>
-              </button>
-              {onShowAuth && (
-                <button
-                  onClick={onShowAuth}
-                  className="text-[11px] px-3 py-1.5 rounded-md transition-colors text-left"
-                  style={{ color: "#D4A843" }}
-                >
-                  Sign in to sync
-                </button>
-              )}
-            </div>
-          )}
+            <button
+              onClick={() => logout()}
+              className="text-[11px] px-2 py-1.5 rounded-md transition-colors text-left w-full"
+              style={{ color: "#666" }}
+              onMouseEnter={e => (e.currentTarget.style.color = "#ef4444")}
+              onMouseLeave={e => (e.currentTarget.style.color = "#666")}
+              aria-label="Sign out"
+            >
+              Sign Out
+            </button>
+          ) : onShowAuth ? (
+            <button
+              onClick={onShowAuth}
+              className="text-[11px] px-2 py-1.5 rounded-md transition-colors text-left w-full"
+              style={{ color: "#D4A843" }}
+            >
+              Sign in to sync
+            </button>
+          ) : null}
         </div>
       </aside>
 

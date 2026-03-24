@@ -65,12 +65,7 @@ export default function AuthPage({ onSkip }: { onSkip: () => void }) {
       <div className="w-full max-w-md mx-4">
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-black tracking-wide" style={{ color: "#D4A843" }}>
-            GUITARFORGE
-          </h1>
-          <p className="text-sm mt-1" style={{ color: "#888" }}>
-            Practice Management Platform
-          </p>
+          <img src="/logo.png" alt="Guitar Practice" className="h-36 mx-auto object-contain logo-blend" />
         </div>
 
         {/* Card */}
@@ -102,7 +97,7 @@ export default function AuthPage({ onSkip }: { onSkip: () => void }) {
           {/* Google OAuth */}
           <button
             onClick={handleGoogle}
-            className="w-full flex items-center justify-center gap-3 py-2.5 rounded-lg text-sm font-medium transition-colors mb-4"
+            className="w-full flex items-center justify-center gap-3 py-2.5 rounded-lg text-sm font-medium mb-4 transition-colors hover:opacity-90"
             style={{ background: "#1a1a1e", border: "1px solid #2a2a2e", color: "#ccc" }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24">

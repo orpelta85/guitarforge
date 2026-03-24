@@ -46,10 +46,15 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
   const [trainerEndSpeed, setTrainerEndSpeed] = useState(1);
   const [trainerStep, setTrainerStep] = useState(0.05);
   const [showFretboard, setShowFretboard] = useState(false);
+  const [viewerCollapsed, setViewerCollapsed] = useState(false);
   const [activeNotes, setActiveNotes] = useState<{ fret: number; string: number }[]>([]);
   const [currentBeatInfo, setCurrentBeatInfo] = useState<string>("");
   const [transpose, setTranspose] = useState(0);
   const [texLoaded, setTexLoaded] = useState(false);
+
+  // Audio enhancement state
+  const [reverbEnabled, setReverbEnabled] = useState(false);
+  const [reverbMix, setReverbMix] = useState(0.1);
 
   const mainRef = useRef<HTMLDivElement>(null);
   const apiRef = useRef<any>(null);
@@ -57,6 +62,14 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
   const loopCountRef = useRef(0);
   const readyCheckRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const workerBlobUrlRef = useRef<string | null>(null);
+  const audioNodesRef = useRef<{
+    ctx: AudioContext;
+    compressor: DynamicsCompressorNode;
+    convolver: ConvolverNode;
+    dryGain: GainNode;
+    wetGain: GainNode;
+    masterGain: GainNode;
+  } | null>(null);
 
   const MAX_SAVE_SIZE = 2 * 1024 * 1024; // 2MB
 
@@ -191,6 +204,114 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
     reader.readAsArrayBuffer(file);
   }
 
+  // Generate a synthetic impulse response for reverb (small room / cabinet sim)
+  function createImpulseResponse(ctx: AudioContext): AudioBuffer {
+    const sampleRate = ctx.sampleRate;
+    const length = Math.floor(sampleRate * 1.2); // 1.2 second reverb tail
+    const impulse = ctx.createBuffer(2, length, sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const data = impulse.getChannelData(ch);
+      for (let i = 0; i < length; i++) {
+        // Exponential decay with slight randomness for natural sound
+        const t = i / sampleRate;
+        const decay = Math.exp(-3.5 * t); // Natural decay curve
+        // Early reflections (first 30ms) + late reverb tail
+        const early = t < 0.03 ? 0.7 : 0.3;
+        data[i] = (Math.random() * 2 - 1) * decay * early;
+      }
+    }
+    return impulse;
+  }
+
+  // Hook into alphaTab's audio output to add effects chain
+  function enhanceAudioOutput(api: any) {
+    try {
+      const output = (api as any).player?.output;
+      if (!output) return;
+
+      // Wait for audioContext to be available
+      const checkCtx = () => {
+        const ctx: AudioContext | undefined = output.audioContext ?? output._context;
+        if (!ctx) return;
+
+        // Check if we already hooked in
+        if (audioNodesRef.current?.ctx === ctx) return;
+
+        // Create effects chain: source -> lowpass -> highshelf cut -> compressor -> dry/wet reverb -> master
+        // Lowpass: cuts harsh metallic harmonics above 5kHz from distorted guitar soundfont
+        const lowpass = ctx.createBiquadFilter();
+        lowpass.type = "lowpass";
+        lowpass.frequency.value = 5000;
+        lowpass.Q.value = 0.7;
+
+        // High shelf cut: reduce 3-8kHz presence/harshness by 6dB
+        const highShelf = ctx.createBiquadFilter();
+        highShelf.type = "highshelf";
+        highShelf.frequency.value = 3000;
+        highShelf.gain.value = -6;
+
+        const compressor = ctx.createDynamicsCompressor();
+        compressor.threshold.value = -3;
+        compressor.knee.value = 6;
+        compressor.ratio.value = 2;
+        compressor.attack.value = 0.02;
+        compressor.release.value = 0.3;
+
+        const convolver = ctx.createConvolver();
+        convolver.buffer = createImpulseResponse(ctx);
+
+        const dryGain = ctx.createGain();
+        dryGain.gain.value = 1 - reverbMix;
+
+        const wetGain = ctx.createGain();
+        wetGain.gain.value = reverbEnabled ? reverbMix : 0;
+
+        const masterGain = ctx.createGain();
+        masterGain.gain.value = 1.0;
+
+        const sourceNode = output._gainNode ?? output.gainNode ?? output._masterGain;
+        if (sourceNode) {
+          try { sourceNode.disconnect(); } catch {}
+
+          // Route: source -> lowpass -> highShelf -> compressor -> split (dry + wet) -> master
+          sourceNode.connect(lowpass);
+          lowpass.connect(highShelf);
+          highShelf.connect(compressor);
+
+          compressor.connect(dryGain);
+          dryGain.connect(masterGain);
+
+          compressor.connect(convolver);
+          convolver.connect(wetGain);
+          wetGain.connect(masterGain);
+
+          masterGain.connect(ctx.destination);
+
+          audioNodesRef.current = { ctx, compressor, convolver, dryGain, wetGain, masterGain };
+        }
+      };
+
+      // Try immediately and also after a delay (audioContext may initialize later)
+      checkCtx();
+      setTimeout(checkCtx, 500);
+      setTimeout(checkCtx, 1500);
+      setTimeout(checkCtx, 3000);
+    } catch (err) {
+      console.warn("Audio enhancement failed:", err);
+    }
+  }
+
+  // Update reverb mix when settings change
+  useEffect(() => {
+    const nodes = audioNodesRef.current;
+    if (!nodes) return;
+    const now = nodes.ctx.currentTime;
+    nodes.wetGain.gain.cancelScheduledValues(now);
+    nodes.dryGain.gain.cancelScheduledValues(now);
+    nodes.wetGain.gain.linearRampToValueAtTime(reverbEnabled ? reverbMix : 0, now + 0.05);
+    nodes.dryGain.gain.linearRampToValueAtTime(reverbEnabled ? 1 - reverbMix : 1, now + 0.05);
+  }, [reverbEnabled, reverbMix]);
+
   useEffect(() => {
     if ((!fileData && !texLoaded) || !mainRef.current) return;
     let dead = false;
@@ -204,6 +325,17 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
         if (dead || !mainRef.current) return;
         if (apiRef.current?.destroy) try { apiRef.current.destroy(); } catch {}
         apiRef.current = null;
+        // Clean up previous audio nodes
+        if (audioNodesRef.current) {
+          try {
+            audioNodesRef.current.compressor.disconnect();
+            audioNodesRef.current.convolver.disconnect();
+            audioNodesRef.current.dryGain.disconnect();
+            audioNodesRef.current.wetGain.disconnect();
+            audioNodesRef.current.masterGain.disconnect();
+          } catch {}
+          audioNodesRef.current = null;
+        }
         const base = window.location.origin;
 
         (at.Environment as any).createWebWorker = () => {
@@ -224,6 +356,8 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
         s.core.includeNoteBounds = true;
         s.player.enablePlayer = true;
         s.player.enableCursor = true;
+        s.player.enableAnimatedBeatCursor = true;
+        s.player.enableElementHighlighting = true;
         s.player.enableUserInteraction = true;
         s.player.soundFont = base + "/alphatab/soundfont/MuseScore_General.sf3";
         s.player.scrollElement = mainRef.current;
@@ -236,6 +370,15 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
 
         api.scoreLoaded.on((score: any) => {
           if (dead) return;
+          // Override distorted/overdriven guitar programs to clean nylon/steel acoustic
+          score.tracks?.forEach((track: any) => {
+            track.playbackInfo?.channels?.forEach((ch: any) => {
+              const p = ch.program;
+              // GM programs 27-31 = distortion/overdrive/muted electric → replace with 25 (steel acoustic)
+              if (p >= 27 && p <= 31) ch.program = 25;
+              // GM 29 = overdriven, 30 = distortion
+            });
+          });
           setLoading(false); setReady(true);
           setSongInfo({ title: score.title || "Untitled", artist: score.artist || "", tempo: score.tempo || 120 });
           setTracks(score.tracks.map((t: any, i: number) => ({
@@ -244,7 +387,13 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
           if (score.masterBars?.length) setTotalBars(score.masterBars.length);
         });
 
-        api.playerReady.on(() => { if (!dead) setPlayerReady(true); });
+        api.playerReady.on(() => {
+          if (!dead) {
+            setPlayerReady(true);
+            // Hook audio enhancement chain after player is ready
+            enhanceAudioOutput(api);
+          }
+        });
 
         let pollCount = 0;
         if (readyCheckRef.current) clearInterval(readyCheckRef.current);
@@ -385,11 +534,14 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
     if (!api) return;
     if ((api as any).player?.output?.audioContext?.state === "suspended")
       (api as any).player.output.audioContext.resume();
+    // Try to enhance audio on first play (audio context may only exist now)
+    if (!audioNodesRef.current) enhanceAudioOutput(api);
     api.playPause();
   }
   function doStop() { apiRef.current?.stop(); setPlaying(false); }
 
   function setSpd(s: number) { if (apiRef.current) apiRef.current.playbackSpeed = s; setSpeed(s); }
+  const [bpmInput, setBpmInput] = useState<string | null>(null);
   function changeTrk(i: number) {
     const api = apiRef.current;
     if (api?.score?.tracks?.[i]) { api.renderTracks([api.score.tracks[i]]); setActiveTrack(i); }
@@ -502,6 +654,8 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
 
   return (
     <div>
+      <input ref={fileRef} type="file" accept=".gp,.gp3,.gp4,.gp5,.gpx" className="hidden"
+        title="Select Guitar Pro file" onChange={e => { if (e.target.files?.[0]) handleFile(e.target.files[0]); }} />
       {gpUrlLoading ? (
         <div className="panel p-6 text-center">
           <div className="inline-block w-5 h-5 border-2 border-[#D4A843] border-t-transparent rounded-full animate-spin mb-2" />
@@ -510,11 +664,13 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
       ) : !fileData && !texLoaded ? (
         <div onDragOver={e => e.preventDefault()}
           onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f && /\.(gp[345x]?|gpx?)$/i.test(f.name)) handleFile(f); }}
-          className="panel p-6 text-center cursor-pointer border-dashed !border-[#333] hover:!border-[#D4A843]/40 transition-all"
-          onClick={() => fileRef.current?.click()}>
-          <input ref={fileRef} type="file" accept=".gp,.gp3,.gp4,.gp5,.gpx" className="hidden"
-            onChange={e => { if (e.target.files?.[0]) handleFile(e.target.files[0]); }} />
-          <div className="font-label text-sm text-[#555] mb-2">Drop Guitar Pro file or click to browse</div>
+          className="panel p-6 text-center border-dashed !border-[#333] hover:!border-[#D4A843]/40 transition-all">
+          <button type="button" onClick={() => fileRef.current?.click()}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/[0.04] border border-white/[0.08] text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.07] text-[12px] font-medium cursor-pointer transition-all mx-auto mb-3">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Open GP / GuitarPro File
+          </button>
+          <div className="font-label text-sm text-[#555] mb-2">or drop a file here</div>
           <div className="font-label text-[10px] text-[#333]">.gp .gp3 .gp4 .gp5 .gpx</div>
           <div className="font-label text-[9px] text-[#444] mt-3">
             <button type="button" className="text-[#D4A843] underline bg-transparent border-none cursor-pointer font-label text-[9px]" onClick={async (e) => {
@@ -543,21 +699,21 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
                 {ready && !playerReady && <span className="font-label text-[9px] text-[#555]">Loading player...</span>}
               </div>
               <div className="flex gap-1">
-                <button onClick={() => fileRef.current?.click()} className="btn-ghost !text-[9px] !px-2 !py-1">Change</button>
+                <button onClick={() => setViewerCollapsed(v => !v)} className="btn-ghost !text-[9px] !px-2 !py-1" title={viewerCollapsed ? "Show tab" : "Hide tab"}>
+                  {viewerCollapsed ? "▼ Show" : "▲ Hide"}
+                </button>
                 <button onClick={() => {
                   if (apiRef.current?.destroy) try { apiRef.current.destroy(); } catch {}
                   apiRef.current = null; setFileData(null); setFileName(null); setReady(false);
                   setSongInfo(null); setPlayerReady(false); setShowMixer(false); setShowSettings(false);
-                  setShowBookmarks(false); setShowFretboard(false);
-                }} className="btn-ghost !text-[9px] !px-2 !py-1 !text-[#C41E3A]">Close</button>
-                <input ref={fileRef} type="file" accept=".gp,.gp3,.gp4,.gp5,.gpx" className="hidden"
-                  onChange={e => { if (e.target.files?.[0]) handleFile(e.target.files[0]); }} />
+                  setShowBookmarks(false); setShowFretboard(false); setTexLoaded(false); setViewerCollapsed(false);
+                }} className="btn-ghost !text-[9px] !px-2 !py-1">Change</button>
               </div>
             </div>
           </div>
 
-          {/* ── Transport ── */}
-          {ready && (
+          {/* ── Transport + Sheet Music (collapsible) ── */}
+          {!viewerCollapsed && ready && (
             <div className="px-4 py-2 border-b border-[#1a1a1a] bg-[#121214] space-y-2">
               {/* Row 1: Play, position, speed */}
               <div className="flex items-center gap-2 flex-wrap">
@@ -584,12 +740,32 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
 
                 {currentBeatInfo && <span className="font-readout text-[9px] text-[#555]">{currentBeatInfo}</span>}
 
-                <div className="flex items-center gap-0.5 ml-auto">
-                  <span className="font-label text-[8px] text-[#555]">Speed</span>
-                  {[0.25, 0.5, 0.75, 1, 1.25, 1.5, 2].map(s => (
-                    <button key={s} onClick={() => setSpd(s)}
-                      className={`font-readout text-[9px] px-1.5 py-0.5 rounded-sm cursor-pointer border ${speed === s ? "border-[#D4A843] text-[#D4A843]" : "border-[#222] text-[#555]"}`}>{s}x</button>
-                  ))}
+                <div className="flex items-center gap-1.5 ml-auto">
+                  <span className="font-readout text-[11px] text-[#555]">{"\u2669"}=</span>
+                  <input
+                    type="number"
+                    value={bpmInput ?? (songInfo ? Math.round(songInfo.tempo * speed) : Math.round(120 * speed))}
+                    onChange={e => setBpmInput(e.target.value)}
+                    onBlur={() => {
+                      if (bpmInput !== null) {
+                        const bpmVal = Math.max(20, Math.min(400, Number(bpmInput)));
+                        const tempo = songInfo?.tempo || 120;
+                        setSpd(Math.max(0.1, Math.min(3, bpmVal / tempo)));
+                        setBpmInput(null);
+                      }
+                    }}
+                    onKeyDown={e => {
+                      if (e.key === "Enter" && bpmInput !== null) {
+                        const bpmVal = Math.max(20, Math.min(400, Number(bpmInput)));
+                        const tempo = songInfo?.tempo || 120;
+                        setSpd(Math.max(0.1, Math.min(3, bpmVal / tempo)));
+                        setBpmInput(null);
+                        (e.target as HTMLInputElement).blur();
+                      }
+                    }}
+                    className="w-16 text-center font-readout text-[12px] bg-[#1a1a1a] border border-[#333] rounded-md px-1.5 py-1 text-[#D4A843] outline-none focus:border-[#D4A843] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                  <span className="font-readout text-[9px] text-[#444]">{Math.round(speed * 100)}%</span>
                 </div>
               </div>
 
@@ -682,6 +858,25 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
                 <input type="range" min="0" max="1" step="0.05" value={masterVolume}
                   onChange={e => setMasterVol(Number(e.target.value))} className="flex-1 h-1 accent-[#D4A843]" />
                 <span className="font-readout text-[9px] text-[#666] w-8 text-right">{Math.round(masterVolume * 100)}%</span>
+              </div>
+
+              {/* Audio Enhancement */}
+              <div className="mt-2 pt-2 border-t border-[#1a1a1a]">
+                <div className="font-label text-[9px] text-[#888] mb-1">Audio Enhancement</div>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setReverbEnabled(!reverbEnabled)}
+                    className={`font-label text-[9px] px-2 py-1 rounded cursor-pointer border ${reverbEnabled ? "border-[#8B5CF6] text-[#8B5CF6] bg-[#8B5CF6]/10" : "border-[#222] text-[#555]"}`}>
+                    Reverb {reverbEnabled ? "ON" : "OFF"}
+                  </button>
+                  {reverbEnabled && (
+                    <div className="flex items-center gap-1 flex-1">
+                      <span className="font-label text-[8px] text-[#555]">Mix</span>
+                      <input type="range" min="0.05" max="0.6" step="0.05" value={reverbMix} title="Reverb mix"
+                        onChange={e => setReverbMix(Number(e.target.value))} className="flex-1 h-1 accent-[#8B5CF6]" />
+                      <span className="font-readout text-[9px] text-[#666] w-8 text-right">{Math.round(reverbMix * 100)}%</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -842,10 +1037,10 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
             </div>
           )}
 
-          {loading && <div className="p-6 text-center font-label text-sm text-[#444]">Loading tab...</div>}
-          {error && <div className="p-4 text-center font-label text-[11px] text-[#C41E3A]">{error}</div>}
+          {!viewerCollapsed && loading && <div className="p-6 text-center font-label text-sm text-[#444]">Loading tab...</div>}
+          {!viewerCollapsed && error && <div className="p-4 text-center font-label text-[11px] text-[#C41E3A]">{error}</div>}
 
-          <div ref={mainRef} style={{ minHeight: ready ? 350 : 0, maxHeight: 550, overflow: "auto", overscrollBehavior: "contain", background: "#fff" }} dir="ltr" />
+          <div ref={mainRef} style={{ minHeight: ready && !viewerCollapsed ? 350 : 0, maxHeight: viewerCollapsed ? 0 : 550, overflow: "hidden", overscrollBehavior: "contain", background: viewerCollapsed ? "transparent" : "#fff" }} dir="ltr" />
         </div>
       )}
     </div>

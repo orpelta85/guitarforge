@@ -67,6 +67,7 @@ interface HomePageProps {
   wDn: number;
   wPct: number;
   wMin: number;
+  setSongModal: (s: SongEntry | null) => void;
   // Functions
   buildAll: () => void;
   getSuggestions: () => { icon: string; text: string }[];
@@ -84,6 +85,7 @@ export default function HomePage(props: HomePageProps) {
     setNewSongUrl, setShowEditor, setCollapsedGroups, setSettingsOpen,
     setShowAnalytics, setShowAuthPage, setAuthBannerDismissed,
     setSunoSuggestUrl, setSunoSuggestLoading, setSunoSuggestDismissed,
+    setSongModal,
     curExList, curDone, curMin, curCats, wTot, wDn, wPct, wMin,
     buildAll, getSuggestions,
   } = props;
@@ -124,11 +126,11 @@ export default function HomePage(props: HomePageProps) {
 
   const addSongFromLibrary = useCallback((song: SongEntry) => {
     setSongs(prev => {
-      if (prev.some(s => s.name === `${song.artist} - ${song.title}`)) return prev;
+      if (prev.some(s => s.id === song.id)) return prev;
       return [...prev, {
         name: `${song.artist} - ${song.title}`,
         url: song.songsterrUrl || "",
-        id: Date.now() + Math.random(),
+        id: song.id,
       }];
     });
     setSongSearchQuery("");
@@ -136,18 +138,30 @@ export default function HomePage(props: HomePageProps) {
     setSongSearchActive(false);
   }, [setSongs]);
 
-  // Quick Jam YouTube search
+  // Quick Jam YouTube search — fetch first result and embed inline
+  const [jamVideoId, setJamVideoId] = useState<string | null>(null);
   const searchJamBacking = useCallback(async () => {
     setJamYtLoading(true);
+    setJamVideoId(null);
     const query = `${jamKey} ${jamScale} ${jamStyle} backing track guitar`;
-    const url = "https://www.youtube.com/results?search_query=" + encodeURIComponent(query);
-    window.open(url, "_blank");
+    try {
+      const res = await fetch(`/api/youtube?q=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      if (data.items?.length > 0) {
+        setJamVideoId(data.items[0].videoId);
+      }
+      setJamYtUrl(`https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`);
+    } catch {
+      setJamYtUrl(`https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`);
+    }
     setJamYtLoading(false);
   }, [jamKey, jamScale, jamStyle]);
 
   // Quick Jam Suno generate
+  const [sunoError, setSunoError] = useState<string | null>(null);
   const generateJamSuno = useCallback(async () => {
     setJamSunoLoading(true);
+    setSunoError(null);
     try {
       const res = await fetch("/api/suno", {
         method: "POST",
@@ -155,8 +169,14 @@ export default function HomePage(props: HomePageProps) {
         body: JSON.stringify({ scale: jamKey, mode: jamScale, style: jamStyle, bpm: 120, title: `${jamKey} ${jamScale} ${jamStyle} Jam` }),
       });
       const data = await res.json();
-      if (data.tracks?.[0]?.audioUrl) setSunoSuggestUrl(data.tracks[0].audioUrl);
-    } catch { /* network error */ }
+      if (data.error) {
+        setSunoError(data.error);
+      } else if (data.tracks?.[0]?.audioUrl) {
+        setSunoSuggestUrl(data.tracks[0].audioUrl);
+      } else {
+        setSunoError("Generation timed out. Try again.");
+      }
+    } catch { setSunoError("Network error. Check your connection."); }
     finally { setJamSunoLoading(false); }
   }, [jamKey, jamScale, jamStyle, setSunoSuggestUrl]);
 
@@ -181,52 +201,31 @@ export default function HomePage(props: HomePageProps) {
       {/* ================================================================ */}
       {/* SECTION 1: Quick Shortcuts (moved first - short & general)      */}
       {/* ================================================================ */}
-      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-4">
-        {([
-          { label: "Start Practice", icon: (
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="5 3 19 12 5 21 5 3"/>
-            </svg>
-          ), target: "daily" as View },
-          { label: "Open Studio", icon: (
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/>
-            </svg>
-          ), target: "studio" as View },
-          { label: "Jam Mode", icon: (
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
-            </svg>
-          ), target: "jam" as View },
-          { label: "Song Library", icon: (
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
-            </svg>
-          ), target: "lib" as View },
-          { label: "AI Coach", icon: (
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
-            </svg>
-          ), target: "coach" as View },
-          { label: "Skill Tree", icon: (
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/>
-            </svg>
-          ), target: "skills" as View },
-        ] as const).map(({ label, icon, target }) => (
-          <button key={target} type="button" onClick={() => setView(target)}
-            className="flex flex-col items-center gap-2.5 p-4 rounded-lg transition-all hover:border-[#D4A843]/40 hover:bg-[#1a1708]"
-            style={{ background: "#141416", border: "1px solid #1a1a1e" }}>
-            {icon}
-            <span className="font-label text-[11px] sm:text-[12px] text-[#999]">{label}</span>
-          </button>
-        ))}
-      </div>
-
       {/* ================================================================ */}
-      {/* SECTION 2: Main Practice Hub (amber-bordered unified box)       */}
+      {/* MAIN HUB: Quick Actions toolbar + Practice Hub (unified box)    */}
       {/* ================================================================ */}
       <div className="mb-4" style={{ border: "1px solid #D4A84340", borderRadius: 12, overflow: "hidden" }}>
+
+        {/* Quick Actions toolbar */}
+        <div className="flex items-center gap-1 px-4 py-3 overflow-x-auto" style={{ background: "#141410", borderBottom: "1px solid #D4A84320" }}>
+          {([
+            { label: "Practice", icon: "M5 3l14 9-14 9V3z", target: "daily" as View },
+            { label: "Studio", icon: "M2 3h20v14H2zM8 21h8M12 17v4", target: "studio" as View },
+            { label: "Jam", icon: "M9 18V5l12-2v13M6 18a3 3 0 100-6 3 3 0 000 6zM18 16a3 3 0 100-6 3 3 0 000 6z", target: "jam" as View },
+            { label: "Library", icon: "M4 19.5A2.5 2.5 0 016.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z", target: "lib" as View },
+            { label: "Coach", icon: "M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z", target: "coach" as View },
+            { label: "Skills", icon: "M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z", target: "skills" as View },
+          ] as const).map(({ label, icon, target }) => (
+            <button key={target} type="button" onClick={() => setView(target)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all hover:bg-[#D4A84315] flex-shrink-0"
+              style={{ background: "transparent" }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d={icon}/>
+              </svg>
+              <span className="font-label text-[14px] font-medium text-[#aaa] hover:text-[#D4A843] transition-colors whitespace-nowrap">{label}</span>
+            </button>
+          ))}
+        </div>
 
         {/* --- Today's Practice --- */}
         {(() => {
@@ -276,14 +275,15 @@ export default function HomePage(props: HomePageProps) {
         })()}
 
         {/* --- Weekly Focus (inline, below Today's Practice) --- */}
-        <div className="border-t border-[#D4A84320]" style={{ background: "#121214" }}>
-          <button onClick={() => setSettingsOpen(p => !p)} className="flex items-center gap-2 w-full cursor-pointer bg-transparent border-0 text-left px-5 py-3">
+        <div className="border-t border-[#D4A84330]" style={{ background: "#121214" }}>
+          <button onClick={() => setSettingsOpen(p => !p)} className="flex items-center gap-3 w-full cursor-pointer bg-transparent border-0 text-left px-5 py-4 transition-colors hover:bg-[#1a1708]">
             <div className="led led-gold" />
-            <span className="font-label text-[11px] text-[#D4A843] flex-1">Weekly Focus</span>
-            <span className="font-readout text-[10px] text-[#555]">
+            <span className="font-label text-[13px] font-semibold text-[#D4A843] flex-1">Weekly Focus</span>
+            <span className="font-readout text-[12px] px-3 py-1.5 rounded-lg" style={{ background: settingsOpen ? "transparent" : "#D4A84315", color: "#D4A843", border: settingsOpen ? "none" : "1px solid #D4A84330" }}>
               {!settingsOpen && `W${week} \u00B7 ${mode} \u00B7 ${scale} \u00B7 ${style}`}
+              {settingsOpen && ""}
             </span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" className={`transition-transform ${settingsOpen ? "rotate-180" : ""}`}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2" className={`transition-transform ${settingsOpen ? "rotate-180" : ""}`}>
               <path d="M6 9l6 6 6-6" />
             </svg>
           </button>
@@ -314,17 +314,21 @@ export default function HomePage(props: HomePageProps) {
           {songs.length === 0 && (
             <div className="text-center py-3 text-[12px] text-[#444]">No songs added yet. Search your library below.</div>
           )}
-          {songs.map((song) => (
-            <div key={song.id} className="flex items-center gap-3 px-3 py-2 bg-[#0e0e10] border border-[#1a1a1a] rounded-lg mb-1.5">
-              <div className="flex-1 min-w-0">
-                <div className="font-heading text-[13px] !font-medium !normal-case !tracking-normal truncate text-[#ccc]">{song.name}</div>
+          {songs.map((song) => {
+            const libraryEntry = SONG_LIBRARY.find(s => s.id === song.id);
+            return (
+              <div key={song.id} className="flex items-center gap-3 px-3 py-2 bg-[#0e0e10] border border-[#1a1a1a] rounded-lg mb-1.5">
+                <button type="button" onClick={() => setSongModal(libraryEntry || { id: song.id, title: song.name, artist: "" })}
+                  className="flex-1 min-w-0 text-left cursor-pointer hover:text-[#D4A843] transition-colors">
+                  <div className="font-heading text-[13px] !font-medium !normal-case !tracking-normal truncate text-[#ccc]">{song.name}</div>
+                </button>
+                {song.url && <a href={song.url} target="_blank" rel="noopener noreferrer" className="font-label text-[9px] text-[#D4A843] no-underline hover:text-[#DFBD69] flex-shrink-0">Tab</a>}
+                <button type="button" title="Remove song" onClick={() => setSongs((p) => p.filter((s) => s.id !== song.id))} className="text-[10px] text-[#666] hover:text-[#C41E3A] transition-colors flex-shrink-0">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
               </div>
-              {song.url && <a href={song.url} target="_blank" rel="noopener noreferrer" className="font-label text-[9px] text-[#D4A843] no-underline hover:text-[#DFBD69] flex-shrink-0">Tab</a>}
-              <button onClick={() => setSongs((p) => p.filter((s) => s.id !== song.id))} className="text-[10px] text-[#666] hover:text-[#C41E3A] transition-colors flex-shrink-0">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-              </button>
-            </div>
-          ))}
+            );
+          })}
 
           {/* Song search from library */}
           <div className="mt-3">
@@ -368,7 +372,7 @@ export default function HomePage(props: HomePageProps) {
 
           {/* Manual add (collapsed) */}
           <details className="mt-2">
-            <summary className="text-[10px] text-[#444] cursor-pointer hover:text-[#666] transition-colors">Add manually...</summary>
+            <summary className="text-[11px] text-[#555] cursor-pointer hover:text-[#D4A843] transition-colors">Add manually...</summary>
             <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2 mt-2">
               <input placeholder="Song name..." value={newSongName} onChange={(e) => setNewSongName(e.target.value)} className="input min-w-0 !text-[12px]" />
               <input placeholder="Tab URL (optional)..." value={newSongUrl} onChange={(e) => setNewSongUrl(e.target.value)} className="input min-w-0 !text-[12px]" />
@@ -634,7 +638,7 @@ export default function HomePage(props: HomePageProps) {
                 </select>
               </label>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mb-4">
               <button onClick={searchJamBacking} disabled={jamYtLoading}
                 className="btn-gold !text-[11px] flex items-center gap-2">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
@@ -645,7 +649,7 @@ export default function HomePage(props: HomePageProps) {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M12 6v6l4 2"/>
                 </svg>
-                {jamSunoLoading ? "Generating..." : "Generate with Suno AI"}
+                {jamSunoLoading ? "Generating (up to 2 min)..." : "Generate with Suno AI"}
               </button>
               <button onClick={() => setView("jam")}
                 className="btn-ghost !text-[11px] flex items-center gap-2">
@@ -653,6 +657,37 @@ export default function HomePage(props: HomePageProps) {
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </button>
             </div>
+            {/* Suno error/loading */}
+            {sunoError && (
+              <div className="text-[12px] px-3 py-2 rounded-lg mb-3" style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444" }}>
+                {sunoError}
+              </div>
+            )}
+            {jamSunoLoading && (
+              <div className="text-[12px] px-3 py-2 rounded-lg mb-3 animate-pulse" style={{ background: "rgba(212,168,67,0.1)", color: "#D4A843" }}>
+                Generating backing track with Suno AI... This can take up to 2 minutes.
+              </div>
+            )}
+            {/* Inline YouTube player */}
+            {jamYtLoading && (
+              <div className="aspect-video w-full rounded-lg overflow-hidden bg-[#0e0e10] mb-3 flex items-center justify-center">
+                <div className="font-label text-[12px] text-[#555] animate-pulse">Searching YouTube...</div>
+              </div>
+            )}
+            {jamVideoId && !jamYtLoading && (
+              <div className="mb-3">
+                <div className="aspect-video w-full rounded-lg overflow-hidden bg-black">
+                  <iframe src={`https://www.youtube.com/embed/${jamVideoId}?modestbranding=1&rel=0&autoplay=1`}
+                    className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen title="Jam Backing Track" />
+                </div>
+                {jamYtUrl && (
+                  <a href={jamYtUrl} target="_blank" rel="noopener noreferrer"
+                    className="font-label text-[11px] text-[#D4A843] hover:text-[#DFBD69] mt-2 inline-block no-underline">
+                    Search more on YouTube →
+                  </a>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>

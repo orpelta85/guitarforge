@@ -206,7 +206,7 @@ function getWelcomeMessage(): CoachMessage {
   const profile = getProfile();
   const name = profile?.name || "guitarist";
 
-  let greeting = `Hey ${name}! I'm your GuitarForge AI Coach. `;
+  let greeting = `Hey ${name}! I'm your Guitar Practice AI Coach. `;
 
   if (profile) {
     greeting += `I see you play ${profile.instrument || "guitar"} at the ${profile.level} level`;

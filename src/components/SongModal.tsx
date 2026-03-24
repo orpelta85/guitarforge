@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import type { SongEntry } from "@/lib/types";
+import type { SongEntry, Exercise } from "@/lib/types";
+import { EXERCISES } from "@/lib/exercises";
 import { ytSearch } from "@/lib/helpers";
 import { useFocusTrap } from "./ExerciseModal";
 import StemSeparator from "./StemSeparator";
@@ -13,6 +14,9 @@ const GpFileUploader = dynamic(() => import("./GpFileUploader"), {
 interface Props {
   song: SongEntry;
   onClose: () => void;
+  targetMinutes?: number;
+  mySongs?: number[];
+  onToggleMySong?: (id: number) => void;
 }
 
 type Tab = "practice" | "tutorial" | "log";
@@ -31,16 +35,34 @@ const PROGRESS_OPTIONS = [
   { value: "mastered", label: "Mastered" },
 ];
 
-export default function SongModal({ song, onClose }: Props) {
+export default function SongModal({ song, onClose, targetMinutes, mySongs, onToggleMySong }: Props) {
   const [tab, setTab] = useState<Tab>("practice");
+
+  // Practice timer
+  const [timerSec, setTimerSec] = useState(0);
+  const [timerActive, setTimerActive] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (timerActive) {
+      timerRef.current = setTimeout(() => setTimerSec(s => s + 1), 1000);
+    }
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, [timerActive, timerSec]);
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
+  const targetSec = (targetMinutes || 0) * 60;
+  const timerMm = String(Math.floor(timerSec / 60)).padStart(2, "0");
+  const timerSs = String(timerSec % 60).padStart(2, "0");
+  const timerOver = targetSec > 0 && timerSec >= targetSec;
 
   // Backing track auto-search
   const [btVideoId, setBtVideoId] = useState("");
   const [btLoading, setBtLoading] = useState(false);
   const [btSearched, setBtSearched] = useState(false);
   const [btUrl, setBtUrl] = useState("");
-  const [showOriginal, setShowOriginal] = useState(false);
+  const [showOriginal, setShowOriginal] = useState(true);
   const [origVideoId, setOrigVideoId] = useState("");
+  const [origLoading, setOrigLoading] = useState(false);
+  const [origSearched, setOrigSearched] = useState(false);
   const [origUrl, setOrigUrl] = useState("");
 
   // Tutorial state
@@ -55,6 +77,16 @@ export default function SongModal({ song, onClose }: Props) {
   const [rating, setRating] = useState(0);
   const [progress, setProgress] = useState("not-started");
 
+  // Practice history
+  type Session = { date: string; duration: number };
+  const histKey = `gf-song-history-${song.id}`;
+  const [sessions, setSessions] = useState<Session[]>([]);
+
+  // Linked exercises
+  const linkedKey = `gf-song-linked-${song.id}`;
+  const [linkedIds, setLinkedIds] = useState<number[]>([]);
+  const [exSearch, setExSearch] = useState("");
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem(lsKey);
@@ -65,7 +97,15 @@ export default function SongModal({ song, onClose }: Props) {
         if (d.progress) setProgress(d.progress);
       }
     } catch {}
-  }, [lsKey]);
+    try {
+      const h = localStorage.getItem(histKey);
+      if (h) setSessions(JSON.parse(h));
+    } catch {}
+    try {
+      const l = localStorage.getItem(linkedKey);
+      if (l) setLinkedIds(JSON.parse(l));
+    } catch {}
+  }, [lsKey, histKey, linkedKey]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -76,20 +116,37 @@ export default function SongModal({ song, onClose }: Props) {
     return () => clearTimeout(timer);
   }, [notes, rating, progress, lsKey]);
 
-  // Auto-fetch backing track on mount
+  // Auto-fetch original video on mount
   useEffect(() => {
-    if (btSearched || btVideoId) return;
+    if (origSearched || origVideoId) return;
+    setOrigLoading(true);
+    setOrigSearched(true);
+    const q = `${song.title} ${song.artist} official video`;
+    fetch(`/api/youtube?q=${encodeURIComponent(q)}`)
+      .then(r => r.json())
+      .then(data => {
+        const id = data.results?.[0] || data.items?.[0]?.videoId;
+        if (id) setOrigVideoId(id);
+      })
+      .catch(() => {})
+      .finally(() => setOrigLoading(false));
+  }, [origSearched, origVideoId, song.title, song.artist]);
+
+  // Fetch backing track lazily when user switches to it
+  useEffect(() => {
+    if (showOriginal || btSearched || btVideoId) return;
     setBtLoading(true);
     setBtSearched(true);
     const q = `${song.title} ${song.artist} backing track guitar`;
     fetch(`/api/youtube?q=${encodeURIComponent(q)}`)
       .then(r => r.json())
       .then(data => {
-        if (data.items?.[0]?.videoId) setBtVideoId(data.items[0].videoId);
+        const id = data.results?.[0] || data.items?.[0]?.videoId;
+        if (id) setBtVideoId(id);
       })
       .catch(() => {})
       .finally(() => setBtLoading(false));
-  }, [btSearched, btVideoId, song.title, song.artist]);
+  }, [showOriginal, btSearched, btVideoId, song.title, song.artist]);
 
   // Auto-fetch tutorial
   useEffect(() => {
@@ -105,6 +162,23 @@ export default function SongModal({ song, onClose }: Props) {
       .catch(() => {})
       .finally(() => setTutorialLoading(false));
   }, [tab, tutorialSearched, tutorialVideoId, song.title, song.artist]);
+
+  function saveSession(sec: number) {
+    if (sec < 5) return;
+    try {
+      const raw = localStorage.getItem(histKey);
+      const existing: Session[] = raw ? JSON.parse(raw) : [];
+      const updated = [{ date: new Date().toISOString(), duration: sec }, ...existing].slice(0, 20);
+      localStorage.setItem(histKey, JSON.stringify(updated));
+      setSessions(updated);
+    } catch {}
+  }
+
+  function toggleLinkedEx(id: number) {
+    const updated = linkedIds.includes(id) ? linkedIds.filter(x => x !== id) : [...linkedIds, id];
+    setLinkedIds(updated);
+    try { localStorage.setItem(linkedKey, JSON.stringify(updated)); } catch {}
+  }
 
   function loadManualUrl() {
     const m = manualUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
@@ -132,33 +206,52 @@ export default function SongModal({ song, onClose }: Props) {
       role="dialog"
       aria-modal="true"
       aria-label={`Song: ${song.title} by ${song.artist}`}>
-      <div className="exercise-modal-content" ref={modalRef}>
+      <div className="exercise-modal-content flex flex-col" ref={modalRef}>
 
         {/* DARK HEADER */}
-        <div className="px-4 sm:px-6 py-4 sm:py-5 modal-dark-header">
+        <div className="px-4 sm:px-6 py-4 sm:py-5 modal-dark-header flex-shrink-0">
           <div className="flex justify-between items-start">
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap mb-2">
-                {song.genre && <span className="tag" style={{ border: "1px solid #D4A84360", color: "#D4A843", background: "#D4A84315" }}>{song.genre}</span>}
-                {song.difficulty && <span className="tag" style={{ border: `1px solid ${dc}60`, color: dc, background: dc + "15" }}>{song.difficulty}</span>}
-                {song.tempo && <span className="font-readout text-[12px] text-[var(--text-secondary)]">{song.tempo} BPM</span>}
-                {song.key && <span className="font-readout text-[12px] text-[var(--text-secondary)]">Key: {song.key}</span>}
+              <div className="font-heading text-2xl text-[var(--text-primary)] leading-tight">{song.title}</div>
+              <div className="font-label text-[14px] text-[var(--text-secondary)] mt-0.5">{song.artist}</div>
+              {song.album && <div className="font-readout text-[11px] text-[var(--text-muted)] mt-0.5">{song.album}{song.year ? ` · ${song.year}` : ""}</div>}
+              <div className="flex items-center gap-1.5 flex-wrap mt-2">
+                {song.genre && <span className="font-readout text-[10px] px-2 py-0.5 rounded-full bg-white/[0.06] text-[var(--text-secondary)] border border-white/[0.08]">{song.genre}</span>}
+                {song.difficulty && <span className="font-readout text-[10px] px-2 py-0.5 rounded-full border" style={{ background: dc + "18", color: dc, borderColor: dc + "50" }}>{song.difficulty}</span>}
+                {song.key && <span className="font-readout text-[10px] px-2 py-0.5 rounded-full bg-white/[0.06] text-[var(--text-secondary)] border border-white/[0.08]">♩ {song.key}</span>}
+                {song.tempo && <span className="font-readout text-[10px] px-2 py-0.5 rounded-full bg-white/[0.06] text-[var(--text-secondary)] border border-white/[0.08]">{song.tempo} BPM</span>}
+                {song.tuning && song.tuning !== "Standard" && (
+                  <span className="font-readout text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/40 font-semibold">⚠ {song.tuning}</span>
+                )}
                 {hasGp && <span className="font-readout text-[10px] px-1.5 py-0.5 rounded border border-[var(--gold)]/40 text-[var(--gold)]">GP</span>}
               </div>
-              <div className="font-heading text-2xl text-[var(--text-primary)]">{song.title}</div>
-              <div className="font-label text-[14px] text-[var(--text-secondary)] mt-1">{song.artist}</div>
-              {song.album && <div className="font-readout text-[12px] text-[var(--text-muted)] mt-0.5">{song.album}{song.year ? ` (${song.year})` : ""}{song.tuning && song.tuning !== "Standard" ? ` / ${song.tuning}` : ""}</div>}
             </div>
-            <button type="button" onClick={onClose}
-              className="w-9 h-9 min-w-[44px] min-h-[44px] rounded-full bg-[var(--bg-elevated)] border border-[var(--border-accent)] flex items-center justify-center text-[var(--text-secondary)] text-lg cursor-pointer hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors flex-shrink-0"
-              aria-label="Close">
-              ×
-            </button>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {onToggleMySong && (
+                <button type="button" onClick={() => onToggleMySong(song.id)}
+                  className={`w-9 h-9 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center cursor-pointer transition-all border ${
+                    mySongs?.includes(song.id)
+                      ? "bg-red-500/20 border-red-500/40 text-red-400"
+                      : "bg-[var(--bg-elevated)] border-[var(--border-accent)] text-zinc-500 hover:text-red-400 hover:border-red-500/40"
+                  }`}
+                  aria-label={mySongs?.includes(song.id) ? "Remove from My Songs" : "Add to My Songs"}
+                  title={mySongs?.includes(song.id) ? "Remove from My Songs" : "Add to My Songs"}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill={mySongs?.includes(song.id) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                  </svg>
+                </button>
+              )}
+              <button type="button" onClick={onClose}
+                className="w-9 h-9 min-w-[44px] min-h-[44px] rounded-full bg-[var(--bg-elevated)] border border-[var(--border-accent)] flex items-center justify-center text-[var(--text-secondary)] text-lg cursor-pointer hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+                aria-label="Close">
+                ×
+              </button>
+            </div>
           </div>
 
-          {/* Progress bar */}
-          <div className="mt-3">
-            <div className="flex gap-1 flex-wrap">
+          {/* Progress bar + Timer row */}
+          <div className="mt-3 flex items-center gap-3 flex-wrap">
+            <div className="flex gap-1 flex-wrap flex-1">
               {PROGRESS_OPTIONS.map(opt => (
                 <button type="button" key={opt.value} onClick={() => setProgress(opt.value)}
                   className={`font-label text-[10px] px-2.5 py-1 min-h-[44px] rounded cursor-pointer border transition-all ${
@@ -168,11 +261,36 @@ export default function SongModal({ song, onClose }: Props) {
                   }`}>{opt.label}</button>
               ))}
             </div>
+
+            {/* Practice timer */}
+            <div className="flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-1.5 flex-shrink-0">
+              <button type="button" onClick={() => { if (timerActive) saveSession(timerSec); setTimerActive(a => !a); }}
+                className={`w-6 h-6 rounded-full flex items-center justify-center cursor-pointer transition-all ${timerActive ? "bg-green-500/20 text-green-400" : timerOver ? "bg-amber-500/20 text-amber-400" : "bg-white/[0.06] text-zinc-400 hover:text-zinc-200"}`}
+                title={timerActive ? "Pause" : "Start practice timer"}>
+                {timerActive
+                  ? <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                  : <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>}
+              </button>
+              <span className={`font-readout text-[13px] tabular-nums ${timerActive ? "text-green-400" : timerOver ? "text-amber-400" : "text-zinc-400"}`}>
+                {timerMm}:{timerSs}
+              </span>
+              {targetSec > 0 && (
+                <span className="font-label text-[10px] text-zinc-600">
+                  / {targetMinutes}m
+                </span>
+              )}
+              {timerSec > 0 && !timerActive && (
+                <button type="button" onClick={() => { setTimerSec(0); setTimerActive(false); }}
+                  className="font-label text-[10px] text-zinc-600 hover:text-zinc-400 cursor-pointer transition-colors">
+                  Reset
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-[var(--border-subtle)] bg-[var(--bg-recess)]">
+        <div className="flex border-b border-[var(--border-subtle)] bg-[var(--bg-recess)] flex-shrink-0">
           {([
             { id: "practice" as Tab, label: "Practice" },
             { id: "tutorial" as Tab, label: "Tutorial" },
@@ -185,19 +303,32 @@ export default function SongModal({ song, onClose }: Props) {
           ))}
         </div>
 
-        <div className="p-4 sm:p-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
 
           {/* Practice Tab */}
           {tab === "practice" && (
             <div>
+              {/* Tuning Alert */}
+              {song.tuning && song.tuning !== "Standard" && (
+                <div className="flex items-center gap-3 bg-amber-500/10 border border-amber-500/40 rounded-lg px-4 py-3 mb-4">
+                  <span className="text-amber-400 text-lg flex-shrink-0">⚠</span>
+                  <div>
+                    <span className="font-label text-[13px] text-amber-300 font-semibold">Non-Standard Tuning: {song.tuning}</span>
+                    <span className="font-label text-[11px] text-amber-500/80 ml-2">— tune your guitar before playing</span>
+                  </div>
+                </div>
+              )}
+
               {/* YouTube Backing Track — auto-searched */}
               <div className="mb-6">
                 <div className="font-label text-[11px] tracking-wider text-[var(--gold)] mb-3 flex items-center gap-2">
                   <div className="led led-gold" /> BACKING TRACK
                 </div>
 
-                {btLoading && (
-                  <div className="bg-[var(--bg-secondary)] rounded-lg p-6 text-center font-label text-[12px] text-[var(--text-muted)] mb-3">Searching for backing track...</div>
+                {(showOriginal ? origLoading : btLoading) && (
+                  <div className="bg-[var(--bg-secondary)] rounded-lg p-6 text-center font-label text-[12px] text-[var(--text-muted)] mb-3">
+                    {showOriginal ? "Searching for original video..." : "Searching for backing track..."}
+                  </div>
                 )}
 
                 {/* Toggle: Backing vs Original */}
@@ -226,8 +357,9 @@ export default function SongModal({ song, onClose }: Props) {
                   </div>
                 )}
 
-                {/* Paste URL */}
-                <div className="flex gap-2 mb-3">
+
+                {/* Paste URL to embed */}
+                <div className="flex gap-2 mt-3">
                   {!showOriginal ? (
                     <>
                       <input value={btUrl} onChange={e => setBtUrl(e.target.value)}
@@ -245,10 +377,12 @@ export default function SongModal({ song, onClose }: Props) {
                   )}
                 </div>
 
-                <div className="flex gap-1.5 flex-wrap">
-                  <button type="button" onClick={() => window.open(ytSearch(`${song.title} ${song.artist} backing track guitar`), "_blank")} className="btn-ghost !text-[10px] !px-2.5 !py-1.5">Backing Track</button>
-                  <button type="button" onClick={() => window.open(ytSearch(`${song.title} ${song.artist} original`), "_blank")} className="btn-ghost !text-[10px] !px-2.5 !py-1.5">Original Song</button>
-                  <button type="button" onClick={() => window.open(ytSearch(`${song.title} ${song.artist} live`), "_blank")} className="btn-ghost !text-[10px] !px-2.5 !py-1.5">Live Version</button>
+                {/* Quick search */}
+                <div className="flex items-center gap-2 flex-wrap mt-2">
+                  <span className="font-label text-[10px] text-[var(--text-muted)]">Open in YouTube:</span>
+                  <button type="button" onClick={() => window.open(ytSearch(`${song.title} ${song.artist} backing track guitar`), "_blank")} className="btn-ghost !text-[10px] !px-2.5 !py-1">Backing Track</button>
+                  <button type="button" onClick={() => window.open(ytSearch(`${song.title} ${song.artist} original`), "_blank")} className="btn-ghost !text-[10px] !px-2.5 !py-1">Original</button>
+                  <button type="button" onClick={() => window.open(ytSearch(`${song.title} ${song.artist} live`), "_blank")} className="btn-ghost !text-[10px] !px-2.5 !py-1">Live</button>
                 </div>
 
                 {/* Stem Separation */}
@@ -341,17 +475,55 @@ export default function SongModal({ song, onClose }: Props) {
                 Search more tutorials on YouTube
               </button>
 
-              {/* Song tips */}
-              {(song.tuning || song.key || song.tempo) && (
-                <div className="bg-[var(--bg-secondary)] rounded-lg p-4 mt-4">
-                  <div className="font-label text-[11px] tracking-wider text-[var(--gold)] mb-2">SONG DETAILS</div>
-                  <div className="space-y-1 text-[12px] text-[var(--text-secondary)]">
-                    {song.tuning && song.tuning !== "Standard" && <div>Tuning: <span className="text-[var(--gold)]">{song.tuning}</span> (not standard)</div>}
-                    {song.key && <div>Key: {song.key}</div>}
-                    {song.tempo && <div>Tempo: {song.tempo} BPM</div>}
-                  </div>
+              {/* Linked Exercises */}
+              <div className="bg-[var(--bg-secondary)] rounded-lg p-4 mt-4">
+                <div className="font-label text-[11px] tracking-wider text-[var(--gold)] mb-3 flex items-center gap-2">
+                  <div className="led led-gold" /> LINKED EXERCISES
                 </div>
-              )}
+                {linkedIds.length > 0 && (
+                  <div className="flex flex-col gap-1 mb-3">
+                    {linkedIds.map(id => {
+                      const ex = EXERCISES.find((e: Exercise) => e.id === id);
+                      if (!ex) return null;
+                      return (
+                        <div key={id} className="flex items-center justify-between bg-[var(--bg-recess)] rounded px-3 py-2">
+                          <div>
+                            <span className="font-label text-[11px] text-[var(--text-primary)]">{ex.n}</span>
+                            <span className="font-readout text-[10px] text-[var(--text-muted)] ml-2">{ex.c} · {ex.m}m</span>
+                          </div>
+                          <button type="button" onClick={() => toggleLinkedEx(id)}
+                            className="text-zinc-600 hover:text-red-400 transition-colors font-label text-[11px] cursor-pointer">×</button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <input value={exSearch} onChange={e => setExSearch(e.target.value)}
+                    placeholder="Search exercises to link..."
+                    className="input flex-1 !text-[11px]" />
+                </div>
+                {exSearch.trim() && (
+                  <div className="mt-2 max-h-40 overflow-y-auto flex flex-col gap-1">
+                    {EXERCISES.filter((e: Exercise) =>
+                      (e.n.toLowerCase().includes(exSearch.toLowerCase()) || e.c.toLowerCase().includes(exSearch.toLowerCase())) &&
+                      !linkedIds.includes(e.id)
+                    ).slice(0, 8).map((e: Exercise) => (
+                      <button type="button" key={e.id} onClick={() => { toggleLinkedEx(e.id); setExSearch(""); }}
+                        className="flex items-center justify-between bg-[var(--bg-recess)] hover:bg-white/[0.05] rounded px-3 py-2 text-left transition-colors cursor-pointer">
+                        <span className="font-label text-[11px] text-[var(--text-primary)]">{e.n}</span>
+                        <span className="font-readout text-[10px] text-[var(--text-muted)] ml-2 flex-shrink-0">{e.c}</span>
+                      </button>
+                    ))}
+                    {EXERCISES.filter((e: Exercise) =>
+                      (e.n.toLowerCase().includes(exSearch.toLowerCase()) || e.c.toLowerCase().includes(exSearch.toLowerCase())) &&
+                      !linkedIds.includes(e.id)
+                    ).length === 0 && (
+                      <div className="font-label text-[11px] text-[var(--text-muted)] px-3 py-2">No exercises found</div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -402,6 +574,41 @@ export default function SongModal({ song, onClose }: Props) {
                 <textarea value={notes} onChange={e => setNotes(e.target.value)}
                   placeholder="Personal notes about this song..."
                   className="input w-full !h-32 resize-none" />
+              </div>
+
+              {/* Practice History */}
+              <div className="bg-[var(--bg-secondary)] rounded-lg p-4 mt-4">
+                <div className="font-label text-[11px] tracking-wider text-[var(--gold)] mb-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="led led-gold" /> PRACTICE HISTORY
+                  </div>
+                  {sessions.length > 0 && (
+                    <span className="font-readout text-[10px] text-[var(--text-muted)]">
+                      Total: {Math.round(sessions.reduce((s, x) => s + x.duration, 0) / 60)}m across {sessions.length} session{sessions.length !== 1 ? "s" : ""}
+                    </span>
+                  )}
+                </div>
+                {sessions.length === 0 ? (
+                  <div className="font-label text-[11px] text-[var(--text-muted)] text-center py-4">
+                    No sessions recorded yet. Start the timer to track practice time.
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-1">
+                    {sessions.map((s, i) => {
+                      const d = new Date(s.date);
+                      const mm = String(Math.floor(s.duration / 60)).padStart(2, "0");
+                      const ss = String(s.duration % 60).padStart(2, "0");
+                      return (
+                        <div key={i} className="flex items-center justify-between bg-[var(--bg-recess)] rounded px-3 py-2">
+                          <span className="font-readout text-[11px] text-[var(--text-muted)]">
+                            {d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })} · {d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
+                          </span>
+                          <span className="font-readout text-[12px] text-[var(--text-primary)] tabular-nums">{mm}:{ss}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           )}

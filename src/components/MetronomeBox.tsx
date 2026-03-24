@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import RotaryKnob from "./RotaryKnob";
 
 /* ───── types ───── */
 interface Props {
@@ -28,6 +27,68 @@ const SUBDIVISION_LABELS: Record<Subdivision, string> = {
 
 const LOOKAHEAD_MS = 25;
 const SCHEDULE_AHEAD_S = 0.1;
+
+/* ───── stepper helper ───── */
+function Stepper({
+  value,
+  min,
+  max,
+  step = 1,
+  label,
+  disabled,
+  onChange,
+  amber,
+}: {
+  value: number;
+  min: number;
+  max: number;
+  step?: number;
+  label: string;
+  disabled?: boolean;
+  onChange: (v: number) => void;
+  amber?: boolean;
+}) {
+  const dec = () => onChange(Math.max(min, value - step));
+  const inc = () => onChange(Math.min(max, value + step));
+  const opacity = disabled ? "opacity-30 pointer-events-none" : "";
+
+  return (
+    <div className={`flex flex-col items-center gap-1 ${opacity}`}>
+      <span className="font-label text-[9px] text-[#555] uppercase tracking-wider">
+        {label}
+      </span>
+      <div className="flex items-center rounded-md overflow-hidden border border-[#2a2a2a]">
+        <button
+          type="button"
+          onClick={dec}
+          disabled={disabled}
+          className="w-7 h-8 flex items-center justify-center text-[#666] hover:text-[#D4A843] hover:bg-[#1a1a1a] bg-[#111] transition-colors text-sm select-none"
+        >
+          -
+        </button>
+        <div
+          className="h-8 min-w-[36px] flex items-center justify-center bg-[#0d0d0d] px-1.5 border-x border-[#2a2a2a]"
+        >
+          <span
+            className={`text-xs font-mono font-semibold ${
+              amber ? "text-[#D4A843]" : "text-[#ccc]"
+            }`}
+          >
+            {value}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={inc}
+          disabled={disabled}
+          className="w-7 h-8 flex items-center justify-center text-[#666] hover:text-[#D4A843] hover:bg-[#1a1a1a] bg-[#111] transition-colors text-sm select-none"
+        >
+          +
+        </button>
+      </div>
+    </div>
+  );
+}
 
 /* ───── component ───── */
 export default function MetronomeBox({ startBpm: propBpm, standalone }: Props) {
@@ -318,150 +379,140 @@ export default function MetronomeBox({ startBpm: propBpm, standalone }: Props) {
         )}
       </div>
 
-      {/* settings — shown when stopped */}
-      {!on && (
-        <div className="mb-3 space-y-3">
-          {/* time signature + subdivision */}
-          <div className="flex gap-2 items-end flex-wrap">
-            <label className="font-label text-[9px] text-[#555]">
+      {/* settings — always visible */}
+      <div className="mb-3 space-y-3">
+        {/* time signature + subdivision */}
+        <div className="flex gap-4 items-end flex-wrap">
+          <div className="flex flex-col gap-1">
+            <span className="font-label text-[9px] text-[#555] uppercase tracking-wider">
               Time Sig
-              <div className="flex gap-1 mt-0.5">
-                {(Object.keys(TIME_SIG_BEATS) as TimeSig[]).map((ts) => (
-                  <button
-                    key={ts}
-                    onClick={() => setTimeSig(ts)}
-                    className={`btn-ghost !py-0.5 !px-1.5 text-[10px] ${
-                      timeSig === ts ? "active" : ""
-                    }`}
-                  >
-                    {ts}
-                  </button>
-                ))}
-              </div>
-            </label>
-
-            <label className="font-label text-[9px] text-[#555]">
-              Subdivision
-              <div className="flex gap-1 mt-0.5">
-                {([1, 2, 3, 4] as Subdivision[]).map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setSubdivision(s)}
-                    className={`btn-ghost !py-0.5 !px-1.5 text-[10px] ${
-                      subdivision === s ? "active" : ""
-                    }`}
-                  >
-                    {SUBDIVISION_LABELS[s]}
-                  </button>
-                ))}
-              </div>
-            </label>
-          </div>
-
-          {/* progressive + count-in toggles */}
-          <div className="flex gap-4">
-            <label
-              className="flex items-center gap-2 cursor-pointer"
-              onClick={() => setProg(!prog)}
-            >
-              <div
-                className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center text-[9px] ${
-                  prog
-                    ? "border-[#D4A843] bg-[#D4A843] text-[#121214]"
-                    : "border-[#444] bg-transparent"
-                }`}
-              >
-                {prog ? "✓" : ""}
-              </div>
-              <span className="font-label text-[10px] text-[#666]">
-                Progressive
-              </span>
-            </label>
-
-            <label
-              className="flex items-center gap-2 cursor-pointer"
-              onClick={() => setCountIn(!countIn)}
-            >
-              <div
-                className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center text-[9px] ${
-                  countIn
-                    ? "border-[#D4A843] bg-[#D4A843] text-[#121214]"
-                    : "border-[#444] bg-transparent"
-                }`}
-              >
-                {countIn ? "✓" : ""}
-              </div>
-              <span className="font-label text-[10px] text-[#666]">
-                Count In
-              </span>
-            </label>
-          </div>
-
-          {/* BPM inputs */}
-          <div className="grid grid-cols-4 gap-2 items-end">
-            <div className="flex flex-col items-center">
-              <RotaryKnob value={bpm} min={30} max={300} onChange={setBpmState} label="Start" size={44} gradientId="knobGradMet" />
+            </span>
+            <div className="flex rounded-md overflow-hidden border border-[#2a2a2a]">
+              {(Object.keys(TIME_SIG_BEATS) as TimeSig[]).map((ts) => (
+                <button
+                  key={ts}
+                  onClick={() => setTimeSig(ts)}
+                  className={`px-2 py-1.5 text-[10px] font-mono transition-colors ${
+                    timeSig === ts
+                      ? "bg-[#D4A843] text-[#0a0a0a] font-semibold"
+                      : "bg-[#111] text-[#666] hover:text-[#D4A843] hover:bg-[#1a1a1a]"
+                  } ${ts !== "4/4" ? "border-l border-[#2a2a2a]" : ""}`}
+                >
+                  {ts}
+                </button>
+              ))}
             </div>
-            <label
-              className={`font-label text-[9px] ${
-                prog ? "text-[#555]" : "text-[#333]"
-              }`}
-            >
-              Target
-              <input
-                type="number"
-                value={targetBpm}
-                min={30}
-                max={300}
-                disabled={!prog}
-                onChange={(e) => setTargetBpm(Number(e.target.value))}
-                className="input mt-0.5 text-center !py-1 text-xs disabled:opacity-30"
-              />
-            </label>
-            <label
-              className={`font-label text-[9px] ${
-                prog ? "text-[#555]" : "text-[#333]"
-              }`}
-            >
-              +BPM
-              <input
-                type="number"
-                value={incAmt}
-                min={1}
-                max={20}
-                disabled={!prog}
-                onChange={(e) => setIncAmt(Number(e.target.value))}
-                className="input mt-0.5 text-center !py-1 text-xs disabled:opacity-30"
-              />
-            </label>
-            <label
-              className={`font-label text-[9px] ${
-                prog ? "text-[#555]" : "text-[#333]"
-              }`}
-            >
-              Every (sec)
-              <input
-                type="number"
-                value={incSec}
-                min={5}
-                max={120}
-                step={5}
-                disabled={!prog}
-                onChange={(e) => setIncSec(Number(e.target.value))}
-                className="input mt-0.5 text-center !py-1 text-xs disabled:opacity-30"
-              />
-            </label>
           </div>
 
-          {/* tap tempo */}
-          <button
-            onClick={handleTap}
-            className="btn-ghost w-full !py-2 justify-center text-[11px]"
-          >
-            Tap Tempo
-          </button>
+          <div className="flex flex-col gap-1">
+            <span className="font-label text-[9px] text-[#555] uppercase tracking-wider">
+              Subdivision
+            </span>
+            <div className="flex rounded-md overflow-hidden border border-[#2a2a2a]">
+              {([1, 2, 3, 4] as Subdivision[]).map((s, i) => (
+                <button
+                  key={s}
+                  onClick={() => setSubdivision(s)}
+                  className={`px-2.5 py-1.5 text-[11px] transition-colors ${
+                    subdivision === s
+                      ? "bg-[#D4A843] text-[#0a0a0a] font-semibold"
+                      : "bg-[#111] text-[#666] hover:text-[#D4A843] hover:bg-[#1a1a1a]"
+                  } ${i > 0 ? "border-l border-[#2a2a2a]" : ""}`}
+                >
+                  {SUBDIVISION_LABELS[s]}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
-      )}
+
+        {/* progressive + count-in toggles */}
+        <div className="flex gap-4">
+          <label
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={() => setProg(!prog)}
+          >
+            <div
+              className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center text-[9px] ${
+                prog
+                  ? "border-[#D4A843] bg-[#D4A843] text-[#121214]"
+                  : "border-[#444] bg-transparent"
+              }`}
+            >
+              {prog ? "✓" : ""}
+            </div>
+            <span className="font-label text-[10px] text-[#666]">
+              Progressive
+            </span>
+          </label>
+
+          <label
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={() => setCountIn(!countIn)}
+          >
+            <div
+              className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center text-[9px] ${
+                countIn
+                  ? "border-[#D4A843] bg-[#D4A843] text-[#121214]"
+                  : "border-[#444] bg-transparent"
+              }`}
+            >
+              {countIn ? "✓" : ""}
+            </div>
+            <span className="font-label text-[10px] text-[#666]">
+              Count In
+            </span>
+          </label>
+        </div>
+
+        {/* BPM stepper inputs — all custom, no native number inputs */}
+        <div className="grid grid-cols-4 gap-2 items-end">
+          <Stepper
+            value={bpm}
+            min={30}
+            max={300}
+            step={1}
+            label="Start"
+            onChange={setBpmState}
+            amber
+          />
+          <Stepper
+            value={targetBpm}
+            min={30}
+            max={300}
+            step={1}
+            label="Target"
+            disabled={!prog}
+            onChange={setTargetBpm}
+          />
+          <Stepper
+            value={incAmt}
+            min={1}
+            max={20}
+            step={1}
+            label="+BPM"
+            disabled={!prog}
+            onChange={setIncAmt}
+          />
+          <Stepper
+            value={incSec}
+            min={5}
+            max={120}
+            step={5}
+            label="Every (s)"
+            disabled={!prog}
+            onChange={setIncSec}
+          />
+        </div>
+
+        {/* tap tempo */}
+        <button
+          onClick={handleTap}
+          className="btn-ghost w-full !py-2 justify-center text-[11px]"
+        >
+          Tap Tempo
+        </button>
+      </div>
 
       {/* play / stop button */}
       {!on ? (

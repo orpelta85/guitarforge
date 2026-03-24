@@ -1,11 +1,12 @@
 "use client";
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import type { Exercise } from "@/lib/types";
-import { COL, STYLES } from "@/lib/constants";
+import { COL, STYLES, SCALES, MODES } from "@/lib/constants";
 import { EXERCISES } from "@/lib/exercises";
 import { ytSearch, ssSearch } from "@/lib/helpers";
 import { buildCacheKey, getCachedTrack, downloadAndCache, type CachedTrack } from "@/lib/suno";
-import TimerBox from "./TimerBox";
+import { idbLoadRecordings, idbDeleteRecording } from "@/lib/recorderIdb";
+import { saveToLibrary } from "@/lib/recordingsLibrary";
 import MetronomeBox from "./MetronomeBox";
 import RecorderBox from "./RecorderBox";
 import DarkAudioPlayer from "./DarkAudioPlayer";
@@ -57,15 +58,15 @@ function YouTubeEmbed({ videoId, setVideoId, label }: {
         </div>
       )}
       {!videoId && (
-        <div className="bg-[var(--bg-recess)] border border-dashed border-[var(--border-panel)] rounded-lg p-6 mb-3 text-center">
-          <div className="font-label text-[12px] text-[var(--text-muted)]">Paste a YouTube URL below</div>
+        <div className="bg-white/[0.03] border border-dashed border-white/[0.06] rounded-lg p-6 mb-3 text-center">
+          <div className="font-label text-[12px] text-zinc-500">Paste a YouTube URL below</div>
         </div>
       )}
       <div className="flex gap-2 mb-3">
         <input value={url} onChange={e => setUrl(e.target.value)}
           onKeyDown={e => e.key === "Enter" && load()}
           placeholder="Paste YouTube URL..."
-          className="input flex-1 !text-[12px]" />
+          className="input flex-1 !text-[12px] min-w-0" />
         <button onClick={load} className="btn-gold !text-[11px]">Load</button>
       </div>
     </div>
@@ -76,47 +77,40 @@ function YouTubeEmbed({ videoId, setVideoId, label }: {
 function SectionLabel({ color, children }: { color: "gold" | "green" | "red" | "amber" | "purple"; children: React.ReactNode }) {
   const ledClass = color === "purple" ? "" : `led-${color}`;
   return (
-    <div className="font-label text-[11px] tracking-wider mb-3 flex items-center gap-2" style={{ color: color === "purple" ? "#8b5cf6" : color === "gold" ? "var(--gold)" : color === "green" ? "var(--led-green)" : color === "red" ? "var(--led-red)" : "var(--led-amber)" }}>
+    <div className="text-[10px] font-medium uppercase tracking-wider mb-3 flex items-center gap-2" style={{ color: color === "purple" ? "#8b5cf6" : color === "gold" ? "var(--gold)" : color === "green" ? "var(--led-green)" : color === "red" ? "var(--led-red)" : "var(--led-amber)" }}>
       {color === "purple" ? (
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
       ) : (
-        <div className={`led ${ledClass}`} />
+        <div className={`led ${ledClass}`} style={{ width: 6, height: 6 }} />
       )}
       {children}
     </div>
   );
 }
 
-/* ── Shared: Tab bar ── */
-function TabBar<T extends string>({ tabs, active, onChange }: { tabs: { id: T; label: string }[]; active: T; onChange: (t: T) => void }) {
+/* ── Pill Tab Bar (new zone-based design) ── */
+function PillTabBar<T extends string>({ tabs, active, onChange }: { tabs: { id: T; label: string }[]; active: T; onChange: (t: T) => void }) {
   return (
-    <div className="flex border-b border-[var(--border-subtle)] bg-[var(--bg-recess)]" role="tablist">
+    <div className="bg-zinc-900/50 rounded-xl p-1 flex gap-1" role="tablist">
       {tabs.map(({ id, label }) => (
         <button key={id} onClick={() => onChange(id)}
           role="tab"
           aria-selected={active === id}
-          className={`flex-1 py-3 min-h-[44px] font-label text-[12px] cursor-pointer border-b-2 transition-all ${
-            active === id ? "border-[var(--gold)] text-[var(--gold)]" : "border-transparent text-[var(--text-muted)]"
+          className={`flex-1 py-2 px-3 min-h-[36px] text-[12px] font-medium cursor-pointer rounded-lg transition-all duration-200 ${
+            active === id
+              ? "bg-amber-500/15 text-amber-400 border border-amber-500/30"
+              : "text-zinc-500 hover:text-zinc-300 border border-transparent"
           }`}>{label}</button>
       ))}
     </div>
   );
 }
 
-/* ── Shared: Dark header (replaces cream faceplate) ── */
-function DarkHeader({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="px-4 sm:px-6 py-4 sm:py-5" style={{ background: "linear-gradient(180deg, #1e1c18 0%, #18181c 100%)", borderBottom: "1px solid var(--border-panel)" }}>
-      {children}
-    </div>
-  );
-}
-
-/* ── Shared: Close button ── */
+/* ── Close button ── */
 function CloseButton({ onClick }: { onClick: () => void }) {
   return (
     <button type="button" onClick={onClick}
-      className="w-9 h-9 min-w-[44px] min-h-[44px] rounded-full bg-[var(--bg-elevated)] border border-[var(--border-accent)] flex items-center justify-center text-[var(--text-secondary)] text-lg cursor-pointer hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors flex-shrink-0"
+      className="w-8 h-8 min-w-[36px] min-h-[36px] rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-zinc-500 text-base cursor-pointer hover:bg-white/[0.07] hover:text-zinc-300 transition-colors duration-200 flex-shrink-0"
       aria-label="Close">
       ×
     </button>
@@ -168,7 +162,7 @@ function useSunoTrack(ex: Exercise, scale: string, mode: string, style: string, 
       if (!res.ok) throw new Error(`Server error: ${res.status}`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      if (!data.tracks?.length) throw new Error("No tracks returned — try again");
+      if (!data.tracks?.length) throw new Error("No tracks returned - try again");
       const track = data.tracks[0];
       const cacheKey = buildCacheKey(ex.id, sunoStyle, scale, mode, sunoBpm);
       const cached = await downloadAndCache(
@@ -193,28 +187,28 @@ function SunoSection({ ex, scale, mode, suno }: {
   suno: ReturnType<typeof useSunoTrack>;
 }) {
   return (
-    <div className="mb-6">
+    <div className="mb-4">
       <SectionLabel color="purple">AI BACKING TRACK</SectionLabel>
       {suno.sunoTrack && (
-        <div className="bg-[var(--bg-secondary)] border border-[#8b5cf620] rounded-lg p-3 mb-2">
-          <div className="text-[11px] text-[var(--text-secondary)] mb-2">{suno.sunoTrack.title}</div>
+        <div className="bg-white/[0.03] border border-[#8b5cf620] rounded-lg p-3 mb-2">
+          <div className="text-[11px] text-zinc-400 mb-2">{suno.sunoTrack.title}</div>
           <DarkAudioPlayer src={suno.sunoTrack.audioUrl} loop />
-          <div className="text-[9px] text-[var(--text-muted)] mt-1">Cached — no credits used</div>
+          <div className="text-[9px] text-zinc-600 mt-1">Cached - no credits used</div>
         </div>
       )}
       {!suno.sunoTrack && !suno.sunoLoading && (
-        <div className="bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-lg p-3 space-y-2">
+        <div className="bg-white/[0.03] border border-white/[0.06] rounded-lg p-3 space-y-2">
           <div className="flex gap-2 items-end">
             <label className="flex-1">
-              <span className="text-[9px] text-[var(--text-muted)] block mb-0.5">Style</span>
+              <span className="text-[9px] text-zinc-600 block mb-0.5">Style</span>
               <select value={suno.sunoStyle} onChange={(e) => suno.setSunoStyle(e.target.value)}
-                className="w-full bg-[var(--bg-recess)] border border-[var(--border-panel)] rounded px-2 py-1.5 text-[11px] text-[var(--text-secondary)] outline-none focus:border-[#8b5cf6] cursor-pointer">
+                className="w-full bg-[#0c0c0e] border border-white/[0.08] rounded px-2 py-1.5 text-[11px] text-zinc-400 outline-none focus:border-[#8b5cf6] cursor-pointer">
                 {(ex.styles && ex.styles.length > 0 ? ex.styles : STYLES).map((s) => (
                   <option key={s} value={s}>{s}</option>
                 ))}
               </select>
             </label>
-            <div className="text-[10px] text-[var(--text-muted)] pb-1">{scale} {mode} / {suno.sunoBpm} BPM</div>
+            <div className="text-[10px] text-zinc-600 pb-1">{scale} {mode} / {suno.sunoBpm} BPM</div>
           </div>
           {!suno.sunoConfirm ? (
             <button type="button" onClick={() => { suno.fetchCredits(); suno.setSunoConfirm(true); }}
@@ -223,38 +217,46 @@ function SunoSection({ ex, scale, mode, suno }: {
             </button>
           ) : (
             <div className="space-y-2">
-              <div className="text-[10px] text-[var(--text-secondary)]">
+              <div className="text-[10px] text-zinc-400">
                 ~10 credits per track.{suno.sunoCredits !== null && ` You have ${suno.sunoCredits} remaining.`}
-                {suno.sunoCredits !== null && suno.sunoCredits <= 10 && (
-                  <span className="text-[var(--crimson)] ml-1">Credits low!</span>
+                {suno.sunoCredits !== null && suno.sunoCredits <= 10 && suno.sunoCredits >= 5 && (
+                  <span className="text-red-400 ml-1">Credits low!</span>
                 )}
               </div>
+              {suno.sunoCredits !== null && suno.sunoCredits < 5 && (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-center">
+                  <div className="text-[12px] text-red-400 font-medium mb-1">Not enough credits</div>
+                  <div className="text-[10px] text-red-400/70">You have {suno.sunoCredits} credits. Generation requires ~10.</div>
+                  <a href="https://sunoapi.org" target="_blank" rel="noopener noreferrer" className="text-[10px] text-[#8b5cf6] hover:underline mt-1 block">Top up at sunoapi.org &rarr;</a>
+                </div>
+              )}
               <div className="flex gap-2">
                 <button type="button" onClick={suno.generateSunoTrack}
-                  className="flex-1 text-[11px] py-1.5 rounded-lg bg-[#8b5cf6] text-white hover:brightness-110 cursor-pointer font-medium">
+                  disabled={suno.sunoCredits !== null && suno.sunoCredits < 5}
+                  className="flex-1 text-[11px] py-1.5 rounded-lg bg-[#8b5cf6] text-white hover:brightness-110 cursor-pointer font-medium disabled:opacity-40 disabled:cursor-not-allowed">
                   Confirm Generate
                 </button>
                 <button type="button" onClick={() => suno.setSunoConfirm(false)}
-                  className="flex-1 text-[11px] py-1.5 rounded-lg bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] cursor-pointer">
+                  className="flex-1 text-[11px] py-1.5 rounded-lg bg-white/[0.04] text-zinc-400 hover:bg-white/[0.07] cursor-pointer">
                   Cancel
                 </button>
               </div>
             </div>
           )}
-          {suno.sunoError && <div className="text-[11px] text-[var(--crimson)]">{suno.sunoError}</div>}
+          {suno.sunoError && <div className="text-[11px] text-red-400">{suno.sunoError}</div>}
         </div>
       )}
       {suno.sunoLoading && (
-        <div className="bg-[var(--bg-secondary)] border border-[#8b5cf620] rounded-lg p-6 text-center">
+        <div className="bg-white/[0.03] border border-[#8b5cf620] rounded-lg p-6 text-center">
           <div className="inline-block w-5 h-5 border-2 border-[#8b5cf6] border-t-transparent rounded-full animate-spin mb-2" />
           <div className="text-[12px] text-[#8b5cf6]">Generating backing track...</div>
-          <div className="text-[10px] text-[var(--text-muted)] mt-1">This takes 30-90 seconds</div>
+          <div className="text-[10px] text-zinc-600 mt-1">This takes 30-90 seconds</div>
         </div>
       )}
       {suno.sunoTrack && !suno.sunoLoading && (
         <div className="flex items-center gap-3 mt-1">
           <button type="button" onClick={() => { suno.setSunoTrack(null); suno.setSunoConfirm(false); suno.setSunoError(""); }}
-            className="text-[10px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] cursor-pointer transition-colors">
+            className="text-[10px] text-zinc-600 hover:text-zinc-400 cursor-pointer transition-colors">
             Generate new track
           </button>
         </div>
@@ -270,38 +272,105 @@ function SunoSection({ ex, scale, mode, suno }: {
 }
 
 /* ── YouTube backing section ── */
-function YouTubeBackingSection({ scale, mode, style, ex, ytVideoId, setYtVideoId, ytSearchInput, setYtSearchInput }: {
+function YouTubeBackingSection({ scale, mode, style, ex, ytVideoId, setYtVideoId, ytSearchInput, setYtSearchInput, ytSearchResults, setYtSearchResults, ytResultIndex, setYtResultIndex }: {
   scale: string; mode: string; style: string; ex: Exercise;
   ytVideoId: string; setYtVideoId: (v: string) => void;
   ytSearchInput: string; setYtSearchInput: (v: string) => void;
+  ytSearchResults?: string[];
+  setYtSearchResults?: (ids: string[]) => void;
+  ytResultIndex?: number;
+  setYtResultIndex?: (i: number) => void;
 }) {
-  function parseAndLoad(val: string) {
-    const m = val.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
-    if (m) setYtVideoId(m[1]);
+  const defaultStyle = (ex.styles && ex.styles.length > 0 ? ex.styles[0] : null) || style || STYLES[0];
+  const defaultScale = scale || SCALES[0];
+  const defaultMode = mode || MODES[0];
+
+  const [filterScale, setFilterScale] = useState(defaultScale);
+  const [filterMode, setFilterMode] = useState(defaultMode);
+  const [filterStyle, setFilterStyle] = useState(defaultStyle);
+
+  // Auto-load on first render using exercise context
+  const didAutoLoad = useRef(false);
+  useEffect(() => {
+    if (didAutoLoad.current || ytVideoId) return;
+    didAutoLoad.current = true;
+    runSearch(`${defaultStyle} ${defaultScale} ${defaultMode} backing track guitar`);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function runSearch(query: string) {
+    const urlMatch = query.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
+    if (urlMatch) { setYtVideoId(urlMatch[1]); return; }
+    try {
+      const res = await fetch(`/api/youtube?q=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      const ids: string[] = data.results || data.items?.map((i: { videoId: string }) => i.videoId).filter(Boolean) || [];
+      if (ids.length > 0) {
+        setYtVideoId(ids[0]);
+        if (setYtSearchResults) setYtSearchResults(ids);
+        if (setYtResultIndex) setYtResultIndex(0);
+      }
+    } catch { /* ignore */ }
   }
+
+  function handleNextVideo() {
+    if (!ytSearchResults || ytSearchResults.length <= 1) return;
+    const nextIdx = ((ytResultIndex ?? 0) + 1) % ytSearchResults.length;
+    if (setYtResultIndex) setYtResultIndex(nextIdx);
+    setYtVideoId(ytSearchResults[nextIdx]);
+  }
+
+  const selectCls = "bg-[#111] border border-[#2a2a2a] rounded px-2 py-1 text-[11px] text-zinc-300 outline-none cursor-pointer hover:border-amber-500/30 focus:border-amber-500/40";
+
   return (
-    <div className="mb-6">
+    <div>
       <SectionLabel color="gold">BACKING TRACK</SectionLabel>
-      {ytVideoId && (
-        <div className="aspect-video w-full rounded-lg overflow-hidden bg-black mb-3">
-          <iframe src={`https://www.youtube.com/embed/${ytVideoId}?modestbranding=1&rel=0`}
-            className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen title="Backing" />
-        </div>
-      )}
+
+      {/* Row 1 — Filter search */}
+      <div className="flex gap-2 items-center mb-2 flex-wrap">
+        <select title="Style" value={filterStyle} onChange={e => setFilterStyle(e.target.value)} className={selectCls}>
+          {STYLES.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <select title="Scale" value={filterScale} onChange={e => setFilterScale(e.target.value)} className={selectCls}>
+          {SCALES.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <select title="Mode" value={filterMode} onChange={e => setFilterMode(e.target.value)} className={selectCls}>
+          {MODES.map(m => <option key={m} value={m}>{m}</option>)}
+        </select>
+        <button onClick={() => runSearch(`${filterStyle} ${filterScale} ${filterMode} backing track guitar`)}
+          className="btn-gold !text-[11px] flex-shrink-0">Search</button>
+        {(ytSearchResults?.length ?? 0) > 1 && (
+          <button onClick={handleNextVideo}
+            className="btn-ghost !text-[11px] flex-shrink-0 flex items-center gap-1">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/><line x1="19" y1="3" x2="19" y2="21"/></svg>
+            Next Video
+          </button>
+        )}
+      </div>
+
+      {/* OR divider */}
+      <div className="flex items-center gap-3 my-2">
+        <div className="flex-1 h-px bg-[#222]" />
+        <span className="font-label text-[10px] text-[#444]">OR</span>
+        <div className="flex-1 h-px bg-[#222]" />
+      </div>
+
+      {/* Row 2 — Free text search */}
       <div className="flex gap-2 mb-3">
         <input value={ytSearchInput} onChange={e => setYtSearchInput(e.target.value)}
-          onKeyDown={e => { if (e.key === "Enter") parseAndLoad(ytSearchInput); }}
-          placeholder="Paste YouTube URL here..."
-          className="input flex-1 !text-[12px]" />
-        <button onClick={() => parseAndLoad(ytSearchInput)} className="btn-gold !text-[11px]">Load</button>
+          onKeyDown={e => { if (e.key === "Enter") runSearch(ytSearchInput.trim() || `${ex.n} backing track guitar`); }}
+          placeholder="Free search..."
+          className="input flex-1 !text-[12px] min-w-0" />
+        <button onClick={() => runSearch(ytSearchInput.trim() || `${ex.n} backing track guitar`)}
+          className="btn-ghost !text-[11px] flex-shrink-0">Search</button>
       </div>
-      <div className="font-label text-[10px] text-[var(--text-muted)] mb-2">Find a backing track on YouTube:</div>
-      <div className="flex gap-1.5 flex-wrap">
-        <button onClick={() => window.open(ytSearch(`${scale} ${mode} backing track guitar`), "_blank")} className="btn-ghost !text-[10px] !px-2.5 !py-1.5">{scale} {mode}</button>
-        <button onClick={() => window.open(ytSearch(`${scale} ${style} jam track`), "_blank")} className="btn-ghost !text-[10px] !px-2.5 !py-1.5">{style} Jam</button>
-        <button onClick={() => window.open(ytSearch(`${scale} slow blues backing track`), "_blank")} className="btn-ghost !text-[10px] !px-2.5 !py-1.5">Slow Blues</button>
-        {ex.songName && <button onClick={() => window.open(ytSearch(`${ex.songName} backing track`), "_blank")} className="btn-ghost !text-[10px] !px-2.5 !py-1.5">{ex.songName}</button>}
-      </div>
+      {/* Video display */}
+      {ytVideoId && (
+        <div className="aspect-video w-full rounded-lg overflow-hidden bg-black">
+          <iframe src={`https://www.youtube.com/embed/${ytVideoId}?modestbranding=1&rel=0`}
+            className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen title="Backing Track" />
+        </div>
+      )}
     </div>
   );
 }
@@ -309,8 +378,7 @@ function YouTubeBackingSection({ scale, mode, style, ex, ytVideoId, setYtVideoId
 /* ── GP Tab section ── */
 function GpTabSection({ ex }: { ex: Exercise }) {
   return (
-    <div className="mb-6">
-      <SectionLabel color="gold">GUITAR PRO TAB</SectionLabel>
+    <div>
       <GpFileUploader exerciseId={String(ex.id)} tex={ex.tex || EXERCISES.find(e => e.id === ex.id)?.tex} songName={ex.n} />
       <div className="flex gap-1.5 flex-wrap mt-2">
         <button type="button" onClick={async () => {
@@ -331,6 +399,8 @@ function GpTabSection({ ex }: { ex: Exercise }) {
 /* ── Tutorial tab (shared across all types) ── */
 function TutorialTabContent({ exerciseName, ytQuery }: { exerciseName: string; ytQuery: string }) {
   const [videoId, setVideoId] = useState("");
+  const [results, setResults] = useState<string[]>([]);
+  const [resultIdx, setResultIdx] = useState(0);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
@@ -341,75 +411,297 @@ function TutorialTabContent({ exerciseName, ytQuery }: { exerciseName: string; y
     fetch(`/api/youtube?q=${encodeURIComponent(ytQuery + " guitar tutorial")}`)
       .then(r => r.json())
       .then(data => {
-        if (data.items?.[0]?.videoId) setVideoId(data.items[0].videoId);
+        const ids: string[] = data.results || data.items?.map((i: { videoId: string }) => i.videoId).filter(Boolean) || [];
+        if (ids.length > 0) { setVideoId(ids[0]); setResults(ids); setResultIdx(0); }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [ytQuery, searched, videoId]);
 
+  function handleNext() {
+    if (results.length <= 1) return;
+    const next = (resultIdx + 1) % results.length;
+    setResultIdx(next);
+    setVideoId(results[next]);
+  }
+
   return (
     <div>
-      <SectionLabel color="gold">Tutorial — {exerciseName}</SectionLabel>
+      <SectionLabel color="gold">Tutorial - {exerciseName}</SectionLabel>
       {loading && (
-        <div className="bg-[var(--bg-secondary)] rounded-lg p-6 text-center font-label text-[12px] text-[var(--text-muted)] mb-3">Searching YouTube for tutorial...</div>
+        <div className="bg-white/[0.03] rounded-lg p-6 text-center text-[12px] text-zinc-600 mb-3">Searching YouTube for tutorial...</div>
       )}
+      <div className="flex gap-2 mb-2">
+        {results.length > 1 && (
+          <button onClick={handleNext}
+            className="btn-ghost !text-[11px] flex items-center gap-1">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/><line x1="19" y1="3" x2="19" y2="21"/></svg>
+            Next Video
+          </button>
+        )}
+        <button onClick={() => window.open(ytSearch(ytQuery + " guitar tutorial"), "_blank")}
+          className="btn-ghost flex-1 justify-center !text-[11px]">
+          Search more tutorials on YouTube
+        </button>
+      </div>
       <YouTubeEmbed videoId={videoId} setVideoId={setVideoId} label="Tutorial" />
-      <button onClick={() => window.open(ytSearch(ytQuery + " guitar tutorial"), "_blank")}
-        className="btn-ghost w-full justify-center !text-[11px]">
-        Search more tutorials on YouTube
-      </button>
     </div>
   );
 }
 
-/* ── Log tab (shared across all types) ── */
-function LogTabContent({ bpm, note, onBpmChange, onNoteChange, week, day, exId, exerciseName }: {
-  bpm: string; note: string;
-  onBpmChange: (v: string) => void;
-  onNoteChange: (v: string) => void;
-  week: number; day: string; exId: number;
-  exerciseName?: string;
-}) {
+
+/* ── Inline timer for toolbar ── */
+function InlineTimer({ durationSec }: { durationSec: number }) {
+  const [remaining, setRemaining] = useState(durationSec);
+  const [active, setActive] = useState(false);
+  const ref = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setRemaining(durationSec);
+    setActive(false);
+  }, [durationSec]);
+
+  useEffect(() => {
+    if (active && remaining > 0) {
+      ref.current = setTimeout(() => setRemaining(s => s - 1), 1000);
+    } else if (remaining === 0) {
+      setActive(false);
+    }
+    return () => { if (ref.current) clearTimeout(ref.current); };
+  }, [active, remaining]);
+
+  const done = remaining === 0;
+  const mm = String(Math.floor(remaining / 60)).padStart(2, "0");
+  const ss = String(remaining % 60).padStart(2, "0");
+
   return (
-    <div>
-      <div className="bg-[var(--bg-secondary)] rounded-lg p-4 mb-4">
-        <SectionLabel color="gold">SESSION LOG</SectionLabel>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          <label className="font-label text-[11px] text-[var(--text-muted)]">BPM Achieved
-            <input value={bpm} onChange={(e) => onBpmChange(e.target.value)} placeholder="e.g. 120" className="input input-gold mt-1" />
+    <div className="flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-1.5">
+      <button type="button" onClick={() => { if (!done) setActive(!active); }}
+        className={`w-7 h-7 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 ${active ? "bg-green-500/20 text-green-400 shadow-[0_0_8px_rgba(34,197,94,0.2)]" : done ? "bg-amber-500/20 text-amber-400" : "bg-white/[0.06] text-zinc-400 hover:text-zinc-200"}`}
+        title={active ? "Pause timer" : "Start timer"}>
+        {active ? (
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+        ) : done ? (
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        ) : (
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+        )}
+      </button>
+      <span className={`font-readout text-[14px] tabular-nums tracking-wide ${done ? "text-amber-400" : active ? "text-green-400" : "text-zinc-400"}`}>{mm}:{ss}</span>
+      {remaining !== durationSec && !active && (
+        <button type="button" onClick={() => { setRemaining(durationSec); setActive(false); }}
+          className="text-[10px] text-zinc-600 hover:text-zinc-400 cursor-pointer transition-colors ml-0.5">
+          Reset
+        </button>
+      )}
+    </div>
+  );
+}
+
+
+/* ── Records Panel (shows exercise recordings from IDB) ── */
+function RecordsPanel({ exerciseId, exerciseName, storageKey }: {
+  exerciseId: string; exerciseName: string; storageKey: string;
+}) {
+  const [recordings, setRecordings] = useState<{ dt: string; d: string }[]>([]);
+  const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
+  const blobCacheRef = useRef<Map<number, Blob>>(new Map());
+
+  useEffect(() => {
+    idbLoadRecordings(storageKey).then(({ list, blobs }) => {
+      setRecordings(list);
+      blobCacheRef.current = blobs;
+    });
+  }, [storageKey]);
+
+  async function handleSaveToLibrary(idx: number) {
+    const blob = blobCacheRef.current.get(idx);
+    if (!blob) return;
+    await saveToLibrary(exerciseId, exerciseName, blob);
+    setSavedIds(prev => new Set(prev).add(idx));
+  }
+
+  async function handleDelete(i: number, blobIdx: number) {
+    await idbDeleteRecording(storageKey, blobIdx);
+    blobCacheRef.current.delete(blobIdx);
+    setRecordings(prev => prev.filter((_, j) => j !== i));
+  }
+
+  if (recordings.length === 0) {
+    return (
+      <div className="text-[11px] text-zinc-600 py-2">
+        No recordings yet. Press Rec to record your practice.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+      {recordings.map((rec, i) => {
+        const blobKeys = Array.from(blobCacheRef.current.keys()).sort((a, b) => b - a);
+        const blobIdx = blobKeys[i] ?? i;
+        return (
+          <div key={i} className="flex items-center gap-2 bg-white/[0.03] rounded-lg p-2 border border-white/[0.05]">
+            <div className="flex-1 min-w-0">
+              <div className="text-[9px] text-zinc-600 mb-1">{rec.dt}</div>
+              <DarkAudioPlayer src={rec.d} compact />
+            </div>
+            <button onClick={() => handleSaveToLibrary(blobIdx)}
+              disabled={savedIds.has(blobIdx)}
+              className={`flex-shrink-0 text-[10px] px-2 py-1 rounded-md border cursor-pointer transition-all ${
+                savedIds.has(blobIdx)
+                  ? "border-green-500/30 text-green-400 bg-green-500/10 cursor-default"
+                  : "border-white/[0.08] text-zinc-500 hover:border-amber-500/40 hover:text-amber-400 hover:bg-amber-500/5"
+              }`}>
+              {savedIds.has(blobIdx) ? "Saved" : "Save"}
+            </button>
+            <button type="button" onClick={() => handleDelete(i, blobIdx)}
+              className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-md border border-white/[0.06] text-zinc-600 hover:border-red-500/40 hover:text-red-400 hover:bg-red-500/5 cursor-pointer transition-all"
+              title="Delete recording">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
+              </svg>
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
+   ZONE 1: TOOLBAR (shared across all window types)
+   Bigger, contains: exercise info + Record + Records + Timer + Done + Close
+   ════════════════════════════════════════════════════════════════ */
+function Toolbar({ ex, week, day, onClose, onDone, bpm, note, onBpmChange, onNoteChange }: { ex: Exercise; week: number; day: string; onClose: () => void; onDone?: () => void; bpm?: string; note?: string; onBpmChange?: (v: string) => void; onNoteChange?: (v: string) => void }) {
+  const cc = COL[ex.c] || "#888";
+  const songName = ex.songName || ex.n;
+  const recKey = week + "-" + day + "-" + ex.id;
+  const [notesOpen, setNotesOpen] = useState(false);
+  const [recordsOpen, setRecordsOpen] = useState(false);
+  const [recordsKey, setRecordsKey] = useState(0);
+  return (
+    <div className="sticky top-0 z-20 px-4 sm:px-5 py-3"
+      style={{ background: "linear-gradient(180deg, #141214 0%, #12121600 100%)", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+      {/* Row 1: Exercise info */}
+      <div className="flex items-center gap-2.5 mb-2.5 min-w-0">
+        <span className="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: cc, boxShadow: `0 0 6px ${cc}40` }} />
+        <span className="font-heading text-[15px] text-[var(--text-primary)] truncate">{songName}</span>
+        {ex.b && (
+          <span className="font-readout text-[10px] text-zinc-500 bg-white/[0.04] border border-white/[0.06] rounded px-1.5 py-0.5 flex-shrink-0">{ex.b} BPM</span>
+        )}
+        <span className="font-readout text-[10px] text-zinc-500 bg-white/[0.04] border border-white/[0.06] rounded px-1.5 py-0.5 flex-shrink-0">{ex.m}m</span>
+      </div>
+      {/* Row 2: Controls */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <InlineTimer durationSec={(ex.m || 5) * 60} />
+        <RecorderBox storageKey={recKey} exerciseName={songName} compact onRecordSaved={() => { setRecordsKey(k => k + 1); setRecordsOpen(true); }} />
+        <button type="button" onClick={() => setRecordsOpen(!recordsOpen)}
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium cursor-pointer transition-all border ${
+            recordsOpen ? "bg-white/[0.06] border-white/[0.12] text-zinc-200" : "border-white/[0.08] text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.04]"
+          }`}
+          title="View recordings">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+          </svg>
+          Records
+        </button>
+        {onNoteChange && (
+          <button type="button" onClick={() => setNotesOpen(!notesOpen)}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium cursor-pointer transition-all border ${notesOpen || note ? "bg-amber-500/15 border-amber-500/30 text-amber-400" : "border-white/[0.08] text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.04]"}`}
+            title="Session notes">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Notes
+            {(bpm || note) && <div className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />}
+          </button>
+        )}
+        <div className="flex-1" />
+        {onDone && (
+          <button type="button" onClick={onDone}
+            className="text-[12px] font-medium px-4 py-2 rounded-lg cursor-pointer transition-all duration-200 bg-amber-500/15 text-amber-400 border border-amber-500/30 hover:bg-amber-500/25"
+            style={{ boxShadow: "0 0 12px rgba(245,158,11,0.15)" }}>
+            Done
+          </button>
+        )}
+        <CloseButton onClick={onClose} />
+      </div>
+      {/* Row 3: Records panel */}
+      {recordsOpen && (
+        <div className="mt-2 pt-2 border-t border-white/[0.06]">
+          <RecordsPanel key={recordsKey} exerciseId={String(ex.id)} exerciseName={songName} storageKey={recKey} />
+        </div>
+      )}
+      {/* Row 4: Notes collapse */}
+      {notesOpen && onNoteChange && (
+        <div className="mt-2 pt-2 border-t border-white/[0.06] flex gap-3 items-start">
+          <label className="w-28 flex-shrink-0">
+            <span className="text-[9px] font-medium text-zinc-600 uppercase tracking-wider block mb-1">BPM Achieved</span>
+            <input value={bpm || ""} onChange={e => onBpmChange?.(e.target.value)} placeholder="e.g. 120"
+              className="input input-gold w-full !py-1 !text-[11px]" />
           </label>
-          <label className="font-label text-[11px] text-[var(--text-muted)]">Date
-            <input value={new Date().toLocaleDateString("en-US")} disabled className="input mt-1 !text-[var(--text-muted)]" />
+          <label className="flex-1">
+            <span className="text-[9px] font-medium text-zinc-600 uppercase tracking-wider block mb-1">Session Notes</span>
+            <textarea value={note || ""} onChange={e => onNoteChange(e.target.value)}
+              placeholder="What went well? What needs work?..."
+              className="input w-full !h-16 resize-none !text-[11px]" />
           </label>
         </div>
-        <label className="font-label text-[11px] text-[var(--text-muted)]">Notes
-          <textarea value={note} onChange={(e) => onNoteChange(e.target.value)}
-            placeholder="What went well? What needs work?..."
-            className="input mt-1 !h-24 resize-none" />
-        </label>
+      )}
+    </div>
+  );
+}
+
+
+
+/* ════════════════════════════════════════════════════════════════
+   PRACTICE TAB CONTENT (shared by Song & Exercise windows)
+   ════════════════════════════════════════════════════════════════ */
+function PracticeTabContent({ ex }: { ex: Exercise }) {
+  return (
+    <div className="space-y-4">
+      {ex.d && (
+        <div className="text-[13px] text-zinc-400 leading-7">{ex.d}</div>
+      )}
+      {ex.t && (
+        <div className="flex gap-3 items-start bg-amber-500/5 border border-amber-500/15 px-4 py-3 rounded-lg"
+          style={{ boxShadow: "0 0 12px rgba(245,158,11,0.08)" }}>
+          <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 flex-shrink-0" />
+          <span className="text-[13px] text-amber-400/80 leading-5">{ex.t}</span>
+        </div>
+      )}
+      {ex.f && (
+        <div>
+          <SectionLabel color="gold">FOCUS AREAS</SectionLabel>
+          <div className="text-[13px] text-zinc-400 leading-6">{ex.f}</div>
+        </div>
+      )}
+      {!ex.d && !ex.t && !ex.f && (
+        <div className="text-center py-8 text-zinc-600 text-[13px]">
+          No practice notes for this exercise. Jump to another tab to start practicing.
+        </div>
+      )}
+      {/* Metronome inline - only in Practice tab */}
+      <div className="mt-4 pt-4 border-t border-white/[0.06]">
+        <SectionLabel color="amber">METRONOME</SectionLabel>
+        <MetronomeBox />
       </div>
-      <SectionLabel color="red">RECORDINGS</SectionLabel>
-      <RecorderBox storageKey={week + "-" + day + "-" + exId} exerciseName={exerciseName} />
     </div>
   );
 }
 
 
 /* ════════════════════════════════════════════════════════════════
-   SONG WINDOW
+   SONG WINDOW - Zone-based layout
    ════════════════════════════════════════════════════════════════ */
 function SongWindow({ exercise: ex, mode, scale, style, week, day, savedYtUrl, bpm, note, onBpmChange, onNoteChange, onClose, onDone }: Props) {
-  const cc = COL[ex.c] || "#888";
-  type SongTab = "practice" | "tutorial" | "log";
-  const [tab, setTab] = useState<SongTab>("practice");
-
-  // Backing track video
   const savedVid = savedYtUrl?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
   const [btVideoId, setBtVideoId] = useState("");
   const [btLoading, setBtLoading] = useState(false);
   const [btSearched, setBtSearched] = useState(false);
+  const [btSearchResults, setBtSearchResults] = useState<string[]>([]);
+  const [btResultIndex, setBtResultIndex] = useState(0);
+  const [btSearchInput, setBtSearchInput] = useState("");
 
-  // Auto-search backing track on mount
   useEffect(() => {
     if (btSearched || btVideoId || savedVid?.[1]) return;
     setBtLoading(true);
@@ -418,236 +710,208 @@ function SongWindow({ exercise: ex, mode, scale, style, week, day, savedYtUrl, b
     fetch(`/api/youtube?q=${encodeURIComponent(q)}`)
       .then(r => r.json())
       .then(data => {
-        if (data.items?.[0]?.videoId) setBtVideoId(data.items[0].videoId);
+        const ids: string[] = data.results || data.items?.map((i: { videoId: string }) => i.videoId).filter(Boolean) || [];
+        if (ids.length > 0) {
+          setBtVideoId(ids[0]);
+          setBtSearchResults(ids);
+          setBtResultIndex(0);
+        }
       })
       .catch(() => {})
       .finally(() => setBtLoading(false));
   }, [btSearched, btVideoId, savedVid, ex.songName, ex.n]);
 
-  // Use saved URL if available
   useEffect(() => {
     if (savedVid?.[1] && !btVideoId) setBtVideoId(savedVid[1]);
   }, [savedVid, btVideoId]);
 
-  // Original track video
   const [origVideoId, setOrigVideoId] = useState("");
   const [showOriginal, setShowOriginal] = useState(false);
-
   const songName = ex.songName || ex.n;
 
+  async function handleSongBtSearch() {
+    const raw = btSearchInput.trim();
+    const urlMatch = raw.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
+    if (urlMatch) { setBtVideoId(urlMatch[1]); return; }
+    const query = raw || `${songName} backing track guitar`;
+    try {
+      const res = await fetch(`/api/youtube?q=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      const ids: string[] = data.results || data.items?.map((i: { videoId: string }) => i.videoId).filter(Boolean) || [];
+      if (ids.length > 0) {
+        setBtVideoId(ids[0]);
+        setBtSearchResults(ids);
+        setBtResultIndex(0);
+      }
+    } catch { /* ignore */ }
+  }
+
+  function handleSongBtNext() {
+    if (btSearchResults.length <= 1) return;
+    const nextIdx = (btResultIndex + 1) % btSearchResults.length;
+    setBtResultIndex(nextIdx);
+    setBtVideoId(btSearchResults[nextIdx]);
+  }
+
+  type SongTab = "practice" | "tabs" | "backing" | "tutorial";
+  const [activeTab, setActiveTab] = useState<SongTab>("practice");
+
   return (
-    <>
-      {/* DARK HEADER */}
-      <DarkHeader>
-        <div className="flex justify-between items-start">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-2">
-              <span className="tag" style={{ border: `1px solid ${cc}60`, color: cc, background: cc + "15" }}>{ex.c}</span>
-              {ex.b && <span className="font-readout text-[12px] text-[var(--text-secondary)]">{ex.b} BPM</span>}
-              <span className="font-readout text-[12px] text-[var(--text-secondary)]">{ex.m} min</span>
-              {ex.tex && <span className="font-readout text-[10px] px-1.5 py-0.5 rounded border border-[var(--gold)]/40 text-[var(--gold)]">GP</span>}
-            </div>
-            <div className="font-heading text-2xl text-[var(--text-primary)]">{songName}</div>
-            {ex.f && <div className="font-label text-[11px] text-[var(--text-muted)] mt-1">{ex.f}</div>}
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0 ml-3">
-            {onDone && <button type="button" onClick={onDone} className="btn-gold !text-[11px] !px-4 !py-2">Done</button>}
-            <CloseButton onClick={onClose} />
-          </div>
+    <div className="flex flex-col h-full">
+      {/* ZONE 1: Toolbar */}
+      <Toolbar ex={ex} week={week} day={day} onClose={onClose} onDone={onDone} bpm={bpm} note={note} onBpmChange={onBpmChange} onNoteChange={onNoteChange} />
+
+      {/* ZONE 2: Main Content */}
+      <div className="flex-1 overflow-y-auto p-4 sm:p-5">
+        <div className="mb-4">
+          <PillTabBar tabs={[
+            { id: "practice" as SongTab, label: "Practice" },
+            { id: "tabs" as SongTab, label: "Tabs" },
+            { id: "backing" as SongTab, label: "Backing Track" },
+            { id: "tutorial" as SongTab, label: "Tutorial" },
+          ]} active={activeTab} onChange={setActiveTab} />
         </div>
-      </DarkHeader>
 
-      <TabBar tabs={[
-        { id: "practice" as SongTab, label: "Practice" },
-        { id: "tutorial" as SongTab, label: "Tutorial" },
-        { id: "log" as SongTab, label: "Log" },
-      ]} active={tab} onChange={setTab} />
+        <div className="bg-zinc-900/30 rounded-xl p-5 border border-white/[0.05] min-h-[300px]">
+          {activeTab === "practice" && <PracticeTabContent ex={ex} />}
 
-      <div className="p-4 sm:p-6">
-        {tab === "practice" && (
-          <div>
-            {/* YouTube Backing Track — auto-searched */}
-            <div className="mb-6">
-              <SectionLabel color="gold">BACKING TRACK</SectionLabel>
-              {btLoading && (
-                <div className="bg-[var(--bg-secondary)] rounded-lg p-6 text-center font-label text-[12px] text-[var(--text-muted)] mb-3">Searching for backing track...</div>
-              )}
+          {activeTab === "tabs" && <GpTabSection ex={ex} />}
 
-              {/* Toggle: Backing vs Original */}
-              <div className="flex gap-2 mb-3">
-                <button onClick={() => setShowOriginal(false)}
-                  className={`font-label text-[11px] px-3 py-1.5 rounded cursor-pointer border transition-all ${!showOriginal ? "bg-[var(--gold)] text-[#121214] border-[var(--gold)]" : "border-[var(--border-panel)] text-[var(--text-muted)]"}`}>
+          {activeTab === "backing" && (
+            <div>
+              <div className="flex gap-2 mb-4">
+                <button type="button" onClick={() => setShowOriginal(false)}
+                  className={`text-[12px] px-4 py-2 rounded-lg cursor-pointer border transition-all duration-200 ${!showOriginal ? "bg-amber-500/15 text-amber-400 border-amber-500/30" : "border-white/[0.08] text-zinc-500 hover:text-zinc-300"}`}>
                   Backing Track
                 </button>
-                <button onClick={() => setShowOriginal(true)}
-                  className={`font-label text-[11px] px-3 py-1.5 rounded cursor-pointer border transition-all ${showOriginal ? "bg-[var(--gold)] text-[#121214] border-[var(--gold)]" : "border-[var(--border-panel)] text-[var(--text-muted)]"}`}>
+                <button type="button" onClick={() => setShowOriginal(true)}
+                  className={`text-[12px] px-4 py-2 rounded-lg cursor-pointer border transition-all duration-200 ${showOriginal ? "bg-amber-500/15 text-amber-400 border-amber-500/30" : "border-white/[0.08] text-zinc-500 hover:text-zinc-300"}`}>
                   Original
                 </button>
               </div>
-
+              {btLoading && (
+                <div className="bg-white/[0.02] rounded-lg p-6 text-center text-[12px] text-zinc-600 mb-3">Searching for backing track...</div>
+              )}
               {!showOriginal ? (
-                <YouTubeEmbed videoId={btVideoId} setVideoId={setBtVideoId} label="Backing Track" />
+                <div>
+                  {/* Search bar */}
+                  <div className="flex gap-2 mb-3">
+                    <input value={btSearchInput} onChange={e => setBtSearchInput(e.target.value)}
+                      onKeyDown={e => { if (e.key === "Enter") handleSongBtSearch(); }}
+                      placeholder={`${songName} backing track guitar...`}
+                      className="input flex-1 !text-[12px] min-w-0" />
+                    <button type="button" onClick={handleSongBtSearch} className="btn-gold !text-[11px] flex-shrink-0">Search</button>
+                  </div>
+                  {/* Video display */}
+                  {btVideoId && (
+                    <div className="relative mb-3">
+                      <div className="aspect-video w-full rounded-lg overflow-hidden bg-black">
+                        <iframe src={`https://www.youtube.com/embed/${btVideoId}?modestbranding=1&rel=0`}
+                          className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen title="Backing Track" />
+                      </div>
+                      {btSearchResults.length > 1 && (
+                        <button type="button" onClick={handleSongBtNext}
+                          className="absolute bottom-2 right-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/70 border border-white/[0.12] text-zinc-300 text-[11px] font-medium cursor-pointer hover:bg-black/90 transition-all backdrop-blur-sm">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/><line x1="19" y1="3" x2="19" y2="21"/></svg>
+                          Next Video
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  {!btVideoId && !btLoading && (
+                    <div className="bg-white/[0.03] border border-dashed border-white/[0.06] rounded-lg p-6 mb-3 text-center">
+                      <div className="font-label text-[12px] text-zinc-500">Search for a backing track above</div>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <YouTubeEmbed videoId={origVideoId} setVideoId={setOrigVideoId} label="Original" />
               )}
-
-              <div className="flex gap-1.5 flex-wrap">
-                <button onClick={() => window.open(ytSearch(`${songName} backing track guitar`), "_blank")} className="btn-ghost !text-[10px] !px-2.5 !py-1.5">Backing Track</button>
-                <button onClick={() => window.open(ytSearch(`${songName} original`), "_blank")} className="btn-ghost !text-[10px] !px-2.5 !py-1.5">Original Song</button>
-                <button onClick={() => window.open(ytSearch(`${songName} live`), "_blank")} className="btn-ghost !text-[10px] !px-2.5 !py-1.5">Live Version</button>
+              <div className="flex gap-2 flex-wrap">
+                <button type="button" onClick={() => window.open(ytSearch(`${songName} backing track guitar`), "_blank")} className="btn-ghost !text-[11px] !px-3 !py-2">Backing Track</button>
+                <button type="button" onClick={() => window.open(ytSearch(`${songName} original`), "_blank")} className="btn-ghost !text-[11px] !px-3 !py-2">Original Song</button>
+                <button type="button" onClick={() => window.open(ytSearch(`${songName} live`), "_blank")} className="btn-ghost !text-[11px] !px-3 !py-2">Live Version</button>
               </div>
             </div>
+          )}
 
-            {/* GP Tab */}
-            <GpTabSection ex={ex} />
-
-            {/* Practice Tools */}
-            <div className="space-y-4">
-              <div>
-                <SectionLabel color="amber">METRONOME</SectionLabel>
-                <MetronomeBox />
-              </div>
-              <div>
-                <SectionLabel color="green">TIMER</SectionLabel>
-                <TimerBox minutes={ex.m} />
-              </div>
-              <div>
-                <SectionLabel color="red">RECORDER</SectionLabel>
-                <RecorderBox storageKey={week + "-" + day + "-" + ex.id} exerciseName={songName} />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {tab === "tutorial" && (
-          <TutorialTabContent exerciseName={songName} ytQuery={`how to play ${songName} guitar`} />
-        )}
-
-        {tab === "log" && (
-          <LogTabContent bpm={bpm} note={note} onBpmChange={onBpmChange} onNoteChange={onNoteChange} week={week} day={day} exId={ex.id} exerciseName={ex.songName || ex.n} />
-        )}
+          {activeTab === "tutorial" && (
+            <TutorialTabContent exerciseName={songName} ytQuery={`how to play ${songName} guitar`} />
+          )}
+        </div>
       </div>
-    </>
+    </div>
   );
 }
 
 
 /* ════════════════════════════════════════════════════════════════
-   EXERCISE WINDOW
+   EXERCISE WINDOW - Zone-based layout
    ════════════════════════════════════════════════════════════════ */
 const BACKING_CATS = ["Improv", "Riffs", "Composition", "Songs", "Modes"];
 
 function ExerciseWindow({ exercise: ex, mode, scale, style, week, day, savedYtUrl, bpm, note, onBpmChange, onNoteChange, onClose, onDone }: Props) {
-  const cc = COL[ex.c] || "#888";
-  type ExTab = "practice" | "tutorial" | "log";
-  const [tab, setTab] = useState<ExTab>("practice");
   const needsBacking = ex.bt || BACKING_CATS.includes(ex.c);
 
-  // YouTube state
   const savedVid = savedYtUrl?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
   const [ytVideoId, setYtVideoId] = useState(savedVid ? savedVid[1] : "");
   const [ytSearchInput, setYtSearchInput] = useState(savedYtUrl || "");
+  const [ytSearchResults, setYtSearchResults] = useState<string[]>([]);
+  const [ytResultIndex, setYtResultIndex] = useState(0);
 
-  // Suno
   const suno = useSunoTrack(ex, scale, mode, style, needsBacking);
 
-  // Scroll refs for sticky toolbar
-  const timerRef = useRef<HTMLDivElement>(null);
-  const recorderRef = useRef<HTMLDivElement>(null);
+  type ExTab = "practice" | "tabs" | "backing" | "tutorial";
+  const [activeTab, setActiveTab] = useState<ExTab>("practice");
 
   return (
-    <>
-      {/* STICKY TOOLBAR */}
-      <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-2" style={{ background: "linear-gradient(180deg, #1e1c18 0%, #1a1a1e 100%)", borderBottom: "1px solid var(--border-subtle)" }}>
-        <div className="flex items-center gap-2">
-          <button type="button" onClick={() => timerRef.current?.scrollIntoView({ behavior: "smooth" })}
-            className="w-8 h-8 rounded-full bg-[var(--bg-surface)] flex items-center justify-center cursor-pointer hover:bg-[var(--bg-tertiary)] transition-colors" title="Jump to Timer">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--led-green)" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M5 3L2 6"/><path d="M22 6l-3-3"/></svg>
-          </button>
-          <button type="button" onClick={() => recorderRef.current?.scrollIntoView({ behavior: "smooth" })}
-            className="w-8 h-8 rounded-full bg-[var(--bg-surface)] flex items-center justify-center cursor-pointer hover:bg-[var(--bg-tertiary)] transition-colors" title="Jump to Recorder">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--led-red)" strokeWidth="2" strokeLinecap="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
-          </button>
+    <div className="flex flex-col h-full">
+      {/* ZONE 1: Toolbar */}
+      <Toolbar ex={ex} week={week} day={day} onClose={onClose} onDone={onDone} bpm={bpm} note={note} onBpmChange={onBpmChange} onNoteChange={onNoteChange} />
+
+      {/* ZONE 2: Main Content */}
+      <div className="flex-1 overflow-y-auto p-4 sm:p-5">
+        <div className="mb-4">
+          <PillTabBar tabs={[
+            { id: "practice" as ExTab, label: "Practice" },
+            { id: "tabs" as ExTab, label: "Tabs" },
+            { id: "backing" as ExTab, label: "Backing Track" },
+            { id: "tutorial" as ExTab, label: "Tutorial" },
+          ]} active={activeTab} onChange={setActiveTab} />
         </div>
-        <div className="flex items-center gap-2">
-          {onDone && <button type="button" onClick={onDone} className="btn-gold !text-[11px] !px-4 !py-1.5">Done</button>}
-          <CloseButton onClick={onClose} />
+
+        <div className="bg-zinc-900/30 rounded-xl p-5 border border-white/[0.05] min-h-[300px]">
+          {activeTab === "practice" && <PracticeTabContent ex={ex} />}
+
+          {activeTab === "tabs" && <GpTabSection ex={ex} />}
+
+          {activeTab === "backing" && (
+            <div>
+              <YouTubeBackingSection scale={scale} mode={mode} style={style} ex={ex}
+                ytVideoId={ytVideoId} setYtVideoId={setYtVideoId}
+                ytSearchInput={ytSearchInput} setYtSearchInput={setYtSearchInput}
+                ytSearchResults={ytSearchResults} setYtSearchResults={setYtSearchResults}
+                ytResultIndex={ytResultIndex} setYtResultIndex={setYtResultIndex} />
+              {needsBacking && (
+                <div className="mt-4 pt-4 border-t border-white/[0.06]">
+                  <SunoSection ex={ex} scale={scale} mode={mode} suno={suno} />
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === "tutorial" && (
+            <TutorialTabContent exerciseName={ex.n} ytQuery={ex.yt} />
+          )}
         </div>
       </div>
-
-      {/* DARK HEADER */}
-      <DarkHeader>
-        <div className="flex items-center gap-2 flex-wrap mb-2">
-          <span className="tag" style={{ border: `1px solid ${cc}60`, color: cc, background: cc + "15" }}>{ex.c}</span>
-          {ex.b && <span className="font-readout text-[12px] text-[var(--text-secondary)]">{ex.b} BPM</span>}
-          <span className="font-readout text-[12px] text-[var(--text-secondary)]">{ex.m} min</span>
-        </div>
-        <div className="font-heading text-xl text-[var(--text-primary)]">{ex.n}</div>
-        {ex.f && <div className="font-label text-[11px] text-[var(--text-muted)] mt-1">Focus: {ex.f}</div>}
-      </DarkHeader>
-
-      <TabBar tabs={[
-        { id: "practice" as ExTab, label: "Practice" },
-        { id: "tutorial" as ExTab, label: "Tutorial" },
-        { id: "log" as ExTab, label: "Log" },
-      ]} active={tab} onChange={setTab} />
-
-      <div className="p-4 sm:p-6">
-        {tab === "practice" && (
-          <div>
-            {/* Description + tips */}
-            <div className="text-[14px] text-[var(--text-secondary)] leading-7 mb-4">{ex.d}</div>
-            {ex.t && (
-              <div className="flex gap-3 items-start bg-[var(--gold)]/5 border border-[var(--gold)]/15 px-4 py-3 rounded-lg mb-6">
-                <div className="led led-gold mt-1 flex-shrink-0" />
-                <span className="text-[12px] text-[var(--gold)]/80 leading-5">{ex.t}</span>
-              </div>
-            )}
-
-            {/* GP Tab — prominent */}
-            <GpTabSection ex={ex} />
-
-            {/* Metronome — above backing track for exercises */}
-            <div className="mb-6">
-              <SectionLabel color="amber">METRONOME</SectionLabel>
-              <MetronomeBox />
-            </div>
-
-            {/* Suno AI Backing Track */}
-            {needsBacking && <SunoSection ex={ex} scale={scale} mode={mode} suno={suno} />}
-
-            {/* YouTube Backing */}
-            <YouTubeBackingSection scale={scale} mode={mode} style={style} ex={ex}
-              ytVideoId={ytVideoId} setYtVideoId={setYtVideoId}
-              ytSearchInput={ytSearchInput} setYtSearchInput={setYtSearchInput} />
-
-            {/* Timer + Recorder */}
-            <div ref={timerRef} className="mb-4">
-              <SectionLabel color="green">TIMER</SectionLabel>
-              <TimerBox minutes={ex.m} />
-            </div>
-            <div ref={recorderRef}>
-              <SectionLabel color="red">RECORDER</SectionLabel>
-              <RecorderBox storageKey={week + "-" + day + "-" + ex.id} exerciseName={ex.n} />
-            </div>
-          </div>
-        )}
-
-        {tab === "tutorial" && (
-          <TutorialTabContent exerciseName={ex.n} ytQuery={ex.yt} />
-        )}
-
-        {tab === "log" && (
-          <LogTabContent bpm={bpm} note={note} onBpmChange={onBpmChange} onNoteChange={onNoteChange} week={week} day={day} exId={ex.id} exerciseName={ex.songName || ex.n} />
-        )}
-      </div>
-    </>
+    </div>
   );
 }
 
 
 /* ════════════════════════════════════════════════════════════════
-   THEORY WINDOW
+   THEORY WINDOW - Zone-based layout
    ════════════════════════════════════════════════════════════════ */
 const TOOL_MAP: Record<string, { label: string; hint: string }> = {
   "Ear Training": { label: "Interval Trainer", hint: "Open Ear Training tools in the Learning Center" },
@@ -658,109 +922,121 @@ const TOOL_MAP: Record<string, { label: string; hint: string }> = {
 };
 
 function TheoryWindow({ exercise: ex, week, day, bpm, note, onBpmChange, onNoteChange, onClose, onDone }: Props) {
-  const cc = COL[ex.c] || "#888";
   type TheoryTab = "lesson" | "tool" | "tutorial" | "log";
-  const [tab, setTab] = useState<TheoryTab>("lesson");
+  const [activeTab, setActiveTab] = useState<TheoryTab>("lesson");
   const tool = TOOL_MAP[ex.c] || { label: "Learning Center", hint: "Open the Learning Center for interactive tools" };
 
-  // Parse steps from description if numbered
   const steps = ex.d.match(/\d+\.\s+[^.]+\./g) || [];
   const hasSteps = steps.length >= 2;
   const descWithoutSteps = hasSteps ? ex.d.replace(/\d+\.\s+[^.]+\./g, "").trim() : ex.d;
 
   return (
-    <>
-      {/* DARK HEADER */}
-      <DarkHeader>
-        <div className="flex justify-between items-start">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-2">
-              <span className="tag" style={{ border: `1px solid ${cc}60`, color: cc, background: cc + "15" }}>{ex.c}</span>
-              <span className="font-readout text-[12px] text-[var(--text-secondary)]">{ex.m} min</span>
-            </div>
-            <div className="font-heading text-xl text-[var(--text-primary)]">{ex.n}</div>
-            {ex.f && <div className="font-label text-[11px] text-[var(--text-muted)] mt-1">Focus: {ex.f}</div>}
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0 ml-3">
-            {onDone && <button type="button" onClick={onDone} className="btn-gold !text-[11px] !px-4 !py-2">Done</button>}
-            <CloseButton onClick={onClose} />
-          </div>
+    <div className="flex flex-col h-full">
+      {/* ZONE 1: Toolbar */}
+      <Toolbar ex={ex} week={week} day={day} onClose={onClose} onDone={onDone} bpm={bpm} note={note} onBpmChange={onBpmChange} onNoteChange={onNoteChange} />
+
+      {/* ZONE 2: Main Content */}
+      <div className="flex-1 overflow-y-auto p-4 sm:p-5">
+        <div className="mb-4">
+          <PillTabBar tabs={[
+            { id: "lesson" as TheoryTab, label: "Lesson" },
+            { id: "tool" as TheoryTab, label: "Tool" },
+            { id: "tutorial" as TheoryTab, label: "Tutorial" },
+            { id: "log" as TheoryTab, label: "Log" },
+          ]} active={activeTab} onChange={setActiveTab} />
         </div>
-      </DarkHeader>
 
-      <TabBar tabs={[
-        { id: "lesson" as TheoryTab, label: "Lesson" },
-        { id: "tool" as TheoryTab, label: "Tool" },
-        { id: "tutorial" as TheoryTab, label: "Tutorial" },
-        { id: "log" as TheoryTab, label: "Log" },
-      ]} active={tab} onChange={setTab} />
+        <div className="bg-zinc-900/30 rounded-xl p-5 border border-white/[0.05] min-h-[300px]">
+          {/* LESSON TAB */}
+          {activeTab === "lesson" && (
+            <div>
+              <SectionLabel color="gold">INSTRUCTIONS</SectionLabel>
+              <div className="text-[13px] text-zinc-400 leading-7 mb-4">
+                {hasSteps ? descWithoutSteps : ex.d}
+              </div>
 
-      <div className="p-4 sm:p-6">
-        {/* LESSON TAB */}
-        {tab === "lesson" && (
-          <div>
-            <SectionLabel color="gold">INSTRUCTIONS</SectionLabel>
-            <div className="text-[14px] text-[var(--text-secondary)] leading-7 mb-4">
-              {hasSteps ? descWithoutSteps : ex.d}
+              {ex.t && (
+                <div className="flex gap-3 items-start bg-amber-500/5 border border-amber-500/15 px-4 py-3 rounded-lg mb-5"
+                  style={{ boxShadow: "0 0 12px rgba(245,158,11,0.08)" }}>
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 flex-shrink-0" />
+                  <span className="text-[13px] text-amber-400/80 leading-5">{ex.t}</span>
+                </div>
+              )}
+
+              {hasSteps && (
+                <div className="bg-white/[0.03] rounded-xl p-5 border border-white/[0.06]">
+                  <div className="text-[10px] font-medium uppercase tracking-wider text-amber-400 mb-3">STEPS</div>
+                  <ol className="space-y-3">
+                    {steps.map((step, i) => (
+                      <li key={i} className="flex gap-3 items-start">
+                        <span className="flex-shrink-0 w-7 h-7 rounded-full bg-amber-500/15 text-amber-400 text-[12px] font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
+                        <span className="text-[13px] text-zinc-400 leading-6">{step.replace(/^\d+\.\s+/, "")}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
             </div>
+          )}
 
-            {ex.t && (
-              <div className="flex gap-3 items-start bg-[var(--gold)]/5 border border-[var(--gold)]/15 px-4 py-3 rounded-lg mb-6">
-                <div className="led led-gold mt-1 flex-shrink-0" />
-                <span className="text-[12px] text-[var(--gold)]/80 leading-5">{ex.t}</span>
+          {/* TOOL TAB */}
+          {activeTab === "tool" && (
+            <div>
+              <SectionLabel color="gold">INTERACTIVE TOOL</SectionLabel>
+              <div className="bg-white/[0.03] rounded-lg p-6 text-center mb-4 border border-white/[0.06]">
+                <div className="font-heading text-lg text-[var(--text-primary)] mb-2">{tool.label}</div>
+                <div className="text-[13px] text-zinc-500 mb-4">{tool.hint}</div>
+                <div className="text-[12px] text-zinc-600 mb-4">
+                  The {tool.label} is available in the Learning Center with full interactive features.
+                </div>
               </div>
-            )}
+              <button type="button" onClick={() => {
+                window.dispatchEvent(new CustomEvent("gf-navigate", { detail: { view: "lib", subTab: "tools" } }));
+                onClose();
+              }} className="btn-ghost w-full justify-center !text-[12px] py-3">
+                Open Full Tool in Learning Center
+              </button>
+            </div>
+          )}
 
-            {hasSteps && (
-              <div className="bg-[var(--bg-secondary)] rounded-lg p-4 mb-6">
-                <div className="font-label text-[11px] text-[var(--gold)] mb-3">STEPS</div>
-                <ol className="space-y-3">
-                  {steps.map((step, i) => (
-                    <li key={i} className="flex gap-3 items-start">
-                      <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[var(--gold)]/15 text-[var(--gold)] text-[11px] font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
-                      <span className="text-[13px] text-[var(--text-secondary)] leading-6">{step.replace(/^\d+\.\s+/, "")}</span>
-                    </li>
-                  ))}
-                </ol>
+          {/* TUTORIAL TAB */}
+          {activeTab === "tutorial" && (
+            <TutorialTabContent exerciseName={ex.n} ytQuery={ex.yt} />
+          )}
+
+          {/* LOG TAB */}
+          {activeTab === "log" && (
+            <div className="space-y-4">
+              <div>
+                <SectionLabel color="gold">SESSION LOG</SectionLabel>
+                <div className="flex gap-4 items-start">
+                  <label className="flex-1">
+                    <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider block mb-1.5">BPM Achieved</span>
+                    <input value={bpm} onChange={(e) => onBpmChange(e.target.value)} placeholder="e.g. 120" className="input input-gold w-full" />
+                  </label>
+                  <label className="flex-[2]">
+                    <span className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider block mb-1.5">Notes</span>
+                    <textarea value={note} onChange={(e) => onNoteChange(e.target.value)}
+                      placeholder="What went well? What needs work?..."
+                      className="input w-full !h-24 resize-none" />
+                  </label>
+                </div>
               </div>
-            )}
-
-            <SectionLabel color="green">TIMER</SectionLabel>
-            <TimerBox minutes={ex.m} />
-          </div>
-        )}
-
-        {/* TOOL TAB */}
-        {tab === "tool" && (
-          <div>
-            <SectionLabel color="gold">INTERACTIVE TOOL</SectionLabel>
-            <div className="bg-[var(--bg-secondary)] rounded-lg p-6 text-center mb-4">
-              <div className="font-heading text-lg text-[var(--text-primary)] mb-2">{tool.label}</div>
-              <div className="text-[13px] text-[var(--text-muted)] mb-4">{tool.hint}</div>
-              <div className="text-[12px] text-[var(--text-muted)] mb-4">
-                The {tool.label} is available in the Learning Center with full interactive features.
+              <div>
+                <SectionLabel color="red">RECORDINGS</SectionLabel>
+                <RecorderBox storageKey={week + "-" + day + "-" + ex.id} exerciseName={ex.songName || ex.n} />
+              </div>
+              <div>
+                <SectionLabel color="amber">METRONOME</SectionLabel>
+                <MetronomeBox />
               </div>
             </div>
-            <button type="button" onClick={() => {
-              window.dispatchEvent(new CustomEvent("gf-navigate", { detail: { view: "lib", subTab: "tools" } }));
-              onClose();
-            }} className="btn-ghost w-full justify-center !text-[12px] py-3">
-              Open Full Tool in Learning Center
-            </button>
-          </div>
-        )}
-
-        {/* TUTORIAL TAB */}
-        {tab === "tutorial" && (
-          <TutorialTabContent exerciseName={ex.n} ytQuery={ex.yt} />
-        )}
-
-        {/* LOG TAB */}
-        {tab === "log" && (
-          <LogTabContent bpm={bpm} note={note} onBpmChange={onBpmChange} onNoteChange={onNoteChange} week={week} day={day} exId={ex.id} exerciseName={ex.songName || ex.n} />
-        )}
+          )}
+        </div>
       </div>
-    </>
+
+      {/* Theory doesn't use the bottom dock - metronome/recorder are inside the Log tab */}
+    </div>
   );
 }
 
@@ -796,8 +1072,9 @@ function useFocusTrap(ref: React.RefObject<HTMLElement | null>) {
   }, [ref]);
 }
 
+
 /* ════════════════════════════════════════════════════════════════
-   MAIN EXPORT — routes to the correct window type
+   MAIN EXPORT - routes to the correct window type
    ════════════════════════════════════════════════════════════════ */
 export default function ExerciseModal(props: Props) {
   const modalType = getModalType(props.exercise);

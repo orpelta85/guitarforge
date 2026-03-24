@@ -12,7 +12,7 @@
   "dependencies": {
     "@coderline/alphatab": "^1.8.1",
     "@supabase/ssr": "^0.9.0",
-    "@supabase/supabase-js": "^2.99.1",
+    "@supabase/supabase-js": "^2.99.3",
     "@tanstack/react-virtual": "^3.13.23",
     "@tombatossals/chords-db": "^0.5.1",
     "lamejs": "^1.2.1",
@@ -31,6 +31,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "playwright": "^1.58.2",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

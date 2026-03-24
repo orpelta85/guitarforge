@@ -495,7 +495,7 @@ export default function GuitarForgeApp() {
   // ── Loading state ──
   if (!ready || authLoading) return (
     <div className="h-screen flex flex-col items-center justify-center gap-3" style={{ background: "#121214" }}>
-      <div className="font-heading text-3xl font-black text-[#D4A843]">GuitarForge</div>
+      <img src="/logo.png" alt="Guitar Practice" className="h-28 object-contain logo-blend" />
       <div className="font-label text-[10px] text-[#555]">Loading...</div>
     </div>
   );
@@ -541,7 +541,7 @@ export default function GuitarForgeApp() {
     setShowWelcome(false);
   };
 
-  const WIZARD_STYLES = ["Metal", "Hard Rock", "Blues", "Classic Rock", "Jazz", "Punk Rock", "Acoustic", "Progressive Metal"];
+  const WIZARD_STYLES = ["Hard Rock", "Metal", "Classic Rock", "Alternative Rock", "Punk Rock", "Grunge", "Blues", "Jazz", "Heavy Metal", "Thrash Metal", "Progressive Metal", "Progressive Rock", "Death Metal", "Acoustic", "Funk", "Fusion", "Flamenco", "Country", "Blues Rock", "Nu Metal", "Stoner Rock", "Neo-Classical"];
 
   if (showWelcome) return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ background: "#121214" }}>
@@ -552,7 +552,7 @@ export default function GuitarForgeApp() {
             <path d="M12 2L9 7H4l3 5-3 5h5l3 5 3-5h5l-3-5 3-5h-5L12 2z" fill="#D4A843" opacity="0.3"/>
             <path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" stroke="#D4A843" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-          <div className="font-heading text-2xl font-black text-[#D4A843]">GuitarForge</div>
+          <img src="/logo.png" alt="Guitar Practice" className="h-28 mx-auto object-contain logo-blend" />
         </div>
 
         {/* Step dots */}
@@ -571,13 +571,14 @@ export default function GuitarForgeApp() {
           {/* Step 1: Level */}
           {wizardStep === 0 && (
             <div className="animate-fade-in">
-              <h2 className="font-heading text-xl sm:text-2xl text-[#D4A843] mb-1 text-center">Welcome to GuitarForge</h2>
+              <h2 className="font-heading text-xl sm:text-2xl text-[#D4A843] mb-1 text-center">Welcome to Guitar Practice</h2>
               <p className="font-label text-[13px] text-[#888] mb-6 text-center">Let&apos;s set up your practice routine</p>
               <div className="space-y-3">
                 {([
-                  { level: "Beginner", desc: "Just starting out. Focus on fundamentals.", icon: "M12 20V4M8 8l4-4 4 4" },
-                  { level: "Intermediate", desc: "1-3 years. Ready for speed and technique.", icon: "M13 10V3L4 14h7v7l9-11h-7z" },
-                  { level: "Advanced", desc: "3+ years. Shred, sweep, and master the fretboard.", icon: "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" },
+                  { level: "Beginner", desc: "0–2 years. Basic chords, strumming, steady beat.", icon: "M12 20V4M8 8l4-4 4 4" },
+                  { level: "Intermediate", desc: "2–5 years. Barre chords, pentatonic, play by ear.", icon: "M13 10V3L4 14h7v7l9-11h-7z" },
+                  { level: "Advanced", desc: "5+ years. Sweep picking, legato, complex rhythms.", icon: "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" },
+                  { level: "Expert", desc: "Professional. Full fretboard mastery, improvise across genres.", icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" },
                 ] as const).map(({ level, desc, icon }) => (
                   <button key={level} type="button" onClick={() => setWizardLevel(level)}
                     className="w-full flex items-center gap-4 p-4 rounded-lg border transition-all text-left"
@@ -602,13 +603,13 @@ export default function GuitarForgeApp() {
           {wizardStep === 1 && (
             <div className="animate-fade-in">
               <h2 className="font-heading text-xl sm:text-2xl text-[#D4A843] mb-1 text-center">What&apos;s your style?</h2>
-              <p className="font-label text-[13px] text-[#888] mb-6 text-center">Select 1-3 styles you want to focus on</p>
+              <p className="font-label text-[13px] text-[#888] mb-6 text-center">Select up to 5 styles you want to focus on</p>
               <div className="grid grid-cols-2 gap-2.5">
                 {WIZARD_STYLES.map(s => {
                   const sel = wizardStyles.includes(s);
                   return (
                     <button key={s} type="button" onClick={() => {
-                      setWizardStyles(prev => sel ? prev.filter(x => x !== s) : prev.length < 3 ? [...prev, s] : prev);
+                      setWizardStyles(prev => sel ? prev.filter(x => x !== s) : prev.length < 5 ? [...prev, s] : prev);
                     }}
                       className="p-3.5 rounded-lg border transition-all text-center"
                       style={{
@@ -638,6 +639,7 @@ export default function GuitarForgeApp() {
                   { hrs: 0.5, label: "30 min", desc: "Quick focused session. Great for busy days.", icon: "M12 2v10l4.24 4.24" },
                   { hrs: 1, label: "1 hour", desc: "Solid practice. Best for steady progress.", icon: "M12 2a10 10 0 100 20 10 10 0 000-20zM12 6v6l4 2" },
                   { hrs: 2, label: "2 hours", desc: "Deep dive. Maximum skill building.", icon: "M13 10V3L4 14h7v7l9-11h-7z" },
+                  { hrs: 3, label: "2+ hours", desc: "Full session. For serious shredders.", icon: "M17.657 18.657A8 8 0 016.343 7.343M12 2v4m0 12v4m10-10h-4M6 12H2" },
                 ] as const).map(({ hrs, label, desc, icon }) => (
                   <button key={hrs} type="button" onClick={() => setWizardTime(hrs)}
                     className="w-full flex items-center gap-4 p-4 rounded-lg border transition-all text-left"
@@ -763,6 +765,7 @@ export default function GuitarForgeApp() {
             setShowAuthPage={setShowAuthPage} setAuthBannerDismissed={setAuthBannerDismissed}
             setSunoSuggestUrl={setSunoSuggestUrl} setSunoSuggestLoading={setSunoSuggestLoading}
             setSunoSuggestDismissed={setSunoSuggestDismissed}
+            setSongModal={setSongModal}
             curExList={curExList} curDone={curDone} curMin={curMin} curCats={curCats}
             wTot={wTot} wDn={wDn} wPct={wPct} wMin={wMin}
             buildAll={buildAll} getSuggestions={getSuggestions}
@@ -826,14 +829,29 @@ export default function GuitarForgeApp() {
         )}
       </div>
 
-      {modal && <ExerciseModal exercise={modal} mode={mode} scale={scale} style={style} week={week} day={selDay}
-        savedYtUrl={exEdits[modal.id]?.ytUrl || ""}
-        bpm={bpmLog[week + "-" + selDay + "-" + modal.id] || ""} note={noteLog[week + "-" + selDay + "-" + modal.id] || ""}
-        onBpmChange={(v) => setBpmLog((p) => ({ ...p, [week + "-" + selDay + "-" + modal.id]: v }))}
-        onNoteChange={(v) => setNoteLog((p) => ({ ...p, [week + "-" + selDay + "-" + modal.id]: v }))}
-        onClose={() => setModal(null)}
-        onDone={() => { const k = week + "-" + selDay + "-" + modal.id; markDone(k, true); setModal(null); }} />}
-      {songModal && <SongModal song={songModal} onClose={() => setSongModal(null)} />}
+      {modal && (() => {
+        const isSong = !!(modal.songId || modal.songName || modal.c === "Songs");
+        if (isSong) {
+          const entry = (modal.songId ? SONG_LIBRARY.find(s => s.id === modal.songId) : null)
+            || SONG_LIBRARY.find(s => `${s.artist} - ${s.title}` === (modal.songName || modal.n))
+            || { id: modal.id, title: modal.songName || modal.n, artist: "" };
+          return <SongModal song={entry} onClose={() => setModal(null)}
+            targetMinutes={modal.m || undefined}
+            mySongs={mySongs} onToggleMySong={(id) => setMySongs(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id])} />;
+        }
+        return <ExerciseModal exercise={modal} mode={mode} scale={scale} style={style} week={week} day={selDay}
+          savedYtUrl={exEdits[modal.id]?.ytUrl || ""}
+          bpm={bpmLog[week + "-" + selDay + "-" + modal.id] || ""} note={noteLog[week + "-" + selDay + "-" + modal.id] || ""}
+          onBpmChange={(v) => setBpmLog((p) => ({ ...p, [week + "-" + selDay + "-" + modal.id]: v }))}
+          onNoteChange={(v) => setNoteLog((p) => ({ ...p, [week + "-" + selDay + "-" + modal.id]: v }))}
+          onClose={() => setModal(null)}
+          onDone={() => { const k = week + "-" + selDay + "-" + modal.id; markDone(k, true); setModal(null); }} />;
+      })()}
+      {songModal && <SongModal song={songModal} onClose={() => setSongModal(null)}
+        targetMinutes={songs.some(s => s.id === songModal.id) && songs.length > 0 && (dayHrs[selDay] || 0) > 0
+          ? Math.max(5, Math.round((dayHrs[selDay] * 60) / songs.length / 5) * 5)
+          : undefined}
+        mySongs={mySongs} onToggleMySong={(id) => setMySongs(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id])} />}
 
       {/* Focus Mode Overlay */}
       {focusEx && (() => {
