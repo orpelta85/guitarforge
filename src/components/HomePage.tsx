@@ -68,6 +68,7 @@ interface HomePageProps {
   wPct: number;
   wMin: number;
   setSongModal: (s: SongEntry | null) => void;
+  setModal: (e: Exercise | null) => void;
   // Functions
   buildAll: () => void;
   getSuggestions: () => { icon: string; text: string }[];
@@ -85,7 +86,7 @@ export default function HomePage(props: HomePageProps) {
     setNewSongUrl, setShowEditor, setCollapsedGroups, setSettingsOpen,
     setShowAnalytics, setShowAuthPage, setAuthBannerDismissed,
     setSunoSuggestUrl, setSunoSuggestLoading, setSunoSuggestDismissed,
-    setSongModal,
+    setSongModal, setModal,
     curExList, curDone, curMin, curCats, wTot, wDn, wPct, wMin,
     buildAll, getSuggestions,
   } = props;
@@ -138,7 +139,7 @@ export default function HomePage(props: HomePageProps) {
     setSongSearchActive(false);
   }, [setSongs]);
 
-  // Quick Jam YouTube search — fetch first result and embed inline
+  // Quick Jam YouTube search
   const [jamVideoId, setJamVideoId] = useState<string | null>(null);
   const searchJamBacking = useCallback(async () => {
     setJamYtLoading(true);
@@ -180,6 +181,47 @@ export default function HomePage(props: HomePageProps) {
     finally { setJamSunoLoading(false); }
   }, [jamKey, jamScale, jamStyle, setSunoSuggestUrl]);
 
+  // Today's date info
+  const todayDate = new Date();
+  const dayName = todayDate.toLocaleDateString("en-US", { weekday: "long" });
+  const dateStr = todayDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const dayPct = curExList.length > 0 ? Math.round((curDone / curExList.length) * 100) : 0;
+  const todayCats = curCats.length > 0 ? curCats.join(", ") : "Rest Day";
+
+  // Exercise previews for hero card (up to 3 undone exercises)
+  const exercisePreviews = useMemo(() => {
+    return curExList.filter(e => !doneMap[week + "-" + selDay + "-" + e.id]).slice(0, 3);
+  }, [curExList, doneMap, week, selDay]);
+
+  // Song of the week
+  const songOfTheWeek = useMemo(() => {
+    if (songs.length > 0) {
+      const idx = week % songs.length;
+      const song = songs[idx];
+      return SONG_LIBRARY.find(s => s.id === song.id) || { id: song.id, title: song.name, artist: "" };
+    }
+    const popularSongs = SONG_LIBRARY.filter(s => s.popularity && s.popularity > 70).slice(0, 20);
+    if (popularSongs.length > 0) return popularSongs[week % popularSongs.length];
+    if (SONG_LIBRARY.length > 0) return SONG_LIBRARY[week % SONG_LIBRARY.length];
+    return null;
+  }, [songs, week]);
+
+  // Coach suggestion based on smart suggestions or daily tip
+  const coachTip = useMemo(() => {
+    const tips = [
+      "Slow is smooth, smooth is fast. Drop your BPM by 20% and focus on clean execution.",
+      "Record yourself today - you'll catch mistakes your ears miss in real-time.",
+      "Try practicing your weakest category first while your focus is fresh.",
+      "Alternate picking exercises with legato passages to build versatility.",
+      "Listen to a new song in your style this week - steal one lick from it.",
+      "Your streak is your most powerful tool. Even 10 minutes counts.",
+      "Warm up with chromatic runs before jumping into shred patterns.",
+    ];
+    const suggestions = getSuggestions();
+    if (suggestions.length > 0) return suggestions[0].text;
+    return tips[todayDate.getDay() % tips.length];
+  }, [getSuggestions, todayDate]);
+
   return (
     <div className="animate-fade-in">
       {/* Auth banner for guests */}
@@ -199,111 +241,336 @@ export default function HomePage(props: HomePageProps) {
       )}
 
       {/* ================================================================ */}
-      {/* SECTION 1: Quick Shortcuts (moved first - short & general)      */}
+      {/* HERO ZONE - Today's Session Card                                 */}
       {/* ================================================================ */}
-      {/* ================================================================ */}
-      {/* MAIN HUB: Quick Actions toolbar + Practice Hub (unified box)    */}
-      {/* ================================================================ */}
-      <div className="mb-4" style={{ border: "1px solid #D4A84340", borderRadius: 12, overflow: "hidden" }}>
+      <div className="relative mb-5 rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(212,168,67,0.15)", background: "linear-gradient(145deg, #1a1708 0%, #121214 40%, #0f1014 100%)" }}>
+        <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 20% 20%, rgba(212,168,67,0.06) 0%, transparent 60%)" }} />
 
-        {/* Quick Actions toolbar */}
-        <div className="flex items-center gap-1 px-4 py-3 overflow-x-auto" style={{ background: "#141410", borderBottom: "1px solid #D4A84320" }}>
-          {([
-            { label: "Practice", icon: "M5 3l14 9-14 9V3z", target: "daily" as View },
-            { label: "Studio", icon: "M2 3h20v14H2zM8 21h8M12 17v4", target: "studio" as View },
-            { label: "Jam", icon: "M9 18V5l12-2v13M6 18a3 3 0 100-6 3 3 0 000 6zM18 16a3 3 0 100-6 3 3 0 000 6z", target: "jam" as View },
-            { label: "Library", icon: "M4 19.5A2.5 2.5 0 016.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z", target: "lib" as View },
-            { label: "Coach", icon: "M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z", target: "coach" as View },
-            { label: "Skills", icon: "M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z", target: "skills" as View },
-          ] as const).map(({ label, icon, target }) => (
-            <button key={target} type="button" onClick={() => setView(target)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all hover:bg-[#D4A84315] flex-shrink-0"
-              style={{ background: "transparent" }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d={icon}/>
-              </svg>
-              <span className="font-label text-[14px] font-medium text-[#aaa] hover:text-[#D4A843] transition-colors whitespace-nowrap">{label}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* --- Today's Practice --- */}
-        {(() => {
-          const dayPct = curExList.length > 0 ? Math.round((curDone / curExList.length) * 100) : 0;
-          const todayDate = new Date();
-          const dayName = todayDate.toLocaleDateString("en-US", { weekday: "long" });
-          const dateStr = todayDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-          const todayCats = curCats.length > 0 ? curCats.join(", ") : "Rest Day";
-          return (
-            <div className="p-5 sm:p-6" style={{ background: "linear-gradient(135deg, #1a1708, #121214)" }}>
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <div className="font-heading text-lg sm:text-xl font-bold text-[#eee]">Today&apos;s Practice</div>
-                  <div className="font-readout text-[11px] text-[#666] mt-1">
-                    {dayName}, {dateStr}
-                  </div>
-                  <div className="font-readout text-[11px] text-[#666] mt-0.5">
-                    {curExList.length} Exercises &middot; {curMin} min
-                  </div>
-                  <div className="font-readout text-[10px] text-[#555] mt-0.5">
-                    Today: {todayCats}
-                  </div>
-                </div>
-                {streak.currentStreak > 0 && (
-                  <div className="flex items-center gap-1.5 bg-[#D4A843]/10 px-3 py-1.5 rounded-full">
-                    <span className="text-lg">&#x1F525;</span>
-                    <span className="font-stat text-[14px] text-[#D4A843]">{streak.currentStreak} Day Streak</span>
-                  </div>
-                )}
+        <div className="relative p-6 sm:p-8">
+          {/* Top row: date + streak */}
+          <div className="flex justify-between items-start mb-5">
+            <div>
+              <div className="text-[13px] text-[#666] font-medium">{dayName}, {dateStr}</div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-[#eee] mt-1 tracking-tight">Today&apos;s Focus</h1>
+              <div className="text-[13px] text-[#555] mt-1">{curExList.length} exercises &middot; {curMin} min &middot; {todayCats}</div>
+            </div>
+            {/* Streak badge with flame animation */}
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full" style={{ background: streak.currentStreak > 0 ? "rgba(212,168,67,0.1)" : "rgba(255,255,255,0.03)", border: `1px solid ${streak.currentStreak > 0 ? "rgba(212,168,67,0.2)" : "rgba(255,255,255,0.05)"}` }}>
+              <span className={`text-xl ${streak.currentStreak > 0 ? "streak-flame" : ""}`} style={{ display: "inline-block" }}>
+                {streak.currentStreak > 0 ? "\uD83D\uDD25" : "\u26A1"}
+              </span>
+              <div className="text-right">
+                <div className="font-bold text-lg leading-none" style={{ color: streak.currentStreak > 0 ? "#D4A843" : "#555" }}>{streak.currentStreak}</div>
+                <div className="text-[9px] text-[#666] mt-0.5">day streak</div>
               </div>
-              <div className="flex items-center gap-3 mt-4">
-                <button type="button" onClick={() => { setView("daily"); }}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-label text-[13px] font-semibold text-[#121214] transition-all hover:brightness-110"
-                  style={{ background: "linear-gradient(135deg, #D4A843, #DFBD69)" }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                  Start Practice
+            </div>
+          </div>
+
+          {/* Exercise previews */}
+          {exercisePreviews.length > 0 ? (
+            <div className="flex flex-col gap-2 mb-6">
+              {exercisePreviews.map((ex) => (
+                <button
+                  key={ex.id}
+                  type="button"
+                  onClick={() => setModal(ex)}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all hover:bg-white/[0.04]"
+                  style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}
+                >
+                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: COL[ex.c] || "#888" }} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[13px] text-[#ccc] truncate">{ex.n}</div>
+                    <div className="text-[11px] text-[#555]">{ex.c} &middot; {ex.m} min</div>
+                  </div>
+                  <div className="text-[12px] text-[#D4A843] font-medium flex-shrink-0">{ex.b} BPM</div>
                 </button>
-                <span className={`font-readout text-[13px] font-bold ${dayPct >= 100 && curExList.length > 0 ? "text-[#33CC33]" : "text-[#D4A843]"}`}>
+              ))}
+              {curExList.length > 3 && (
+                <div className="text-[11px] text-[#555] px-4">+ {curExList.length - 3} more exercises</div>
+              )}
+            </div>
+          ) : (
+            <div className="mb-6 px-4 py-5 rounded-xl text-center" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
+              <div className="text-[14px] text-[#666] mb-1">{curCats.length > 0 ? "No exercises built yet" : "Rest day - take it easy"}</div>
+              {curCats.length > 0 && (
+                <button type="button" onClick={buildAll} className="text-[12px] text-[#D4A843] hover:text-[#DFBD69] transition-colors mt-1">
+                  Build today&apos;s routine
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Progress bar + CTA */}
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => setView("daily")}
+              className="flex items-center gap-2.5 px-7 py-3.5 rounded-xl font-semibold text-[15px] transition-all hover:brightness-110 hover:scale-[1.02] active:scale-[0.98] flex-shrink-0"
+              style={{ background: "linear-gradient(135deg, #D4A843, #DFBD69)", color: "#121214", boxShadow: "0 4px 20px rgba(212,168,67,0.25)" }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              Start Practice
+            </button>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className={`text-[13px] font-bold ${dayPct >= 100 && curExList.length > 0 ? "text-[#22c55e]" : "text-[#D4A843]"}`}>
                   {dayPct}% complete
                 </span>
+                <span className="text-[11px] text-[#555]">{curDone}/{curExList.length}</span>
               </div>
-              <div className="mt-3 h-[6px] rounded-full overflow-hidden" style={{ background: "#ffffff08" }}>
-                <div className="h-full rounded-full transition-all duration-500" style={{ width: dayPct + "%", background: dayPct >= 100 && curExList.length > 0 ? "#33CC33" : "linear-gradient(90deg, #D4A843, #DFBD69)" }} />
+              <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
+                <div className="h-full rounded-full transition-all duration-700 ease-out" style={{ width: dayPct + "%", background: dayPct >= 100 && curExList.length > 0 ? "#22c55e" : "linear-gradient(90deg, #D4A843, #DFBD69)" }} />
               </div>
             </div>
-          );
-        })()}
+          </div>
+        </div>
 
-        {/* --- Weekly Focus (inline, below Today's Practice) --- */}
-        <div className="border-t border-[#D4A84330]" style={{ background: "#121214" }}>
-          <button onClick={() => setSettingsOpen(p => !p)} className="flex items-center gap-3 w-full cursor-pointer bg-transparent border-0 text-left px-5 py-4 transition-colors hover:bg-[#1a1708]">
-            <div className="led led-gold" />
-            <span className="font-label text-[13px] font-semibold text-[#D4A843] flex-1">Weekly Focus</span>
-            <span className="font-readout text-[12px] px-3 py-1.5 rounded-lg" style={{ background: settingsOpen ? "transparent" : "#D4A84315", color: "#D4A843", border: settingsOpen ? "none" : "1px solid #D4A84330" }}>
-              {!settingsOpen && `W${week} \u00B7 ${mode} \u00B7 ${scale} \u00B7 ${style}`}
-              {settingsOpen && ""}
-            </span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2" className={`transition-transform ${settingsOpen ? "rotate-180" : ""}`}>
-              <path d="M6 9l6 6 6-6" />
-            </svg>
-          </button>
-          {settingsOpen && (
-            <div className="px-5 pb-4">
-              <div className="font-readout text-[10px] text-[#555] mb-3">What are you focusing on this week?</div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
-                {[
-                  { l: "Week", v: <div className="segment-display text-center mt-1"><input type="number" value={week} min={1} onChange={(e) => setWeek(Number(e.target.value))} className="bg-transparent border-none outline-none text-center w-full font-mono font-bold text-[#D4A843]" style={{ boxShadow: 'none' }} /></div> },
-                  { l: "Mode", v: <select value={mode} onChange={(e) => setMode(e.target.value)} className="input w-full text-[12px] sm:text-[14px]">{MODES.map((m) => <option key={m}>{m}</option>)}</select> },
-                  { l: "Key", v: <select value={scale} onChange={(e) => setScale(e.target.value)} className="input w-full">{SCALES.map((s) => <option key={s}>{s}</option>)}</select> },
-                  { l: "Style", v: <select value={style} onChange={(e) => setStyle(e.target.value)} className="input w-full text-[12px] sm:text-[14px]">{STYLES.map((s) => <option key={s}>{s}</option>)}</select> },
-                ].map(({ l, v }) => <label key={l} className="font-label text-[11px] text-[#666]">{l}<div className="mt-1">{v}</div></label>)}
-              </div>
+        {/* Flame animation CSS */}
+        <style>{`
+          .streak-flame {
+            animation: flame-pulse 1.5s ease-in-out infinite;
+          }
+          @keyframes flame-pulse {
+            0%, 100% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.15); filter: brightness(1.3); }
+          }
+        `}</style>
+      </div>
+
+      {/* ================================================================ */}
+      {/* Quick Access Row - 3 tool shortcuts                              */}
+      {/* ================================================================ */}
+      <div className="flex items-center justify-center gap-6 sm:gap-8 mb-6">
+        {([
+          {
+            label: "Record",
+            icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>,
+            action: () => setView("studio"),
+          },
+          {
+            label: "Jam",
+            icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>,
+            action: () => setView("jam"),
+          },
+          {
+            label: "Tuner",
+            icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12h4l3-9 4 18 3-9h4"/></svg>,
+            action: () => setView("daily"),
+          },
+        ] as const).map(({ label, icon, action }) => (
+          <button
+            key={label}
+            type="button"
+            onClick={action}
+            className="group flex flex-col items-center gap-2 transition-all"
+          >
+            <div className="w-14 h-14 rounded-full flex items-center justify-center transition-all group-hover:scale-105 group-hover:shadow-[0_0_16px_rgba(212,168,67,0.15)]" style={{ background: "rgba(212,168,67,0.08)", border: "1px solid rgba(212,168,67,0.15)", color: "#D4A843" }}>
+              {icon}
             </div>
+            <span className="text-[11px] text-[#666] group-hover:text-[#D4A843] transition-colors">{label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* ================================================================ */}
+      {/* Three-column grid: Song of the Week + Weekly Progress + Coach    */}
+      {/* ================================================================ */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+
+        {/* Song of the Week */}
+        <div className="rounded-xl p-4 transition-all hover:border-white/10" style={{ background: "#111114", border: "1px solid rgba(255,255,255,0.05)" }}>
+          <div className="text-[10px] font-semibold text-[#D4A843] uppercase tracking-wider mb-3">Song of the Week</div>
+          {songOfTheWeek ? (
+            <button type="button" onClick={() => setSongModal(songOfTheWeek)} className="w-full text-left">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg, #1a1a2e, #16213e)" }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[13px] text-[#ccc] font-medium truncate">{songOfTheWeek.title}</div>
+                  <div className="text-[11px] text-[#555] truncate">{songOfTheWeek.artist}</div>
+                  {songOfTheWeek.difficulty && (
+                    <span className={`text-[9px] mt-1 inline-block px-1.5 py-0.5 rounded ${songOfTheWeek.difficulty === "Beginner" ? "text-[#22c55e] bg-[#22c55e10]" : songOfTheWeek.difficulty === "Intermediate" ? "text-[#D4A843] bg-[#D4A84310]" : "text-[#ef4444] bg-[#ef444410]"}`}>
+                      {songOfTheWeek.difficulty}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </button>
+          ) : (
+            <div className="text-[12px] text-[#444]">Add songs to your library</div>
           )}
         </div>
 
-        {/* --- Songs for the Week (merged setlist) --- */}
-        <div className="border-t border-[#D4A84320] px-5 py-4" style={{ background: "#121214" }}>
+        {/* Weekly Progress mini */}
+        <div className="rounded-xl p-4 transition-all hover:border-white/10" style={{ background: "#111114", border: "1px solid rgba(255,255,255,0.05)" }}>
+          <div className="text-[10px] font-semibold text-[#D4A843] uppercase tracking-wider mb-3">This Week</div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <div className="font-bold text-xl text-[#D4A843]">{wPct}%</div>
+              <div className="text-[9px] text-[#555]">Progress</div>
+            </div>
+            <div>
+              <div className="font-bold text-xl text-[#eee]">{wMin}</div>
+              <div className="text-[9px] text-[#555]">Minutes</div>
+            </div>
+            <div>
+              <div className="font-bold text-xl text-[#eee]">{wDn}/{wTot}</div>
+              <div className="text-[9px] text-[#555]">Exercises</div>
+            </div>
+            <div>
+              <div className="font-bold text-xl text-[#eee]">{DAYS.filter(d => (dayExMap[d] || []).some(e => doneMap[week + "-" + d + "-" + e.id])).length}/7</div>
+              <div className="text-[9px] text-[#555]">Days Active</div>
+            </div>
+          </div>
+        </div>
+
+        {/* AI Coach Suggestion */}
+        <div className="rounded-xl p-4 transition-all hover:border-white/10" style={{ background: "#111114", border: "1px solid rgba(255,255,255,0.05)" }}>
+          <div className="text-[10px] font-semibold text-[#D4A843] uppercase tracking-wider mb-3 flex items-center gap-1.5">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5"><path d="M9 18h6M10 22h4M12 2a7 7 0 015 11.9V17H7v-3.1A7 7 0 0112 2z"/></svg>
+            Coach Tip
+          </div>
+          <p className="text-[12px] text-[#999] leading-relaxed mb-3">{coachTip}</p>
+          <button type="button" onClick={() => setView("coach")} className="text-[11px] text-[#D4A843] hover:text-[#DFBD69] transition-colors">
+            Ask the Coach &rarr;
+          </button>
+        </div>
+      </div>
+
+      {/* ================================================================ */}
+      {/* Week Schedule + Day Grid                                         */}
+      {/* ================================================================ */}
+      <div className="mb-4 rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.05)", background: "#111114" }}>
+        {/* Weekly Focus toggle */}
+        <button onClick={() => setSettingsOpen(p => !p)} className="flex items-center gap-3 w-full cursor-pointer bg-transparent border-0 text-left px-5 py-4 transition-colors hover:bg-white/[0.02]">
+          <div className="led led-gold" />
+          <span className="font-label text-[13px] font-semibold text-[#D4A843] flex-1">Weekly Focus</span>
+          <span className="font-readout text-[12px] px-3 py-1.5 rounded-lg" style={{ background: settingsOpen ? "transparent" : "rgba(212,168,67,0.06)", color: "#D4A843", border: settingsOpen ? "none" : "1px solid rgba(212,168,67,0.12)" }}>
+            {!settingsOpen && `W${week} \u00B7 ${mode} \u00B7 ${scale} \u00B7 ${style}`}
+          </span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2" className={`transition-transform ${settingsOpen ? "rotate-180" : ""}`}>
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+        {settingsOpen && (
+          <div className="px-5 pb-4">
+            <div className="font-readout text-[10px] text-[#555] mb-3">What are you focusing on this week?</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+              {[
+                { l: "Week", v: <div className="segment-display text-center mt-1"><input type="number" value={week} min={1} onChange={(e) => setWeek(Number(e.target.value))} className="bg-transparent border-none outline-none text-center w-full font-mono font-bold text-[#D4A843]" style={{ boxShadow: 'none' }} /></div> },
+                { l: "Mode", v: <select value={mode} onChange={(e) => setMode(e.target.value)} className="input w-full text-[12px] sm:text-[14px]">{MODES.map((m) => <option key={m}>{m}</option>)}</select> },
+                { l: "Key", v: <select value={scale} onChange={(e) => setScale(e.target.value)} className="input w-full">{SCALES.map((s) => <option key={s}>{s}</option>)}</select> },
+                { l: "Style", v: <select value={style} onChange={(e) => setStyle(e.target.value)} className="input w-full text-[12px] sm:text-[14px]">{STYLES.map((s) => <option key={s}>{s}</option>)}</select> },
+              ].map(({ l, v }) => <label key={l} className="font-label text-[11px] text-[#666]">{l}<div className="mt-1">{v}</div></label>)}
+            </div>
+          </div>
+        )}
+
+        {/* Day grid */}
+        <div className="border-t border-white/5 px-5 py-4">
+          <div className="flex justify-between items-center mb-3">
+            <span className="font-label text-[11px] text-[#D4A843] flex items-center gap-2">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+              </svg>
+              Week {week} Schedule
+            </span>
+            <button onClick={() => setShowEditor(!showEditor)} className="font-readout text-[10px] text-[#555] hover:text-[#888] transition-colors flex items-center gap-1 bg-transparent border-0 cursor-pointer p-0">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              {showEditor ? "Close" : "Edit"}
+            </button>
+          </div>
+
+          {showEditor && (
+            <div className="mb-4 p-4 bg-[#0e0e10] border border-[#1a1a1a] rounded-lg">
+              {DAYS.map((day) => {
+                const ac = dayCats[day] || [], hrs = dayHrs[day] || 0;
+                return (
+                  <div key={day} className="mb-3 pb-3 border-b border-[#1a1a1a] last:border-0 last:mb-0 last:pb-0">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="font-label text-[11px] w-[50px] text-[#aaa]">{day}</span>
+                      <input type="number" value={hrs} min={0} max={8} step={0.5}
+                        onChange={(e) => setDayHrs((p) => ({ ...p, [day]: Number(e.target.value) }))}
+                        className="input input-gold w-14 text-center !py-1" />
+                      <span className="font-label text-[9px] text-[#444]">hrs</span>
+                    </div>
+                    <div className="pr-[62px]">
+                      {Object.entries(CAT_GROUPS).map(([group, cats]) => {
+                        const isCollapsed = collapsedGroups[group] === true;
+                        return (
+                          <div key={group} className="mb-1.5">
+                            <button onClick={() => setCollapsedGroups((p) => ({ ...p, [group]: !isCollapsed }))}
+                              className="flex items-center gap-1 mb-0.5 cursor-pointer text-[9px] font-semibold text-[#666] hover:text-[#aaa] transition-colors bg-transparent border-0 p-0">
+                              <span className="text-[8px]">{isCollapsed ? "\u25B6" : "\u25BC"}</span> {group}
+                            </button>
+                            {!isCollapsed && (
+                              <div className="flex flex-wrap gap-1 mr-3">
+                                {cats.map((cat) => {
+                                  const on = ac.includes(cat), c = COL[cat] || "#888";
+                                  return (
+                                    <span key={cat} onClick={() => setDayCats((p) => {
+                                      const a = (p[day] || []).slice(), i = a.indexOf(cat);
+                                      i >= 0 ? a.splice(i, 1) : a.push(cat); return { ...p, [day]: a };
+                                    })} className="tag cursor-pointer transition-all" style={{
+                                      border: `1px solid ${on ? c : "#2a2a2a"}`, color: on ? c : "#444",
+                                      background: on ? c + "10" : "transparent",
+                                    }}>{cat}</span>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+              <div className="flex gap-2 mt-4 pt-3 border-t border-[#1a1a1a]">
+                <button onClick={buildAll} className="btn-gold !text-[10px]">Build Routine</button>
+                <button onClick={() => {
+                  try {
+                    const archive = JSON.parse(localStorage.getItem("gf-archive") || "[]");
+                    archive.push({ week, mode, scale, style, doneMap, bpmLog, dayExMap, date: new Date().toLocaleDateString("he-IL") });
+                    localStorage.setItem("gf-archive", JSON.stringify(archive.slice(-52)));
+                  } catch {}
+                  setWeek(week + 1); setDoneMap({}); setBpmLog({});
+                }} className="btn-ghost !text-[10px]">Finish Week &amp; Archive</button>
+                <button onClick={() => { setWeek(week + 1); setDoneMap({}); setBpmLog({}); setDayExMap({}); }}
+                  className="btn-ghost !text-[10px] !text-[#C41E3A] !border-[#C41E3A]/30">Reset All</button>
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
+            {DAYS.map((day) => {
+              const ac = dayCats[day] || [], hrs = dayHrs[day] || 0, exs = dayExMap[day] || [];
+              const d2 = exs.filter((e) => doneMap[week + "-" + day + "-" + e.id]).length;
+              const off = !ac.length, pct = exs.length ? Math.round((d2 / exs.length) * 100) : 0;
+              return (
+                <div key={day} onClick={() => { setSelDay(day); setView("daily"); }}
+                  className={`p-2 cursor-pointer text-center transition-all rounded-lg ${off ? "bg-[#0e0e10] border border-[#1a1a1a]" : "panel hover:border-[#D4A843]/30"} ${selDay === day ? "!border-[#D4A843] ring-1 ring-[#D4A843]/30 !bg-[#1a1708]" : ""}`}>
+                  <div className={`font-label text-[10px] ${off ? "text-[#444]" : selDay === day ? "text-[#D4A843]" : "text-[#bbb]"}`}>
+                    <span className="sm:hidden">{day.slice(0, 3)}</span><span className="hidden sm:inline">{day}</span>
+                  </div>
+                  <div className="font-readout text-[9px] text-[#555]">{hrs}h</div>
+                  {exs.length > 0 && <>
+                    <div className="vu mt-1 !h-[3px]"><div className="vu-fill" style={{ width: pct + "%" }} /></div>
+                    <div className={`font-readout text-[8px] mt-0.5 ${pct >= 100 ? "text-[#33CC33]" : "text-[#666]"}`}>{d2}/{exs.length}</div>
+                  </>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* ================================================================ */}
+      {/* Songs for This Week                                              */}
+      {/* ================================================================ */}
+      <div className="mb-4 rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.05)", background: "#111114" }}>
+        <div className="px-5 py-4">
           <div className="font-label text-[11px] text-[#D4A843] mb-3 flex items-center gap-2">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
@@ -380,129 +647,12 @@ export default function HomePage(props: HomePageProps) {
             </div>
           </details>
         </div>
-
-        {/* --- Week Schedule --- */}
-        <div className="border-t border-[#D4A84320] px-5 py-4" style={{ background: "#121214" }}>
-          <div className="flex justify-between items-center mb-3">
-            <span className="font-label text-[11px] text-[#D4A843] flex items-center gap-2">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
-              </svg>
-              Week {week} Schedule
-            </span>
-            <button onClick={() => setShowEditor(!showEditor)} className="font-readout text-[10px] text-[#555] hover:text-[#888] transition-colors flex items-center gap-1 bg-transparent border-0 cursor-pointer p-0">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              {showEditor ? "Close" : "Edit"}
-            </button>
-          </div>
-
-          {showEditor && (
-            <div className="mb-4 p-4 bg-[#0e0e10] border border-[#1a1a1a] rounded-lg">
-              {DAYS.map((day) => {
-                const ac = dayCats[day] || [], hrs = dayHrs[day] || 0;
-                return (
-                  <div key={day} className="mb-3 pb-3 border-b border-[#1a1a1a] last:border-0 last:mb-0 last:pb-0">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="font-label text-[11px] w-[50px] text-[#aaa]">{day}</span>
-                      <input type="number" value={hrs} min={0} max={8} step={0.5}
-                        onChange={(e) => setDayHrs((p) => ({ ...p, [day]: Number(e.target.value) }))}
-                        className="input input-gold w-14 text-center !py-1" />
-                      <span className="font-label text-[9px] text-[#444]">hrs</span>
-                    </div>
-                    <div className="pr-[62px]">
-                      {Object.entries(CAT_GROUPS).map(([group, cats]) => {
-                        const isCollapsed = collapsedGroups[group] === true;
-                        return (
-                          <div key={group} className="mb-1.5">
-                            <button onClick={() => setCollapsedGroups((p) => ({ ...p, [group]: !isCollapsed }))}
-                              className="flex items-center gap-1 mb-0.5 cursor-pointer text-[9px] font-semibold text-[#666] hover:text-[#aaa] transition-colors bg-transparent border-0 p-0">
-                              <span className="text-[8px]">{isCollapsed ? "\u25B6" : "\u25BC"}</span> {group}
-                            </button>
-                            {!isCollapsed && (
-                              <div className="flex flex-wrap gap-1 mr-3">
-                                {cats.map((cat) => {
-                                  const on = ac.includes(cat), c = COL[cat] || "#888";
-                                  return (
-                                    <span key={cat} onClick={() => setDayCats((p) => {
-                                      const a = (p[day] || []).slice(), i = a.indexOf(cat);
-                                      i >= 0 ? a.splice(i, 1) : a.push(cat); return { ...p, [day]: a };
-                                    })} className="tag cursor-pointer transition-all" style={{
-                                      border: `1px solid ${on ? c : "#2a2a2a"}`, color: on ? c : "#444",
-                                      background: on ? c + "10" : "transparent",
-                                    }}>{cat}</span>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-              <div className="flex gap-2 mt-4 pt-3 border-t border-[#1a1a1a]">
-                <button onClick={buildAll} className="btn-gold !text-[10px]">Build Routine</button>
-                <button onClick={() => {
-                  try {
-                    const archive = JSON.parse(localStorage.getItem("gf-archive") || "[]");
-                    archive.push({ week, mode, scale, style, doneMap, bpmLog, dayExMap, date: new Date().toLocaleDateString("he-IL") });
-                    localStorage.setItem("gf-archive", JSON.stringify(archive.slice(-52)));
-                  } catch {}
-                  setWeek(week + 1); setDoneMap({}); setBpmLog({});
-                }} className="btn-ghost !text-[10px]">Finish Week &amp; Archive</button>
-                <button onClick={() => { setWeek(week + 1); setDoneMap({}); setBpmLog({}); setDayExMap({}); }}
-                  className="btn-ghost !text-[10px] !text-[#C41E3A] !border-[#C41E3A]/30">Reset All</button>
-              </div>
-            </div>
-          )}
-
-          {/* Day grid */}
-          <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
-            {DAYS.map((day) => {
-              const ac = dayCats[day] || [], hrs = dayHrs[day] || 0, exs = dayExMap[day] || [];
-              const d2 = exs.filter((e) => doneMap[week + "-" + day + "-" + e.id]).length;
-              const off = !ac.length, pct = exs.length ? Math.round((d2 / exs.length) * 100) : 0;
-              return (
-                <div key={day} onClick={() => { setSelDay(day); setView("daily"); }}
-                  className={`p-2 cursor-pointer text-center transition-all ${off ? "bg-[#0e0e10] border border-[#1a1a1a]" : "panel hover:border-[#D4A843]/30"} ${selDay === day ? "!border-[#D4A843] ring-1 ring-[#D4A843]/30 !bg-[#1a1708]" : ""}`}
-                  style={{ borderRadius: 8 }}>
-                  <div className={`font-label text-[10px] ${off ? "text-[#444]" : selDay === day ? "text-[#D4A843]" : "text-[#bbb]"}`}>
-                    <span className="sm:hidden">{day.slice(0, 3)}</span><span className="hidden sm:inline">{day}</span>
-                  </div>
-                  <div className="font-readout text-[9px] text-[#555]">{hrs}h</div>
-                  {exs.length > 0 && <>
-                    <div className="vu mt-1 !h-[3px]"><div className="vu-fill" style={{ width: pct + "%" }} /></div>
-                    <div className={`font-readout text-[8px] mt-0.5 ${pct >= 100 ? "text-[#33CC33]" : "text-[#666]"}`}>{d2}/{exs.length}</div>
-                  </>}
-                </div>
-              );
-            })}
-          </div>
-        </div>
       </div>
 
       {/* ================================================================ */}
-      {/* Stats Row                                                        */}
+      {/* Week Analytics (collapsible)                                     */}
       {/* ================================================================ */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
-        {[
-          { value: String(streak.currentStreak), label: "Streak" },
-          { value: wPct + "%", label: "Progress" },
-          { value: String(wMin), label: "Minutes" },
-          { value: DAYS.filter(d => (dayExMap[d] || []).some(e => doneMap[week + "-" + d + "-" + e.id])).length + "/7", label: "Days Active" },
-        ].map(({ value, label }) => (
-          <div key={label} className="p-3 text-center" style={{ background: "#1a1a1e", borderRadius: 8 }}>
-            <div className="font-stat text-xl sm:text-2xl text-[#D4A843]">{value}</div>
-            <div className="font-label text-[9px] text-[#555] mt-0.5">{label}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* ================================================================ */}
-      {/* SECTION 3: Week Analytics                                        */}
-      {/* ================================================================ */}
-      <div className="panel-secondary mb-4" style={{ borderRadius: 8 }}>
+      <div className="mb-4 rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.05)", background: "#111114" }}>
         <button onClick={() => setShowAnalytics(p => !p)} className="panel-header flex items-center gap-2 w-full cursor-pointer bg-transparent border-0 text-left">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M18 20V10M12 20V4M6 20v-6"/>
@@ -600,9 +750,9 @@ export default function HomePage(props: HomePageProps) {
       </div>
 
       {/* ================================================================ */}
-      {/* SECTION 4: Quick Jam                                             */}
+      {/* Quick Jam (collapsible)                                          */}
       {/* ================================================================ */}
-      <div className="panel-secondary mb-4" style={{ borderRadius: 8 }}>
+      <div className="mb-4 rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.05)", background: "#111114" }}>
         <button onClick={() => setJamOpen(p => !p)} className="panel-header flex items-center gap-2 w-full cursor-pointer bg-transparent border-0 text-left">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
@@ -657,7 +807,6 @@ export default function HomePage(props: HomePageProps) {
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </button>
             </div>
-            {/* Suno error/loading */}
             {sunoError && (
               <div className="text-[12px] px-3 py-2 rounded-lg mb-3" style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444" }}>
                 {sunoError}
@@ -668,7 +817,6 @@ export default function HomePage(props: HomePageProps) {
                 Generating backing track with Suno AI... This can take up to 2 minutes.
               </div>
             )}
-            {/* Inline YouTube player */}
             {jamYtLoading && (
               <div className="aspect-video w-full rounded-lg overflow-hidden bg-[#0e0e10] mb-3 flex items-center justify-center">
                 <div className="font-label text-[12px] text-[#555] animate-pulse">Searching YouTube...</div>
@@ -683,7 +831,7 @@ export default function HomePage(props: HomePageProps) {
                 {jamYtUrl && (
                   <a href={jamYtUrl} target="_blank" rel="noopener noreferrer"
                     className="font-label text-[11px] text-[#D4A843] hover:text-[#DFBD69] mt-2 inline-block no-underline">
-                    Search more on YouTube →
+                    Search more on YouTube &rarr;
                   </a>
                 )}
               </div>
@@ -694,7 +842,7 @@ export default function HomePage(props: HomePageProps) {
 
       {/* Suno player (if generated) */}
       {sunoSuggestUrl && (
-        <div className="panel-secondary p-3 mb-4" style={{ borderRadius: 8 }}>
+        <div className="rounded-xl p-3 mb-4" style={{ border: "1px solid rgba(255,255,255,0.05)", background: "#111114" }}>
           <div className="flex items-center gap-2 mb-2">
             <div className="font-label text-[10px] text-[#D4A843]">AI Backing Track</div>
             <span className="font-readout text-[9px] text-[#555]">{scale} {mode} &middot; {style}</span>
@@ -702,32 +850,6 @@ export default function HomePage(props: HomePageProps) {
           <DarkAudioPlayer src={sunoSuggestUrl} title={`${scale} ${mode} \u00B7 ${style}`} loop />
         </div>
       )}
-
-      {/* ================================================================ */}
-      {/* Smart Suggestions                                                */}
-      {/* ================================================================ */}
-      {(() => {
-        const suggestions = getSuggestions();
-        if (suggestions.length === 0) return null;
-        return (
-          <div className="panel-secondary p-4 mb-4" style={{ borderRadius: 8 }}>
-            <div className="font-label text-[10px] text-[#666] mb-2 flex items-center gap-2">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 18h6M10 22h4M12 2a7 7 0 015 11.9V17H7v-3.1A7 7 0 0112 2z"/>
-              </svg>
-              Suggestions
-            </div>
-            <div className="flex flex-col gap-2">
-              {suggestions.map((s, i) => (
-                <div key={i} className="flex items-start gap-2 text-[12px] text-[#888]">
-                  <span className="flex-shrink-0">{s.icon}</span>
-                  <span>{s.text}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-      })()}
 
       {/* ================================================================ */}
       {/* Recent Activity                                                  */}
@@ -746,14 +868,14 @@ export default function HomePage(props: HomePageProps) {
         const recent = recentItems.slice(-10).reverse();
         if (recent.length === 0) return null;
         return (
-          <div className="panel-secondary p-4 mb-4" style={{ borderRadius: 8 }}>
+          <div className="rounded-xl p-4 mb-4" style={{ border: "1px solid rgba(255,255,255,0.05)", background: "#111114" }}>
             <div className="font-label text-[10px] text-[#666] mb-3 flex items-center gap-2">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
               Recent Activity
             </div>
             <div className="flex flex-col gap-1">
               {recent.map((item, i) => (
-                <div key={i} className="flex items-center gap-3 px-3 py-2 bg-[#121214] rounded-lg">
+                <div key={i} className="flex items-center gap-3 px-3 py-2 bg-[#0a0a0a] rounded-lg">
                   <div className="flex-1 min-w-0">
                     <div className="text-[12px] text-[#ccc] truncate">{item.name}</div>
                   </div>

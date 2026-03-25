@@ -765,7 +765,7 @@ export default function GuitarForgeApp() {
             setShowAuthPage={setShowAuthPage} setAuthBannerDismissed={setAuthBannerDismissed}
             setSunoSuggestUrl={setSunoSuggestUrl} setSunoSuggestLoading={setSunoSuggestLoading}
             setSunoSuggestDismissed={setSunoSuggestDismissed}
-            setSongModal={setSongModal}
+            setSongModal={setSongModal} setModal={setModal}
             curExList={curExList} curDone={curDone} curMin={curMin} curCats={curCats}
             wTot={wTot} wDn={wDn} wPct={wPct} wMin={wMin}
             buildAll={buildAll} getSuggestions={getSuggestions}
