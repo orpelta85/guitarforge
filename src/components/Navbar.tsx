@@ -185,48 +185,10 @@ export default function Navbar({ view, onViewChange, onShowAuth, lastSynced, syn
       {/* ═══ Desktop Sidebar ═══ */}
       <aside className="sidebar hidden md:flex flex-col h-screen w-[220px] flex-shrink-0 sticky top-0">
         {/* Logo + Profile (Suno-style top section) */}
-        <div className="pt-1 pb-0">
-          <Image src="/logo.png" alt="Guitar Practice" width={220} height={260} className="object-contain logo-blend w-full" priority />
-          {/* Profile under logo */}
-          <button
-            type="button"
-            onClick={() => onViewChange("profile")}
-            className="flex items-center gap-2 w-full mt-0.5 px-1 py-1 rounded-lg transition-colors hover:bg-white/5"
-          >
-            {user ? (
-              <>
-                {user.user_metadata?.avatar_url ? (
-                  <img src={user.user_metadata.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0" referrerPolicy="no-referrer" />
-                ) : (
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg, #D4A843, #a07c2e)" }}>
-                    <span className="text-[10px] font-bold text-black">{(user.user_metadata?.full_name || user.email || "U")[0].toUpperCase()}</span>
-                  </div>
-                )}
-                <div className="flex flex-col items-start overflow-hidden">
-                  <span className="text-[13px] font-medium truncate w-full" style={{ color: "#ccc" }}>
-                    {user.user_metadata?.full_name || user.email?.split("@")[0] || "User"}
-                  </span>
-                  {syncing ? (
-                    <span className="text-[10px] flex items-center gap-1" style={{ color: "var(--text-muted)" }}><span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />Syncing...</span>
-                  ) : lastSynced ? (
-                    <span className="text-[10px] flex items-center gap-1" style={{ color: "var(--text-muted)" }}><span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500" />Synced</span>
-                  ) : (
-                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{user.email}</span>
-                  )}
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.08)" }}>
-                  <IconProfile />
-                </div>
-                <div className="flex flex-col items-start">
-                  <span className="text-[13px] font-medium" style={{ color: "#ccc" }}>Guest</span>
-                  <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Sign in to sync</span>
-                </div>
-              </>
-            )}
-          </button>
+        <div className="px-3 pt-3 pb-2">
+          <div className="flex justify-center">
+            <Image src="/logo.png" alt="Guitar Practice" width={110} height={70} className="object-contain logo-blend" priority />
+          </div>
         </div>
 
         <div className="mx-4 border-t" style={{ borderColor: "var(--border-panel)" }} />
@@ -261,6 +223,50 @@ export default function Navbar({ view, onViewChange, onShowAuth, lastSynced, syn
             </button>
           ))}
         </nav>
+
+        {/* Profile */}
+        <div className="px-3 pb-1">
+          <div className="mx-1 border-t mb-2" style={{ borderColor: "var(--border-panel)" }} />
+          <button
+            type="button"
+            onClick={() => onViewChange("profile")}
+            className="flex items-center gap-2.5 w-full px-2 py-2 rounded-lg transition-colors hover:bg-white/5"
+          >
+            {user ? (
+              <>
+                {user.user_metadata?.avatar_url ? (
+                  <img src={user.user_metadata.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" referrerPolicy="no-referrer" />
+                ) : (
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg, #D4A843, #a07c2e)" }}>
+                    <span className="text-[11px] font-bold text-black">{(user.user_metadata?.full_name || user.email || "U")[0].toUpperCase()}</span>
+                  </div>
+                )}
+                <div className="flex flex-col items-start overflow-hidden min-w-0 flex-1">
+                  <span className="text-[13px] font-medium truncate w-full" style={{ color: "#e0e0e0" }}>
+                    {user.user_metadata?.full_name || user.email?.split("@")[0] || "User"}
+                  </span>
+                  {syncing ? (
+                    <span className="text-[10px] flex items-center gap-1" style={{ color: "var(--text-muted)" }}><span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />Syncing...</span>
+                  ) : lastSynced ? (
+                    <span className="text-[10px] flex items-center gap-1" style={{ color: "var(--text-muted)" }}><span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500" />Synced</span>
+                  ) : (
+                    <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>{user.email}</span>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(255,255,255,0.08)" }}>
+                  <IconProfile />
+                </div>
+                <div className="flex flex-col items-start min-w-0 flex-1">
+                  <span className="text-[13px] font-medium" style={{ color: "#e0e0e0" }}>Guest</span>
+                  <span className="text-[10px]" style={{ color: "var(--text-muted)" }}>Sign in to sync</span>
+                </div>
+              </>
+            )}
+          </button>
+        </div>
 
         {/* Bottom actions */}
         <div className="px-4 py-3">

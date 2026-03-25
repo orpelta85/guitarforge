@@ -1628,8 +1628,9 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
                 background: dockPanel === tab.key ? "#111" : "transparent",
                 borderTop: dockPanel === tab.key ? "2px solid #D4A843" : "2px solid transparent",
               }}>
-              <span className="text-[11px]">{tab.icon}</span>
+              <span className="text-[16px] sm:text-[13px]">{tab.icon}</span>
               <span className="hidden sm:inline">{tab.label}</span>
+              <span className="sm:hidden text-[8px]">{tab.label.split(" ")[0]}</span>
             </button>
           ))}
         </div>
