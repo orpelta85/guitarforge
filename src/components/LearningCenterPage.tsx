@@ -1450,31 +1450,105 @@ export default function LearningCenterPage() {
   /* ── Chord buttons for fb-chords ── */
   const FB_CHORD_BUTTONS = ["Major","Minor","Dim","Aug","Dom7","Maj7","Min7"];
 
+  /* ── Lesson metadata for redesign ── */
+  const LESSON_META: Record<string, { icon: string; time: number; difficulty: 1|2|3 }> = {
+    b1: { icon: "N", time: 5, difficulty: 1 }, b2: { icon: "C", time: 5, difficulty: 1 }, b3: { icon: "#", time: 3, difficulty: 1 },
+    b4: { icon: "8", time: 4, difficulty: 1 }, b5: { icon: "D", time: 5, difficulty: 1 }, b6: { icon: "S", time: 4, difficulty: 1 },
+    r1: { icon: "R", time: 5, difficulty: 1 }, r2: { icon: "V", time: 5, difficulty: 1 }, r3: { icon: "~", time: 6, difficulty: 2 }, r4: { icon: "T", time: 8, difficulty: 3 },
+    s1: { icon: "M", time: 8, difficulty: 1 }, s2: { icon: "m", time: 8, difficulty: 2 }, s3: { icon: "P", time: 7, difficulty: 1 }, s4: { icon: "7", time: 10, difficulty: 2 }, s5: { icon: "D", time: 6, difficulty: 2 },
+    i1: { icon: "I", time: 6, difficulty: 1 }, i2: { icon: "Q", time: 7, difficulty: 2 }, i3: { icon: "X", time: 6, difficulty: 2 }, i4: { icon: "+", time: 5, difficulty: 3 },
+    c1: { icon: "T", time: 8, difficulty: 1 }, c2: { icon: "V", time: 6, difficulty: 2 }, c3: { icon: "5", time: 5, difficulty: 1 }, c4: { icon: "S", time: 6, difficulty: 2 }, c5: { icon: "7", time: 10, difficulty: 2 }, c6: { icon: "/", time: 7, difficulty: 3 },
+    dc1: { icon: "I", time: 10, difficulty: 2 }, dc2: { icon: "R", time: 7, difficulty: 2 }, dc3: { icon: "7", time: 8, difficulty: 3 }, dc4: { icon: "m", time: 8, difficulty: 3 },
+    p1: { icon: "P", time: 5, difficulty: 1 }, p2: { icon: "O", time: 7, difficulty: 2 }, p3: { icon: "A", time: 5, difficulty: 1 }, p4: { icon: "C", time: 8, difficulty: 2 }, p5: { icon: "?", time: 8, difficulty: 3 },
+    a1: { icon: "M", time: 10, difficulty: 3 }, a2: { icon: "B", time: 10, difficulty: 3 }, a3: { icon: "H", time: 12, difficulty: 3 }, a4: { icon: "V", time: 10, difficulty: 3 }, a5: { icon: "N", time: 8, difficulty: 3 },
+  };
+  const DIFF_LABELS = ["", "Beginner", "Intermediate", "Advanced"] as const;
+  const DIFF_COLORS = ["", "#22c55e", "#f59e0b", "#ef4444"];
+  const CAT_COLORS: Record<string, string> = {
+    Fundamentals: "#22c55e", Rhythm: "#f97316", Scales: "#3b82f6", Intervals: "#8b5cf6",
+    Chords: "#ec4899", "Diatonic Chords": "#06b6d4", Progressions: "#eab308", Advanced: "#ef4444",
+  };
+
+  const totalLessons = LESSONS.length;
+  const completedLessons = ls.lessonsCompleted.length;
+  const totalExerciseAnswers = score.total;
+
+  /* ── Continue where you left off ── */
+  const lastLesson = ls.lessonsCompleted.length > 0 ? ls.lessonsCompleted[ls.lessonsCompleted.length - 1] : null;
+  const nextLessonObj = (() => {
+    if (lastLesson) {
+      const idx = LESSONS.findIndex(l => l.id === lastLesson);
+      if (idx >= 0 && idx < LESSONS.length - 1) return LESSONS[idx + 1];
+    }
+    const firstIncomplete = LESSONS.find(l => !ls.lessonsCompleted.includes(l.id));
+    return firstIncomplete || null;
+  })();
+
   /* ═══════════════════════════════════════════════════════════
      RENDER
      ═══════════════════════════════════════════════════════════ */
   return (
     <div>
-      {/* ── Header (compact) ── */}
-      <div className="panel p-3 sm:px-5 sm:py-3 mb-3">
-        <div className="flex items-center gap-3">
-          <div className="font-heading text-base sm:text-lg font-bold text-[#D4A843] flex-shrink-0">Learning Center</div>
-          <div className="flex-1 min-w-0">
-            <div className="vu !h-[3px]"><div className="vu-fill" style={{ width: (ls.xp % 100) + "%" }} /></div>
+      {/* ── Header ── */}
+      <div className="panel p-4 sm:px-6 sm:py-4 mb-4" style={{ borderBottom: "2px solid #D4A843" }}>
+        <div className="flex items-center gap-4">
+          <div className="flex-shrink-0">
+            <div className="font-heading text-lg sm:text-xl font-bold text-[#D4A843]">Learning Center</div>
+            <div className="text-[10px] text-[#555] mt-0.5">{completedLessons}/{totalLessons} lessons completed{totalExerciseAnswers > 0 ? ` \u00B7 ${totalExerciseAnswers} exercises answered` : ""}</div>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <span className="font-readout text-[11px] font-bold text-[#D4A843]">LV.{ls.level}</span>
-            <span className="font-readout text-[10px] text-[#555]">{ls.xp} XP</span>
-            {ls.bestStreak > 0 && <span className="font-readout text-[9px] text-[#444]">Streak: {ls.bestStreak}</span>}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 justify-end mb-1">
+              <span className="font-readout text-[12px] font-bold text-[#D4A843]">LV.{ls.level}</span>
+              <span className="font-readout text-[10px] text-[#555]">{ls.xp} XP</span>
+              {ls.bestStreak > 0 && <span className="font-readout text-[9px] text-[#444]">Best streak: {ls.bestStreak}</span>}
+            </div>
+            <div className="h-1.5 bg-[#1a1a1a] rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-[#D4A843] to-[#DFBD69] rounded-full transition-all duration-500" style={{ width: (ls.xp % 100) + "%" }} />
+            </div>
+            <div className="text-[9px] text-[#444] text-right mt-0.5">{ls.xp % 100}/100 XP to next level</div>
           </div>
         </div>
       </div>
 
+      {/* ── Continue Where You Left Off ── */}
+      {nextLessonObj && (
+        <div className="mb-4 panel p-4 sm:p-5 cursor-pointer hover:border-[#D4A843]/40 transition-all"
+          style={{ borderLeft: "3px solid #D4A843" }}
+          onClick={() => { setMainTab("lessons"); setOpenLesson(nextLessonObj.id); setQuizPicked(null); setCurrentStep(0); }}>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#D4A843]/20 to-[#D4A843]/5 flex items-center justify-center flex-shrink-0">
+              <span className="text-[#D4A843] text-lg font-bold">{LESSON_META[nextLessonObj.id]?.icon || "?"}</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[10px] text-[#D4A843] font-semibold mb-0.5">{lastLesson ? "Continue Learning" : "Start Your Journey"}</div>
+              <div className="font-heading text-[14px] text-[#eee] font-semibold truncate">{nextLessonObj.title}</div>
+              <div className="text-[10px] text-[#666] mt-0.5">{nextLessonObj.cat} {"\u00B7"} {LESSON_META[nextLessonObj.id]?.time || 5} min {"\u00B7"} {DIFF_LABELS[LESSON_META[nextLessonObj.id]?.difficulty || 1]}</div>
+            </div>
+            <div className="flex-shrink-0">
+              <div className="px-4 py-2 rounded-lg bg-[#D4A843] text-[#121214] font-label text-[11px] font-semibold">
+                {lastLesson ? "Continue" : "Start"}
+              </div>
+            </div>
+          </div>
+          {lastLesson && (
+            <div className="mt-3">
+              <div className="h-1 bg-[#1a1a1a] rounded-full overflow-hidden">
+                <div className="h-full bg-[#D4A843] rounded-full transition-all" style={{ width: `${Math.round((completedLessons / totalLessons) * 100)}%` }} />
+              </div>
+              <div className="text-[9px] text-[#555] mt-1">{Math.round((completedLessons / totalLessons) * 100)}% of all lessons completed</div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ── Main Tabs ── */}
-      <div className="flex gap-1 mb-3">
-        {([["lessons","Lessons"],["exercises","Exercises"],["tools","Tools"]] as [MainTab,string][]).map(([k,lbl]) => (
+      <div className="flex gap-1.5 mb-4">
+        {([["lessons","Lessons", totalLessons],["exercises","Exercises", 17],["tools","Tools", 10]] as [MainTab,string,number][]).map(([k,lbl,count]) => (
           <button key={k} onClick={() => setMainTab(k)}
-            className={`font-label text-[11px] px-3 sm:px-4 py-2.5 sm:py-2 rounded-sm cursor-pointer transition-all flex-1 min-h-[36px] ${mainTab === k ? "bg-[#D4A843] text-[#121214]" : "text-[#555] border border-[#222]"}`}>{lbl}</button>
+            className={`font-label text-[12px] px-4 sm:px-5 py-3 sm:py-2.5 rounded-lg cursor-pointer transition-all flex-1 min-h-[40px] font-semibold ${mainTab === k ? "bg-[#D4A843] text-[#121214] shadow-lg shadow-[#D4A843]/20" : "text-[#666] border border-[#222] hover:border-[#333] hover:text-[#888]"}`}>
+            {lbl}
+            <span className={`ml-1.5 text-[9px] ${mainTab === k ? "text-[#121214]/60" : "text-[#444]"}`}>{count}</span>
+          </button>
         ))}
       </div>
 
@@ -1484,44 +1558,70 @@ export default function LearningCenterPage() {
       {mainTab === "lessons" && (<>
         {!activeLessonObj ? (
           /* Lesson list grouped by category */
-          <div className="space-y-2">
+          <div className="space-y-3">
             {LESSON_CATS.map(cat => {
               const catLessons = LESSONS.filter(l => l.cat === cat);
               if (catLessons.length === 0) return null;
               const completedCount = catLessons.filter(l => ls.lessonsCompleted.includes(l.id)).length;
               const isExpanded = lessonCat === cat;
+              const catColor = CAT_COLORS[cat] || "#D4A843";
+              const allDone = completedCount === catLessons.length;
               return (
-                <div key={cat} className={`panel overflow-hidden transition-all ${isExpanded ? "border-[#D4A843]/20" : ""}`}>
-                  <div className="flex items-center gap-3 p-3 cursor-pointer select-none hover:bg-[#111] transition-all"
+                <div key={cat} className={`panel overflow-hidden transition-all duration-300 ${isExpanded ? "border-[#333]" : ""}`}
+                  style={{ borderLeft: `3px solid ${isExpanded ? catColor : allDone ? "#22c55e" : "#222"}` }}>
+                  <div className="flex items-center gap-3 p-3 sm:p-4 cursor-pointer select-none hover:bg-[#111] transition-all"
                     onClick={() => setLessonCat(isExpanded ? "" as LessonCategory : cat)}>
-                    <div className="flex-1 min-w-0">
-                      <div className={`font-heading text-[13px] font-semibold ${isExpanded ? "text-[#D4A843]" : "text-[#ccc]"}`}>{cat}</div>
-                      <div className="text-[10px] text-[#555]">{completedCount}/{catLessons.length} completed</div>
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 text-sm font-bold"
+                      style={{ background: catColor + "15", color: catColor }}>
+                      {cat.charAt(0)}
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {completedCount === catLessons.length && <span className="text-[10px] text-[#22c55e]">{"✓"}</span>}
-                      <div className="w-16 h-1.5 bg-[#1a1a1a] rounded-full overflow-hidden">
-                        <div className="h-full bg-[#D4A843] rounded-full transition-all" style={{ width: `${catLessons.length > 0 ? (completedCount / catLessons.length) * 100 : 0}%` }} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className={`font-heading text-[14px] font-semibold ${isExpanded ? "text-[#eee]" : "text-[#ccc]"}`}>{cat}</span>
+                        {allDone && <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#22c55e]/15 text-[#22c55e] font-semibold">Complete</span>}
                       </div>
-                      <span className={`text-[10px] transition-transform ${isExpanded ? "rotate-90" : ""} ${isExpanded ? "text-[#D4A843]" : "text-[#555]"}`}>{"\u25B6"}</span>
+                      <div className="text-[10px] text-[#555] mt-0.5">{catLessons.length} lessons {"\u00B7"} {completedCount} completed</div>
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <div className="text-right hidden sm:block">
+                        <div className="font-readout text-[11px] font-bold" style={{ color: catColor }}>{Math.round(catLessons.length > 0 ? (completedCount / catLessons.length) * 100 : 0)}%</div>
+                      </div>
+                      <div className="w-16 h-2 bg-[#1a1a1a] rounded-full overflow-hidden">
+                        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${catLessons.length > 0 ? (completedCount / catLessons.length) * 100 : 0}%`, background: catColor }} />
+                      </div>
+                      <span className={`text-[11px] transition-transform duration-200 ${isExpanded ? "rotate-90" : ""} ${isExpanded ? "text-[#D4A843]" : "text-[#555]"}`}>{"\u25B6"}</span>
                     </div>
                   </div>
                   {isExpanded && (
-                    <div className="border-t border-[#1a1a1a] px-2 pb-2 pt-1 space-y-1">
-                      {catLessons.map(l => {
-                        const done = ls.lessonsCompleted.includes(l.id);
-                        return (
-                          <div key={l.id} onClick={() => { setOpenLesson(l.id); setQuizPicked(null); setCurrentStep(0); }}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-sm cursor-pointer transition-all ${done ? "bg-[#D4A843]/5" : "hover:bg-[#111]"}`}>
-                            <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${done ? "bg-[#D4A843]" : "bg-[#333]"}`} />
-                            <div className="flex-1 min-w-0">
-                              <div className={`font-label text-[11px] ${done ? "text-[#D4A843]" : "text-[#ccc]"}`}>{l.title}</div>
-                              <div className="text-[9px] text-[#555]">{l.desc}</div>
+                    <div className="border-t border-[#1a1a1a] p-2 sm:p-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                        {catLessons.map(l => {
+                          const done = ls.lessonsCompleted.includes(l.id);
+                          const meta = LESSON_META[l.id] || { icon: "?", time: 5, difficulty: 1 as const };
+                          const diffColor = DIFF_COLORS[meta.difficulty];
+                          return (
+                            <div key={l.id} onClick={() => { setOpenLesson(l.id); setQuizPicked(null); setCurrentStep(0); }}
+                              className={`relative rounded-xl p-3 sm:p-4 cursor-pointer transition-all duration-200 border ${done ? "bg-[#D4A843]/5 border-[#D4A843]/20 hover:border-[#D4A843]/40" : "bg-[#111] border-[#1a1a1a] hover:border-[#333] hover:bg-[#141414]"}`}>
+                              <div className="flex items-start gap-3">
+                                <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-bold ${done ? "bg-[#D4A843]/20 text-[#D4A843]" : "bg-[#1a1a1a] text-[#666]"}`}>
+                                  {done ? "\u2713" : meta.icon}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className={`font-label text-[12px] font-semibold leading-tight ${done ? "text-[#D4A843]" : "text-[#ddd]"}`}>{l.title}</div>
+                                  <div className="text-[10px] text-[#666] mt-1 leading-snug line-clamp-2">{l.desc}</div>
+                                  <div className="flex items-center gap-2 mt-2">
+                                    <span className="text-[9px] text-[#555]">{meta.time} min</span>
+                                    <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold" style={{ background: diffColor + "15", color: diffColor }}>{DIFF_LABELS[meta.difficulty]}</span>
+                                    {l.steps && <span className="text-[9px] text-[#444]">{"\u00B7"} Interactive</span>}
+                                    {l.quiz && <span className="text-[9px] text-[#444]">{"\u00B7"} Quiz</span>}
+                                  </div>
+                                </div>
+                              </div>
+                              {done && <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#22c55e]" />}
                             </div>
-                            {done && <span className="font-readout text-[9px] text-[#D4A843]">{"✓"}</span>}
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1678,6 +1778,12 @@ export default function LearningCenterPage() {
         {/* Exercise groups - organized into 3 categories */}
         {(() => {
           const selectMode = (m: ExMode) => { setExMode(m); setSubTab("exercise"); setRevealed(false); setAnswer(null); setFbTarget(null); setFbExAnswer(null); setFbExRevealed(false); };
+          const GROUP_COLORS: Record<string, string> = { ear: "#8b5cf6", fretboard: "#22c55e", theory: "#3b82f6" };
+          const EX_DIFFICULTY: Record<string, number> = {
+            intervals: 2, chords: 2, scales: 3, progressions: 3, "note-ear": 1, "kb-ear": 2,
+            fretboard: 1, "fb-intervals": 2, "fb-scales": 3, "fb-chords": 2, "kb-notes": 1,
+            construction: 3, "iv-construction": 2, "chord-construction": 2, "kb-intervals": 2, "kb-scales": 3, "kb-chords": 2,
+          };
           const EXERCISE_GROUPS: { id: string; title: string; desc: string; icon: string; items: [ExMode, string, string][] }[] = [
             { id: "ear", title: "Ear Training", desc: "Train your ear to recognize intervals, chords, scales and progressions by sound", icon: "\u266A",
               items: [
@@ -1707,40 +1813,73 @@ export default function LearningCenterPage() {
               ]},
           ];
           return (
-            <div className="space-y-2 mb-3">
+            <div className="space-y-3 mb-4">
               {EXERCISE_GROUPS.map(group => {
                 const isOpen = openGroups.has(group.id);
                 const activeInGroup = group.items.some(([m]) => m === exMode);
+                const groupColor = GROUP_COLORS[group.id] || "#D4A843";
+                const answeredInGroup = group.items.reduce((acc, [m]) => {
+                  const keys = Object.keys(ls.history).filter(k => k.startsWith(m + "-"));
+                  return acc + keys.reduce((s, k) => s + (ls.history[k]?.t || 0), 0);
+                }, 0);
                 return (
-                  <div key={group.id} className={`panel overflow-hidden transition-all ${activeInGroup ? "border-[#D4A843]/30" : ""}`}>
-                    <div className="flex items-center gap-3 p-3 cursor-pointer select-none hover:bg-[#111] transition-all"
+                  <div key={group.id} className={`panel overflow-hidden transition-all duration-300 ${activeInGroup ? "border-[#333]" : ""}`}
+                    style={{ borderLeft: `3px solid ${activeInGroup ? groupColor : "#222"}` }}>
+                    <div className="flex items-center gap-3 p-3 sm:p-4 cursor-pointer select-none hover:bg-[#111] transition-all"
                       onClick={() => toggleGroup(group.id)}>
-                      <div className={`w-8 h-8 rounded-sm flex items-center justify-center text-base flex-shrink-0 ${activeInGroup ? "bg-[#D4A843]/15 text-[#D4A843]" : "bg-[#141414] text-[#555]"}`}>
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center text-lg flex-shrink-0"
+                        style={{ background: groupColor + "15", color: groupColor }}>
                         {group.icon}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className={`font-heading text-[13px] font-semibold ${activeInGroup ? "text-[#D4A843]" : "text-[#ccc]"}`}>{group.title}</div>
-                        <div className="text-[10px] text-[#555] leading-tight">{group.desc}</div>
+                        <div className="flex items-center gap-2">
+                          <span className={`font-heading text-[14px] font-semibold ${activeInGroup ? "text-[#eee]" : "text-[#ccc]"}`}>{group.title}</span>
+                          <span className="font-readout text-[9px] px-1.5 py-0.5 rounded bg-[#1a1a1a] text-[#666]">{group.items.length} exercises</span>
+                        </div>
+                        <div className="text-[10px] text-[#555] leading-tight mt-0.5">{group.desc}</div>
                       </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className="font-readout text-[9px] text-[#444]">{group.items.length}</span>
-                        <span className={`text-[10px] transition-transform ${isOpen ? "rotate-90" : ""} ${activeInGroup ? "text-[#D4A843]" : "text-[#555]"}`}>{"\u25B6"}</span>
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        {answeredInGroup > 0 && (
+                          <span className="font-readout text-[10px] text-[#666]">{answeredInGroup} answered</span>
+                        )}
+                        <span className={`text-[11px] transition-transform duration-200 ${isOpen ? "rotate-90" : ""} ${activeInGroup ? "text-[#D4A843]" : "text-[#555]"}`}>{"\u25B6"}</span>
                       </div>
                     </div>
                     {isOpen && (
-                      <div className="border-t border-[#1a1a1a] px-2 pb-2 pt-1">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
-                          {group.items.map(([m, label, desc]) => (
-                            <div key={m}
-                              onClick={() => selectMode(m)}
-                              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-sm cursor-pointer transition-all ${exMode === m ? "bg-[#D4A843]/10 border border-[#D4A843]/30" : "hover:bg-[#111] border border-transparent"}`}>
-                              <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${exMode === m ? "bg-[#D4A843]" : "bg-[#333]"}`} />
-                              <div className="min-w-0">
-                                <div className={`font-label text-[11px] leading-tight ${exMode === m ? "text-[#D4A843]" : "text-[#bbb]"}`}>{label}</div>
-                                <div className="text-[9px] text-[#555] leading-tight">{desc}</div>
+                      <div className="border-t border-[#1a1a1a] p-2 sm:p-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {group.items.map(([m, label, desc]) => {
+                            const diff = EX_DIFFICULTY[m] || 1;
+                            const exHistory = Object.keys(ls.history).filter(k => k.startsWith(m + "-"));
+                            const totalAnswered = exHistory.reduce((s, k) => s + (ls.history[k]?.t || 0), 0);
+                            const totalCorrect = exHistory.reduce((s, k) => s + (ls.history[k]?.c || 0), 0);
+                            const accuracy = totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : 0;
+                            return (
+                              <div key={m}
+                                onClick={() => selectMode(m)}
+                                className={`relative rounded-xl p-3 cursor-pointer transition-all duration-200 border ${exMode === m ? "bg-[#D4A843]/8 border-[#D4A843]/30" : "bg-[#111] border-[#1a1a1a] hover:border-[#333] hover:bg-[#141414]"}`}>
+                                <div className="flex items-start gap-3">
+                                  <div className={`w-2 h-full min-h-[32px] rounded-full flex-shrink-0 ${exMode === m ? "bg-[#D4A843]" : "bg-[#222]"}`} />
+                                  <div className="flex-1 min-w-0">
+                                    <div className={`font-label text-[12px] font-semibold leading-tight ${exMode === m ? "text-[#D4A843]" : "text-[#ddd]"}`}>{label}</div>
+                                    <div className="text-[9px] text-[#555] leading-tight mt-0.5">{desc}</div>
+                                    <div className="flex items-center gap-2 mt-1.5">
+                                      <span className="flex gap-0.5">
+                                        {[1,2,3].map(d => (
+                                          <span key={d} className={`w-1.5 h-1.5 rounded-full ${d <= diff ? "bg-[#D4A843]" : "bg-[#222]"}`} />
+                                        ))}
+                                      </span>
+                                      {totalAnswered > 0 && (
+                                        <span className={`font-readout text-[9px] ${accuracy >= 80 ? "text-[#22c55e]" : accuracy >= 50 ? "text-[#f59e0b]" : "text-[#ef4444]"}`}>
+                                          {accuracy}% ({totalAnswered})
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -2587,6 +2726,7 @@ export default function LearningCenterPage() {
       {mainTab === "tools" && (<>
         {/* Tool groups */}
         {(() => {
+          const TOOL_GROUP_COLORS: Record<string, string> = { reference: "#06b6d4", utilities: "#f97316" };
           const TOOL_GROUPS: { id: string; title: string; desc: string; items: { key: ToolTab; label: string; desc: string; icon: string }[] }[] = [
             { id: "reference", title: "Reference & Exploration", desc: "Interactive reference tools for scales, chords, intervals and more",
               items: [
@@ -2606,36 +2746,44 @@ export default function LearningCenterPage() {
               ]},
           ];
           return (
-            <div className="space-y-2 mb-3">
+            <div className="space-y-3 mb-4">
               {TOOL_GROUPS.map(group => {
                 const isOpen = openToolGroups.has(group.id);
                 const activeInGroup = group.items.some(i => i.key === toolTab);
+                const gColor = TOOL_GROUP_COLORS[group.id] || "#D4A843";
                 return (
-                  <div key={group.id} className={`panel overflow-hidden transition-all ${activeInGroup ? "border-[#D4A843]/30" : ""}`}>
-                    <div className="flex items-center gap-3 p-3 cursor-pointer select-none hover:bg-[#111] transition-all"
+                  <div key={group.id} className={`panel overflow-hidden transition-all duration-300 ${activeInGroup ? "border-[#333]" : ""}`}
+                    style={{ borderLeft: `3px solid ${activeInGroup ? gColor : "#222"}` }}>
+                    <div className="flex items-center gap-3 p-3 sm:p-4 cursor-pointer select-none hover:bg-[#111] transition-all"
                       onClick={() => toggleToolGroup(group.id)}>
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0"
+                        style={{ background: gColor + "15", color: gColor }}>
+                        {group.id === "reference" ? "R" : "U"}
+                      </div>
                       <div className="flex-1 min-w-0">
-                        <div className={`font-heading text-[13px] font-semibold ${activeInGroup ? "text-[#D4A843]" : "text-[#ccc]"}`}>{group.title}</div>
-                        <div className="text-[10px] text-[#555] leading-tight">{group.desc}</div>
+                        <div className="flex items-center gap-2">
+                          <span className={`font-heading text-[14px] font-semibold ${activeInGroup ? "text-[#eee]" : "text-[#ccc]"}`}>{group.title}</span>
+                          <span className="font-readout text-[9px] px-1.5 py-0.5 rounded bg-[#1a1a1a] text-[#666]">{group.items.length}</span>
+                        </div>
+                        <div className="text-[10px] text-[#555] leading-tight mt-0.5">{group.desc}</div>
                       </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className="font-readout text-[9px] text-[#444]">{group.items.length}</span>
-                        <span className={`text-[10px] transition-transform ${isOpen ? "rotate-90" : ""} ${activeInGroup ? "text-[#D4A843]" : "text-[#555]"}`}>{"\u25B6"}</span>
-                      </div>
+                      <span className={`text-[11px] transition-transform duration-200 ${isOpen ? "rotate-90" : ""} ${activeInGroup ? "text-[#D4A843]" : "text-[#555]"}`}>{"\u25B6"}</span>
                     </div>
                     {isOpen && (
-                      <div className="border-t border-[#1a1a1a] p-2">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
+                      <div className="border-t border-[#1a1a1a] p-2 sm:p-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                           {group.items.map(item => (
                             <div key={item.key}
                               onClick={() => setToolTab(item.key)}
-                              className={`flex items-center gap-3 px-3 py-3 rounded-sm cursor-pointer transition-all ${toolTab === item.key ? "bg-[#D4A843]/10 border border-[#D4A843]/30" : "hover:bg-[#111] border border-transparent"}`}>
-                              <div className={`w-8 h-8 rounded-sm flex items-center justify-center text-sm flex-shrink-0 ${toolTab === item.key ? "bg-[#D4A843]/20 text-[#D4A843]" : "bg-[#141414] text-[#555]"}`}>
-                                {item.icon}
-                              </div>
-                              <div className="min-w-0">
-                                <div className={`font-label text-[11px] leading-tight ${toolTab === item.key ? "text-[#D4A843]" : "text-[#bbb]"}`}>{item.label}</div>
-                                <div className="text-[9px] text-[#555] leading-tight">{item.desc}</div>
+                              className={`rounded-xl p-3 cursor-pointer transition-all duration-200 border ${toolTab === item.key ? "bg-[#D4A843]/8 border-[#D4A843]/30" : "bg-[#111] border-[#1a1a1a] hover:border-[#333] hover:bg-[#141414]"}`}>
+                              <div className="flex items-center gap-3">
+                                <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-sm flex-shrink-0 ${toolTab === item.key ? "bg-[#D4A843]/20 text-[#D4A843]" : "bg-[#1a1a1a] text-[#555]"}`}>
+                                  {item.icon}
+                                </div>
+                                <div className="min-w-0">
+                                  <div className={`font-label text-[11px] font-semibold leading-tight ${toolTab === item.key ? "text-[#D4A843]" : "text-[#bbb]"}`}>{item.label}</div>
+                                  <div className="text-[9px] text-[#555] leading-tight mt-0.5">{item.desc}</div>
+                                </div>
                               </div>
                             </div>
                           ))}
@@ -2810,10 +2958,11 @@ export default function LearningCenterPage() {
 
         {/* ── Circle of Fifths ── */}
         {toolTab === "circle" && (<div>
-          <div className="panel p-3 sm:p-5 mb-3">
-            <div className="font-label text-[11px] text-[#D4A843] mb-4">Circle of Fifths</div>
+          <div className="panel p-4 sm:p-6 mb-3">
+            <div className="font-heading text-base font-bold text-[#D4A843] mb-2">Circle of Fifths</div>
+            <div className="text-[10px] text-[#555] mb-4">Click any key to set it as root note for other tools</div>
             <div className="flex justify-center">
-              <svg viewBox="0 0 340 340" className="w-72 h-72">
+              <svg viewBox="0 0 340 340" className="w-80 h-80 sm:w-96 sm:h-96">
                 {MAJOR_KEYS.map((k, i) => {
                   const angle = (i * 30 - 90) * (Math.PI / 180);
                   const x = 170 + 130 * Math.cos(angle), y = 170 + 130 * Math.sin(angle);
