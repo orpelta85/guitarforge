@@ -1,9 +1,10 @@
 "use client";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { SongEntry } from "@/lib/types";
 import { SONG_LIBRARY } from "@/lib/songs-data";
 import SongFilterBar, { useFilteredSongs } from "./SongFilterBar";
 import type { SongSort, DifficultyFilter } from "./SongFilterBar";
+import AddSongModal from "./AddSongModal";
 
 interface SongsPageProps {
   customSongs: SongEntry[];
@@ -48,6 +49,8 @@ export default function SongsPage(props: SongsPageProps) {
     setNewSongTitle, setNewSongArtist, setSongModal, generateSongBacking, toggleSongBackingPlay,
   } = props;
 
+  const [addSongModalOpen, setAddSongModalOpen] = useState(false);
+
   const allSongs = useMemo(() => [...SONG_LIBRARY, ...customSongs], [customSongs]);
   const filtered = useFilteredSongs(allSongs, songLibSearch, songLibFilter, songLibGenres, songLibSort, songLibHasGP);
 
@@ -73,23 +76,19 @@ export default function SongsPage(props: SongsPageProps) {
       />
 
       <div className="mb-4">
-        <button onClick={() => setShowAddSong(!showAddSong)} className="btn-ghost !text-[10px] mb-2">
-          {showAddSong ? "Close" : "+ Add Song"}
+        <button onClick={() => setAddSongModalOpen(true)}
+          className="font-label text-[11px] px-3 py-2 rounded-lg cursor-pointer border border-[#D4A843] bg-[#D4A843]/10 text-[#D4A843] hover:bg-[#D4A843]/20 transition-all flex-shrink-0 flex items-center gap-1.5 mb-2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
+          Add Song Manually
         </button>
-        {showAddSong && (
-          <div className="panel p-4">
-            <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2">
-              <input placeholder="Song title..." value={newSongTitle} onChange={e => setNewSongTitle(e.target.value)} className="input min-w-0" />
-              <input placeholder="Artist..." value={newSongArtist} onChange={e => setNewSongArtist(e.target.value)} className="input min-w-0" />
-              <button onClick={() => {
-                if (!newSongTitle.trim() || !newSongArtist.trim()) return;
-                setCustomSongs(p => [...p, { id: Date.now(), title: newSongTitle.trim(), artist: newSongArtist.trim() }]);
-                setNewSongTitle(""); setNewSongArtist("");
-              }} className="btn-gold">Add</button>
-            </div>
-          </div>
-        )}
       </div>
+
+      {addSongModalOpen && (
+        <AddSongModal
+          onClose={() => setAddSongModalOpen(false)}
+          onSave={(song) => setCustomSongs(p => [...p, song])}
+        />
+      )}
 
       {filtered.length === 0 && (
         <div className="panel p-8 sm:p-10 text-center">
@@ -104,7 +103,7 @@ export default function SongsPage(props: SongsPageProps) {
         const limited = filtered.slice(0, songLibLimit);
         return (<>
           {limited.map(song => {
-            const dc = song.difficulty ? ({ Beginner: "#22c55e", Intermediate: "#D4A843", Advanced: "#ef4444" }[song.difficulty] || "#888") : "#888";
+            const dc = song.difficulty ? ({ Beginner: "#22c55e", Intermediate: "#D4A843", Advanced: "#ef4444", Expert: "#dc2626" }[song.difficulty] || "#888") : "#888";
             const isCustom = song.id >= 1000000000;
             return (
               <div key={song.id} onClick={() => setSongModal(song)}

@@ -38,7 +38,7 @@ export default function GuitarForgeApp() {
   const [style, setStyle] = useState("Metal");
   const [dayCats, setDayCats] = useState<DayCats>(DEFAULT_DAY_CATS);
   const [dayHrs, setDayHrs] = useState<DayHrs>(DEFAULT_DAY_HRS);
-  const [selDay, setSelDay] = useState("Sunday");
+  const [selDay, setSelDay] = useState(() => DAYS[new Date().getDay()]);
   const [dayExMap, setDayExMap] = useState<DayExMap>({});
   const [doneMap, setDoneMap] = useState<BoolMap>({});
   const [bpmLog, setBpmLog] = useState<StringMap>({});
@@ -59,7 +59,7 @@ export default function GuitarForgeApp() {
   const [songModal, setSongModal] = useState<SongEntry | null>(null);
   const [customSongs, setCustomSongs] = useState<SongEntry[]>([]);
   const [songLibSearch, setSongLibSearch] = useState("");
-  const [songLibFilter, setSongLibFilter] = useState<"all" | "Beginner" | "Intermediate" | "Advanced">("all");
+  const [songLibFilter, setSongLibFilter] = useState<"all" | "Beginner" | "Intermediate" | "Advanced" | "Expert">("all");
   const [showAddSong, setShowAddSong] = useState(false);
   const [songLibProgress, setSongLibProgress] = useState<Record<number, number>>({});
   const [newSongTitle, setNewSongTitle] = useState("");
@@ -122,6 +122,9 @@ export default function GuitarForgeApp() {
   // ── Quick Tools toggles ──
   const [showQuickMetronome, setShowQuickMetronome] = useState(false);
   const [showQuickRecorder, setShowQuickRecorder] = useState(false);
+
+  // ── Daily Recorder control ──
+  const dailyRecControlRef = useRef<import("./DailyRecorderBox").DailyRecorderControl | null>(null);
 
   // ── Song Picker (unified) ──
   const [songPickerOpen, setSongPickerOpen] = useState(false);
@@ -482,11 +485,13 @@ export default function GuitarForgeApp() {
     setDayExMap(nd);
   }
 
-  // ── Computed values ──
-  const curExList = dayExMap[selDay] || [];
+  // ── Computed values (memoized to prevent re-render cascades) ──
+  const EMPTY_EX: Exercise[] = useMemo(() => [], []);
+  const EMPTY_CATS: string[] = useMemo(() => [], []);
+  const curExList = dayExMap[selDay] || EMPTY_EX;
   const curMin = curExList.reduce((s, e) => s + e.m, 0);
   const curDone = curExList.filter((e) => doneMap[week + "-" + selDay + "-" + e.id]).length;
-  const curCats = dayCats[selDay] || [];
+  const curCats = dayCats[selDay] || EMPTY_CATS;
 
   let wTot = 0, wDn = 0, wMin = 0;
   DAYS.forEach((d) => (dayExMap[d] || []).forEach((e) => { wTot++; wMin += e.m; if (doneMap[week + "-" + d + "-" + e.id]) wDn++; }));
@@ -790,6 +795,7 @@ export default function GuitarForgeApp() {
             setExPickerCat={setExPickerCat}
             setSongPickerOpen={setSongPickerOpen} setSongPickerSearch={setSongPickerSearch}
             setModal={setModal} setFocusEx={setFocusEx}
+            dailyRecControlRef={dailyRecControlRef} exerciseModalOpen={!!modal}
             toggleDone={toggleDone} getEditedEx={getEditedEx} buildDay={buildDay}
           />
         )}

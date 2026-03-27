@@ -5,6 +5,7 @@ import { EXERCISES } from "@/lib/exercises";
 import { ytSearch } from "@/lib/helpers";
 import { useFocusTrap } from "./ExerciseModal";
 import StemSeparator from "./StemSeparator";
+import SongRecorder from "./SongRecorder";
 import dynamic from "next/dynamic";
 const GpFileUploader = dynamic(() => import("./GpFileUploader"), {
   ssr: false,
@@ -25,6 +26,7 @@ const DIFFICULTY_COLORS: Record<string, string> = {
   Beginner: "#22c55e",
   Intermediate: "#D4A843",
   Advanced: "#ef4444",
+  Expert: "#dc2626",
 };
 
 const PROGRESS_OPTIONS = [
@@ -393,6 +395,13 @@ export default function SongModal({ song, onClose, targetMinutes, mySongs, onTog
                   />
                 )}
               </div>
+
+              {/* Song Recorder — dual channel (guitar + song) */}
+              <SongRecorder
+                songName={song.title}
+                songId={song.id}
+                isYouTubeSource={true}
+              />
 
               {/* GP file uploader */}
               <div className="mb-6">

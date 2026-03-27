@@ -3,7 +3,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import type { SongEntry } from "@/lib/types";
 
 export type SongSort = "popular" | "artist" | "title" | "recent";
-export type DifficultyFilter = "all" | "Beginner" | "Intermediate" | "Advanced";
+export type DifficultyFilter = "all" | "Beginner" | "Intermediate" | "Advanced" | "Expert";
 
 interface SongFilterBarProps {
   allSongs: SongEntry[];
@@ -159,6 +159,7 @@ export default function SongFilterBar(props: SongFilterBarProps) {
     Beginner: "#22c55e",
     Intermediate: "#D4A843",
     Advanced: "#ef4444",
+    Expert: "#dc2626",
   };
 
   const sortLabels: Record<SongSort, string> = {
@@ -207,7 +208,7 @@ export default function SongFilterBar(props: SongFilterBarProps) {
 
       {/* Difficulty Dropdown */}
       <Dropdown label="Difficulty" open={diffOpen} setOpen={setDiffOpen} activeCount={diffFilter !== "all" ? 1 : 0}>
-        {(["all", "Beginner", "Intermediate", "Advanced"] as const).map(d => {
+        {(["all", "Beginner", "Intermediate", "Advanced", "Expert"] as const).map(d => {
           const active = diffFilter === d;
           const label = d === "all" ? "All Levels" : d;
           const color = d === "all" ? "#D4A843" : diffColors[d];

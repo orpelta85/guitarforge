@@ -34,7 +34,7 @@ export interface SongEntry {
   album?: string;
   year?: number;
   genre?: string;
-  difficulty?: "Beginner" | "Intermediate" | "Advanced";
+  difficulty?: "Beginner" | "Intermediate" | "Advanced" | "Expert";
   tuning?: string;
   tempo?: number;
   key?: string;
@@ -48,6 +48,8 @@ export interface SongEntry {
   gp?: boolean;
   gpPath?: string;
   personal?: boolean;
+  notes?: string;
+  attachments?: { name: string; type: string; idbKey: string }[];
 }
 
 export interface Stage {
@@ -90,7 +92,8 @@ export interface ExEditMap {
 
 export interface SavedRecording {
   dt: string;
-  d: string; // base64 data URL
+  d: string; // base64 data URL or object URL
+  name?: string; // auto-generated or user-edited name
 }
 
 export interface AppData {

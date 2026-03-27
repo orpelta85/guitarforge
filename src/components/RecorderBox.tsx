@@ -50,17 +50,40 @@ async function migrateFromLocalStorage(key: string): Promise<SavedRecording[] | 
   }
 }
 
+function generateRecordingName(exerciseName: string | undefined, existingList: SavedRecording[]): string {
+  const now = new Date();
+  const dateStr = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
+  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const base = exerciseName ? `${exerciseName} - ${dateStr}` : `${days[now.getDay()]} - ${dateStr}`;
+  const sameName = existingList.filter(r => r.name?.startsWith(base));
+  if (sameName.length === 0) return base;
+  return `${base} (${sameName.length})`;
+}
+
 export default function RecorderBox({ storageKey, exerciseName, expectedNotes, compact, onRecordSaved }: RecorderBoxProps) {
   const [isRec, setIsRec] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [savedList, setSavedList] = useState<SavedRecording[]>([]);
   const [micError, setMicError] = useState("");
   const [recTime, setRecTime] = useState(0);
+  const [editingIdx, setEditingIdx] = useState<number | null>(null);
+  const [editName, setEditName] = useState("");
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const blobMapRef = useRef<Map<number, Blob>>(new Map());
   const nextIdxRef = useRef(0);
+  const savedListRef = useRef<SavedRecording[]>([]);
+
+  function renameRecording(idx: number, newName: string) {
+    setSavedList(prev => {
+      const next = prev.map((r, i) => i === idx ? { ...r, name: newName } : r);
+      savedListRef.current = next;
+      idbSaveRecording(storageKey, next, blobMapRef.current).catch(() => {});
+      return next;
+    });
+    setEditingIdx(null);
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -71,6 +94,7 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
       const { list, blobs } = await idbLoadRecordings(storageKey);
       if (cancelled) return;
       setSavedList(list);
+      savedListRef.current = list;
       blobMapRef.current = blobs;
       const existingKeys = Array.from(blobs.keys());
       nextIdxRef.current = existingKeys.length === 0 ? 0 : Math.max(...existingKeys) + 1;
@@ -96,11 +120,13 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
         stream.getTracks().forEach((t) => t.stop());
 
         const idx = nextIdxRef.current++;
-        const newItem: SavedRecording = { dt: new Date().toLocaleString("en-US"), d: url };
+        const autoName = generateRecordingName(exerciseName, savedListRef.current);
+        const newItem: SavedRecording = { dt: new Date().toLocaleString("en-US"), d: url, name: autoName };
         blobMapRef.current.set(idx, blob);
 
         setSavedList((prev) => {
           const next = [newItem, ...prev].slice(0, 10);
+          savedListRef.current = next;
           const allKeys = Array.from(blobMapRef.current.keys()).sort((a, b) => b - a);
           const keptKeys = allKeys.slice(0, next.length);
           const keptBlobs = new Map<number, Blob>();
@@ -179,7 +205,7 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
 
       {micError && <div className="font-label text-[10px] text-[#C41E3A] mb-2">{micError}</div>}
 
-      {audioUrl && (
+      {audioUrl && savedList.length === 0 && (
         <div className="mb-2">
           <DarkAudioPlayer src={audioUrl} title="Recording" compact className="mb-1" />
           <AudioAnalyzer audioUrl={audioUrl} exerciseName={exerciseName} expectedNotes={expectedNotes} />
@@ -191,7 +217,28 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
           <div className="font-label text-[9px] text-[#444] mb-1">Recordings ({savedList.length})</div>
           {savedList.map((item, idx) => (
             <div key={idx} className="mb-2">
-              <DarkAudioPlayer src={item.d} title={item.dt} compact />
+              <div className="flex items-center gap-1.5 mb-0.5">
+                {editingIdx === idx ? (
+                  <form className="flex items-center gap-1 flex-1" onSubmit={e => { e.preventDefault(); renameRecording(idx, editName); }}>
+                    <input type="text" value={editName} onChange={e => setEditName(e.target.value)} autoFocus
+                      className="input !py-0.5 !px-1.5 !text-[11px] flex-1" />
+                    <button type="submit" className="font-label text-[9px] text-[#D4A843] hover:text-[#e5c060] cursor-pointer">Save</button>
+                    <button type="button" onClick={() => setEditingIdx(null)} className="font-label text-[9px] text-[#555] hover:text-[#888] cursor-pointer">Cancel</button>
+                  </form>
+                ) : (
+                  <>
+                    <span className="font-heading text-[11px] text-[#999] truncate">{item.name || item.dt}</span>
+                    <button type="button" onClick={() => { setEditingIdx(idx); setEditName(item.name || item.dt); }}
+                      className="flex-shrink-0 text-[#444] hover:text-[#D4A843] transition-colors cursor-pointer" title="Rename">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                      </svg>
+                    </button>
+                    <span className="font-readout text-[9px] text-[#333]">{item.dt}</span>
+                  </>
+                )}
+              </div>
+              <DarkAudioPlayer src={item.d} title={item.name || item.dt} compact />
               <AudioAnalyzer audioUrl={item.d} exerciseName={exerciseName} expectedNotes={expectedNotes} />
             </div>
           ))}

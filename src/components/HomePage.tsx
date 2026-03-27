@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import type { Exercise, Song, DayCats, DayHrs, DayExMap, BoolMap, StringMap, ExEditMap, SongEntry } from "@/lib/types";
 import { DAYS, CATS, COL, MODES, SCALES, STYLES, CAT_GROUPS } from "@/lib/constants";
 import { EXERCISES } from "@/lib/exercises";
@@ -96,6 +96,9 @@ export default function HomePage(props: HomePageProps) {
   const [songSearchResults, setSongSearchResults] = useState<SongEntry[]>([]);
   const [songSearchActive, setSongSearchActive] = useState(false);
 
+  // Copy/Paste clipboard for weekly schedule editor
+  const [copiedDay, setCopiedDay] = useState<{ cats: string[]; hrs: number } | null>(null);
+
   // Quick Jam state
   const [jamStyle, setJamStyle] = useState(style);
   const [jamScale, setJamScale] = useState(scale);
@@ -139,21 +142,27 @@ export default function HomePage(props: HomePageProps) {
     setSongSearchActive(false);
   }, [setSongs]);
 
-  // Quick Jam YouTube search
   const [jamVideoId, setJamVideoId] = useState<string | null>(null);
+  const [jamSearchFailed, setJamSearchFailed] = useState(false);
   const searchJamBacking = useCallback(async () => {
     setJamYtLoading(true);
     setJamVideoId(null);
+    setJamSearchFailed(false);
     const query = `${jamKey} ${jamScale} ${jamStyle} backing track guitar`;
+    const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
     try {
       const res = await fetch(`/api/youtube?q=${encodeURIComponent(query)}`);
       const data = await res.json();
-      if (data.items?.length > 0) {
-        setJamVideoId(data.items[0].videoId);
+      const videoId = data.items?.[0]?.videoId;
+      if (videoId) {
+        setJamVideoId(videoId);
+      } else {
+        setJamSearchFailed(true);
       }
-      setJamYtUrl(`https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`);
+      setJamYtUrl(searchUrl);
     } catch {
-      setJamYtUrl(`https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`);
+      setJamSearchFailed(true);
+      setJamYtUrl(searchUrl);
     }
     setJamYtLoading(false);
   }, [jamKey, jamScale, jamStyle]);
@@ -181,8 +190,9 @@ export default function HomePage(props: HomePageProps) {
     finally { setJamSunoLoading(false); }
   }, [jamKey, jamScale, jamStyle, setSunoSuggestUrl]);
 
-  // Today's date info
-  const todayDate = new Date();
+  // Today's date info (stable ref to avoid re-render loops)
+  const todayDateRef = useRef(new Date());
+  const todayDate = todayDateRef.current;
   const dayName = todayDate.toLocaleDateString("en-US", { weekday: "long" });
   const dateStr = todayDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   const dayPct = curExList.length > 0 ? Math.round((curDone / curExList.length) * 100) : 0;
@@ -193,8 +203,19 @@ export default function HomePage(props: HomePageProps) {
     return curExList.filter(e => !doneMap[week + "-" + selDay + "-" + e.id]).slice(0, 3);
   }, [curExList, doneMap, week, selDay]);
 
-  // Song of the week
+  // Song of the week - pull first song found in this week's schedule
   const songOfTheWeek = useMemo(() => {
+    // Check dayExMap for any song exercise across this week's days
+    for (const day of DAYS) {
+      const exs = dayExMap[day] || [];
+      const songEx = exs.find(e => e.c === "Songs" && e.songId);
+      if (songEx) {
+        const entry = SONG_LIBRARY.find(s => s.id === songEx.songId);
+        if (entry) return entry;
+        return { id: songEx.songId!, title: songEx.songName || songEx.n, artist: "" };
+      }
+    }
+    // Fallback: pick from user's song list
     if (songs.length > 0) {
       const idx = week % songs.length;
       const song = songs[idx];
@@ -204,9 +225,10 @@ export default function HomePage(props: HomePageProps) {
     if (popularSongs.length > 0) return popularSongs[week % popularSongs.length];
     if (SONG_LIBRARY.length > 0) return SONG_LIBRARY[week % SONG_LIBRARY.length];
     return null;
-  }, [songs, week]);
+  }, [songs, week, dayExMap]);
 
-  // Coach suggestion based on smart suggestions or daily tip
+  const todayDayOfWeek = todayDate.getDay();
+
   const coachTip = useMemo(() => {
     const tips = [
       "Slow is smooth, smooth is fast. Drop your BPM by 20% and focus on clean execution.",
@@ -219,8 +241,8 @@ export default function HomePage(props: HomePageProps) {
     ];
     const suggestions = getSuggestions();
     if (suggestions.length > 0) return suggestions[0].text;
-    return tips[todayDate.getDay() % tips.length];
-  }, [getSuggestions, todayDate]);
+    return tips[todayDayOfWeek % tips.length];
+  }, [getSuggestions, todayDayOfWeek]);
 
   return (
     <div className="animate-fade-in">
@@ -256,8 +278,24 @@ export default function HomePage(props: HomePageProps) {
             </div>
             {/* Streak badge with flame animation */}
             <div className="flex items-center gap-2 px-4 py-2 rounded-full" style={{ background: streak.currentStreak > 0 ? "rgba(212,168,67,0.1)" : "rgba(255,255,255,0.03)", border: `1px solid ${streak.currentStreak > 0 ? "rgba(212,168,67,0.2)" : "rgba(255,255,255,0.05)"}` }}>
-              <span className={`text-xl ${streak.currentStreak > 0 ? "streak-flame" : ""}`} style={{ display: "inline-block" }}>
-                {streak.currentStreak > 0 ? "\uD83D\uDD25" : "\u26A1"}
+              <span className={`${streak.currentStreak > 0 ? "streak-flame" : ""}`} style={{ display: "inline-flex" }}>
+                {streak.currentStreak > 0 ? (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <linearGradient id="flameGrad" x1="12" y1="2" x2="12" y2="22" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stopColor="#EDCF72"/>
+                        <stop offset="50%" stopColor="#D4A843"/>
+                        <stop offset="100%" stopColor="#B8922E"/>
+                      </linearGradient>
+                    </defs>
+                    <path d="M12 2C12 2 7.5 8 7.5 12.5C7.5 15 9 17 10.5 18C9.5 16.5 9.5 14 11 12C11 12 12 15 12 17C13.5 15.5 15.5 13 15.5 10.5C15.5 8 14 5 12 2Z" fill="url(#flameGrad)" opacity="0.9"/>
+                    <path d="M12 7C12 7 10 10 10 12.5C10 14.5 11 16 12 17C13 16 14 14.5 14 12.5C14 10 12 7 12 7Z" fill="#EDCF72" opacity="0.6"/>
+                  </svg>
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                  </svg>
+                )}
               </span>
               <div className="text-right">
                 <div className="font-bold text-lg leading-none" style={{ color: streak.currentStreak > 0 ? "#D4A843" : "#555" }}>{streak.currentStreak}</div>
@@ -337,40 +375,123 @@ export default function HomePage(props: HomePageProps) {
         `}</style>
       </div>
 
-      {/* ================================================================ */}
-      {/* Quick Access Row - 3 tool shortcuts                              */}
-      {/* ================================================================ */}
-      <div className="flex items-center justify-center gap-6 sm:gap-8 mb-6">
-        {([
-          {
-            label: "Record",
-            icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>,
-            action: () => setView("studio"),
-          },
-          {
-            label: "Jam",
-            icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>,
-            action: () => setView("jam"),
-          },
-          {
-            label: "Tuner",
-            icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12h4l3-9 4 18 3-9h4"/></svg>,
-            action: () => setView("daily"),
-          },
-        ] as const).map(({ label, icon, action }) => (
-          <button
-            key={label}
-            type="button"
-            onClick={action}
-            className="group flex flex-col items-center gap-2 transition-all"
-          >
-            <div className="w-14 h-14 rounded-full flex items-center justify-center transition-all group-hover:scale-105 group-hover:shadow-[0_0_16px_rgba(212,168,67,0.15)]" style={{ background: "rgba(212,168,67,0.08)", border: "1px solid rgba(212,168,67,0.15)", color: "#D4A843" }}>
-              {icon}
-            </div>
-            <span className="text-[11px] text-[#666] group-hover:text-[#D4A843] transition-colors">{label}</span>
-          </button>
-        ))}
+      {/* Mobile-only logo (desktop logo is in sidebar) */}
+      <div className="flex justify-center mb-4 md:hidden">
+        <img src="/logo.png" alt="GuitarForge" className="h-16 object-contain logo-blend" />
       </div>
+
+      {/* ================================================================ */}
+      {/* Quick Jam (collapsible)                                          */}
+      {/* ================================================================ */}
+      <div className="mb-4 rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.05)", background: "#111114" }}>
+        <button onClick={() => setJamOpen(p => !p)} className="panel-header flex items-center gap-2 w-full cursor-pointer bg-transparent border-0 text-left">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+          </svg>
+          <span className="flex-1">Quick Jam</span>
+          <span className="font-readout text-[10px] text-[#555]">
+            {!jamOpen && `${jamKey} ${jamScale} \u00B7 ${jamStyle}`}
+          </span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" className={`transition-transform ${jamOpen ? "rotate-180" : ""}`}>
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+        {jamOpen && (
+          <div className="p-4 sm:p-5">
+            <div className="font-readout text-[10px] text-[#555] mb-3">Find a backing track to jam over</div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 mb-4">
+              <label className="font-label text-[11px] text-[#666]">
+                Style
+                <select value={jamStyle} onChange={(e) => setJamStyle(e.target.value)} className="input w-full mt-1 text-[12px]">
+                  {STYLES.map(s => <option key={s}>{s}</option>)}
+                </select>
+              </label>
+              <label className="font-label text-[11px] text-[#666]">
+                Scale
+                <select value={jamScale} onChange={(e) => setJamScale(e.target.value)} className="input w-full mt-1 text-[12px]">
+                  {MODES.map(m => <option key={m}>{m}</option>)}
+                </select>
+              </label>
+              <label className="font-label text-[11px] text-[#666]">
+                Key
+                <select value={jamKey} onChange={(e) => setJamKey(e.target.value)} className="input w-full mt-1 text-[12px]">
+                  {KEYS_LIST.map(k => <option key={k}>{k}</option>)}
+                </select>
+              </label>
+            </div>
+            <div className="flex flex-wrap gap-2 mb-4">
+              <button onClick={searchJamBacking} disabled={jamYtLoading}
+                className="btn-gold !text-[11px] flex items-center gap-2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                {jamYtLoading ? "Searching..." : "Search YouTube"}
+              </button>
+              <button onClick={generateJamSuno} disabled={jamSunoLoading}
+                className="btn-ghost !text-[11px] flex items-center gap-2 !border-[#D4A843]/30 !text-[#D4A843]">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M12 6v6l4 2"/>
+                </svg>
+                {jamSunoLoading ? "Generating (up to 2 min)..." : "Generate with Suno AI"}
+              </button>
+              <button onClick={() => setView("jam")}
+                className="btn-ghost !text-[11px] flex items-center gap-2">
+                Open Full Jam Mode
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </button>
+            </div>
+            {sunoError && (
+              <div className="text-[12px] px-3 py-2 rounded-lg mb-3" style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444" }}>
+                {sunoError}
+              </div>
+            )}
+            {jamSunoLoading && (
+              <div className="text-[12px] px-3 py-2 rounded-lg mb-3 animate-pulse" style={{ background: "rgba(212,168,67,0.1)", color: "#D4A843" }}>
+                Generating backing track with Suno AI... This can take up to 2 minutes.
+              </div>
+            )}
+            {jamYtLoading && (
+              <div className="aspect-video w-full rounded-lg overflow-hidden bg-[#0e0e10] mb-3 flex items-center justify-center">
+                <div className="font-label text-[12px] text-[#555] animate-pulse">Searching YouTube...</div>
+              </div>
+            )}
+            {jamVideoId && !jamYtLoading && (
+              <div className="mb-3">
+                <div className="aspect-video w-full rounded-lg overflow-hidden bg-black">
+                  <iframe
+                    key={jamVideoId}
+                    src={`https://www.youtube.com/embed/${jamVideoId}?modestbranding=1&rel=0&autoplay=1`}
+                    className="w-full h-full"
+                    allow="autoplay; encrypted-media"
+                    allowFullScreen
+                    title="Jam Backing Track"
+                  />
+                </div>
+              </div>
+            )}
+            {jamSearchFailed && !jamYtLoading && (
+              <div className="text-[12px] px-3 py-2 rounded-lg mb-3" style={{ background: "rgba(255,255,255,0.03)", color: "#666" }}>
+                No videos found. Try a different key or style, or search directly on YouTube.
+              </div>
+            )}
+            {jamYtUrl && !jamYtLoading && (
+              <a href={jamYtUrl} target="_blank" rel="noopener noreferrer"
+                className="font-label text-[11px] text-[#D4A843] hover:text-[#DFBD69] mb-3 inline-block no-underline">
+                Search more on YouTube &rarr;
+              </a>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Suno player (if generated) */}
+      {sunoSuggestUrl && (
+        <div className="rounded-xl p-3 mb-4" style={{ border: "1px solid rgba(255,255,255,0.05)", background: "#111114" }}>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="font-label text-[10px] text-[#D4A843]">AI Backing Track</div>
+            <span className="font-readout text-[9px] text-[#555]">{scale} {mode} &middot; {style}</span>
+          </div>
+          <DarkAudioPlayer src={sunoSuggestUrl} title={`${scale} ${mode} \u00B7 ${style}`} loop />
+        </div>
+      )}
 
       {/* ================================================================ */}
       {/* Three-column grid: Song of the Week + Weekly Progress + Coach    */}
@@ -494,6 +615,22 @@ export default function HomePage(props: HomePageProps) {
                         onChange={(e) => setDayHrs((p) => ({ ...p, [day]: Number(e.target.value) }))}
                         className="input input-gold w-14 text-center !py-1" />
                       <span className="font-label text-[9px] text-[#444]">hrs</span>
+                      <div className="flex gap-1 ml-auto">
+                        <button type="button" title="Copy day" onClick={() => setCopiedDay({ cats: [...ac], hrs })}
+                          className="text-[9px] px-1.5 py-0.5 rounded border transition-all bg-transparent cursor-pointer"
+                          style={{ borderColor: "#333", color: "#666" }}>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                        </button>
+                        <button type="button" title="Paste day" onClick={() => {
+                          if (!copiedDay) return;
+                          setDayCats(p => ({ ...p, [day]: [...copiedDay.cats] }));
+                          setDayHrs(p => ({ ...p, [day]: copiedDay.hrs }));
+                        }}
+                          className="text-[9px] px-1.5 py-0.5 rounded border transition-all bg-transparent cursor-pointer"
+                          style={{ borderColor: copiedDay ? "#D4A843" + "40" : "#222", color: copiedDay ? "#D4A843" : "#333" }}>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
+                        </button>
+                      </div>
                     </div>
                     <div className="pr-[62px]">
                       {Object.entries(CAT_GROUPS).map(([group, cats]) => {
@@ -749,107 +886,6 @@ export default function HomePage(props: HomePageProps) {
         )}
       </div>
 
-      {/* ================================================================ */}
-      {/* Quick Jam (collapsible)                                          */}
-      {/* ================================================================ */}
-      <div className="mb-4 rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.05)", background: "#111114" }}>
-        <button onClick={() => setJamOpen(p => !p)} className="panel-header flex items-center gap-2 w-full cursor-pointer bg-transparent border-0 text-left">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
-          </svg>
-          <span className="flex-1">Quick Jam</span>
-          <span className="font-readout text-[10px] text-[#555]">
-            {!jamOpen && `${jamKey} ${jamScale} \u00B7 ${jamStyle}`}
-          </span>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" className={`transition-transform ${jamOpen ? "rotate-180" : ""}`}>
-            <path d="M6 9l6 6 6-6" />
-          </svg>
-        </button>
-        {jamOpen && (
-          <div className="p-4 sm:p-5">
-            <div className="font-readout text-[10px] text-[#555] mb-3">Find a backing track to jam over</div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 mb-4">
-              <label className="font-label text-[11px] text-[#666]">
-                Style
-                <select value={jamStyle} onChange={(e) => setJamStyle(e.target.value)} className="input w-full mt-1 text-[12px]">
-                  {STYLES.map(s => <option key={s}>{s}</option>)}
-                </select>
-              </label>
-              <label className="font-label text-[11px] text-[#666]">
-                Scale
-                <select value={jamScale} onChange={(e) => setJamScale(e.target.value)} className="input w-full mt-1 text-[12px]">
-                  {MODES.map(m => <option key={m}>{m}</option>)}
-                </select>
-              </label>
-              <label className="font-label text-[11px] text-[#666]">
-                Key
-                <select value={jamKey} onChange={(e) => setJamKey(e.target.value)} className="input w-full mt-1 text-[12px]">
-                  {KEYS_LIST.map(k => <option key={k}>{k}</option>)}
-                </select>
-              </label>
-            </div>
-            <div className="flex flex-wrap gap-2 mb-4">
-              <button onClick={searchJamBacking} disabled={jamYtLoading}
-                className="btn-gold !text-[11px] flex items-center gap-2">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-                {jamYtLoading ? "Searching..." : "Search YouTube"}
-              </button>
-              <button onClick={generateJamSuno} disabled={jamSunoLoading}
-                className="btn-ghost !text-[11px] flex items-center gap-2 !border-[#D4A843]/30 !text-[#D4A843]">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M12 6v6l4 2"/>
-                </svg>
-                {jamSunoLoading ? "Generating (up to 2 min)..." : "Generate with Suno AI"}
-              </button>
-              <button onClick={() => setView("jam")}
-                className="btn-ghost !text-[11px] flex items-center gap-2">
-                Open Full Jam Mode
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-              </button>
-            </div>
-            {sunoError && (
-              <div className="text-[12px] px-3 py-2 rounded-lg mb-3" style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444" }}>
-                {sunoError}
-              </div>
-            )}
-            {jamSunoLoading && (
-              <div className="text-[12px] px-3 py-2 rounded-lg mb-3 animate-pulse" style={{ background: "rgba(212,168,67,0.1)", color: "#D4A843" }}>
-                Generating backing track with Suno AI... This can take up to 2 minutes.
-              </div>
-            )}
-            {jamYtLoading && (
-              <div className="aspect-video w-full rounded-lg overflow-hidden bg-[#0e0e10] mb-3 flex items-center justify-center">
-                <div className="font-label text-[12px] text-[#555] animate-pulse">Searching YouTube...</div>
-              </div>
-            )}
-            {jamVideoId && !jamYtLoading && (
-              <div className="mb-3">
-                <div className="aspect-video w-full rounded-lg overflow-hidden bg-black">
-                  <iframe src={`https://www.youtube.com/embed/${jamVideoId}?modestbranding=1&rel=0&autoplay=1`}
-                    className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen title="Jam Backing Track" />
-                </div>
-                {jamYtUrl && (
-                  <a href={jamYtUrl} target="_blank" rel="noopener noreferrer"
-                    className="font-label text-[11px] text-[#D4A843] hover:text-[#DFBD69] mt-2 inline-block no-underline">
-                    Search more on YouTube &rarr;
-                  </a>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Suno player (if generated) */}
-      {sunoSuggestUrl && (
-        <div className="rounded-xl p-3 mb-4" style={{ border: "1px solid rgba(255,255,255,0.05)", background: "#111114" }}>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="font-label text-[10px] text-[#D4A843]">AI Backing Track</div>
-            <span className="font-readout text-[9px] text-[#555]">{scale} {mode} &middot; {style}</span>
-          </div>
-          <DarkAudioPlayer src={sunoSuggestUrl} title={`${scale} ${mode} \u00B7 ${style}`} loop />
-        </div>
-      )}
 
       {/* ================================================================ */}
       {/* Recent Activity                                                  */}

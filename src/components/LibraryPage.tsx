@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import type { Exercise, Song, DayExMap, BoolMap, ExEditMap, SongEntry } from "@/lib/types";
 import { CATS, COL, STYLES, CAT_GROUPS } from "@/lib/constants";
 import { EXERCISES } from "@/lib/exercises";
@@ -10,6 +10,10 @@ import type { LibraryTrack } from "@/lib/suno";
 import type { View } from "./Navbar";
 import SongFilterBar, { useFilteredSongs } from "./SongFilterBar";
 import type { SongSort, DifficultyFilter } from "./SongFilterBar";
+import { getLibraryRecordings, deleteLibraryRecording } from "@/lib/recordingsLibrary";
+import type { LibraryRecording } from "@/lib/recordingsLibrary";
+import { openRecorderDB } from "@/lib/recorderIdb";
+import AddSongModal from "./AddSongModal";
 
 interface LibraryPageProps {
   week: number;
@@ -60,6 +64,323 @@ interface LibraryPageProps {
   getEditedEx: (ex: Exercise) => Exercise;
 }
 
+/* ── Recordings Tab Component (Practice + Studio sub-tabs) ── */
+interface RecordingsTabProps {
+  recSubTab: "practice" | "studio";
+  setRecSubTab: (t: "practice" | "studio") => void;
+  practiceRecordings: { id: string; exerciseName: string; date: string; url: string; blob: Blob }[];
+  setPracticeRecordings: React.Dispatch<React.SetStateAction<{ id: string; exerciseName: string; date: string; url: string; blob: Blob }[]>>;
+  practiceRecLoaded: boolean;
+  setPracticeRecLoaded: (b: boolean) => void;
+  idbRecordings: { key: string; label: string; date: string; url: string; blobKey: string }[];
+  setIdbRecordings: React.Dispatch<React.SetStateAction<{ key: string; label: string; date: string; url: string; blobKey: string }[]>>;
+  idbRecLoaded: boolean;
+  setIdbRecLoaded: (b: boolean) => void;
+  libRecordings: { id: string; name: string; date: string; duration: number; format: string }[];
+  setLibRecordings: React.Dispatch<React.SetStateAction<{ id: string; name: string; date: string; duration: number; format: string }[]>>;
+  libRecordingsLoaded: boolean;
+  setLibRecordingsLoaded: (b: boolean) => void;
+  playingRecId: string | null;
+  setPlayingRecId: (id: string | null) => void;
+  libAudioRef: React.MutableRefObject<HTMLAudioElement | null>;
+  setView: (v: View) => void;
+}
+
+function RecordingsTab({
+  recSubTab, setRecSubTab,
+  practiceRecordings, setPracticeRecordings,
+  practiceRecLoaded, setPracticeRecLoaded,
+  idbRecordings, setIdbRecordings,
+  idbRecLoaded, setIdbRecLoaded,
+  libRecordings, setLibRecordings,
+  libRecordingsLoaded, setLibRecordingsLoaded,
+  playingRecId, setPlayingRecId,
+  libAudioRef, setView,
+}: RecordingsTabProps) {
+
+  // Load practice recordings from both gf-recordings-library and gf-recorder IDBs
+  useEffect(() => {
+    if (practiceRecLoaded) return;
+    setPracticeRecLoaded(true);
+
+    // 1. Load from gf-recordings-library (saved from exercise modal)
+    getLibraryRecordings().then(recs => {
+      const mapped = recs.map(r => ({
+        id: r.id,
+        exerciseName: r.exerciseName,
+        date: r.savedAt,
+        url: URL.createObjectURL(r.blob),
+        blob: r.blob,
+      }));
+      setPracticeRecordings(prev => {
+        const existingIds = new Set(prev.map(p => p.id));
+        return [...prev, ...mapped.filter(m => !existingIds.has(m.id))];
+      });
+    }).catch(() => {});
+
+    // 2. Load from gf-recorder IDB (all meta-* keys = practice/exercise recordings)
+    openRecorderDB().then(db => {
+      const tx = db.transaction("recordings", "readonly");
+      const store = tx.objectStore("recordings");
+      const allKeysReq = store.getAllKeys();
+      allKeysReq.onsuccess = () => {
+        const keys = allKeysReq.result as string[];
+        const metaKeys = keys.filter(k => typeof k === "string" && k.startsWith("meta-"));
+        const results: { key: string; label: string; date: string; url: string; blobKey: string }[] = [];
+
+        if (metaKeys.length === 0) {
+          setIdbRecordings([]);
+          setIdbRecLoaded(true);
+          return;
+        }
+
+        let loaded = 0;
+        for (const metaKey of metaKeys) {
+          const rawKey = metaKey.replace("meta-", "");
+          const getReq = store.get(metaKey);
+          getReq.onsuccess = () => {
+            if (getReq.result) {
+              try {
+                const metaList: { dt: string; idx: number }[] = JSON.parse(getReq.result);
+                for (const meta of metaList) {
+                  const blobKey = `blob-${rawKey}-${meta.idx}`;
+                  const blobReq = store.get(blobKey);
+                  blobReq.onsuccess = () => {
+                    if (blobReq.result instanceof Blob) {
+                      // Try to create a human-readable label from the key
+                      const label = rawKey.replace(/^ex-/, "Exercise ").replace(/^song-/, "Song ").replace(/-/g, " ");
+                      results.push({
+                        key: rawKey,
+                        label,
+                        date: meta.dt,
+                        url: URL.createObjectURL(blobReq.result),
+                        blobKey,
+                      });
+                    }
+                  };
+                }
+              } catch { /* skip malformed meta */ }
+            }
+            loaded++;
+            if (loaded === metaKeys.length) {
+              // Small delay to let all blob reads finish
+              setTimeout(() => {
+                setIdbRecordings([...results]);
+                setIdbRecLoaded(true);
+              }, 100);
+            }
+          };
+        }
+      };
+    }).catch(() => { setIdbRecLoaded(true); });
+  }, [practiceRecLoaded, setPracticeRecLoaded, setPracticeRecordings, setIdbRecordings, setIdbRecLoaded]);
+
+  // Load studio recordings from localStorage
+  useEffect(() => {
+    if (libRecordingsLoaded) return;
+    setLibRecordingsLoaded(true);
+    try {
+      const raw = localStorage.getItem("gf-recordings");
+      if (raw) setLibRecordings(JSON.parse(raw));
+    } catch {}
+  }, [libRecordingsLoaded, setLibRecordingsLoaded, setLibRecordings]);
+
+  // Play/pause any recording by URL
+  const playUrl = (id: string, url: string) => {
+    if (playingRecId === id) { libAudioRef.current?.pause(); setPlayingRecId(null); return; }
+    if (libAudioRef.current) { libAudioRef.current.pause(); URL.revokeObjectURL(libAudioRef.current.src); }
+    const audio = new Audio(url);
+    audio.onended = () => setPlayingRecId(null);
+    audio.play();
+    libAudioRef.current = audio;
+    setPlayingRecId(id);
+  };
+
+  // Play studio recording from IDB blob
+  const playStudioRecording = (id: string) => {
+    if (playingRecId === id) { libAudioRef.current?.pause(); setPlayingRecId(null); return; }
+    try {
+      const dbReq = indexedDB.open("gf-studio", 1);
+      dbReq.onupgradeneeded = () => {
+        const db = dbReq.result;
+        if (!db.objectStoreNames.contains("recordings")) db.createObjectStore("recordings", { keyPath: "id" });
+      };
+      dbReq.onsuccess = () => {
+        const db = dbReq.result;
+        if (!db.objectStoreNames.contains("recordings")) { return; }
+        const tx = db.transaction("recordings", "readonly");
+        const req = tx.objectStore("recordings").get(id);
+        req.onsuccess = () => {
+          const rec = req.result;
+          if (rec?.blob) {
+            if (libAudioRef.current) { libAudioRef.current.pause(); URL.revokeObjectURL(libAudioRef.current.src); }
+            const url = URL.createObjectURL(rec.blob);
+            const audio = new Audio(url);
+            audio.onended = () => setPlayingRecId(null);
+            audio.play();
+            libAudioRef.current = audio;
+            setPlayingRecId(id);
+          }
+        };
+      };
+    } catch {}
+  };
+
+  // Delete practice recording from gf-recordings-library
+  const deletePracticeRec = async (id: string) => {
+    try { await deleteLibraryRecording(id); } catch {}
+    setPracticeRecordings(p => p.filter(r => r.id !== id));
+    if (playingRecId === id) { libAudioRef.current?.pause(); setPlayingRecId(null); }
+  };
+
+  // Delete idb recorder recording
+  const deleteIdbRec = async (blobKey: string, recId: string) => {
+    try {
+      const db = await openRecorderDB();
+      const tx = db.transaction("recordings", "readwrite");
+      tx.objectStore("recordings").delete(blobKey);
+      await new Promise<void>((resolve) => { tx.oncomplete = () => resolve(); });
+    } catch {}
+    setIdbRecordings(p => p.filter(r => !(r.blobKey === blobKey && (r.key + r.date) === recId)));
+    if (playingRecId === recId) { libAudioRef.current?.pause(); setPlayingRecId(null); }
+  };
+
+  // Delete studio recording
+  const deleteStudioRec = (id: string) => {
+    try {
+      const dbReq = indexedDB.open("gf-studio", 1);
+      dbReq.onupgradeneeded = () => {
+        const db = dbReq.result;
+        if (!db.objectStoreNames.contains("recordings")) db.createObjectStore("recordings", { keyPath: "id" });
+      };
+      dbReq.onsuccess = () => {
+        const db = dbReq.result;
+        if (!db.objectStoreNames.contains("recordings")) return;
+        const tx = db.transaction("recordings", "readwrite");
+        tx.objectStore("recordings").delete(id);
+        tx.oncomplete = () => {
+          const updated = libRecordings.filter(r => r.id !== id);
+          setLibRecordings(updated);
+          try { localStorage.setItem("gf-recordings", JSON.stringify(updated)); } catch {}
+        };
+      };
+    } catch {}
+    if (playingRecId === id) { libAudioRef.current?.pause(); setPlayingRecId(null); }
+  };
+
+  // Combine practice recordings from both sources
+  const allPractice = [
+    ...practiceRecordings.map(r => ({ id: r.id, name: r.exerciseName, date: r.date, url: r.url, source: "library" as const, blobKey: "" })),
+    ...idbRecordings.map(r => ({ id: r.key + r.date, name: r.label, date: r.date, url: r.url, source: "idb" as const, blobKey: r.blobKey })),
+  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  const practiceCount = allPractice.length;
+  const studioCount = libRecordings.length;
+
+  const PlayButton = ({ id, onClick }: { id: string; onClick: () => void }) => (
+    <button type="button" onClick={onClick}
+      className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border transition-all"
+      style={{ borderColor: playingRecId === id ? "#D4A843" : "#333", background: playingRecId === id ? "#D4A843" + "20" : "transparent" }}>
+      {playingRecId === id ? (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#D4A843"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+      ) : (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#D4A843"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      )}
+    </button>
+  );
+
+  return (
+    <div>
+      {/* Sub-tab selector */}
+      <div className="flex gap-2 mb-4">
+        <button type="button" onClick={() => setRecSubTab("practice")}
+          className={`flex-1 font-label text-[11px] px-3 py-2.5 rounded-lg cursor-pointer border transition-all flex items-center justify-center gap-2 ${recSubTab === "practice" ? "bg-[#D4A843]/10 text-[#D4A843] border-[#D4A843]/40" : "border-[#222] text-[#555] hover:border-[#333] hover:text-[#777]"}`}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 19V6l12-3v13"/></svg>
+          Practice{practiceCount > 0 ? ` (${practiceCount})` : ""}
+        </button>
+        <button type="button" onClick={() => setRecSubTab("studio")}
+          className={`flex-1 font-label text-[11px] px-3 py-2.5 rounded-lg cursor-pointer border transition-all flex items-center justify-center gap-2 ${recSubTab === "studio" ? "bg-[#D4A843]/10 text-[#D4A843] border-[#D4A843]/40" : "border-[#222] text-[#555] hover:border-[#333] hover:text-[#777]"}`}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+          Studio{studioCount > 0 ? ` (${studioCount})` : ""}
+        </button>
+      </div>
+
+      {/* Practice Recordings */}
+      {recSubTab === "practice" && (
+        <div>
+          {allPractice.length === 0 ? (
+            <div className="panel p-8 sm:p-12 text-center">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-4 opacity-30">
+                <path d="M9 19V6l12-3v13"/>
+              </svg>
+              <div className="font-heading text-lg text-[#D4A843] mb-2">No Practice Recordings</div>
+              <div className="font-readout text-[11px] text-[#444] mb-4">Record yourself during exercises or practice sessions to see them here.</div>
+            </div>
+          ) : (
+            <>
+              <div className="font-readout text-[10px] text-[#555] mb-3">{allPractice.length} practice recordings</div>
+              {allPractice.map(rec => (
+                <div key={rec.id} className="panel p-4 mb-1.5">
+                  <div className="flex items-center gap-3">
+                    <PlayButton id={rec.id} onClick={() => playUrl(rec.id, rec.url)} />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-heading text-[13px] !font-medium !normal-case !tracking-normal truncate">{rec.name}</div>
+                      <div className="font-readout text-[10px] text-[#444]">
+                        {(() => {
+                          try { return new Date(rec.date).toLocaleDateString(); } catch { return rec.date; }
+                        })()}
+                      </div>
+                    </div>
+                    <button type="button" onClick={() => {
+                      if (rec.source === "library") deletePracticeRec(rec.id);
+                      else deleteIdbRec(rec.blobKey, rec.id);
+                    }} className="btn-ghost !px-2 !py-1 !text-[9px] !text-[#C41E3A] !border-[#333] flex-shrink-0">Delete</button>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Studio Recordings */}
+      {recSubTab === "studio" && (
+        <div>
+          {libRecordings.length === 0 ? (
+            <div className="panel p-8 sm:p-12 text-center">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-4 opacity-30">
+                <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/>
+              </svg>
+              <div className="font-heading text-lg text-[#D4A843] mb-2">No Studio Recordings</div>
+              <div className="font-readout text-[11px] text-[#444] mb-4">Record or export tracks in the Studio to see them here.</div>
+              <button type="button" onClick={() => setView("studio")} className="btn-ghost">Open Studio</button>
+            </div>
+          ) : (
+            <>
+              <div className="font-readout text-[10px] text-[#555] mb-3">{libRecordings.length} studio recordings</div>
+              {libRecordings.map(rec => (
+                <div key={rec.id} className="panel p-4 mb-1.5">
+                  <div className="flex items-center gap-3">
+                    <PlayButton id={rec.id} onClick={() => playStudioRecording(rec.id)} />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-heading text-[13px] !font-medium !normal-case !tracking-normal truncate">{rec.name}</div>
+                      <div className="font-readout text-[10px] text-[#444]">
+                        {new Date(rec.date).toLocaleDateString()} · {Math.round(rec.duration)}s · {rec.format?.toUpperCase() || "WAV"}
+                      </div>
+                    </div>
+                    <button type="button" onClick={() => deleteStudioRec(rec.id)}
+                      className="btn-ghost !px-2 !py-1 !text-[9px] !text-[#C41E3A] !border-[#333] flex-shrink-0">Delete</button>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function LibraryPage(props: LibraryPageProps) {
   const {
     week, doneMap, exEdits, customSongs, mySongs,
@@ -87,6 +408,45 @@ export default function LibraryPage(props: LibraryPageProps) {
   const [playingRecId, setPlayingRecId] = useState<string | null>(null);
   const [playingBackingId, setPlayingBackingId] = useState<string | null>(null);
   const libAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [activeStyle, setActiveStyle] = useState<string | null>(null);
+  // Add Exercise form state
+  const [showAddExForm, setShowAddExForm] = useState(false);
+  const [newExName, setNewExName] = useState("");
+  const [newExCat, setNewExCat] = useState("Warm-Up");
+  const [newExMinutes, setNewExMinutes] = useState(5);
+  const [newExBpm, setNewExBpm] = useState("");
+  const [newExDesc, setNewExDesc] = useState("");
+  const [newExFocus, setNewExFocus] = useState("");
+  const [customExercises, setCustomExercises] = useState<Exercise[]>(() => {
+    try { const raw = localStorage.getItem("gf-custom-exercises"); return raw ? JSON.parse(raw) : []; } catch { return []; }
+  });
+
+  function saveCustomExercise() {
+    if (!newExName.trim()) return;
+    const maxId = Math.max(...EXERCISES.map(e => e.id), ...customExercises.map(e => e.id), 9999);
+    const ex: Exercise = {
+      id: maxId + 1, c: newExCat, n: newExName.trim(), m: newExMinutes,
+      b: newExBpm, d: newExDesc, yt: newExName.trim() + " guitar exercise",
+      t: "", f: newExFocus || newExCat, bt: false,
+    };
+    const next = [...customExercises, ex];
+    setCustomExercises(next);
+    try { localStorage.setItem("gf-custom-exercises", JSON.stringify(next)); } catch {}
+    setShowAddExForm(false);
+    setNewExName(""); setNewExDesc(""); setNewExBpm(""); setNewExFocus("");
+  }
+
+  const allExercises = useMemo(() => [...EXERCISES, ...customExercises], [customExercises]);
+
+  // Add Song modal state
+  const [addSongModalOpen, setAddSongModalOpen] = useState(false);
+
+  // Recordings sub-tab state
+  const [recSubTab, setRecSubTab] = useState<"practice" | "studio">("practice");
+  const [practiceRecordings, setPracticeRecordings] = useState<{ id: string; exerciseName: string; date: string; url: string; blob: Blob }[]>([]);
+  const [practiceRecLoaded, setPracticeRecLoaded] = useState(false);
+  const [idbRecordings, setIdbRecordings] = useState<{ key: string; label: string; date: string; url: string; blobKey: string }[]>([]);
+  const [idbRecLoaded, setIdbRecLoaded] = useState(false);
 
   return (
     <div className="animate-fade-in">
@@ -110,13 +470,48 @@ export default function LibraryPage(props: LibraryPageProps) {
 
       {/* Tab 1: Exercises */}
       {libTab === "exercises" && (<>
-        <input type="text" placeholder="Search exercise..." className="input w-full mb-3"
-          value={libSearch} onChange={e => setLibSearch(e.target.value)} />
+        <div className="flex items-center gap-2 mb-3">
+          <input type="text" placeholder="Search exercise..." className="input flex-1"
+            value={libSearch} onChange={e => setLibSearch(e.target.value)} />
+          <button type="button" onClick={() => setShowAddExForm(f => !f)}
+            className="font-label text-[11px] px-3 py-2 rounded-lg cursor-pointer border border-[#D4A843] bg-[#D4A843]/10 text-[#D4A843] hover:bg-[#D4A843]/20 transition-all flex-shrink-0 flex items-center gap-1.5">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
+            Add Exercise
+          </button>
+        </div>
+
+        {showAddExForm && (
+          <div className="panel p-4 mb-4 !border-[#D4A843]/30">
+            <div className="font-label text-[11px] text-[#D4A843] mb-3">New Custom Exercise</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+              <input type="text" placeholder="Exercise name *" value={newExName} onChange={e => setNewExName(e.target.value)}
+                className="input" />
+              <select value={newExCat} onChange={e => setNewExCat(e.target.value)} className="input">
+                {CATS.filter(c => c !== "Songs").map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <input type="number" placeholder="Minutes" value={newExMinutes} onChange={e => setNewExMinutes(Number(e.target.value))}
+                className="input" min={1} max={60} />
+              <input type="text" placeholder="BPM range (e.g. 80-120)" value={newExBpm} onChange={e => setNewExBpm(e.target.value)}
+                className="input" />
+            </div>
+            <textarea placeholder="Description" value={newExDesc} onChange={e => setNewExDesc(e.target.value)}
+              className="input w-full mb-2" rows={2} />
+            <input type="text" placeholder="Focus areas (e.g. Speed, Accuracy)" value={newExFocus} onChange={e => setNewExFocus(e.target.value)}
+              className="input w-full mb-3" />
+            <div className="flex gap-2">
+              <button type="button" onClick={saveCustomExercise}
+                className="font-label text-[11px] px-4 py-2 rounded-lg cursor-pointer bg-[#D4A843] text-[#121214] hover:bg-[#e5c060] transition-all">
+                Save Exercise
+              </button>
+              <button type="button" onClick={() => setShowAddExForm(false)} className="btn-ghost !text-[10px]">Cancel</button>
+            </div>
+          </div>
+        )}
 
         <div className="flex gap-1 flex-wrap mb-4">
-          <button onClick={() => setLibFilter("All")} className={`font-label text-[10px] px-3 py-1 rounded-lg cursor-pointer border ${libFilter === "All" ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>All ({EXERCISES.length})</button>
+          <button onClick={() => setLibFilter("All")} className={`font-label text-[10px] px-3 py-1 rounded-lg cursor-pointer border ${libFilter === "All" ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>All ({allExercises.length})</button>
           {CATS.filter((c) => c !== "Songs").map((cat) => {
-            const cnt = EXERCISES.filter((e) => e.c === cat).length, c = COL[cat];
+            const cnt = allExercises.filter((e) => e.c === cat).length, c = COL[cat];
             if (!cnt) return null;
             return <button key={cat} onClick={() => setLibFilter(cat)} className="font-label text-[10px] px-3 py-1 rounded-lg cursor-pointer border transition-all"
               style={libFilter === cat ? { background: c, borderColor: c, color: "#121214" } : { borderColor: c + "40", color: c + "99" }}>{cat} ({cnt})</button>;
@@ -130,7 +525,7 @@ export default function LibraryPage(props: LibraryPageProps) {
         </div>
 
         {(() => {
-          const filtered = EXERCISES.filter((e) => {
+          const filtered = allExercises.filter((e) => {
             if (libFilter !== "All" && e.c !== libFilter) return false;
             if (libSearch.trim()) {
               const q = libSearch.trim().toLowerCase();
@@ -217,7 +612,6 @@ export default function LibraryPage(props: LibraryPageProps) {
           "Death Metal": { color: "#991b1b", icon: "M13 10V3L4 14h7v7l9-11h-7z", techniques: ["Tremolo Picking", "Blast Beats", "Dissonance", "Sweep Picking"], scales: ["Phrygian", "Locrian", "Chromatic", "Whole Tone"] },
           "Fusion": { color: "#d946ef", icon: "M9 19V6l12-3v13", techniques: ["Legato", "Tapping", "Hybrid Picking", "Chord Extensions"], scales: ["Lydian", "Dorian", "Altered", "Melodic Minor"] },
         };
-        const [activeStyle, setActiveStyle] = useState<string | null>(null);
         const styleExercises = activeStyle ? EXERCISES.filter(e => e.styles?.includes(activeStyle)) : [];
         const allSongsForStyle = activeStyle ? [...SONG_LIBRARY, ...customSongs].filter(s => s.genre?.toLowerCase().includes(activeStyle.toLowerCase())) : [];
 
@@ -339,7 +733,7 @@ export default function LibraryPage(props: LibraryPageProps) {
               <>
                 <div className="font-readout text-[10px] text-[#555] mb-3">{savedSongs.length} saved songs</div>
                 {savedSongs.map(song => {
-                  const dc = song.difficulty ? ({ Beginner: "#22c55e", Intermediate: "#D4A843", Advanced: "#ef4444" }[song.difficulty] || "#888") : "#888";
+                  const dc = song.difficulty ? ({ Beginner: "#22c55e", Intermediate: "#D4A843", Advanced: "#ef4444", Expert: "#dc2626" }[song.difficulty] || "#888") : "#888";
                   return (
                     <div key={song.id} className="panel p-4 mb-1.5 cursor-pointer hover:border-[#D4A843]/30 transition-all">
                       <div className="flex justify-between items-start">
@@ -371,96 +765,19 @@ export default function LibraryPage(props: LibraryPageProps) {
         );
       })()}
 
-      {/* Tab 4: My Recordings */}
-      {libTab === "recordings" && (() => {
-        if (!libRecordingsLoaded) {
-          try {
-            const raw = localStorage.getItem("gf-recordings");
-            if (raw) setLibRecordings(JSON.parse(raw));
-          } catch {}
-          setLibRecordingsLoaded(true);
-        }
-        const playRecording = async (id: string) => {
-          if (playingRecId === id) { libAudioRef.current?.pause(); setPlayingRecId(null); return; }
-          try {
-            const dbReq = indexedDB.open("gf-studio", 2);
-            dbReq.onsuccess = () => {
-              const db = dbReq.result;
-              const tx = db.transaction("recordings", "readonly");
-              const req = tx.objectStore("recordings").get(id);
-              req.onsuccess = () => {
-                const rec = req.result;
-                if (rec?.blob) {
-                  if (libAudioRef.current) { libAudioRef.current.pause(); URL.revokeObjectURL(libAudioRef.current.src); }
-                  const url = URL.createObjectURL(rec.blob);
-                  const audio = new Audio(url);
-                  audio.onended = () => setPlayingRecId(null);
-                  audio.play();
-                  libAudioRef.current = audio;
-                  setPlayingRecId(id);
-                }
-              };
-            };
-          } catch {}
-        };
-        const deleteRecording = async (id: string) => {
-          try {
-            const dbReq = indexedDB.open("gf-studio", 2);
-            dbReq.onsuccess = () => {
-              const db = dbReq.result;
-              const tx = db.transaction("recordings", "readwrite");
-              tx.objectStore("recordings").delete(id);
-              tx.oncomplete = () => {
-                const updated = libRecordings.filter(r => r.id !== id);
-                setLibRecordings(updated);
-                try { localStorage.setItem("gf-recordings", JSON.stringify(updated)); } catch {}
-              };
-            };
-          } catch {}
-          if (playingRecId === id) { libAudioRef.current?.pause(); setPlayingRecId(null); }
-        };
-        return (
-          <div>
-            {libRecordings.length === 0 ? (
-              <div className="panel p-8 sm:p-12 text-center">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-4 opacity-30">
-                  <path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m-4-1h8M12 4a3 3 0 00-3 3v4a3 3 0 006 0V7a3 3 0 00-3-3z"/>
-                </svg>
-                <div className="font-heading text-lg text-[#D4A843] mb-2">No Recordings</div>
-                <div className="font-readout text-[11px] text-[#444] mb-4">Record yourself in any exercise or the Studio to see recordings here.</div>
-                <button type="button" onClick={() => setView("studio")} className="btn-ghost">Open Studio</button>
-              </div>
-            ) : (
-              <>
-                <div className="font-readout text-[10px] text-[#555] mb-3">{libRecordings.length} recordings</div>
-                {libRecordings.map(rec => (
-                  <div key={rec.id} className="panel p-4 mb-1.5">
-                    <div className="flex items-center gap-3">
-                      <button type="button" onClick={() => playRecording(rec.id)}
-                        className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border transition-all"
-                        style={{ borderColor: playingRecId === rec.id ? "#D4A843" : "#333", background: playingRecId === rec.id ? "#D4A843" + "20" : "transparent" }}>
-                        {playingRecId === rec.id ? (
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="#D4A843"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-                        ) : (
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="#D4A843"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                        )}
-                      </button>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-heading text-[13px] !font-medium !normal-case !tracking-normal truncate">{rec.name}</div>
-                        <div className="font-readout text-[10px] text-[#444]">
-                          {new Date(rec.date).toLocaleDateString()} · {Math.round(rec.duration)}s · {rec.format?.toUpperCase() || "WAV"}
-                        </div>
-                      </div>
-                      <button type="button" onClick={() => deleteRecording(rec.id)}
-                        className="btn-ghost !px-2 !py-1 !text-[9px] !text-[#C41E3A] !border-[#333] flex-shrink-0">Delete</button>
-                    </div>
-                  </div>
-                ))}
-              </>
-            )}
-          </div>
-        );
-      })()}
+      {/* Tab 4: My Recordings - Split into Practice / Studio sub-tabs */}
+      {libTab === "recordings" && <RecordingsTab
+        recSubTab={recSubTab} setRecSubTab={setRecSubTab}
+        practiceRecordings={practiceRecordings} setPracticeRecordings={setPracticeRecordings}
+        practiceRecLoaded={practiceRecLoaded} setPracticeRecLoaded={setPracticeRecLoaded}
+        idbRecordings={idbRecordings} setIdbRecordings={setIdbRecordings}
+        idbRecLoaded={idbRecLoaded} setIdbRecLoaded={setIdbRecLoaded}
+        libRecordings={libRecordings} setLibRecordings={setLibRecordings}
+        libRecordingsLoaded={libRecordingsLoaded} setLibRecordingsLoaded={setLibRecordingsLoaded}
+        playingRecId={playingRecId} setPlayingRecId={setPlayingRecId}
+        libAudioRef={libAudioRef}
+        setView={setView}
+      />}
 
       {/* Tab 5: Backing Tracks */}
       {libTab === "backing" && (() => {
@@ -548,23 +865,18 @@ export default function LibraryPage(props: LibraryPageProps) {
               totalCount={songLibAllSongs.length}
             />
             <div className="mb-4">
-              <button type="button" onClick={() => setShowAddSong(!showAddSong)} className="btn-ghost !text-[10px] mb-2">
-                {showAddSong ? "Close" : "+ Add Song"}
+              <button type="button" onClick={() => setAddSongModalOpen(true)}
+                className="font-label text-[11px] px-3 py-2 rounded-lg cursor-pointer border border-[#D4A843] bg-[#D4A843]/10 text-[#D4A843] hover:bg-[#D4A843]/20 transition-all flex-shrink-0 flex items-center gap-1.5 mb-2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
+                Add Song Manually
               </button>
-              {showAddSong && (
-                <div className="panel p-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2">
-                    <input placeholder="Song title..." value={newSongTitle} onChange={e => setNewSongTitle(e.target.value)} className="input min-w-0" />
-                    <input placeholder="Artist..." value={newSongArtist} onChange={e => setNewSongArtist(e.target.value)} className="input min-w-0" />
-                    <button type="button" onClick={() => {
-                      if (!newSongTitle.trim() || !newSongArtist.trim()) return;
-                      setCustomSongs(p => [...p, { id: Date.now(), title: newSongTitle.trim(), artist: newSongArtist.trim() }]);
-                      setNewSongTitle(""); setNewSongArtist("");
-                    }} className="btn-gold">Add</button>
-                  </div>
-                </div>
-              )}
             </div>
+            {addSongModalOpen && (
+              <AddSongModal
+                onClose={() => setAddSongModalOpen(false)}
+                onSave={(song) => setCustomSongs(p => [...p, song])}
+              />
+            )}
             {songLibFiltered.length === 0 && (
               <div className="panel p-8 text-center"><div className="font-label text-sm text-[#444]">No songs found</div></div>
             )}
@@ -572,7 +884,7 @@ export default function LibraryPage(props: LibraryPageProps) {
               const limited = songLibFiltered.slice(0, songLibLimit);
               return (<>
                 {limited.map(song => {
-                  const dc = song.difficulty ? ({ Beginner: "#22c55e", Intermediate: "#D4A843", Advanced: "#ef4444" }[song.difficulty] || "#888") : "#888";
+                  const dc = song.difficulty ? ({ Beginner: "#22c55e", Intermediate: "#D4A843", Advanced: "#ef4444", Expert: "#dc2626" }[song.difficulty] || "#888") : "#888";
                   const isCustom = song.id >= 1000000000;
                   const isSaved = mySongs.includes(song.id);
                   return (

@@ -125,6 +125,14 @@ function IconJam() {
   );
 }
 
+function IconTuner() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 12h4l3-9 4 18 3-9h4" />
+    </svg>
+  );
+}
+
 // ── Navigation data ──
 
 interface NavItem {
@@ -138,6 +146,7 @@ const MAIN_NAV: NavItem[] = [
   { id: "daily", label: "Practice", icon: IconPractice },
   { id: "learn", label: "Learn", icon: IconLearn },
   { id: "studio", label: "Studio", icon: IconStudio },
+  { id: "jam", label: "Jam Mode", icon: IconJam },
   { id: "lib", label: "Library", icon: IconLibrary },
 ];
 
@@ -159,6 +168,7 @@ const MORE_DRAWER_ITEMS: NavItem[] = [
   { id: "coach", label: "AI Coach", icon: IconCoach },
   { id: "skills", label: "Skill Tree", icon: IconSkills },
   { id: "jam", label: "Jam Mode", icon: IconJam },
+  { id: "daily", label: "Tuner", icon: IconTuner },
   { id: "suno", label: "Suno AI", icon: IconSuno },
 ];
 

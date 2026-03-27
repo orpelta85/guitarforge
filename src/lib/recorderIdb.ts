@@ -19,7 +19,7 @@ export async function idbSaveRecording(key: string, list: SavedRecording[], blob
   const db = await openRecorderDB();
   // Use actual blob map keys (newest-first) to match list order
   const blobKeys = Array.from(blobs.keys()).sort((a, b) => b - a);
-  const metaList = list.map((r, i) => ({ dt: r.dt, idx: blobKeys[i] ?? i }));
+  const metaList = list.map((r, i) => ({ dt: r.dt, idx: blobKeys[i] ?? i, ...(r.name ? { name: r.name } : {}) }));
   return new Promise((resolve, reject) => {
     const tx = db.transaction(IDB_STORE, "readwrite");
     const store = tx.objectStore(IDB_STORE);
@@ -43,7 +43,7 @@ export async function idbLoadRecordings(key: string): Promise<{ list: SavedRecor
         resolve({ list: [], blobs: new Map() });
         return;
       }
-      const metaList: { dt: string; idx: number }[] = JSON.parse(metaReq.result);
+      const metaList: { dt: string; idx: number; name?: string }[] = JSON.parse(metaReq.result);
       const blobs = new Map<number, Blob>();
       const list: SavedRecording[] = [];
       let loaded = 0;
@@ -53,7 +53,7 @@ export async function idbLoadRecordings(key: string): Promise<{ list: SavedRecor
         blobReq.onsuccess = () => {
           if (blobReq.result instanceof Blob) {
             blobs.set(meta.idx, blobReq.result);
-            list.push({ dt: meta.dt, d: URL.createObjectURL(blobReq.result) });
+            list.push({ dt: meta.dt, d: URL.createObjectURL(blobReq.result), ...(meta.name ? { name: meta.name } : {}) });
           }
           loaded++;
           if (loaded === metaList.length) resolve({ list, blobs });

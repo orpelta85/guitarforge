@@ -6,6 +6,8 @@ import { EXERCISES } from "@/lib/exercises";
 import { autoFill, makeSongItemSimple } from "@/lib/helpers";
 import MetronomeBox from "./MetronomeBox";
 import RecorderBox from "./RecorderBox";
+import DailyRecorderBox from "./DailyRecorderBox";
+import type { DailyRecorderControl } from "./DailyRecorderBox";
 import type { View } from "./Navbar";
 
 // ── Note detection constants ──
@@ -112,6 +114,9 @@ interface PracticePageProps {
   setSongPickerSearch: (s: string) => void;
   setModal: (ex: Exercise | null) => void;
   setFocusEx: (v: { ex: Exercise; idx: number } | null) => void;
+  // Daily recorder
+  dailyRecControlRef: React.MutableRefObject<DailyRecorderControl | null>;
+  exerciseModalOpen: boolean;
   // Functions
   toggleDone: (key: string) => void;
   getEditedEx: (ex: Exercise) => Exercise;
@@ -129,6 +134,7 @@ export default function PracticePage(props: PracticePageProps) {
     setExPickerOpen, setExPickerSearch, setExPickerCat,
     setSongPickerOpen, setSongPickerSearch,
     setModal, setFocusEx,
+    dailyRecControlRef, exerciseModalOpen,
     toggleDone, getEditedEx, buildDay,
   } = props;
 
@@ -137,6 +143,9 @@ export default function PracticePage(props: PracticePageProps) {
   const [showTuner, setShowTuner] = useState(false);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+
+  // Copy/Paste clipboard for day routine
+  const [copiedDayRoutine, setCopiedDayRoutine] = useState<{ cats: string[]; hrs: number; exs: Exercise[] } | null>(null);
 
   // ── Tuner state ──
   const [tunerNote, setTunerNote] = useState("");
@@ -281,6 +290,23 @@ export default function PracticePage(props: PracticePageProps) {
             {songs.length > 0 && (
               <button type="button" onClick={() => { setSongPickerOpen(true); setSongPickerSearch(""); }} className="btn-ghost" style={{ borderColor: "#1a3a2a", color: "#33CC33" }}>+ Song</button>
             )}
+            <button type="button" title="Copy this day's routine" onClick={() => setCopiedDayRoutine({
+              cats: [...(dayCats[selDay] || [])],
+              hrs: dayHrs[selDay] || 0,
+              exs: [...(dayExMap[selDay] || [])],
+            })} className="btn-ghost !px-2" style={{ borderColor: "#333" }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              <span className="ml-1">Copy</span>
+            </button>
+            <button type="button" title="Paste routine to this day" onClick={() => {
+              if (!copiedDayRoutine) return;
+              setDayCats(p => ({ ...p, [selDay]: [...copiedDayRoutine.cats] }));
+              setDayHrs(p => ({ ...p, [selDay]: copiedDayRoutine.hrs }));
+              setDayExMap(p => ({ ...p, [selDay]: [...copiedDayRoutine.exs] }));
+            }} className="btn-ghost !px-2" style={{ borderColor: copiedDayRoutine ? "#D4A843" + "40" : "#222", color: copiedDayRoutine ? "#D4A843" : "#333" }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
+              <span className="ml-1">Paste</span>
+            </button>
           </div>
 
           {/* Unified Exercise Picker */}
@@ -532,10 +558,14 @@ export default function PracticePage(props: PracticePageProps) {
         </div>
       )}
 
-      {/* Inline Recorder */}
+      {/* Inline Daily Session Recorder */}
       {showQuickRecorder && (
         <div className="panel p-4 mb-4" style={{ borderColor: "#C41E3A" + "30" }}>
-          <RecorderBox storageKey={week + "-" + selDay + "-session"} />
+          <DailyRecorderBox
+            storageKey={week + "-" + selDay + "-session"}
+            controlRef={dailyRecControlRef}
+            externalPause={exerciseModalOpen}
+          />
         </div>
       )}
 
@@ -602,20 +632,12 @@ export default function PracticePage(props: PracticePageProps) {
                   className="btn-ghost !px-1.5 !py-1 !text-[9px]" style={{ opacity: idx === 0 ? 0.2 : 1 }} title="Move up">UP</button>
                 <button onClick={() => { if (idx >= curExList.length - 1) return; setDayExMap((p) => { const l = (p[selDay] || []).slice(); [l[idx], l[idx+1]] = [l[idx+1], l[idx]]; return { ...p, [selDay]: l }; }); }}
                   className="btn-ghost !px-1.5 !py-1 !text-[9px]" style={{ opacity: idx >= curExList.length - 1 ? 0.2 : 1 }} title="Move down">DN</button>
-                <button type="button" onClick={() => setFocusEx({ ex, idx })} className="btn-ghost !px-1.5 !py-1 !text-[9px]" title="Enter focus mode: full-screen timer for this exercise">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="inline mr-0.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
-                  Focus
-                </button>
                 {!isSong && <button onClick={() => { const pool = EXERCISES.filter((e) => e.c === ex.c && e.id !== ex.id); if (!pool.length) return; setDayExMap((p) => { const l = (p[selDay] || []).slice(); l[idx] = pool[Math.floor(Math.random() * pool.length)]; return { ...p, [selDay]: l }; }); }}
                   className="btn-ghost !px-1.5 !py-1 !text-[9px]">Swap</button>}
                 <button type="button" onClick={() => setDayExMap((p) => { const l = (p[selDay] || []).slice(); l.splice(idx, 1); return { ...p, [selDay]: l }; })}
                   className="btn-ghost !px-1.5 !py-1 !text-[9px] !text-[#C41E3A]">Del</button>
               </div>
               <div className="mobile-action-row flex-shrink-0">
-                <button type="button" onClick={(e) => { e.stopPropagation(); setFocusEx({ ex, idx }); }}
-                  className="btn-ghost !px-2 !py-1 !text-[9px]" aria-label="Focus mode: full-screen timer" title="Focus mode">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
-                </button>
                 {!isSong && <button type="button" onClick={(e) => { e.stopPropagation(); const pool = EXERCISES.filter((x) => x.c === ex.c && x.id !== ex.id); if (!pool.length) return; setDayExMap((p) => { const l = (p[selDay] || []).slice(); l[idx] = pool[Math.floor(Math.random() * pool.length)]; return { ...p, [selDay]: l }; }); }}
                   className="btn-ghost !px-2 !py-1 !text-[9px]" aria-label="Swap">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
