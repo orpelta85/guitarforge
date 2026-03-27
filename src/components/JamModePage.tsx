@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
+import JamLooper from "@/components/JamLooper";
 
 // ── Music Theory Data ──
 
@@ -30,6 +31,235 @@ interface ChordDef {
   numeral: string;
   display: string;
 }
+
+// ── Drum Patterns ──
+// Each pattern works at 16th-note resolution (16 subdivisions per bar of 4/4)
+// Indices 0-15 represent the 16 sixteenth notes in one bar
+
+type DrumStyleName = "rock" | "metal" | "blues_shuffle" | "jazz" | "funk" | "punk" | "ballad" | "latin" | "reggae" | "country";
+
+interface DrumPattern {
+  name: string;
+  kick: number[];
+  snare: number[];
+  hihat: number[];
+  crash?: number[];
+  ride?: number[];
+}
+
+const DRUM_PATTERNS: Record<DrumStyleName, DrumPattern> = {
+  rock: {
+    name: "Rock",
+    kick: [0, 8],           // 1 and 3
+    snare: [4, 12],         // 2 and 4
+    hihat: [0, 2, 4, 6, 8, 10, 12, 14], // 8th notes
+  },
+  metal: {
+    name: "Metal",
+    kick: [0, 2, 4, 6, 8, 10, 12, 14], // double bass 8ths
+    snare: [4, 12],         // 2 and 4
+    hihat: [0, 2, 4, 6, 8, 10, 12, 14], // 8th notes
+    crash: [0],             // crash on 1
+  },
+  blues_shuffle: {
+    name: "Blues Shuffle",
+    kick: [0, 8],           // 1 and 3
+    snare: [4, 12],         // 2 and 4
+    hihat: [0, 3, 4, 7, 8, 11, 12, 15], // triplet feel (swing 8ths)
+  },
+  jazz: {
+    name: "Jazz",
+    kick: [0, 10],          // light kick on 1, ghosted on 3-and
+    snare: [4, 7, 12, 15],  // ghost notes + backbeat
+    hihat: [],              // no hihat
+    ride: [0, 3, 4, 6, 8, 11, 12, 14], // ride cymbal pattern
+  },
+  funk: {
+    name: "Funk",
+    kick: [0, 6, 10],       // syncopated kick (1, and-of-2, and-of-3)
+    snare: [4, 7, 12, 14],  // 2 with ghost on and-of-2, 4 with ghost before
+    hihat: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], // tight 16ths
+  },
+  punk: {
+    name: "Punk",
+    kick: [0, 4, 8, 12],    // fast four-on-floor
+    snare: [4, 12],         // snare on 2 and 4
+    hihat: [0, 2, 4, 6, 8, 10, 12, 14], // open 8ths
+    crash: [0],             // crash every bar
+  },
+  ballad: {
+    name: "Ballad",
+    kick: [0, 8],           // soft kick 1 and 3
+    snare: [4, 12],         // rim click on 2 and 4 (played softer)
+    hihat: [0, 2, 4, 6, 8, 10, 12, 14], // brushed 8ths
+  },
+  latin: {
+    name: "Latin",
+    kick: [0, 3, 6, 10],    // tumbao pattern
+    snare: [4, 12],         // cross-stick
+    hihat: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], // shaker 16ths
+  },
+  reggae: {
+    name: "Reggae",
+    kick: [8],              // kick on 3 only
+    snare: [8],             // rimshot on 3
+    hihat: [2, 6, 10, 14],  // offbeats only
+  },
+  country: {
+    name: "Country",
+    kick: [0, 8],           // boom-chuck: kick 1+3
+    snare: [4, 12],         // snare 2+4
+    hihat: [0, 2, 4, 6, 8, 10, 12, 14], // 8th notes
+  },
+};
+
+const DRUM_STYLE_LIST: DrumStyleName[] = ["rock", "metal", "blues_shuffle", "jazz", "funk", "punk", "ballad", "latin", "reggae", "country"];
+
+// ── Bass Patterns ──
+// Bass patterns define which subdivisions (0-15 per bar) get which chord tone
+// Tones: "root", "third", "fifth", "seventh", "octave"
+
+type BassStyleName = "rock" | "metal" | "blues" | "jazz" | "funk" | "punk" | "ballad" | "reggae";
+
+interface BassEvent {
+  sub: number;          // subdivision index (0-15)
+  tone: "root" | "third" | "fifth" | "seventh" | "octave";
+  duration: string;     // Tone.js duration
+}
+
+interface BassPattern {
+  name: string;
+  events: BassEvent[];
+}
+
+const BASS_PATTERNS: Record<BassStyleName, BassPattern> = {
+  rock: {
+    name: "Rock",
+    events: [
+      { sub: 0, tone: "root", duration: "4n" },
+      { sub: 8, tone: "fifth", duration: "4n" },
+    ],
+  },
+  metal: {
+    name: "Metal",
+    events: [
+      { sub: 0, tone: "root", duration: "8n" },
+      { sub: 2, tone: "root", duration: "8n" },
+      { sub: 4, tone: "root", duration: "8n" },
+      { sub: 6, tone: "root", duration: "8n" },
+      { sub: 8, tone: "root", duration: "8n" },
+      { sub: 10, tone: "root", duration: "8n" },
+      { sub: 12, tone: "root", duration: "8n" },
+      { sub: 14, tone: "root", duration: "8n" },
+    ],
+  },
+  blues: {
+    name: "Blues Walk",
+    events: [
+      { sub: 0, tone: "root", duration: "4n" },
+      { sub: 4, tone: "third", duration: "4n" },
+      { sub: 8, tone: "fifth", duration: "4n" },
+      { sub: 12, tone: "seventh", duration: "4n" },
+    ],
+  },
+  jazz: {
+    name: "Jazz Walking",
+    events: [
+      { sub: 0, tone: "root", duration: "4n" },
+      { sub: 4, tone: "fifth", duration: "4n" },
+      { sub: 8, tone: "third", duration: "4n" },
+      { sub: 12, tone: "seventh", duration: "4n" },
+    ],
+  },
+  funk: {
+    name: "Funk",
+    events: [
+      { sub: 0, tone: "root", duration: "16n" },
+      { sub: 3, tone: "octave", duration: "16n" },
+      { sub: 6, tone: "root", duration: "16n" },
+      { sub: 8, tone: "fifth", duration: "8n" },
+      { sub: 10, tone: "octave", duration: "16n" },
+      { sub: 13, tone: "root", duration: "16n" },
+    ],
+  },
+  punk: {
+    name: "Punk",
+    events: [
+      { sub: 0, tone: "root", duration: "8n" },
+      { sub: 2, tone: "root", duration: "8n" },
+      { sub: 4, tone: "root", duration: "8n" },
+      { sub: 6, tone: "root", duration: "8n" },
+      { sub: 8, tone: "root", duration: "8n" },
+      { sub: 10, tone: "root", duration: "8n" },
+      { sub: 12, tone: "root", duration: "8n" },
+      { sub: 14, tone: "root", duration: "8n" },
+    ],
+  },
+  ballad: {
+    name: "Ballad",
+    events: [
+      { sub: 0, tone: "root", duration: "2n" },
+    ],
+  },
+  reggae: {
+    name: "Reggae",
+    events: [
+      { sub: 2, tone: "root", duration: "16n" },
+      { sub: 6, tone: "fifth", duration: "16n" },
+      { sub: 10, tone: "root", duration: "16n" },
+      { sub: 14, tone: "fifth", duration: "16n" },
+    ],
+  },
+};
+
+const BASS_STYLE_LIST: BassStyleName[] = ["rock", "metal", "blues", "jazz", "funk", "punk", "ballad", "reggae"];
+
+// ── Groove Styles (unified drum + bass) ──
+
+type GrooveStyleName = "rock" | "metal" | "blues" | "jazz" | "funk" | "punk" | "ballad" | "latin" | "reggae" | "country";
+
+interface GrooveStyle {
+  name: string;
+  drum: DrumStyleName;
+  bass: BassStyleName;
+}
+
+const GROOVE_STYLES: Record<GrooveStyleName, GrooveStyle> = {
+  rock:    { name: "Rock",          drum: "rock",          bass: "rock" },
+  metal:   { name: "Metal",         drum: "metal",         bass: "metal" },
+  blues:   { name: "Blues",         drum: "blues_shuffle",  bass: "blues" },
+  jazz:    { name: "Jazz",          drum: "jazz",          bass: "jazz" },
+  funk:    { name: "Funk",          drum: "funk",          bass: "funk" },
+  punk:    { name: "Punk",          drum: "punk",          bass: "punk" },
+  ballad:  { name: "Ballad",       drum: "ballad",        bass: "ballad" },
+  latin:   { name: "Latin",        drum: "latin",         bass: "funk" },
+  reggae:  { name: "Reggae",       drum: "reggae",        bass: "reggae" },
+  country: { name: "Country",      drum: "country",       bass: "rock" },
+};
+
+const GROOVE_STYLE_LIST: GrooveStyleName[] = ["rock", "metal", "blues", "jazz", "funk", "punk", "ballad", "latin", "reggae", "country"];
+
+// Genre-to-groove auto-mapping
+const GENRE_GROOVE_MAP: Record<string, GrooveStyleName> = {
+  Blues: "blues", Rock: "rock", Jazz: "jazz", Metal: "metal",
+  Funk: "funk", Punk: "punk", Ballad: "ballad", "R&B": "funk",
+};
+
+// Get bass note for a chord tone
+function getBassNote(chordRoot: string, quality: string, tone: BassEvent["tone"]): string {
+  const rootIdx = NOTE_NAMES.indexOf(chordRoot);
+  if (rootIdx < 0) return chordRoot + "2";
+  const isMinor = quality.includes("m") && !quality.includes("maj");
+  switch (tone) {
+    case "root": return chordRoot + "2";
+    case "third": return NOTE_NAMES[(rootIdx + (isMinor ? 3 : 4)) % 12] + "2";
+    case "fifth": return NOTE_NAMES[(rootIdx + 7) % 12] + "2";
+    case "seventh": return NOTE_NAMES[(rootIdx + (quality.includes("maj7") ? 11 : 10)) % 12] + "2";
+    case "octave": return chordRoot + "3";
+  }
+}
+
+// Legacy genre maps kept for reference (replaced by GENRE_GROOVE_MAP)
 
 interface JamProgression {
   name: string;
@@ -261,7 +491,11 @@ interface JamSettings {
   drumVol: number;
   bassEnabled: boolean;
   drumEnabled: boolean;
+  grooveStyle: GrooveStyleName;
   scaleType: "natural" | "pentatonic" | "blues";
+  // Legacy fields kept for backwards compatibility with localStorage
+  drumStyle?: DrumStyleName;
+  bassStyle?: BassStyleName;
 }
 
 const DEFAULT_SETTINGS: JamSettings = {
@@ -277,13 +511,24 @@ const DEFAULT_SETTINGS: JamSettings = {
   drumVol: 0.3,
   bassEnabled: false,
   drumEnabled: false,
+  grooveStyle: "blues",
   scaleType: "pentatonic",
 };
 
 function loadSettings(): JamSettings {
   try {
     const raw = localStorage.getItem("gf-jam-settings");
-    if (raw) return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // Migrate legacy drumStyle/bassStyle to grooveStyle
+      if (!parsed.grooveStyle && parsed.drumStyle) {
+        const match = GROOVE_STYLE_LIST.find(g => GROOVE_STYLES[g].drum === parsed.drumStyle);
+        parsed.grooveStyle = match || DEFAULT_SETTINGS.grooveStyle;
+      }
+      delete parsed.drumStyle;
+      delete parsed.bassStyle;
+      return { ...DEFAULT_SETTINGS, ...parsed };
+    }
   } catch {}
   return { ...DEFAULT_SETTINGS };
 }
@@ -311,6 +556,9 @@ export default function JamModePage() {
   const hihatSynthRef = useRef<InstanceType<typeof import("tone").NoiseSynth> | null>(null);
   const kickSynthRef = useRef<InstanceType<typeof import("tone").MembraneSynth> | null>(null);
   const snareSynthRef = useRef<InstanceType<typeof import("tone").NoiseSynth> | null>(null);
+  const rideSynthRef = useRef<InstanceType<typeof import("tone").MetalSynth> | null>(null);
+  const crashSynthRef = useRef<InstanceType<typeof import("tone").MetalSynth> | null>(null);
+  const subCountRef = useRef(0);
   const loopRef = useRef<InstanceType<typeof import("tone").Loop> | null>(null);
   const beatCountRef = useRef(0);
   const chordIdxRef = useRef(0);
@@ -357,6 +605,14 @@ export default function JamModePage() {
     }
   }, [settings.genre, settings.progressionIndex, updateSetting]);
 
+  // Reset playback position when progression or key changes to prevent stale chord refs
+  useEffect(() => {
+    subCountRef.current = 0;
+    chordIdxRef.current = 0;
+    setCurrentChordIdx(0);
+    setCurrentBeat(0);
+  }, [settings.progressionIndex, settings.key]);
+
   // ── Tone.js initialization ──
 
   const initTone = useCallback(async () => {
@@ -397,12 +653,32 @@ export default function JamModePage() {
     }).toDestination();
     kickSynthRef.current.volume.value = volToDb(settingsRef.current.drumVol);
 
-    // Bug fix #3: Add snare synth (was missing — only kick + hihat existed)
+    // Snare
     snareSynthRef.current = new Tone.NoiseSynth({
       noise: { type: "white" },
       envelope: { attack: 0.001, decay: 0.15, sustain: 0, release: 0.05 },
     }).toDestination();
     snareSynthRef.current.volume.value = volToDb(settingsRef.current.drumVol) - 3;
+
+    // Ride cymbal
+    rideSynthRef.current = new Tone.MetalSynth({
+      envelope: { attack: 0.001, decay: 0.4, release: 0.2 },
+      harmonicity: 5.1,
+      modulationIndex: 32,
+      resonance: 4000,
+      octaves: 1.5,
+    }).toDestination();
+    rideSynthRef.current.volume.value = volToDb(settingsRef.current.drumVol) - 10;
+
+    // Crash cymbal
+    crashSynthRef.current = new Tone.MetalSynth({
+      envelope: { attack: 0.001, decay: 1.0, release: 0.5 },
+      harmonicity: 5.1,
+      modulationIndex: 40,
+      resonance: 5000,
+      octaves: 1.5,
+    }).toDestination();
+    crashSynthRef.current.volume.value = volToDb(settingsRef.current.drumVol) - 6;
 
     setToneLoaded(true);
   }, []);
@@ -419,6 +695,8 @@ export default function JamModePage() {
     if (hihatSynthRef.current) hihatSynthRef.current.volume.value = volToDb(settings.drumVol) - 6;
     if (kickSynthRef.current) kickSynthRef.current.volume.value = volToDb(settings.drumVol);
     if (snareSynthRef.current) snareSynthRef.current.volume.value = volToDb(settings.drumVol) - 3;
+    if (rideSynthRef.current) rideSynthRef.current.volume.value = volToDb(settings.drumVol) - 10;
+    if (crashSynthRef.current) crashSynthRef.current.volume.value = volToDb(settings.drumVol) - 6;
   }, [settings.metronomeVol, settings.bassVol, settings.drumVol]);
 
   // Update BPM live
@@ -443,6 +721,7 @@ export default function JamModePage() {
 
     // Reset state
     beatCountRef.current = 0;
+    subCountRef.current = 0;
     chordIdxRef.current = 0;
     setCurrentChordIdx(0);
     setCurrentBeat(0);
@@ -456,58 +735,71 @@ export default function JamModePage() {
       loopRef.current.dispose();
     }
 
-    const beatsPerChord = settingsRef.current.barsPerChord * 4;
-    const totalBeats = chordsRef.current.length * beatsPerChord;
+    // 16th note resolution: 16 subdivisions per bar
+    const subsPerBar = 16;
+    const subsPerChord = settingsRef.current.barsPerChord * subsPerBar;
+    const totalSubs = chordsRef.current.length * subsPerChord;
+    subCountRef.current = 0;
 
     loopRef.current = new Tone.Loop((time) => {
       const s = settingsRef.current;
       const cds = chordsRef.current;
       if (!cds.length) return;
 
-      const bpc = s.barsPerChord * 4;
-      const total = cds.length * bpc;
-      const globalBeat = beatCountRef.current;
-      const beatInChord = globalBeat % bpc;
-      const chIdx = Math.floor(globalBeat / bpc) % cds.length;
+      const spc = s.barsPerChord * subsPerBar;
+      const total = cds.length * spc;
+      const globalSub = subCountRef.current;
+      const subInChord = globalSub % spc;
+      const subInBar = subInChord % subsPerBar;
+      const chIdx = Math.floor(globalSub / spc) % cds.length;
+      const beatInChord = Math.floor(subInChord / 4); // quarter-note beat index
 
-      // Metronome
-      if (metronomeSynthRef.current && s.metronomeVol > 0) {
-        const pitch = beatInChord === 0 ? "C5" : "C4";
+      // Metronome - on quarter notes (every 4 subdivisions)
+      if (subInBar % 4 === 0 && metronomeSynthRef.current && s.metronomeVol > 0) {
+        const pitch = subInBar === 0 ? "C5" : "C4";
         metronomeSynthRef.current.triggerAttackRelease(pitch, "16n", time);
       }
 
-      // Bug fix #4: Bass root on beat 1, fifth on beat 3 (was only root on beat 1)
+      // ── Bass ──
       if (bassSynthRef.current && s.bassEnabled && s.bassVol > 0) {
-        const rootNote = cds[chIdx].root + "2";
-        if (beatInChord === 0) {
-          bassSynthRef.current.triggerAttackRelease(rootNote, "4n", time);
-        } else if (beatInChord === 2) {
-          // Play the fifth above root
-          const rootIdx = NOTE_NAMES.indexOf(cds[chIdx].root);
-          const fifthIdx = rootIdx >= 0 ? (rootIdx + 7) % 12 : -1;
-          const fifthNote = fifthIdx >= 0 ? NOTE_NAMES[fifthIdx] + "2" : rootNote;
-          bassSynthRef.current.triggerAttackRelease(fifthNote, "4n", time);
+        const groove = GROOVE_STYLES[s.grooveStyle];
+        const bassPattern = BASS_PATTERNS[groove.bass];
+        const chord = cds[chIdx];
+        for (const ev of bassPattern.events) {
+          if (subInBar === ev.sub) {
+            const note = getBassNote(chord.root, chord.quality, ev.tone);
+            bassSynthRef.current.triggerAttackRelease(note, ev.duration, time);
+            break; // only one bass note per subdivision
+          }
         }
       }
 
-      // Drums — Bug fix #3: added snare on beats 2 and 4
+      // ── Drums ──
       if (s.drumEnabled && s.drumVol > 0) {
-        // Kick on 1 and 3
-        if (beatInChord % 2 === 0 && kickSynthRef.current) {
+        const grooveDrum = GROOVE_STYLES[s.grooveStyle];
+        const dp = DRUM_PATTERNS[grooveDrum.drum];
+
+        if (dp.kick.includes(subInBar) && kickSynthRef.current) {
           kickSynthRef.current.triggerAttackRelease("C1", "8n", time);
         }
-        // Snare on 2 and 4
-        if (beatInChord % 2 === 1 && snareSynthRef.current) {
+        if (dp.snare.includes(subInBar) && snareSynthRef.current) {
           snareSynthRef.current.triggerAttackRelease("8n", time);
         }
-        // Hihat on every beat
-        if (hihatSynthRef.current) {
-          hihatSynthRef.current.triggerAttackRelease("16n", time);
+        if (dp.hihat.includes(subInBar) && hihatSynthRef.current) {
+          hihatSynthRef.current.triggerAttackRelease("32n", time);
+        }
+        if (dp.ride && dp.ride.includes(subInBar) && rideSynthRef.current) {
+          rideSynthRef.current.triggerAttackRelease("32n", time);
+        }
+        if (dp.crash && dp.crash.includes(subInBar) && crashSynthRef.current) {
+          crashSynthRef.current.triggerAttackRelease("16n", time);
         }
       }
 
-      // Update UI state
-      setCurrentBeat(beatInChord);
+      // Update UI state (only on quarter notes to avoid excessive renders)
+      if (subInBar % 4 === 0) {
+        setCurrentBeat(beatInChord);
+      }
       if (chIdx !== chordIdxRef.current) {
         chordIdxRef.current = chIdx;
         setCurrentChordIdx(chIdx);
@@ -515,12 +807,12 @@ export default function JamModePage() {
         setTimeout(() => setChordFlash(false), 200);
       }
 
-      beatCountRef.current++;
+      subCountRef.current++;
 
       // End of progression
-      if (beatCountRef.current >= total) {
+      if (subCountRef.current >= total) {
         if (s.loop) {
-          beatCountRef.current = 0;
+          subCountRef.current = 0;
           chordIdxRef.current = 0;
           // Random mode: pick a new random progression in same genre
           if (s.randomMode) {
@@ -538,11 +830,11 @@ export default function JamModePage() {
           setPaused(false);
           setCurrentBeat(0);
           setCurrentChordIdx(0);
-          beatCountRef.current = 0;
+          subCountRef.current = 0;
           chordIdxRef.current = 0;
         }
       }
-    }, "4n");
+    }, "16n");
 
     loopRef.current.start(0);
     Tone.getTransport().start();
@@ -571,6 +863,7 @@ export default function JamModePage() {
     setCurrentBeat(0);
     setCurrentChordIdx(0);
     beatCountRef.current = 0;
+    subCountRef.current = 0;
     chordIdxRef.current = 0;
   }, []);
 
@@ -587,6 +880,8 @@ export default function JamModePage() {
       hihatSynthRef.current?.dispose();
       kickSynthRef.current?.dispose();
       snareSynthRef.current?.dispose();
+      rideSynthRef.current?.dispose();
+      crashSynthRef.current?.dispose();
     };
   }, []);
 
@@ -623,8 +918,8 @@ export default function JamModePage() {
 
       {/* Settings Panel */}
       {showSettings && (
-        <div className="panel-secondary rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <div className="panel-secondary rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 min-h-[320px]">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 min-h-[64px]">
             {/* Key */}
             <div>
               <label className="block text-[10px] text-[#6b6560] font-label mb-1 uppercase tracking-wider">Key</label>
@@ -647,7 +942,21 @@ export default function JamModePage() {
               <label className="block text-[10px] text-[#6b6560] font-label mb-1 uppercase tracking-wider">Genre</label>
               <select
                 value={settings.genre}
-                onChange={e => { updateSetting("genre", e.target.value); updateSetting("progressionIndex", 0); }}
+                onChange={e => {
+                  const newGenre = e.target.value;
+                  const wasPlaying = playing;
+                  // Stop playback when genre changes to prevent stale progression
+                  if (playing || paused) handleStop();
+                  updateSetting("genre", newGenre);
+                  updateSetting("progressionIndex", 0);
+                  // Auto-select matching groove style
+                  const matchedGroove = GENRE_GROOVE_MAP[newGenre];
+                  if (matchedGroove) updateSetting("grooveStyle", matchedGroove);
+                  // Auto-restart playback after a tick so new chords are picked up
+                  if (wasPlaying) {
+                    setTimeout(() => handlePlay(), 50);
+                  }
+                }}
                 className="input w-full !rounded !px-2 !py-1.5 !text-xs font-label"
               >
                 {GENRES.map(g => <option key={g} value={g}>{g}</option>)}
@@ -655,11 +964,19 @@ export default function JamModePage() {
             </div>
 
             {/* Progression */}
-            <div>
+            <div className="min-h-[52px]">
               <label className="block text-[10px] text-[#6b6560] font-label mb-1 uppercase tracking-wider">Progression</label>
               <select
                 value={settings.progressionIndex}
-                onChange={e => updateSetting("progressionIndex", Number(e.target.value))}
+                onChange={e => {
+                  const wasPlaying = playing;
+                  if (playing || paused) handleStop();
+                  updateSetting("progressionIndex", Number(e.target.value));
+                  // Auto-restart playback after a tick so new chords are picked up
+                  if (wasPlaying) {
+                    setTimeout(() => handlePlay(), 50);
+                  }
+                }}
                 className="input w-full !rounded !px-2 !py-1.5 !text-xs font-label"
               >
                 {filteredProgressions.map((p, i) => (
@@ -786,6 +1103,32 @@ export default function JamModePage() {
                 className="w-full accent-[#22c55e] h-1"
                 disabled={!settings.drumEnabled}
               />
+            </div>
+          </div>
+
+          {/* Groove style selector (unified drum + bass) */}
+          <div className="mt-3 sm:mt-4 min-h-[56px]">
+            <label className="block text-[10px] text-[#6b6560] font-label mb-1 uppercase tracking-wider">Groove Style</label>
+            <div className="flex flex-wrap gap-1.5 min-h-[32px]">
+              {GROOVE_STYLE_LIST.map(g => {
+                const isActive = settings.grooveStyle === g;
+                const enabled = settings.drumEnabled || settings.bassEnabled;
+                return (
+                  <button
+                    key={g}
+                    onClick={() => updateSetting("grooveStyle", g)}
+                    disabled={!enabled}
+                    className="px-3 py-1.5 rounded text-[11px] font-label transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    style={{
+                      background: isActive ? "rgba(212,168,67,0.2)" : "rgba(255,255,255,0.05)",
+                      color: isActive ? "#D4A843" : "#9a9590",
+                      border: `1px solid ${isActive ? "rgba(212,168,67,0.4)" : "rgba(255,255,255,0.08)"}`,
+                    }}
+                  >
+                    {GROOVE_STYLES[g].name}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -1043,6 +1386,9 @@ export default function JamModePage() {
           </div>
         </div>
       )}
+
+      {/* ── Looper ── */}
+      <JamLooper bpm={settings.bpm} jamPlaying={playing} />
     </div>
   );
 }
