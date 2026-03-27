@@ -117,6 +117,9 @@ interface PracticePageProps {
   // Daily recorder
   dailyRecControlRef: React.MutableRefObject<DailyRecorderControl | null>;
   exerciseModalOpen: boolean;
+  // Tuner navigation
+  pendingTuner?: boolean;
+  setPendingTuner?: (b: boolean) => void;
   // Functions
   toggleDone: (key: string) => void;
   getEditedEx: (ex: Exercise) => Exercise;
@@ -135,6 +138,7 @@ export default function PracticePage(props: PracticePageProps) {
     setSongPickerOpen, setSongPickerSearch,
     setModal, setFocusEx,
     dailyRecControlRef, exerciseModalOpen,
+    pendingTuner, setPendingTuner,
     toggleDone, getEditedEx, buildDay,
   } = props;
 
@@ -219,6 +223,14 @@ export default function PracticePage(props: PracticePageProps) {
     if (showTuner && !tunerActive) startTuner();
     if (!showTuner && tunerActive) stopTuner();
   }, [showTuner, tunerActive, startTuner, stopTuner]);
+
+  // Open tuner when navigated from mobile More menu
+  useEffect(() => {
+    if (pendingTuner) {
+      setShowTuner(true);
+      setPendingTuner?.(false);
+    }
+  }, [pendingTuner, setPendingTuner]);
 
   const fmtTimer = (s: number) => {
     const m = Math.floor(s / 60), sec = s % 60;

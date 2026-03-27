@@ -137,7 +137,9 @@ export default function GuitarForgeApp() {
     const v = map[hash.toLowerCase()] || hash.replace("#", "") as View;
     return VALID_VIEWS.has(v) ? v : null;
   };
+  const [pendingTuner, setPendingTuner] = useState(false);
   const setView = (v: View) => { setViewRaw(v); setViewKey(k => k + 1); history.pushState(null, "", `#${v}`); };
+  const openTuner = () => { setPendingTuner(true); setView("daily"); };
 
   // Global keyboard shortcuts
   useEffect(() => {
@@ -704,7 +706,7 @@ export default function GuitarForgeApp() {
   return (
     <ErrorBoundary>
     <div className="flex h-screen text-white" style={{ background: "#121214" }} dir="ltr">
-      <Navbar view={view} onViewChange={setView} onShowAuth={() => setShowAuthPage(true)} lastSynced={lastSynced} syncing={syncing} />
+      <Navbar view={view} onViewChange={setView} onShowAuth={() => setShowAuthPage(true)} onOpenTuner={openTuner} lastSynced={lastSynced} syncing={syncing} />
       <div id="main-content" className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden">
       {view === "studio" && <StudioPage channelScale={scale} channelMode={mode} channelStyle={style} />}
       {view === "jam" && <JamModePage />}
@@ -797,6 +799,7 @@ export default function GuitarForgeApp() {
             setModal={setModal} setFocusEx={setFocusEx}
             dailyRecControlRef={dailyRecControlRef} exerciseModalOpen={!!modal}
             toggleDone={toggleDone} getEditedEx={getEditedEx} buildDay={buildDay}
+            pendingTuner={pendingTuner} setPendingTuner={setPendingTuner}
           />
         )}
 

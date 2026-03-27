@@ -97,7 +97,7 @@ export default function HomePage(props: HomePageProps) {
   const [songSearchActive, setSongSearchActive] = useState(false);
 
   // Copy/Paste clipboard for weekly schedule editor
-  const [copiedDay, setCopiedDay] = useState<{ cats: string[]; hrs: number } | null>(null);
+  const [copiedDay, setCopiedDay] = useState<{ cats: string[]; hrs: number; exs: Exercise[] } | null>(null);
 
   // Quick Jam state
   const [jamStyle, setJamStyle] = useState(style);
@@ -616,7 +616,7 @@ export default function HomePage(props: HomePageProps) {
                         className="input input-gold w-14 text-center !py-1" />
                       <span className="font-label text-[9px] text-[#444]">hrs</span>
                       <div className="flex gap-1 ml-auto">
-                        <button type="button" title="Copy day" onClick={() => setCopiedDay({ cats: [...ac], hrs })}
+                        <button type="button" title="Copy day" onClick={() => setCopiedDay({ cats: [...ac], hrs, exs: dayExMap[day] ? [...dayExMap[day]] : [] })}
                           className="text-[9px] px-1.5 py-0.5 rounded border transition-all bg-transparent cursor-pointer"
                           style={{ borderColor: "#333", color: "#666" }}>
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
@@ -625,6 +625,7 @@ export default function HomePage(props: HomePageProps) {
                           if (!copiedDay) return;
                           setDayCats(p => ({ ...p, [day]: [...copiedDay.cats] }));
                           setDayHrs(p => ({ ...p, [day]: copiedDay.hrs }));
+                          setDayExMap(p => ({ ...p, [day]: [...copiedDay.exs] }));
                         }}
                           className="text-[9px] px-1.5 py-0.5 rounded border transition-all bg-transparent cursor-pointer"
                           style={{ borderColor: copiedDay ? "#D4A843" + "40" : "#222", color: copiedDay ? "#D4A843" : "#333" }}>

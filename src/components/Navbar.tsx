@@ -10,6 +10,7 @@ interface NavbarProps {
   view: View;
   onViewChange: (view: View) => void;
   onShowAuth?: () => void;
+  onOpenTuner?: () => void;
   lastSynced?: Date | null;
   syncing?: boolean;
 }
@@ -136,7 +137,7 @@ function IconTuner() {
 // ── Navigation data ──
 
 interface NavItem {
-  id: View | "suno";
+  id: View | "suno" | "tuner";
   label: string;
   icon: () => React.JSX.Element;
 }
@@ -168,25 +169,28 @@ const MORE_DRAWER_ITEMS: NavItem[] = [
   { id: "coach", label: "AI Coach", icon: IconCoach },
   { id: "skills", label: "Skill Tree", icon: IconSkills },
   { id: "jam", label: "Jam Mode", icon: IconJam },
-  { id: "daily", label: "Tuner", icon: IconTuner },
+  { id: "tuner", label: "Tuner", icon: IconTuner },
   { id: "suno", label: "Suno AI", icon: IconSuno },
 ];
 
-export default function Navbar({ view, onViewChange, onShowAuth, lastSynced, syncing }: NavbarProps) {
+export default function Navbar({ view, onViewChange, onShowAuth, onOpenTuner, lastSynced, syncing }: NavbarProps) {
   const [moreOpen, setMoreOpen] = useState(false);
   const { user, logout } = useAuth();
 
-  const handleNav = (id: View | "suno") => {
+  const handleNav = (id: View | "suno" | "tuner") => {
     if (id === "suno") {
       // Navigate to studio and trigger suno panel
       onViewChange("studio");
+    } else if (id === "tuner") {
+      // Navigate to practice page — onOpenTuner callback opens the tuner panel
+      onOpenTuner?.();
     } else {
       onViewChange(id);
     }
   };
 
-  const isActive = (id: View | "suno") => {
-    if (id === "suno") return false;
+  const isActive = (id: View | "suno" | "tuner") => {
+    if (id === "suno" || id === "tuner") return false;
     return view === id;
   };
 
