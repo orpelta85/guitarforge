@@ -155,7 +155,9 @@ export default function SongModal({ song, onClose, targetMinutes, mySongs, onTog
     if (tab !== "tutorial" || tutorialSearched || tutorialVideoId) return;
     setTutorialLoading(true);
     setTutorialSearched(true);
-    const q = `how to play ${song.title} ${song.artist} guitar tutorial`;
+    const q = song.ytTutorial
+      ? new URL(song.ytTutorial).searchParams.get("search_query") || `how to play ${song.title} ${song.artist} guitar tutorial`
+      : `how to play ${song.title} ${song.artist} guitar tutorial`;
     fetch(`/api/youtube?q=${encodeURIComponent(q)}`)
       .then(r => r.json())
       .then(data => {
@@ -163,7 +165,7 @@ export default function SongModal({ song, onClose, targetMinutes, mySongs, onTog
       })
       .catch(() => {})
       .finally(() => setTutorialLoading(false));
-  }, [tab, tutorialSearched, tutorialVideoId, song.title, song.artist]);
+  }, [tab, tutorialSearched, tutorialVideoId, song.title, song.artist, song.ytTutorial]);
 
   function saveSession(sec: number) {
     if (sec < 5) return;
@@ -192,9 +194,11 @@ export default function SongModal({ song, onClose, targetMinutes, mySongs, onTog
     return m ? m[1] : null;
   }
 
-  const ytQuery = `how to play ${song.title} ${song.artist} guitar tutorial`;
+  const ytQuery = song.ytTutorial
+    ? (new URL(song.ytTutorial).searchParams.get("search_query") || `how to play ${song.title} ${song.artist} guitar tutorial`)
+    : `how to play ${song.title} ${song.artist} guitar tutorial`;
   const dc = song.difficulty ? DIFFICULTY_COLORS[song.difficulty] || "#888" : "#888";
-  const hasGp = song.gp || !!song.gpFileName || !!song.gpPath;
+  const hasGp = !!song.gpPath || !!song.gpFileName;
   const gpStorageUrl = song.gpPath
     ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/gp-tabs/${song.gpPath}`
     : undefined;

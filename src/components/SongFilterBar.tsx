@@ -45,7 +45,7 @@ export function useFilteredSongs(
 
     // Has GP filter
     if (hasGP) {
-      result = result.filter(s => s.gp || s.gpPath);
+      result = result.filter(s => s.gpPath || s.gpFileName);
     }
 
     // Search

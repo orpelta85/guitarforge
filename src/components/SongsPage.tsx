@@ -115,7 +115,7 @@ export default function SongsPage(props: SongsPageProps) {
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-heading text-[13px] !font-medium !normal-case !tracking-normal">{song.title}</span>
                       {song.difficulty && <span className="tag" style={{ border: `1px solid ${dc}60`, color: dc, background: dc + "15" }}>{song.difficulty}</span>}
-                      {(song.gp || song.gpPath) && (
+                      {(song.gpPath || song.gpFileName) && (
                         <span className="font-readout text-[8px] px-1.5 py-0.5 rounded bg-[#D4A843]/10 text-[#D4A843] border border-[#D4A843]/20">GP</span>
                       )}
                       {song.personal && (

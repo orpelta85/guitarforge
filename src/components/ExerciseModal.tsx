@@ -377,9 +377,12 @@ function YouTubeBackingSection({ scale, mode, style, ex, ytVideoId, setYtVideoId
 
 /* ── GP Tab section ── */
 function GpTabSection({ ex }: { ex: Exercise }) {
+  const gpStorageUrl = ex.gpPath
+    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/gp-tabs/${ex.gpPath}`
+    : undefined;
   return (
     <div>
-      <GpFileUploader exerciseId={String(ex.id)} tex={ex.tex || EXERCISES.find(e => e.id === ex.id)?.tex} songName={ex.n} />
+      <GpFileUploader exerciseId={String(ex.id)} tex={ex.tex || EXERCISES.find(e => e.id === ex.id)?.tex} songName={ex.n} gpUrl={gpStorageUrl} />
       <div className="flex gap-1.5 flex-wrap mt-2">
         <button type="button" onClick={async () => {
           try {
