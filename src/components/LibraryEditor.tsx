@@ -19,20 +19,39 @@ function extractVid(url: string): string | null {
   return m ? m[1] : null;
 }
 
+function getLockedVideo(exerciseId: number | string, type: string): string | null {
+  try { return localStorage.getItem(`gf-locked-yt-${exerciseId}-${type}`); } catch { return null; }
+}
+
 export default function LibraryEditor({ ex, exEdits, setExEdits }: Props) {
-  const [autoVideoId, setAutoVideoId] = useState("");
+  const lockedId = getLockedVideo(ex.id, "tutorial");
+  const [videoResults, setVideoResults] = useState<string[]>([]);
+  const [resultIdx, setResultIdx] = useState(0);
+  const [autoVideoId, setAutoVideoId] = useState(lockedId || "");
   const [autoLoading, setAutoLoading] = useState(false);
   const [showGp, setShowGp] = useState(false);
+  const [isLocked, setIsLocked] = useState(!!lockedId);
 
-  // Auto-fetch tutorial video
+  // Auto-fetch tutorial video (skip if locked)
   useEffect(() => {
+    if (lockedId) { setAutoVideoId(lockedId); return; }
     setAutoLoading(true);
     fetch(`/api/youtube?q=${encodeURIComponent(ex.yt + " guitar tutorial")}`)
       .then(r => r.json())
-      .then(data => { if (data.items?.[0]?.videoId) setAutoVideoId(data.items[0].videoId); })
+      .then(data => {
+        const ids: string[] = data.results || data.items?.map((i: { videoId: string }) => i.videoId).filter(Boolean) || [];
+        if (ids.length > 0) { setAutoVideoId(ids[0]); setVideoResults(ids); setResultIdx(0); }
+      })
       .catch(() => {})
       .finally(() => setAutoLoading(false));
-  }, [ex.yt]);
+  }, [ex.yt, lockedId]);
+
+  function handleNextVideo() {
+    if (videoResults.length <= 1) return;
+    const next = (resultIdx + 1) % videoResults.length;
+    setResultIdx(next);
+    setAutoVideoId(videoResults[next]);
+  }
 
   function update(key: string, value: string | number) {
     setExEdits(p => ({ ...p, [ex.id]: { ...p[ex.id], [key]: value } }));
@@ -41,6 +60,17 @@ export default function LibraryEditor({ ex, exEdits, setExEdits }: Props) {
   const savedYtUrl = exEdits[ex.id]?.ytUrl || "";
   const savedVid = extractVid(savedYtUrl);
   const displayVid = savedVid || autoVideoId;
+
+  function toggleLock() {
+    if (!displayVid) return;
+    if (isLocked) {
+      try { localStorage.removeItem(`gf-locked-yt-${ex.id}-tutorial`); } catch {}
+      setIsLocked(false);
+    } else {
+      try { localStorage.setItem(`gf-locked-yt-${ex.id}-tutorial`, displayVid); } catch {}
+      setIsLocked(true);
+    }
+  }
 
   return (
     <div className="px-4 py-4 border-t border-[#1a1a1a] bg-[#121214]">
@@ -89,8 +119,29 @@ export default function LibraryEditor({ ex, exEdits, setExEdits }: Props) {
 
       {/* YouTube tutorial — auto-embedded */}
       <div className="panel p-3 mb-3">
-        <div className="font-label text-[10px] text-[#D4A843] mb-2 flex items-center gap-2">
-          <div className={`led ${displayVid ? "led-gold" : "led-off"}`} /> Tutorial Video
+        <div className="font-label text-[10px] text-[#D4A843] mb-2 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className={`led ${displayVid ? "led-gold" : "led-off"}`} /> Tutorial Video
+            {isLocked && <span className="font-readout text-[8px] px-1.5 py-0.5 rounded bg-[#D4A843]/10 text-[#D4A843] border border-[#D4A843]/20">Locked</span>}
+          </div>
+          <div className="flex items-center gap-1">
+            {videoResults.length > 1 && !isLocked && (
+              <button type="button" onClick={handleNextVideo}
+                className="btn-ghost !text-[9px] !px-2 !py-1 flex items-center gap-1">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/><line x1="19" y1="3" x2="19" y2="21"/></svg>
+                Next ({resultIdx + 1}/{videoResults.length})
+              </button>
+            )}
+            {displayVid && (
+              <button type="button" onClick={toggleLock}
+                title={isLocked ? "Unlock video" : "Lock this video"}
+                className={`w-7 h-7 rounded-md flex items-center justify-center cursor-pointer transition-all text-[14px] ${
+                  isLocked ? "bg-amber-500/15 border border-amber-500/30 text-amber-400" : "bg-white/[0.04] border border-white/[0.08] text-zinc-600 hover:text-zinc-400"
+                }`}>
+                {isLocked ? "\uD83D\uDD12" : "\uD83D\uDD13"}
+              </button>
+            )}
+          </div>
         </div>
 
         {autoLoading && <div className="text-[10px] text-[#444] mb-2">Searching YouTube...</div>}

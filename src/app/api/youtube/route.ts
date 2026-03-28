@@ -41,18 +41,59 @@ export async function GET(req: NextRequest) {
     );
     if (res.ok) {
       const html = await res.text();
-      // Extract video IDs from the page
-      const ids: string[] = [];
-      const regex = /"videoId":"([a-zA-Z0-9_-]{11})"/g;
-      let match;
-      while ((match = regex.exec(html)) !== null) {
-        if (!ids.includes(match[1])) ids.push(match[1]);
-        if (ids.length >= 5) break;
+      // Extract video IDs and titles from the page
+      const items: { videoId: string; title: string; channel: string; thumbnail: string }[] = [];
+      const seen = new Set<string>();
+
+      // Try to extract from ytInitialData JSON
+      const dataStart = html.indexOf('var ytInitialData = ');
+      const dataMatch = dataStart !== -1 ? (() => {
+        const jsonStart = dataStart + 'var ytInitialData = '.length;
+        const jsonEnd = html.indexOf(';</script>', jsonStart);
+        return jsonEnd !== -1 ? [null, html.slice(jsonStart, jsonEnd)] : null;
+      })() : null;
+      if (dataMatch) {
+        try {
+          const ytData = JSON.parse(dataMatch[1] as string);
+          const contents = ytData?.contents?.twoColumnSearchResultsRenderer?.primaryContents?.sectionListRenderer?.contents;
+          if (contents) {
+            for (const section of contents) {
+              const renderers = section?.itemSectionRenderer?.contents || [];
+              for (const r of renderers) {
+                const v = r?.videoRenderer;
+                if (v?.videoId && !seen.has(v.videoId)) {
+                  seen.add(v.videoId);
+                  items.push({
+                    videoId: v.videoId,
+                    title: v.title?.runs?.[0]?.text || "",
+                    channel: v.ownerText?.runs?.[0]?.text || "",
+                    thumbnail: v.thumbnail?.thumbnails?.pop()?.url || `https://img.youtube.com/vi/${v.videoId}/mqdefault.jpg`,
+                  });
+                  if (items.length >= 5) break;
+                }
+              }
+              if (items.length >= 5) break;
+            }
+          }
+        } catch { /* fall through to regex */ }
+      }
+
+      // Fallback: regex extract IDs only
+      if (items.length === 0) {
+        const regex = /"videoId":"([a-zA-Z0-9_-]{11})"/g;
+        let match;
+        while ((match = regex.exec(html)) !== null) {
+          if (!seen.has(match[1])) {
+            seen.add(match[1]);
+            items.push({ videoId: match[1], title: "", channel: "", thumbnail: `https://img.youtube.com/vi/${match[1]}/mqdefault.jpg` });
+          }
+          if (items.length >= 5) break;
+        }
       }
 
       return NextResponse.json({
-        items: ids.map((id) => ({ videoId: id, title: "", channel: "", thumbnail: `https://img.youtube.com/vi/${id}/mqdefault.jpg` })),
-        results: ids,
+        items,
+        results: items.map(i => i.videoId),
         fallback: true,
         searchUrl: `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`,
       });

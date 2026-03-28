@@ -14,6 +14,7 @@ interface YtResult {
 interface AddSongModalProps {
   onClose: () => void;
   onSave: (song: SongEntry) => void;
+  editSong?: SongEntry;
 }
 
 const TUNINGS = [
@@ -31,9 +32,10 @@ const KEYS = [
 
 const DIFFICULTIES: SongEntry["difficulty"][] = ["Beginner", "Intermediate", "Advanced", "Expert"];
 
-export default function AddSongModal({ onClose, onSave }: AddSongModalProps) {
+export default function AddSongModal({ onClose, onSave, editSong }: AddSongModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   useFocusTrap(modalRef);
+  const isEdit = !!editSong;
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -41,16 +43,16 @@ export default function AddSongModal({ onClose, onSave }: AddSongModalProps) {
   const [ytLoading, setYtLoading] = useState(false);
   const [ytSearched, setYtSearched] = useState(false);
 
-  // Form fields
-  const [title, setTitle] = useState("");
-  const [artist, setArtist] = useState("");
-  const [ytUrl, setYtUrl] = useState("");
-  const [difficulty, setDifficulty] = useState<SongEntry["difficulty"]>(undefined);
-  const [genre, setGenre] = useState("");
-  const [tuning, setTuning] = useState("Standard");
-  const [tempo, setTempo] = useState<number | "">("");
-  const [key, setKey] = useState("");
-  const [notes, setNotes] = useState("");
+  // Form fields - pre-fill from editSong if editing
+  const [title, setTitle] = useState(editSong?.title || "");
+  const [artist, setArtist] = useState(editSong?.artist || "");
+  const [ytUrl, setYtUrl] = useState(editSong?.songsterrUrl || "");
+  const [difficulty, setDifficulty] = useState<SongEntry["difficulty"]>(editSong?.difficulty);
+  const [genre, setGenre] = useState(editSong?.genre || "");
+  const [tuning, setTuning] = useState(editSong?.tuning || "Standard");
+  const [tempo, setTempo] = useState<number | "">(editSong?.tempo || "");
+  const [key, setKey] = useState(editSong?.key || "");
+  const [notes, setNotes] = useState(editSong?.notes || "");
 
   // YouTube preview
   const [previewVideoId, setPreviewVideoId] = useState("");
@@ -184,7 +186,7 @@ export default function AddSongModal({ onClose, onSave }: AddSongModalProps) {
     if (!title.trim() || !artist.trim()) return;
 
     const song: SongEntry = {
-      id: Date.now(),
+      id: editSong?.id || Date.now(),
       title: title.trim(),
       artist: artist.trim(),
       genre: genre || undefined,
@@ -205,7 +207,7 @@ export default function AddSongModal({ onClose, onSave }: AddSongModalProps) {
   return (
     <div onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       className="fixed inset-0 z-[200] bg-black/70 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto"
-      role="dialog" aria-modal="true" aria-label="Add Song Manually">
+      role="dialog" aria-modal="true" aria-label={isEdit ? "Edit Song" : "Add Song Manually"}>
       <div ref={modalRef} className="w-full max-w-2xl my-8 rounded-xl border border-[#222] bg-[#0e0e10] shadow-2xl overflow-hidden">
 
         {/* Header */}
@@ -216,7 +218,7 @@ export default function AddSongModal({ onClose, onSave }: AddSongModalProps) {
                 <path d="M12 5v14M5 12h14" />
               </svg>
             </div>
-            <span className="font-heading text-base font-semibold text-[#D4A843]">Add Song Manually</span>
+            <span className="font-heading text-base font-semibold text-[#D4A843]">{isEdit ? "Edit Song" : "Add Song Manually"}</span>
           </div>
           <button type="button" onClick={onClose}
             className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[#1a1a1a] transition-colors">
@@ -433,7 +435,7 @@ export default function AddSongModal({ onClose, onSave }: AddSongModalProps) {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" />
             </svg>
-            Save Song
+            {isEdit ? "Update Song" : "Save Song"}
           </button>
         </div>
       </div>

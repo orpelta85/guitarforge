@@ -91,6 +91,9 @@ export default function GuitarForgeApp() {
 
   // ── Library: My Songs, Recordings, Backing Tracks ──
   const [mySongs, setMySongs] = useState<number[]>([]);
+  const [customExercises, setCustomExercises] = useState<Exercise[]>(() => {
+    try { const raw = localStorage.getItem("gf-custom-exercises"); return raw ? JSON.parse(raw) : []; } catch { return []; }
+  });
 
   // ── Onboarding wizard ──
   const [showWelcome, setShowWelcome] = useState(false);
@@ -140,6 +143,19 @@ export default function GuitarForgeApp() {
   const [pendingTuner, setPendingTuner] = useState(false);
   const setView = (v: View) => { setViewRaw(v); setViewKey(k => k + 1); history.pushState(null, "", `#${v}`); };
   const openTuner = () => { setPendingTuner(true); setView("daily"); };
+
+  // Apply stored edits to any song
+  const applySongEdits = useCallback((s: SongEntry): SongEntry => {
+    if (s.id >= 1000000000) return s; // custom songs are already editable
+    try {
+      const raw = localStorage.getItem("gf-song-edits");
+      if (!raw) return s;
+      const edits = JSON.parse(raw)[s.id];
+      if (!edits) return s;
+      return { ...s, ...edits };
+    } catch { return s; }
+  }, []);
+  const openSongModal = useCallback((s: SongEntry | null) => setSongModal(s ? applySongEdits(s) : null), [applySongEdits]);
 
   // Global keyboard shortcuts
   useEffect(() => {
@@ -326,7 +342,8 @@ export default function GuitarForgeApp() {
   }, [sessionRunning]);
 
   const fmtTimer = (s: number) => {
-    const m = Math.floor(s / 60), sec = s % 60;
+    const total = Math.floor(s);
+    const m = Math.floor(total / 60), sec = total % 60;
     return String(m).padStart(2, "0") + ":" + String(sec).padStart(2, "0");
   };
 
@@ -744,7 +761,7 @@ export default function GuitarForgeApp() {
             setShowAddSong={setShowAddSong}
             setNewSongTitle={setNewSongTitle}
             setNewSongArtist={setNewSongArtist}
-            setSongModal={setSongModal}
+            setSongModal={openSongModal}
             generateSongBacking={generateSongBacking}
             toggleSongBackingPlay={toggleSongBackingPlay}
           />
@@ -772,7 +789,7 @@ export default function GuitarForgeApp() {
             setShowAuthPage={setShowAuthPage} setAuthBannerDismissed={setAuthBannerDismissed}
             setSunoSuggestUrl={setSunoSuggestUrl} setSunoSuggestLoading={setSunoSuggestLoading}
             setSunoSuggestDismissed={setSunoSuggestDismissed}
-            setSongModal={setSongModal} setModal={setModal}
+            setSongModal={openSongModal} setModal={setModal}
             curExList={curExList} curDone={curDone} curMin={curMin} curCats={curCats}
             wTot={wTot} wDn={wDn} wPct={wPct} wMin={wMin}
             buildAll={buildAll} getSuggestions={getSuggestions}
@@ -784,7 +801,7 @@ export default function GuitarForgeApp() {
             week={week} selDay={selDay} style={style}
             dayCats={dayCats} dayHrs={dayHrs} dayExMap={dayExMap}
             doneMap={doneMap} bpmLog={bpmLog} songs={songs} exEdits={exEdits}
-            streak={streak}
+            streak={streak} customExercises={customExercises}
             sessionSeconds={sessionSeconds} sessionRunning={sessionRunning}
             showQuickMetronome={showQuickMetronome} showQuickRecorder={showQuickRecorder}
             exPickerOpen={exPickerOpen} exPickerSearch={exPickerSearch} exPickerCat={exPickerCat}
@@ -797,7 +814,7 @@ export default function GuitarForgeApp() {
             setExPickerCat={setExPickerCat}
             setSongPickerOpen={setSongPickerOpen} setSongPickerSearch={setSongPickerSearch}
             setModal={setModal} setFocusEx={setFocusEx}
-            dailyRecControlRef={dailyRecControlRef} exerciseModalOpen={!!modal}
+            dailyRecControlRef={dailyRecControlRef}
             toggleDone={toggleDone} getEditedEx={getEditedEx} buildDay={buildDay}
             pendingTuner={pendingTuner} setPendingTuner={setPendingTuner}
           />
@@ -807,6 +824,7 @@ export default function GuitarForgeApp() {
           <LibraryPage
             week={week} doneMap={doneMap} exEdits={exEdits}
             customSongs={customSongs} mySongs={mySongs}
+            customExercises={customExercises} setCustomExercises={setCustomExercises}
             songLibSearch={songLibSearch} songLibFilter={songLibFilter}
             songLibGenre={songLibGenre} songLibGenres={songLibGenres}
             songLibSort={songLibSort} songLibHasGP={songLibHasGP}
@@ -860,7 +878,22 @@ export default function GuitarForgeApp() {
         targetMinutes={songs.some(s => s.id === songModal.id) && songs.length > 0 && (dayHrs[selDay] || 0) > 0
           ? Math.max(5, Math.round((dayHrs[selDay] * 60) / songs.length / 5) * 5)
           : undefined}
-        mySongs={mySongs} onToggleMySong={(id) => setMySongs(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id])} />}
+        mySongs={mySongs} onToggleMySong={(id) => setMySongs(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id])}
+        onUpdateSong={(updated) => {
+          const isCustom = updated.id >= 1000000000;
+          if (isCustom) {
+            setCustomSongs(p => p.map(s => s.id === updated.id ? updated : s));
+          } else {
+            // Store edits for non-custom songs in localStorage
+            try {
+              const raw = localStorage.getItem("gf-song-edits") || "{}";
+              const edits = JSON.parse(raw);
+              edits[updated.id] = { difficulty: updated.difficulty, genre: updated.genre, tuning: updated.tuning, key: updated.key, tempo: updated.tempo, personal: updated.personal };
+              localStorage.setItem("gf-song-edits", JSON.stringify(edits));
+            } catch {}
+          }
+          setSongModal(updated);
+        }} />}
 
       {/* Focus Mode Overlay */}
       {focusEx && (() => {

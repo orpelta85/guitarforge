@@ -107,6 +107,8 @@ export default function HomePage(props: HomePageProps) {
   const [jamYtLoading, setJamYtLoading] = useState(false);
   const [jamSunoLoading, setJamSunoLoading] = useState(false);
   const [jamOpen, setJamOpen] = useState(false);
+  const [jamStyleDropOpen, setJamStyleDropOpen] = useState(false);
+  const jamStyleRef = useRef<HTMLDivElement>(null);
 
   const KEYS_LIST = ["C", "Cm", "C#", "C#m", "D", "Dm", "Eb", "Ebm", "E", "Em", "F", "Fm", "F#", "F#m", "G", "Gm", "Ab", "Abm", "A", "Am", "Bb", "Bbm", "B", "Bm"];
 
@@ -203,29 +205,23 @@ export default function HomePage(props: HomePageProps) {
     return curExList.filter(e => !doneMap[week + "-" + selDay + "-" + e.id]).slice(0, 3);
   }, [curExList, doneMap, week, selDay]);
 
-  // Song of the week - pull first song found in this week's schedule
-  const songOfTheWeek = useMemo(() => {
-    // Check dayExMap for any song exercise across this week's days
+  // Songs of the week - all unique songs from this week's practice schedule
+  const songsOfTheWeek = useMemo(() => {
+    const seen = new Set<number | string>();
+    const songs: SongEntry[] = [];
     for (const day of DAYS) {
       const exs = dayExMap[day] || [];
-      const songEx = exs.find(e => e.c === "Songs" && e.songId);
-      if (songEx) {
-        const entry = SONG_LIBRARY.find(s => s.id === songEx.songId);
-        if (entry) return entry;
-        return { id: songEx.songId!, title: songEx.songName || songEx.n, artist: "" };
+      for (const ex of exs) {
+        if (ex.c === "Songs" && ex.songId && !seen.has(ex.songId)) {
+          seen.add(ex.songId);
+          const entry = SONG_LIBRARY.find(s => s.id === ex.songId);
+          if (entry) songs.push(entry);
+          else songs.push({ id: ex.songId!, title: ex.songName || ex.n, artist: "" } as SongEntry);
+        }
       }
     }
-    // Fallback: pick from user's song list
-    if (songs.length > 0) {
-      const idx = week % songs.length;
-      const song = songs[idx];
-      return SONG_LIBRARY.find(s => s.id === song.id) || { id: song.id, title: song.name, artist: "" };
-    }
-    const popularSongs = SONG_LIBRARY.filter(s => s.popularity && s.popularity > 70).slice(0, 20);
-    if (popularSongs.length > 0) return popularSongs[week % popularSongs.length];
-    if (SONG_LIBRARY.length > 0) return SONG_LIBRARY[week % SONG_LIBRARY.length];
-    return null;
-  }, [songs, week, dayExMap]);
+    return songs;
+  }, [dayExMap]);
 
   const todayDayOfWeek = todayDate.getDay();
 
@@ -400,12 +396,38 @@ export default function HomePage(props: HomePageProps) {
           <div className="p-4 sm:p-5">
             <div className="font-readout text-[10px] text-[#555] mb-3">Find a backing track to jam over</div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 mb-4">
-              <label className="font-label text-[11px] text-[#666]">
+              <div className="font-label text-[11px] text-[#666] relative" ref={jamStyleRef}>
                 Style
-                <select value={jamStyle} onChange={(e) => setJamStyle(e.target.value)} className="input w-full mt-1 text-[12px]">
-                  {STYLES.map(s => <option key={s}>{s}</option>)}
-                </select>
-              </label>
+                <input
+                  type="text"
+                  value={jamStyle}
+                  onChange={(e) => { setJamStyle(e.target.value); setJamStyleDropOpen(true); }}
+                  onFocus={() => setJamStyleDropOpen(true)}
+                  onBlur={(e) => { if (!jamStyleRef.current?.contains(e.relatedTarget as Node)) setJamStyleDropOpen(false); }}
+                  placeholder="Type or select..."
+                  className="input w-full mt-1 text-[12px]"
+                  autoComplete="off"
+                />
+                {jamStyleDropOpen && (() => {
+                  const isExactMatch = STYLES.some(s => s.toLowerCase() === jamStyle.toLowerCase());
+                  const filtered = isExactMatch ? STYLES : STYLES.filter(s => s.toLowerCase().includes(jamStyle.toLowerCase()));
+                  return filtered.length > 0 ? (
+                    <div className="absolute z-50 left-0 right-0 mt-1 rounded-lg overflow-hidden shadow-lg border border-white/10" style={{ background: "#1a1a1e", maxHeight: 340, overflowY: "auto" }}>
+                      {filtered.map(s => (
+                        <button
+                          key={s}
+                          type="button"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => { setJamStyle(s); setJamStyleDropOpen(false); }}
+                          className="block w-full text-left px-3 py-1.5 text-[12px] text-[#ccc] hover:bg-[#f59e0b]/15 hover:text-[#f59e0b] transition-colors cursor-pointer bg-transparent border-0"
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null;
+                })()}
+              </div>
               <label className="font-label text-[11px] text-[#666]">
                 Scale
                 <select value={jamScale} onChange={(e) => setJamScale(e.target.value)} className="input w-full mt-1 text-[12px]">
@@ -498,28 +520,34 @@ export default function HomePage(props: HomePageProps) {
       {/* ================================================================ */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
 
-        {/* Song of the Week */}
+        {/* Songs of the Week */}
         <div className="rounded-xl p-4 transition-all hover:border-white/10" style={{ background: "#111114", border: "1px solid rgba(255,255,255,0.05)" }}>
-          <div className="text-[10px] font-semibold text-[#D4A843] uppercase tracking-wider mb-3">Song of the Week</div>
-          {songOfTheWeek ? (
-            <button type="button" onClick={() => setSongModal(songOfTheWeek)} className="w-full text-left">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg, #1a1a2e, #16213e)" }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-[13px] text-[#ccc] font-medium truncate">{songOfTheWeek.title}</div>
-                  <div className="text-[11px] text-[#555] truncate">{songOfTheWeek.artist}</div>
-                  {songOfTheWeek.difficulty && (
-                    <span className={`text-[9px] mt-1 inline-block px-1.5 py-0.5 rounded ${songOfTheWeek.difficulty === "Beginner" ? "text-[#22c55e] bg-[#22c55e10]" : songOfTheWeek.difficulty === "Intermediate" ? "text-[#D4A843] bg-[#D4A84310]" : "text-[#ef4444] bg-[#ef444410]"}`}>
-                      {songOfTheWeek.difficulty}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </button>
+          <div className="text-[10px] font-semibold text-[#D4A843] uppercase tracking-wider mb-3">
+            {songsOfTheWeek.length > 1 ? "Songs of the Week" : "Song of the Week"}
+          </div>
+          {songsOfTheWeek.length > 0 ? (
+            <div className="flex flex-col gap-2">
+              {songsOfTheWeek.map(song => (
+                <button key={song.id} type="button" onClick={() => setSongModal(song)} className="w-full text-left">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg, #1a1a2e, #16213e)" }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[13px] text-[#ccc] font-medium truncate">{song.title}</div>
+                      <div className="text-[11px] text-[#555] truncate">{song.artist}</div>
+                      {song.difficulty && (
+                        <span className={`text-[9px] mt-0.5 inline-block px-1.5 py-0.5 rounded ${song.difficulty === "Beginner" ? "text-[#22c55e] bg-[#22c55e10]" : song.difficulty === "Intermediate" ? "text-[#D4A843] bg-[#D4A84310]" : "text-[#ef4444] bg-[#ef444410]"}`}>
+                          {song.difficulty}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
           ) : (
-            <div className="text-[12px] text-[#444]">Add songs to your library</div>
+            <div className="text-[12px] text-[#444]">No songs scheduled this week</div>
           )}
         </div>
 
@@ -579,7 +607,7 @@ export default function HomePage(props: HomePageProps) {
             <div className="font-readout text-[10px] text-[#555] mb-3">What are you focusing on this week?</div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
               {[
-                { l: "Week", v: <div className="segment-display text-center mt-1"><input type="number" value={week} min={1} onChange={(e) => setWeek(Number(e.target.value))} className="bg-transparent border-none outline-none text-center w-full font-mono font-bold text-[#D4A843]" style={{ boxShadow: 'none' }} /></div> },
+                { l: "Week", v: <div className="segment-display text-center mt-1 flex items-center justify-center gap-1"><button onClick={() => setWeek(Math.max(1, week - 1))} className="bg-transparent border-0 text-white/70 hover:text-white cursor-pointer text-sm p-0 leading-none transition-opacity">&#9664;</button><input type="number" value={week} min={1} onChange={(e) => setWeek(Math.max(1, Number(e.target.value)))} className="bg-transparent border-none outline-none text-center w-10 font-mono font-bold text-[#D4A843]" style={{ boxShadow: 'none' }} /><button onClick={() => setWeek(week + 1)} className="bg-transparent border-0 text-white/70 hover:text-white cursor-pointer text-sm p-0 leading-none transition-opacity">&#9654;</button></div> },
                 { l: "Mode", v: <select value={mode} onChange={(e) => setMode(e.target.value)} className="input w-full text-[12px] sm:text-[14px]">{MODES.map((m) => <option key={m}>{m}</option>)}</select> },
                 { l: "Key", v: <select value={scale} onChange={(e) => setScale(e.target.value)} className="input w-full">{SCALES.map((s) => <option key={s}>{s}</option>)}</select> },
                 { l: "Style", v: <select value={style} onChange={(e) => setStyle(e.target.value)} className="input w-full text-[12px] sm:text-[14px]">{STYLES.map((s) => <option key={s}>{s}</option>)}</select> },

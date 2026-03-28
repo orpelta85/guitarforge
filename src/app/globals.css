@@ -539,9 +539,10 @@ optgroup { background: var(--bg-primary); color: var(--gray-warm-400); }
 audio { filter: invert(1) sepia(0.3) hue-rotate(-15deg); }
 audio::-webkit-media-controls-panel { background: #1a1a1a; }
 
-/* ── Number input spinners ── */
+/* ── Number input spinners — hide native arrows globally ── */
 input[type="number"]::-webkit-inner-spin-button,
-input[type="number"]::-webkit-outer-spin-button { opacity: 0.3; }
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; }
 
 /* ══════════════════════════════════════════════════════════════
    STUDIO DAW

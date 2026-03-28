@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { saveToLibrary } from "@/lib/recordingsLibrary";
+import { saveToLibrary, getExerciseRecordings, deleteLibraryRecording } from "@/lib/recordingsLibrary";
+import type { LibraryRecording } from "@/lib/recordingsLibrary";
 import DarkAudioPlayer from "./DarkAudioPlayer";
 
 export type DailyRecState = "idle" | "recording" | "paused" | "stopped";
@@ -10,8 +11,6 @@ interface DailyRecorderBoxProps {
   storageKey: string;
   /** Called when daily recording starts */
   onStateChange?: (state: DailyRecState) => void;
-  /** External signal to pause (from exercise modal opening) */
-  externalPause?: boolean;
   /** Register control methods for parent */
   controlRef?: React.MutableRefObject<DailyRecorderControl | null>;
 }
@@ -22,7 +21,7 @@ export interface DailyRecorderControl {
   getState: () => DailyRecState;
 }
 
-export default function DailyRecorderBox({ storageKey, onStateChange, externalPause, controlRef }: DailyRecorderBoxProps) {
+export default function DailyRecorderBox({ storageKey, onStateChange, controlRef }: DailyRecorderBoxProps) {
   const [state, setState] = useState<DailyRecState>("idle");
   const [pauseReason, setPauseReason] = useState<PauseReason>(null);
   const [recTime, setRecTime] = useState(0);
@@ -31,6 +30,11 @@ export default function DailyRecorderBox({ storageKey, onStateChange, externalPa
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [pastRecordings, setPastRecordings] = useState<LibraryRecording[]>([]);
+  const [pastLoaded, setPastLoaded] = useState(false);
+  const [playingPastId, setPlayingPastId] = useState<string | null>(null);
+  const pastAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const mediaRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -112,9 +116,10 @@ export default function DailyRecorderBox({ storageKey, onStateChange, externalPa
       mediaRef.current.resume();
       setState("recording");
       setPauseReason(null);
+      clearTimer();
       timerRef.current = setInterval(() => setRecTime((t) => t + 1), 1000);
     }
-  }, []);
+  }, [clearTimer]);
 
   const stopRecording = useCallback(() => {
     if (mediaRef.current && (stateRef.current === "recording" || stateRef.current === "paused")) {
@@ -139,12 +144,10 @@ export default function DailyRecorderBox({ storageKey, onStateChange, externalPa
     };
   }, [controlRef, pauseRecording, resumeRecording]);
 
-  // Handle external pause signal (exercise modal opens)
-  useEffect(() => {
-    if (externalPause && stateRef.current === "recording") {
-      pauseRecording("exercise");
-    }
-  }, [externalPause, pauseRecording]);
+  // NOTE: Daily recording keeps running when exercise modal opens.
+  // It only pauses if the parent explicitly calls controlRef.pause("exercise")
+  // (e.g., when an exercise-specific recording starts and the browser
+  // cannot record two audio streams simultaneously).
 
   // Cleanup on unmount
   useEffect(() => {
@@ -193,7 +196,47 @@ export default function DailyRecorderBox({ storageKey, onStateChange, externalPa
     setSaved(false);
   };
 
-  const fmt = Math.floor(recTime / 60) + ":" + String(recTime % 60).padStart(2, "0");
+  // Load past daily session recordings from library
+  const loadPastRecordings = useCallback(() => {
+    getExerciseRecordings("daily-session").then(recs => {
+      setPastRecordings(recs.sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime()));
+      setPastLoaded(true);
+    }).catch(() => setPastLoaded(true));
+  }, []);
+
+  useEffect(() => {
+    loadPastRecordings();
+  }, [loadPastRecordings]);
+
+  // Reload list after saving a new recording
+  useEffect(() => {
+    if (saved) loadPastRecordings();
+  }, [saved, loadPastRecordings]);
+
+  const handleDeletePast = async (id: string) => {
+    try { await deleteLibraryRecording(id); } catch {}
+    setPastRecordings(p => p.filter(r => r.id !== id));
+    if (playingPastId === id) { pastAudioRef.current?.pause(); setPlayingPastId(null); }
+    setConfirmDeleteId(null);
+  };
+
+  const playPastRecording = (rec: LibraryRecording) => {
+    if (playingPastId === rec.id) {
+      pastAudioRef.current?.pause();
+      setPlayingPastId(null);
+      return;
+    }
+    pastAudioRef.current?.pause();
+    const url = URL.createObjectURL(rec.blob);
+    const audio = new Audio(url);
+    audio.onended = () => { setPlayingPastId(null); URL.revokeObjectURL(url); };
+    audio.play();
+    pastAudioRef.current = audio;
+    setPlayingPastId(rec.id);
+  };
+
+  const totalSec = Math.floor(recTime);
+  const fmt = Math.floor(totalSec / 60) + ":" + String(totalSec % 60).padStart(2, "0");
 
   return (
     <div>
@@ -271,7 +314,7 @@ export default function DailyRecorderBox({ storageKey, onStateChange, externalPa
       {/* After recording: playback + save/delete */}
       {state === "stopped" && audioUrl && (
         <div>
-          <DarkAudioPlayer src={audioUrl} title="Daily Session Recording" compact className="mb-3" />
+          <DarkAudioPlayer src={audioUrl} title="Daily Session Recording" compact className="mb-3" knownDuration={recTime} />
           <div className="flex gap-2 items-center">
             {!saved ? (
               <>
@@ -294,6 +337,59 @@ export default function DailyRecorderBox({ storageKey, onStateChange, externalPa
               className="font-label text-[11px] px-3 py-1.5 rounded-lg border transition-all border-[#555] text-[#888] hover:text-[#ccc] hover:border-[#888] cursor-pointer ml-auto">
               New Recording
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Past daily session recordings */}
+      {pastLoaded && pastRecordings.length > 0 && (
+        <div className="mt-4 pt-3 border-t border-[#1a1a1a]">
+          <div className="font-label text-[10px] text-[#555] mb-2">
+            Saved Sessions ({pastRecordings.length})
+          </div>
+          <div className="space-y-1">
+            {pastRecordings.map(rec => (
+              <div key={rec.id} className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-[#111] transition-colors group">
+                {/* Play/pause button */}
+                <button type="button" onClick={() => playPastRecording(rec)}
+                  className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 border transition-all cursor-pointer"
+                  style={{ borderColor: playingPastId === rec.id ? "#D4A843" : "#333", background: playingPastId === rec.id ? "#D4A843" + "20" : "transparent" }}>
+                  {playingPastId === rec.id ? (
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="#D4A843"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                  ) : (
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="#D4A843"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  )}
+                </button>
+                {/* Name + date */}
+                <div className="flex-1 min-w-0">
+                  <div className="font-heading text-[11px] !font-medium !normal-case !tracking-normal truncate text-[#ccc]">{rec.exerciseName}</div>
+                  <div className="font-readout text-[9px] text-[#444]">
+                    {(() => { try { return new Date(rec.savedAt).toLocaleDateString(); } catch { return rec.savedAt; } })()}
+                  </div>
+                </div>
+                {/* Delete button */}
+                {confirmDeleteId === rec.id ? (
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button type="button" onClick={() => handleDeletePast(rec.id)}
+                      className="font-label text-[9px] px-1.5 py-0.5 rounded border border-[#C41E3A]/40 text-[#C41E3A] hover:bg-[#C41E3A]/10 cursor-pointer transition-all">
+                      Yes
+                    </button>
+                    <button type="button" onClick={() => setConfirmDeleteId(null)}
+                      className="font-label text-[9px] px-1.5 py-0.5 rounded border border-[#333] text-[#555] hover:text-[#888] cursor-pointer transition-all">
+                      No
+                    </button>
+                  </div>
+                ) : (
+                  <button type="button" onClick={() => setConfirmDeleteId(rec.id)}
+                    title="Delete recording"
+                    className="w-6 h-6 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 transition-all text-[#555] hover:text-[#C41E3A] hover:bg-[#C41E3A]/10 cursor-pointer flex-shrink-0">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                  </button>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       )}

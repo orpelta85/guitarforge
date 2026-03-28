@@ -4,7 +4,7 @@ import type { Exercise } from "@/lib/types";
 import { COL, STYLES, SCALES, MODES } from "@/lib/constants";
 import { EXERCISES } from "@/lib/exercises";
 import { ytSearch, ssSearch } from "@/lib/helpers";
-import { buildCacheKey, getCachedTrack, downloadAndCache, type CachedTrack } from "@/lib/suno";
+import { buildCacheKey, getCachedTrack, downloadAndCache, type CachedTrack, saveYtBackingTrack, isYtBackingTrackSaved } from "@/lib/suno";
 import { idbLoadRecordings, idbDeleteRecording } from "@/lib/recorderIdb";
 import { saveToLibrary } from "@/lib/recordingsLibrary";
 import MetronomeBox from "./MetronomeBox";
@@ -36,6 +36,87 @@ function getModalType(exercise: Exercise): "song" | "exercise" | "theory" {
   if (exercise.songId || exercise.songName || exercise.c === "Songs") return "song";
   if (THEORY_CATS.includes(exercise.c) && !exercise.tex && !exercise.bt) return "theory";
   return "exercise";
+}
+
+/* ── Lock Video helpers ── */
+function getLockedVideo(exerciseId: number | string, type: string): string | null {
+  try { return localStorage.getItem(`gf-locked-yt-${exerciseId}-${type}`); } catch { return null; }
+}
+function setLockedVideo(exerciseId: number | string, type: string, videoId: string) {
+  try { localStorage.setItem(`gf-locked-yt-${exerciseId}-${type}`, videoId); } catch { /* ignore */ }
+}
+function removeLockedVideo(exerciseId: number | string, type: string) {
+  try { localStorage.removeItem(`gf-locked-yt-${exerciseId}-${type}`); } catch { /* ignore */ }
+}
+
+function VideoLockButton({ exerciseId, type, videoId, onUnlock }: {
+  exerciseId: number | string; type: string; videoId: string; onUnlock?: () => void;
+}) {
+  const [locked, setLocked] = useState(() => getLockedVideo(exerciseId, type) === videoId);
+
+  // Sync if videoId changes externally
+  useEffect(() => {
+    setLocked(getLockedVideo(exerciseId, type) === videoId);
+  }, [exerciseId, type, videoId]);
+
+  function toggle() {
+    if (locked) {
+      removeLockedVideo(exerciseId, type);
+      setLocked(false);
+      if (onUnlock) onUnlock();
+    } else {
+      setLockedVideo(exerciseId, type, videoId);
+      setLocked(true);
+    }
+  }
+
+  return (
+    <button type="button" onClick={toggle} title={locked ? "Unlock video (search again next time)" : "Lock this video (always load it)"}
+      className={`w-7 h-7 rounded-md flex items-center justify-center cursor-pointer transition-all duration-200 text-[14px] ${
+        locked ? "bg-amber-500/15 border border-amber-500/30 text-amber-400" : "bg-white/[0.04] border border-white/[0.08] text-zinc-600 hover:text-zinc-400 hover:bg-white/[0.07]"
+      }`}>
+      {locked ? "\uD83D\uDD12" : "\uD83D\uDD13"}
+    </button>
+  );
+}
+
+/* ── Save YouTube backing track to library ── */
+function YtSaveButton({ videoId, style, scale, mode, exerciseId, exerciseName }: {
+  videoId: string; style: string; scale: string; mode: string; exerciseId: number; exerciseName: string;
+}) {
+  const [saved, setSaved] = useState(() => isYtBackingTrackSaved(videoId));
+
+  useEffect(() => {
+    setSaved(isYtBackingTrackSaved(videoId));
+  }, [videoId]);
+
+  function handleSave() {
+    if (saved) return;
+    saveYtBackingTrack({
+      id: `yt-${videoId}-${Date.now()}`,
+      videoId,
+      title: exerciseName,
+      searchQuery: `${style} ${scale} ${mode} backing track guitar`,
+      style,
+      scale,
+      mode,
+      savedAt: Date.now(),
+      exerciseId,
+      exerciseName,
+    });
+    setSaved(true);
+  }
+
+  return (
+    <button type="button" onClick={handleSave} title={saved ? "Saved to Library" : "Save to Library"}
+      className={`w-7 h-7 rounded-md flex items-center justify-center cursor-pointer transition-all duration-200 ${
+        saved ? "bg-amber-500/15 border border-amber-500/30 text-amber-400" : "bg-white/[0.04] border border-white/[0.08] text-zinc-600 hover:text-zinc-400 hover:bg-white/[0.07]"
+      }`}>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill={saved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+      </svg>
+    </button>
+  );
 }
 
 /* ── Shared: YouTube embed + paste ── */
@@ -272,10 +353,9 @@ function SunoSection({ ex, scale, mode, suno }: {
 }
 
 /* ── YouTube backing section ── */
-function YouTubeBackingSection({ scale, mode, style, ex, ytVideoId, setYtVideoId, ytSearchInput, setYtSearchInput, ytSearchResults, setYtSearchResults, ytResultIndex, setYtResultIndex }: {
+function YouTubeBackingSection({ scale, mode, style, ex, ytVideoId, setYtVideoId, ytSearchResults, setYtSearchResults, ytResultIndex, setYtResultIndex }: {
   scale: string; mode: string; style: string; ex: Exercise;
   ytVideoId: string; setYtVideoId: (v: string) => void;
-  ytSearchInput: string; setYtSearchInput: (v: string) => void;
   ytSearchResults?: string[];
   setYtSearchResults?: (ids: string[]) => void;
   ytResultIndex?: number;
@@ -288,12 +368,16 @@ function YouTubeBackingSection({ scale, mode, style, ex, ytVideoId, setYtVideoId
   const [filterScale, setFilterScale] = useState(defaultScale);
   const [filterMode, setFilterMode] = useState(defaultMode);
   const [filterStyle, setFilterStyle] = useState(defaultStyle);
+  const [styleDropOpen, setStyleDropOpen] = useState(false);
+  const styleRef = useRef<HTMLDivElement>(null);
 
-  // Auto-load on first render using exercise context
+  // Check for locked video first
+  const lockedBacking = getLockedVideo(ex.id, "backing");
   const didAutoLoad = useRef(false);
   useEffect(() => {
     if (didAutoLoad.current || ytVideoId) return;
     didAutoLoad.current = true;
+    if (lockedBacking) { setYtVideoId(lockedBacking); return; }
     runSearch(`${defaultStyle} ${defaultScale} ${defaultMode} backing track guitar`);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -320,17 +404,58 @@ function YouTubeBackingSection({ scale, mode, style, ex, ytVideoId, setYtVideoId
     setYtVideoId(ytSearchResults[nextIdx]);
   }
 
-  const selectCls = "bg-[#111] border border-[#2a2a2a] rounded px-2 py-1 text-[11px] text-zinc-300 outline-none cursor-pointer hover:border-amber-500/30 focus:border-amber-500/40";
+  const selectCls = "input !text-[12px] !w-auto";
+
+  function handleBackingUnlock() {
+    // Keep current video playing — lock removed by VideoLockButton internally
+  }
 
   return (
     <div>
-      <SectionLabel color="gold">BACKING TRACK</SectionLabel>
+      <div className="flex items-center justify-between mb-1">
+        <SectionLabel color="gold">BACKING TRACK</SectionLabel>
+        {ytVideoId && (
+          <div className="flex items-center gap-1.5">
+            <YtSaveButton videoId={ytVideoId} style={filterStyle} scale={filterScale} mode={filterMode} exerciseId={ex.id} exerciseName={ex.n} />
+            <VideoLockButton exerciseId={ex.id} type="backing" videoId={ytVideoId} onUnlock={handleBackingUnlock} />
+          </div>
+        )}
+      </div>
 
-      {/* Row 1 — Filter search */}
-      <div className="flex gap-2 items-center mb-2 flex-wrap">
-        <select title="Style" value={filterStyle} onChange={e => setFilterStyle(e.target.value)} className={selectCls}>
-          {STYLES.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
+      {/* Unified search row */}
+      <div className="flex gap-2 items-center mb-3 flex-wrap">
+        <div className="relative" ref={styleRef}>
+          <input
+            type="text"
+            value={filterStyle}
+            onChange={(e) => { setFilterStyle(e.target.value); setStyleDropOpen(true); }}
+            onFocus={() => setStyleDropOpen(true)}
+            onBlur={(e) => { if (!styleRef.current?.contains(e.relatedTarget as Node)) setStyleDropOpen(false); }}
+            onKeyDown={e => { if (e.key === "Enter") { setStyleDropOpen(false); runSearch(`${filterStyle} ${filterScale} ${filterMode} backing track guitar`); } }}
+            placeholder="Type or select style..."
+            className={`${selectCls} w-[140px]`}
+            autoComplete="off"
+          />
+          {styleDropOpen && (() => {
+            const isExactMatch = STYLES.some(s => s.toLowerCase() === filterStyle.toLowerCase());
+            const filtered = isExactMatch ? STYLES : STYLES.filter(s => s.toLowerCase().includes(filterStyle.toLowerCase()));
+            return filtered.length > 0 ? (
+              <div className="absolute z-50 left-0 right-0 mt-1 rounded-lg overflow-hidden shadow-lg border border-white/10" style={{ background: "#1a1a1e", maxHeight: 260, overflowY: "auto", minWidth: 160 }}>
+                {filtered.map(s => (
+                  <button
+                    key={s}
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => { setFilterStyle(s); setStyleDropOpen(false); }}
+                    className="block w-full text-left px-3 py-1.5 text-[11px] text-[#ccc] hover:bg-[#f59e0b]/15 hover:text-[#f59e0b] transition-colors cursor-pointer bg-transparent border-0"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            ) : null;
+          })()}
+        </div>
         <select title="Scale" value={filterScale} onChange={e => setFilterScale(e.target.value)} className={selectCls}>
           {SCALES.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
@@ -346,23 +471,6 @@ function YouTubeBackingSection({ scale, mode, style, ex, ytVideoId, setYtVideoId
             Next Video
           </button>
         )}
-      </div>
-
-      {/* OR divider */}
-      <div className="flex items-center gap-3 my-2">
-        <div className="flex-1 h-px bg-[#222]" />
-        <span className="font-label text-[10px] text-[#444]">OR</span>
-        <div className="flex-1 h-px bg-[#222]" />
-      </div>
-
-      {/* Row 2 — Free text search */}
-      <div className="flex gap-2 mb-3">
-        <input value={ytSearchInput} onChange={e => setYtSearchInput(e.target.value)}
-          onKeyDown={e => { if (e.key === "Enter") runSearch(ytSearchInput.trim() || `${ex.n} backing track guitar`); }}
-          placeholder="Free search..."
-          className="input flex-1 !text-[12px] min-w-0" />
-        <button onClick={() => runSearch(ytSearchInput.trim() || `${ex.n} backing track guitar`)}
-          className="btn-ghost !text-[11px] flex-shrink-0">Search</button>
       </div>
       {/* Video display */}
       {ytVideoId && (
@@ -400,12 +508,13 @@ function GpTabSection({ ex }: { ex: Exercise }) {
 }
 
 /* ── Tutorial tab (shared across all types) ── */
-function TutorialTabContent({ exerciseName, ytQuery }: { exerciseName: string; ytQuery: string }) {
-  const [videoId, setVideoId] = useState("");
+function TutorialTabContent({ exerciseName, ytQuery, exerciseId }: { exerciseName: string; ytQuery: string; exerciseId: number | string }) {
+  const lockedId = getLockedVideo(exerciseId, "tutorial");
+  const [videoId, setVideoId] = useState(lockedId || "");
   const [results, setResults] = useState<string[]>([]);
   const [resultIdx, setResultIdx] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
+  const [searched, setSearched] = useState(!!lockedId);
 
   useEffect(() => {
     if (searched || videoId) return;
@@ -428,9 +537,16 @@ function TutorialTabContent({ exerciseName, ytQuery }: { exerciseName: string; y
     setVideoId(results[next]);
   }
 
+  function handleUnlock() {
+    // Keep current video playing — lock removed by VideoLockButton internally
+  }
+
   return (
     <div>
-      <SectionLabel color="gold">Tutorial - {exerciseName}</SectionLabel>
+      <div className="flex items-center justify-between mb-1">
+        <SectionLabel color="gold">Tutorial - {exerciseName}</SectionLabel>
+        {videoId && <VideoLockButton exerciseId={exerciseId} type="tutorial" videoId={videoId} onUnlock={handleUnlock} />}
+      </div>
       {loading && (
         <div className="bg-white/[0.03] rounded-lg p-6 text-center text-[12px] text-zinc-600 mb-3">Searching YouTube for tutorial...</div>
       )}
@@ -698,9 +814,11 @@ function PracticeTabContent({ ex }: { ex: Exercise }) {
    ════════════════════════════════════════════════════════════════ */
 function SongWindow({ exercise: ex, mode, scale, style, week, day, savedYtUrl, bpm, note, onBpmChange, onNoteChange, onClose, onDone }: Props) {
   const savedVid = savedYtUrl?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
-  const [btVideoId, setBtVideoId] = useState("");
+  const lockedSongBt = getLockedVideo(ex.id, "backing");
+  const lockedSongOrig = getLockedVideo(ex.id, "original");
+  const [btVideoId, setBtVideoId] = useState(lockedSongBt || "");
   const [btLoading, setBtLoading] = useState(false);
-  const [btSearched, setBtSearched] = useState(false);
+  const [btSearched, setBtSearched] = useState(!!lockedSongBt);
   const [btSearchResults, setBtSearchResults] = useState<string[]>([]);
   const [btResultIndex, setBtResultIndex] = useState(0);
   const [btSearchInput, setBtSearchInput] = useState("");
@@ -728,7 +846,7 @@ function SongWindow({ exercise: ex, mode, scale, style, week, day, savedYtUrl, b
     if (savedVid?.[1] && !btVideoId) setBtVideoId(savedVid[1]);
   }, [savedVid, btVideoId]);
 
-  const [origVideoId, setOrigVideoId] = useState("");
+  const [origVideoId, setOrigVideoId] = useState(lockedSongOrig || "");
   const [showOriginal, setShowOriginal] = useState(false);
   const songName = ex.songName || ex.n;
 
@@ -782,7 +900,7 @@ function SongWindow({ exercise: ex, mode, scale, style, week, day, savedYtUrl, b
 
           {activeTab === "backing" && (
             <div>
-              <div className="flex gap-2 mb-4">
+              <div className="flex gap-2 mb-4 items-center">
                 <button type="button" onClick={() => setShowOriginal(false)}
                   className={`text-[12px] px-4 py-2 rounded-lg cursor-pointer border transition-all duration-200 ${!showOriginal ? "bg-amber-500/15 text-amber-400 border-amber-500/30" : "border-white/[0.08] text-zinc-500 hover:text-zinc-300"}`}>
                   Backing Track
@@ -791,6 +909,10 @@ function SongWindow({ exercise: ex, mode, scale, style, week, day, savedYtUrl, b
                   className={`text-[12px] px-4 py-2 rounded-lg cursor-pointer border transition-all duration-200 ${showOriginal ? "bg-amber-500/15 text-amber-400 border-amber-500/30" : "border-white/[0.08] text-zinc-500 hover:text-zinc-300"}`}>
                   Original
                 </button>
+                <div className="ml-auto">
+                  {!showOriginal && btVideoId && <VideoLockButton exerciseId={ex.id} type="backing" videoId={btVideoId} />}
+                  {showOriginal && origVideoId && <VideoLockButton exerciseId={ex.id} type="original" videoId={origVideoId} />}
+                </div>
               </div>
               {btLoading && (
                 <div className="bg-white/[0.02] rounded-lg p-6 text-center text-[12px] text-zinc-600 mb-3">Searching for backing track...</div>
@@ -839,7 +961,7 @@ function SongWindow({ exercise: ex, mode, scale, style, week, day, savedYtUrl, b
           )}
 
           {activeTab === "tutorial" && (
-            <TutorialTabContent exerciseName={songName} ytQuery={`how to play ${songName} guitar`} />
+            <TutorialTabContent exerciseName={songName} ytQuery={`how to play ${songName} guitar`} exerciseId={ex.id} />
           )}
         </div>
       </div>
@@ -858,7 +980,6 @@ function ExerciseWindow({ exercise: ex, mode, scale, style, week, day, savedYtUr
 
   const savedVid = savedYtUrl?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
   const [ytVideoId, setYtVideoId] = useState(savedVid ? savedVid[1] : "");
-  const [ytSearchInput, setYtSearchInput] = useState(savedYtUrl || "");
   const [ytSearchResults, setYtSearchResults] = useState<string[]>([]);
   const [ytResultIndex, setYtResultIndex] = useState(0);
 
@@ -892,7 +1013,6 @@ function ExerciseWindow({ exercise: ex, mode, scale, style, week, day, savedYtUr
             <div>
               <YouTubeBackingSection scale={scale} mode={mode} style={style} ex={ex}
                 ytVideoId={ytVideoId} setYtVideoId={setYtVideoId}
-                ytSearchInput={ytSearchInput} setYtSearchInput={setYtSearchInput}
                 ytSearchResults={ytSearchResults} setYtSearchResults={setYtSearchResults}
                 ytResultIndex={ytResultIndex} setYtResultIndex={setYtResultIndex} />
               {needsBacking && (
@@ -904,7 +1024,7 @@ function ExerciseWindow({ exercise: ex, mode, scale, style, week, day, savedYtUr
           )}
 
           {activeTab === "tutorial" && (
-            <TutorialTabContent exerciseName={ex.n} ytQuery={ex.yt} />
+            <TutorialTabContent exerciseName={ex.n} ytQuery={ex.yt} exerciseId={ex.id} />
           )}
         </div>
       </div>
@@ -1004,7 +1124,7 @@ function TheoryWindow({ exercise: ex, week, day, bpm, note, onBpmChange, onNoteC
 
           {/* TUTORIAL TAB */}
           {activeTab === "tutorial" && (
-            <TutorialTabContent exerciseName={ex.n} ytQuery={ex.yt} />
+            <TutorialTabContent exerciseName={ex.n} ytQuery={ex.yt} exerciseId={ex.id} />
           )}
 
           {/* LOG TAB */}

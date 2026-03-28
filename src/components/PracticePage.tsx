@@ -83,6 +83,7 @@ interface PracticePageProps {
   songs: Song[];
   exEdits: ExEditMap;
   streak: { currentStreak: number; longestStreak: number; lastPracticeDate: string; totalDays: number };
+  customExercises?: Exercise[];
   sessionSeconds: number;
   sessionRunning: boolean;
   showQuickMetronome: boolean;
@@ -116,7 +117,6 @@ interface PracticePageProps {
   setFocusEx: (v: { ex: Exercise; idx: number } | null) => void;
   // Daily recorder
   dailyRecControlRef: React.MutableRefObject<DailyRecorderControl | null>;
-  exerciseModalOpen: boolean;
   // Tuner navigation
   pendingTuner?: boolean;
   setPendingTuner?: (b: boolean) => void;
@@ -129,7 +129,7 @@ interface PracticePageProps {
 export default function PracticePage(props: PracticePageProps) {
   const {
     week, selDay, style, dayCats, dayHrs, dayExMap, doneMap, bpmLog, songs, exEdits,
-    streak, sessionSeconds, sessionRunning, showQuickMetronome, showQuickRecorder,
+    streak, customExercises = [], sessionSeconds, sessionRunning, showQuickMetronome, showQuickRecorder,
     exPickerOpen, exPickerSearch, exPickerCat, songPickerOpen, songPickerSearch,
     curExList, curDone, curMin, curCats,
     setView, setSelDay, setDayCats, setDayHrs, setDayExMap,
@@ -137,7 +137,7 @@ export default function PracticePage(props: PracticePageProps) {
     setExPickerOpen, setExPickerSearch, setExPickerCat,
     setSongPickerOpen, setSongPickerSearch,
     setModal, setFocusEx,
-    dailyRecControlRef, exerciseModalOpen,
+    dailyRecControlRef,
     pendingTuner, setPendingTuner,
     toggleDone, getEditedEx, buildDay,
   } = props;
@@ -150,6 +150,28 @@ export default function PracticePage(props: PracticePageProps) {
 
   // Copy/Paste clipboard for day routine
   const [copiedDayRoutine, setCopiedDayRoutine] = useState<{ cats: string[]; hrs: number; exs: Exercise[] } | null>(null);
+
+  // ── Practice Log (journal) ──
+  const logKey = `gf-practice-log-${selDay}`;
+  const [showLog, setShowLog] = useState(false);
+  const [logText, setLogText] = useState("");
+  const logTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Load log from localStorage when day changes
+  useEffect(() => {
+    const saved = localStorage.getItem(logKey);
+    setLogText(saved || "");
+  }, [logKey]);
+
+  // Debounced save on text change
+  const handleLogChange = useCallback((val: string) => {
+    setLogText(val);
+    if (logTimerRef.current) clearTimeout(logTimerRef.current);
+    logTimerRef.current = setTimeout(() => {
+      if (val.trim()) localStorage.setItem(logKey, val);
+      else localStorage.removeItem(logKey);
+    }, 500);
+  }, [logKey]);
 
   // ── Tuner state ──
   const [tunerNote, setTunerNote] = useState("");
@@ -233,7 +255,8 @@ export default function PracticePage(props: PracticePageProps) {
   }, [pendingTuner, setPendingTuner]);
 
   const fmtTimer = (s: number) => {
-    const m = Math.floor(s / 60), sec = s % 60;
+    const total = Math.floor(s);
+    const m = Math.floor(total / 60), sec = total % 60;
     return String(m).padStart(2, "0") + ":" + String(sec).padStart(2, "0");
   };
 
@@ -341,7 +364,7 @@ export default function PracticePage(props: PracticePageProps) {
                   </div>
                 </div>
                 <div className="overflow-y-auto flex-1" style={{ maxHeight: "50vh" }}>
-                  {EXERCISES.filter(e => {
+                  {[...EXERCISES, ...customExercises].filter(e => {
                     if (exPickerCat !== "All" && e.c !== exPickerCat) return false;
                     if (exPickerSearch.trim()) {
                       const q = exPickerSearch.trim().toLowerCase();
@@ -454,6 +477,12 @@ export default function PracticePage(props: PracticePageProps) {
             )}
           </div>
           <div className="flex items-center gap-1.5">
+            <button type="button" onClick={() => setShowLog(!showLog)}
+              className={`relative btn-ghost !px-2 !py-1.5 !text-[10px] flex items-center gap-1 ${showLog ? "!border-[#D4A843]/60 !text-[#D4A843]" : ""}`}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              Log
+              {logText.trim() && !showLog && <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-[#D4A843]" />}
+            </button>
             <button type="button" onClick={() => setSessionRunning(!sessionRunning)}
               className={`font-label text-[10px] px-3 py-1.5 rounded-lg border transition-all ${sessionRunning ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#D4A843]/40 text-[#D4A843]"}`}>
               {sessionRunning ? "Pause" : "Start"}
@@ -497,6 +526,25 @@ export default function PracticePage(props: PracticePageProps) {
             Record
           </button>
         </div>
+
+        {/* Practice Log (expandable) */}
+        {showLog && (
+          <div className="mt-3 pt-3 border-t border-[#ffffff08]">
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-label text-[10px] text-[#666]">Practice Log - {selDay}</span>
+              {logText.trim() && (
+                <span className="font-label text-[9px] text-[#444]">Auto-saved</span>
+              )}
+            </div>
+            <textarea
+              value={logText}
+              onChange={e => handleLogChange(e.target.value)}
+              placeholder="Write notes about today's session..."
+              rows={4}
+              className="w-full bg-[#111] text-[#ccc] text-[12px] font-body rounded-lg border border-[#333] focus:border-[#D4A843] focus:outline-none p-3 resize-y placeholder-[#444]"
+            />
+          </div>
+        )}
       </div>
 
       {/* Inline Metronome */}
@@ -576,7 +624,6 @@ export default function PracticePage(props: PracticePageProps) {
           <DailyRecorderBox
             storageKey={week + "-" + selDay + "-session"}
             controlRef={dailyRecControlRef}
-            externalPause={exerciseModalOpen}
           />
         </div>
       )}

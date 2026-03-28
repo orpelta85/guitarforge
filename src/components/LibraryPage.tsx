@@ -5,8 +5,8 @@ import { CATS, COL, STYLES, CAT_GROUPS } from "@/lib/constants";
 import { EXERCISES } from "@/lib/exercises";
 import { SONG_LIBRARY } from "@/lib/songs-data";
 import LibraryEditor from "./LibraryEditor";
-import { getAllLibraryTracks, deleteFromLibrary } from "@/lib/suno";
-import type { LibraryTrack } from "@/lib/suno";
+import { getAllLibraryTracks, deleteFromLibrary, getYtBackingTracks, deleteYtBackingTrack } from "@/lib/suno";
+import type { LibraryTrack, YtBackingTrack } from "@/lib/suno";
 import type { View } from "./Navbar";
 import SongFilterBar, { useFilteredSongs } from "./SongFilterBar";
 import type { SongSort, DifficultyFilter } from "./SongFilterBar";
@@ -21,6 +21,8 @@ interface LibraryPageProps {
   exEdits: ExEditMap;
   customSongs: SongEntry[];
   mySongs: number[];
+  customExercises: Exercise[];
+  setCustomExercises: React.Dispatch<React.SetStateAction<Exercise[]>>;
   songLibSearch: string;
   songLibFilter: DifficultyFilter;
   songLibGenre: string;
@@ -383,7 +385,7 @@ function RecordingsTab({
 
 export default function LibraryPage(props: LibraryPageProps) {
   const {
-    week, doneMap, exEdits, customSongs, mySongs,
+    week, doneMap, exEdits, customSongs, mySongs, customExercises, setCustomExercises,
     songLibSearch, songLibFilter, songLibGenre, songLibGenres, songLibSort, songLibHasGP,
     songLibLimit, showAddSong,
     newSongTitle, newSongArtist, libTab, libFilter, libSearch, libShowAll,
@@ -396,8 +398,19 @@ export default function LibraryPage(props: LibraryPageProps) {
     setModal, setSongModal, getEditedEx,
   } = props;
 
+  // Apply stored song edits
+  const songEditsRef = useRef<Record<number, Partial<SongEntry>>>({});
+  useEffect(() => {
+    try { const raw = localStorage.getItem("gf-song-edits"); if (raw) songEditsRef.current = JSON.parse(raw); } catch {}
+  }, []);
+  const applySongEdits = (s: SongEntry): SongEntry => {
+    if (s.id >= 1000000000) return s;
+    const edits = songEditsRef.current[s.id];
+    return edits ? { ...s, ...edits } : s;
+  };
+
   // Song library filtering (must be at top level since useFilteredSongs is a hook)
-  const songLibAllSongs = useMemo(() => [...SONG_LIBRARY, ...customSongs], [customSongs]);
+  const songLibAllSongs = useMemo(() => [...SONG_LIBRARY, ...customSongs].map(applySongEdits), [customSongs]);
   const songLibFiltered = useFilteredSongs(songLibAllSongs, songLibSearch, songLibFilter, songLibGenres, songLibSort, songLibHasGP);
 
   // Library-local state
@@ -405,27 +418,51 @@ export default function LibraryPage(props: LibraryPageProps) {
   const [libRecordingsLoaded, setLibRecordingsLoaded] = useState(false);
   const [libBackingTracks, setLibBackingTracks] = useState<LibraryTrack[]>([]);
   const [libBackingLoaded, setLibBackingLoaded] = useState(false);
+  const [ytBackingTracks, setYtBackingTracks] = useState<YtBackingTrack[]>([]);
   const [playingRecId, setPlayingRecId] = useState<string | null>(null);
   const [playingBackingId, setPlayingBackingId] = useState<string | null>(null);
+  const [expandedYtId, setExpandedYtId] = useState<string | null>(null);
   const libAudioRef = useRef<HTMLAudioElement | null>(null);
   const [activeStyle, setActiveStyle] = useState<string | null>(null);
   // Add Exercise form state
   const [showAddExForm, setShowAddExForm] = useState(false);
   const [newExName, setNewExName] = useState("");
+  const CAT_DEFAULTS: Record<string, { bpm: string; focus: string; minutes: number }> = {
+    "Warm-Up": { bpm: "60-80", focus: "Finger Independence, Relaxation", minutes: 5 },
+    "Shred": { bpm: "120-200", focus: "Speed, Accuracy", minutes: 10 },
+    "Legato": { bpm: "80-140", focus: "Hammer-ons, Pull-offs", minutes: 10 },
+    "Bends": { bpm: "60-100", focus: "Pitch Accuracy, Vibrato", minutes: 5 },
+    "Tapping": { bpm: "100-160", focus: "Two-hand Coordination", minutes: 10 },
+    "Sweep": { bpm: "80-160", focus: "Economy of Motion, Arpeggios", minutes: 10 },
+    "Rhythm": { bpm: "80-140", focus: "Timing, Groove", minutes: 10 },
+    "Fretboard": { bpm: "", focus: "Note Knowledge, Navigation", minutes: 5 },
+    "Ear Training": { bpm: "", focus: "Interval Recognition, Pitch", minutes: 10 },
+    "Improv": { bpm: "80-120", focus: "Creativity, Phrasing", minutes: 10 },
+    "Riffs": { bpm: "100-160", focus: "Precision, Tone", minutes: 10 },
+    "Phrasing": { bpm: "60-100", focus: "Expression, Dynamics", minutes: 10 },
+    "Modes": { bpm: "80-120", focus: "Scale Patterns, Application", minutes: 10 },
+    "Composition": { bpm: "", focus: "Song Structure, Creativity", minutes: 15 },
+    "Dynamics": { bpm: "60-120", focus: "Volume Control, Touch", minutes: 5 },
+    "Chords": { bpm: "60-100", focus: "Chord Shapes, Transitions", minutes: 10 },
+    "Harmonics": { bpm: "60-80", focus: "Natural & Artificial Harmonics", minutes: 5 },
+    "Picking": { bpm: "100-180", focus: "Alternate Picking, Economy", minutes: 10 },
+    "Arpeggios": { bpm: "80-140", focus: "Sweep, String Skipping", minutes: 10 },
+    "Slide": { bpm: "60-100", focus: "Intonation, Slide Control", minutes: 10 },
+    "Tunings": { bpm: "", focus: "Alternate Tuning Familiarity", minutes: 10 },
+    "Keys": { bpm: "", focus: "Key Signatures, Transposition", minutes: 10 },
+  };
   const [newExCat, setNewExCat] = useState("Warm-Up");
-  const [newExMinutes, setNewExMinutes] = useState(5);
+  const [newExMinutes, setNewExMinutes] = useState<number | "">(5);
   const [newExBpm, setNewExBpm] = useState("");
   const [newExDesc, setNewExDesc] = useState("");
   const [newExFocus, setNewExFocus] = useState("");
-  const [customExercises, setCustomExercises] = useState<Exercise[]>(() => {
-    try { const raw = localStorage.getItem("gf-custom-exercises"); return raw ? JSON.parse(raw) : []; } catch { return []; }
-  });
-
   function saveCustomExercise() {
     if (!newExName.trim()) return;
+    const minutes = newExMinutes === "" ? 5 : newExMinutes;
+    if (minutes < 1 || minutes > 60) return;
     const maxId = Math.max(...EXERCISES.map(e => e.id), ...customExercises.map(e => e.id), 9999);
     const ex: Exercise = {
-      id: maxId + 1, c: newExCat, n: newExName.trim(), m: newExMinutes,
+      id: maxId + 1, c: newExCat, n: newExName.trim(), m: minutes,
       b: newExBpm, d: newExDesc, yt: newExName.trim() + " guitar exercise",
       t: "", f: newExFocus || newExCat, bt: false,
     };
@@ -433,13 +470,54 @@ export default function LibraryPage(props: LibraryPageProps) {
     setCustomExercises(next);
     try { localStorage.setItem("gf-custom-exercises", JSON.stringify(next)); } catch {}
     setShowAddExForm(false);
-    setNewExName(""); setNewExDesc(""); setNewExBpm(""); setNewExFocus("");
+    setNewExName(""); setNewExMinutes(5); setNewExDesc(""); setNewExBpm(""); setNewExFocus("");
   }
 
-  const allExercises = useMemo(() => [...EXERCISES, ...customExercises], [customExercises]);
+  const allExercisesRaw = useMemo(() => [...EXERCISES, ...customExercises], [customExercises]);
+
+  // Trash / hidden exercises
+  const [hiddenIds, setHiddenIds] = useState<Set<number>>(() => {
+    try { const raw = localStorage.getItem("gf-hidden-exercises"); return raw ? new Set(JSON.parse(raw)) : new Set(); } catch { return new Set(); }
+  });
+  const [showTrash, setShowTrash] = useState(false);
+
+  function hideExercise(id: number) {
+    const next = new Set(hiddenIds);
+    next.add(id);
+    setHiddenIds(next);
+    try { localStorage.setItem("gf-hidden-exercises", JSON.stringify([...next])); } catch {}
+    if (editingId === id) setEditingId(null);
+  }
+
+  function restoreExercise(id: number) {
+    const next = new Set(hiddenIds);
+    next.delete(id);
+    setHiddenIds(next);
+    try { localStorage.setItem("gf-hidden-exercises", JSON.stringify([...next])); } catch {}
+  }
+
+  function restoreAll() {
+    setHiddenIds(new Set());
+    try { localStorage.removeItem("gf-hidden-exercises"); } catch {}
+  }
+
+  function permanentlyDelete(id: number) {
+    // Only custom exercises can be permanently deleted
+    const isCustom = customExercises.some(e => e.id === id);
+    if (isCustom) {
+      const next = customExercises.filter(e => e.id !== id);
+      setCustomExercises(next);
+      try { localStorage.setItem("gf-custom-exercises", JSON.stringify(next)); } catch {}
+    }
+    restoreExercise(id); // Remove from hidden too
+  }
+
+  const allExercises = useMemo(() => allExercisesRaw.filter(e => !hiddenIds.has(e.id)), [allExercisesRaw, hiddenIds]);
+  const trashedExercises = useMemo(() => allExercisesRaw.filter(e => hiddenIds.has(e.id)), [allExercisesRaw, hiddenIds]);
 
   // Add Song modal state
   const [addSongModalOpen, setAddSongModalOpen] = useState(false);
+  const [editingSong, setEditingSong] = useState<SongEntry | null>(null);
 
   // Recordings sub-tab state
   const [recSubTab, setRecSubTab] = useState<"practice" | "studio">("practice");
@@ -473,7 +551,11 @@ export default function LibraryPage(props: LibraryPageProps) {
         <div className="flex items-center gap-2 mb-3">
           <input type="text" placeholder="Search exercise..." className="input flex-1"
             value={libSearch} onChange={e => setLibSearch(e.target.value)} />
-          <button type="button" onClick={() => setShowAddExForm(f => !f)}
+          <button type="button" onClick={() => {
+            const opening = !showAddExForm;
+            setShowAddExForm(opening);
+            if (opening) { const d = CAT_DEFAULTS[newExCat]; if (d) { setNewExMinutes(d.minutes); setNewExBpm(d.bpm); setNewExFocus(d.focus); } }
+          }}
             className="font-label text-[11px] px-3 py-2 rounded-lg cursor-pointer border border-[#D4A843] bg-[#D4A843]/10 text-[#D4A843] hover:bg-[#D4A843]/20 transition-all flex-shrink-0 flex items-center gap-1.5">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
             Add Exercise
@@ -486,10 +568,15 @@ export default function LibraryPage(props: LibraryPageProps) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
               <input type="text" placeholder="Exercise name *" value={newExName} onChange={e => setNewExName(e.target.value)}
                 className="input" />
-              <select value={newExCat} onChange={e => setNewExCat(e.target.value)} className="input">
+              <select value={newExCat} onChange={e => {
+                const cat = e.target.value;
+                setNewExCat(cat);
+                const d = CAT_DEFAULTS[cat];
+                if (d) { setNewExMinutes(d.minutes); setNewExBpm(d.bpm); setNewExFocus(d.focus); }
+              }} className="input">
                 {CATS.filter(c => c !== "Songs").map(c => <option key={c} value={c}>{c}</option>)}
               </select>
-              <input type="number" placeholder="Minutes" value={newExMinutes} onChange={e => setNewExMinutes(Number(e.target.value))}
+              <input type="number" placeholder="Duration (minutes)" value={newExMinutes} onChange={e => setNewExMinutes(e.target.value === "" ? "" : Math.max(1, Math.min(60, Number(e.target.value))))}
                 className="input" min={1} max={60} />
               <input type="text" placeholder="BPM range (e.g. 80-120)" value={newExBpm} onChange={e => setNewExBpm(e.target.value)}
                 className="input" />
@@ -522,11 +609,64 @@ export default function LibraryPage(props: LibraryPageProps) {
           <button onClick={() => setLibShowAll(!libShowAll)} className="btn-ghost !text-[10px]">
             {libShowAll ? "Group by Category" : "Show Flat List"}
           </button>
+          {customExercises.length > 0 && (
+            <button onClick={() => setLibFilter(libFilter === "Custom" ? "All" : "Custom")}
+              className={`font-label text-[10px] px-3 py-1 rounded-lg cursor-pointer border transition-all ${libFilter === "Custom" ? "bg-[#8b5cf6] text-[#121214] border-[#8b5cf6]" : "border-[#8b5cf6]/40 text-[#8b5cf6]/80 hover:border-[#8b5cf6]/60"}`}>
+              Custom ({customExercises.length})
+            </button>
+          )}
+          {trashedExercises.length > 0 && (
+            <button onClick={() => setShowTrash(!showTrash)}
+              className={`font-label text-[10px] px-3 py-1 rounded-lg cursor-pointer border transition-all flex items-center gap-1 ${showTrash ? "bg-[#C41E3A]/20 text-[#C41E3A] border-[#C41E3A]/40" : "border-[#333] text-[#555] hover:border-[#555] hover:text-[#777]"}`}>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              Trash ({trashedExercises.length})
+            </button>
+          )}
         </div>
 
+        {/* Trash panel */}
+        {showTrash && trashedExercises.length > 0 && (
+          <div className="panel p-4 mb-4 !border-[#C41E3A]/20">
+            <div className="flex items-center justify-between mb-3">
+              <div className="font-label text-[11px] text-[#C41E3A] flex items-center gap-2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                Trash ({trashedExercises.length})
+              </div>
+              <button type="button" onClick={restoreAll}
+                className="font-label text-[10px] px-3 py-1 rounded-lg cursor-pointer border border-[#22c55e]/30 text-[#22c55e] hover:bg-[#22c55e]/10 transition-all">
+                Restore All
+              </button>
+            </div>
+            {trashedExercises.map(ex => {
+              const c = COL[ex.c], isCustom = customExercises.some(ce => ce.id === ex.id);
+              return (
+                <div key={ex.id} className="flex items-center gap-3 px-3 py-2 rounded-lg mb-1 bg-[#1a1a1a]/50 border border-[#222]">
+                  <span className="tag min-w-[48px] text-center opacity-50" style={{ border: `1px solid ${c}40`, color: c }}>{ex.c}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-heading text-[12px] !font-medium !normal-case !tracking-normal text-[#666]">{ex.n}</div>
+                    <div className="font-readout text-[9px] text-[#444]">{ex.f} · {ex.m}min</div>
+                  </div>
+                  <button type="button" onClick={() => restoreExercise(ex.id)}
+                    className="font-label text-[9px] px-2 py-1 rounded cursor-pointer border border-[#22c55e]/30 text-[#22c55e] hover:bg-[#22c55e]/10 transition-all">
+                    Restore
+                  </button>
+                  {isCustom && (
+                    <button type="button" onClick={() => permanentlyDelete(ex.id)}
+                      className="font-label text-[9px] px-2 py-1 rounded cursor-pointer border border-[#C41E3A]/30 text-[#C41E3A] hover:bg-[#C41E3A]/10 transition-all">
+                      Delete Forever
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {(() => {
+          const customIds = new Set(customExercises.map(e => e.id));
           const filtered = allExercises.filter((e) => {
-            if (libFilter !== "All" && e.c !== libFilter) return false;
+            if (libFilter === "Custom") { if (!customIds.has(e.id)) return false; }
+            else if (libFilter !== "All" && e.c !== libFilter) return false;
             if (libSearch.trim()) {
               const q = libSearch.trim().toLowerCase();
               return e.n.toLowerCase().includes(q) || e.d.toLowerCase().includes(q) || e.f.toLowerCase().includes(q);
@@ -539,7 +679,7 @@ export default function LibraryPage(props: LibraryPageProps) {
             const ex = getEditedEx(rawEx), c = COL[ex.c], isEd = editingId === ex.id;
             const practiceCount = Object.keys(doneMap).filter(k => k.includes("-" + ex.id) && doneMap[k]).length;
             return (
-              <div key={ex.id} className={`panel mb-1.5 overflow-hidden ${isEd ? "!border-[#D4A843]/30" : ""}`}>
+              <div key={ex.id} className={`panel mb-1.5 overflow-hidden group ${isEd ? "!border-[#D4A843]/30" : ""}`}>
                 <div onClick={() => setEditingId(isEd ? null : ex.id)} className="flex items-center gap-3 px-4 py-3 cursor-pointer">
                   <span className="tag min-w-[48px] text-center" style={{ border: `1px solid ${c}40`, color: c }}>{ex.c}</span>
                   <div className="flex-1">
@@ -549,6 +689,10 @@ export default function LibraryPage(props: LibraryPageProps) {
                   {practiceCount > 0 && (
                     <span className="font-readout text-[9px] px-1.5 py-0.5 rounded-sm bg-[#D4A843]/10 text-[#D4A843] border border-[#D4A843]/20">{practiceCount}x</span>
                   )}
+                  <button type="button" title="Delete exercise" onClick={e => { e.stopPropagation(); hideExercise(ex.id); }}
+                    className="w-6 h-6 rounded flex items-center justify-center text-[10px] text-[#555] hover:text-[#C41E3A] hover:bg-[#C41E3A]/10 transition-all opacity-0 group-hover:opacity-100">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  </button>
                   <span className="text-[10px] text-[#333]">{isEd ? "\u2212" : "+"}</span>
                 </div>
                 {isEd && <LibraryEditor ex={ex} exEdits={exEdits} setExEdits={setExEdits} />}
@@ -784,6 +928,7 @@ export default function LibraryPage(props: LibraryPageProps) {
         if (!libBackingLoaded) {
           setLibBackingLoaded(true);
           getAllLibraryTracks().then(tracks => setLibBackingTracks(tracks)).catch(() => {});
+          setYtBackingTracks(getYtBackingTracks());
         }
         const playBacking = (track: LibraryTrack) => {
           if (playingBackingId === track.id) { libAudioRef.current?.pause(); setPlayingBackingId(null); return; }
@@ -798,47 +943,102 @@ export default function LibraryPage(props: LibraryPageProps) {
           try { await deleteFromLibrary(id); setLibBackingTracks(p => p.filter(t => t.id !== id)); } catch {}
           if (playingBackingId === id) { libAudioRef.current?.pause(); setPlayingBackingId(null); }
         };
+        const deleteYtBacking = (id: string) => {
+          deleteYtBackingTrack(id);
+          setYtBackingTracks(p => p.filter(t => t.id !== id));
+        };
+        const totalCount = libBackingTracks.length + ytBackingTracks.length;
         return (
           <div>
-            {libBackingTracks.length === 0 ? (
+            {totalCount === 0 ? (
               <div className="panel p-8 sm:p-12 text-center">
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-4 opacity-30">
                   <path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z"/>
                 </svg>
                 <div className="font-heading text-lg text-[#D4A843] mb-2">No Backing Tracks</div>
-                <div className="font-readout text-[11px] text-[#444] mb-4">Generate a backing track in any exercise or the Studio.</div>
+                <div className="font-readout text-[11px] text-[#444] mb-4">Generate a backing track in any exercise, or save YouTube backing tracks from the exercise modal.</div>
                 <button type="button" onClick={() => setView("studio")} className="btn-ghost">Open Studio</button>
               </div>
             ) : (
               <>
-                <div className="font-readout text-[10px] text-[#555] mb-3">{libBackingTracks.length} backing tracks</div>
-                {libBackingTracks.map(track => (
-                  <div key={track.id} className="panel p-4 mb-1.5">
-                    <div className="flex items-center gap-3">
-                      <button type="button" onClick={() => playBacking(track)}
-                        className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border transition-all"
-                        style={{ borderColor: playingBackingId === track.id ? "#D4A843" : "#333", background: playingBackingId === track.id ? "#D4A843" + "20" : "transparent" }}>
-                        {playingBackingId === track.id ? (
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="#D4A843"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-                        ) : (
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="#D4A843"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                        )}
-                      </button>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-heading text-[13px] !font-medium !normal-case !tracking-normal truncate">{track.title}</div>
-                        <div className="font-readout text-[10px] text-[#444]">
-                          {track.params.style} · {track.params.scale} {track.params.mode} · {track.params.bpm} BPM
-                        </div>
-                        <div className="font-readout text-[9px] text-[#333] mt-0.5">
-                          {new Date(track.createdAt).toLocaleDateString()} · {Math.round(track.duration)}s
+                <div className="font-readout text-[10px] text-[#555] mb-3">{totalCount} backing track{totalCount !== 1 ? "s" : ""}</div>
+
+                {libBackingTracks.length > 0 && (
+                  <>
+                    {ytBackingTracks.length > 0 && <div className="font-label text-[10px] text-[#666] uppercase tracking-wider mb-2">Suno AI Tracks</div>}
+                    {libBackingTracks.map(track => (
+                      <div key={track.id} className="panel p-4 mb-1.5">
+                        <div className="flex items-center gap-3">
+                          <button type="button" onClick={() => playBacking(track)}
+                            className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border transition-all"
+                            style={{ borderColor: playingBackingId === track.id ? "#D4A843" : "#333", background: playingBackingId === track.id ? "#D4A843" + "20" : "transparent" }}>
+                            {playingBackingId === track.id ? (
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="#D4A843"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                            ) : (
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="#D4A843"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                            )}
+                          </button>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-heading text-[13px] !font-medium !normal-case !tracking-normal truncate">{track.title}</div>
+                            <div className="font-readout text-[10px] text-[#444]">
+                              {track.params.style} · {track.params.scale} {track.params.mode} · {track.params.bpm} BPM
+                            </div>
+                            <div className="font-readout text-[9px] text-[#333] mt-0.5">
+                              {new Date(track.createdAt).toLocaleDateString()} · {Math.round(track.duration)}s
+                            </div>
+                          </div>
+                          {track.favorite && <span className="text-[#D4A843] text-xs flex-shrink-0">&#x2605;</span>}
+                          <button type="button" onClick={() => deleteBacking(track.id)}
+                            className="btn-ghost !px-2 !py-1 !text-[9px] !text-[#C41E3A] !border-[#333] flex-shrink-0">Delete</button>
                         </div>
                       </div>
-                      {track.favorite && <span className="text-[#D4A843] text-xs flex-shrink-0">&#x2605;</span>}
-                      <button type="button" onClick={() => deleteBacking(track.id)}
-                        className="btn-ghost !px-2 !py-1 !text-[9px] !text-[#C41E3A] !border-[#333] flex-shrink-0">Delete</button>
-                    </div>
-                  </div>
-                ))}
+                    ))}
+                  </>
+                )}
+
+                {ytBackingTracks.length > 0 && (
+                  <>
+                    {libBackingTracks.length > 0 && <div className="font-label text-[10px] text-[#666] uppercase tracking-wider mb-2 mt-4">YouTube Backing Tracks</div>}
+                    {ytBackingTracks.map(track => {
+                      const isExpanded = expandedYtId === track.id;
+                      return (
+                        <div key={track.id} className="panel mb-1.5 overflow-hidden">
+                          <div className="flex gap-3 p-4">
+                            <div className="w-[120px] h-[68px] rounded-lg overflow-hidden bg-black flex-shrink-0 relative cursor-pointer group"
+                              onClick={() => setExpandedYtId(isExpanded ? null : track.id)}>
+                              <img src={`https://img.youtube.com/vi/${track.videoId}/mqdefault.jpg`} alt="" className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="#D4A843"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setExpandedYtId(isExpanded ? null : track.id)}>
+                              <div className="font-heading text-[13px] !font-medium !normal-case !tracking-normal truncate">{track.title}</div>
+                              {track.exerciseName && track.exerciseName !== track.title && (
+                                <div className="font-readout text-[10px] text-[#555] truncate">{track.exerciseName}</div>
+                              )}
+                              <div className="font-readout text-[10px] text-[#444]">
+                                {track.style} · {track.scale} {track.mode}
+                              </div>
+                              <div className="font-readout text-[9px] text-[#333] mt-0.5">
+                                {new Date(track.savedAt).toLocaleDateString()}
+                              </div>
+                            </div>
+                            <button type="button" onClick={() => deleteYtBacking(track.id)}
+                              className="btn-ghost !px-2 !py-1 !text-[9px] !text-[#C41E3A] !border-[#333] flex-shrink-0 self-center">Delete</button>
+                          </div>
+                          {isExpanded && (
+                            <div className="px-4 pb-4">
+                              <div className="aspect-video w-full rounded-lg overflow-hidden bg-black">
+                                <iframe src={`https://www.youtube.com/embed/${track.videoId}?autoplay=1&modestbranding=1&rel=0`}
+                                  className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen title={track.title} />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </>
+                )}
               </>
             )}
           </div>
@@ -871,10 +1071,17 @@ export default function LibraryPage(props: LibraryPageProps) {
                 Add Song Manually
               </button>
             </div>
-            {addSongModalOpen && (
+            {(addSongModalOpen || editingSong) && (
               <AddSongModal
-                onClose={() => setAddSongModalOpen(false)}
-                onSave={(song) => setCustomSongs(p => [...p, song])}
+                onClose={() => { setAddSongModalOpen(false); setEditingSong(null); }}
+                editSong={editingSong || undefined}
+                onSave={(song) => {
+                  if (editingSong) {
+                    setCustomSongs(p => p.map(s => s.id === song.id ? song : s));
+                  } else {
+                    setCustomSongs(p => [...p, song]);
+                  }
+                }}
               />
             )}
             {songLibFiltered.length === 0 && (
@@ -921,8 +1128,12 @@ export default function LibraryPage(props: LibraryPageProps) {
                             </svg>
                           </button>
                           {isCustom && (
-                            <button type="button" onClick={(e) => { e.stopPropagation(); setCustomSongs(p => p.filter(s => s.id !== song.id)); }}
-                              className="btn-ghost !px-2 !py-1 !text-[9px] !text-[#C41E3A] !border-[#333]">Remove</button>
+                            <>
+                              <button type="button" onClick={(e) => { e.stopPropagation(); setEditingSong(song); }}
+                                className="btn-ghost !px-2 !py-1 !text-[9px] !border-[#333]">Edit</button>
+                              <button type="button" onClick={(e) => { e.stopPropagation(); setCustomSongs(p => p.filter(s => s.id !== song.id)); }}
+                                className="btn-ghost !px-2 !py-1 !text-[9px] !text-[#C41E3A] !border-[#333]">Remove</button>
+                            </>
                           )}
                         </div>
                       </div>

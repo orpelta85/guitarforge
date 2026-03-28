@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import type { SavedRecording } from "@/lib/types";
 import { openRecorderDB, idbSaveRecording, idbLoadRecordings } from "@/lib/recorderIdb";
+import { saveToLibrary } from "@/lib/recordingsLibrary";
 import DarkAudioPlayer from "./DarkAudioPlayer";
 import AudioAnalyzer from "./AudioAnalyzer";
 
@@ -68,6 +69,7 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
   const [recTime, setRecTime] = useState(0);
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editName, setEditName] = useState("");
+  const [librarySaved, setLibrarySaved] = useState<Set<number>>(new Set());
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -101,6 +103,19 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
     })();
     return () => { cancelled = true; };
   }, [storageKey]);
+
+  async function handleSaveToLibrary(idx: number) {
+    const allKeys = Array.from(blobMapRef.current.keys()).sort((a, b) => b - a);
+    const blobKey = allKeys[idx];
+    const blob = blobKey !== undefined ? blobMapRef.current.get(blobKey) : undefined;
+    if (!blob) return;
+    const item = savedList[idx];
+    const name = item?.name || item?.dt || exerciseName || storageKey;
+    try {
+      await saveToLibrary(storageKey, name, blob);
+      setLibrarySaved(prev => new Set(prev).add(idx));
+    } catch { /* ignore */ }
+  }
 
   function startRecording() {
     if (!navigator.mediaDevices) { setMicError("Microphone not available on this device."); return; }
@@ -161,7 +176,8 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, []);
 
-  const fmt = Math.floor(recTime / 60) + ":" + String(recTime % 60).padStart(2, "0");
+  const totalSec = Math.floor(recTime);
+  const fmt = Math.floor(totalSec / 60) + ":" + String(totalSec % 60).padStart(2, "0");
 
   if (compact) {
     return (
@@ -234,6 +250,19 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
                         <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
                       </svg>
                     </button>
+                    {librarySaved.has(idx) ? (
+                      <span className="flex-shrink-0 text-[#33CC33]" title="Saved to Library">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 6L9 17l-5-5"/></svg>
+                      </span>
+                    ) : (
+                      <button type="button" onClick={() => handleSaveToLibrary(idx)}
+                        className="flex-shrink-0 text-[#444] hover:text-[#33CC33] transition-colors cursor-pointer" title="Save to Library">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+                          <polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" />
+                        </svg>
+                      </button>
+                    )}
                     <span className="font-readout text-[9px] text-[#333]">{item.dt}</span>
                   </>
                 )}

@@ -302,6 +302,46 @@ export async function getLibraryStats(): Promise<{ count: number; totalBytes: nu
   }
 }
 
+// ── YouTube Backing Tracks (localStorage) ──
+
+export interface YtBackingTrack {
+  id: string;
+  videoId: string;
+  title: string;
+  searchQuery: string;
+  style: string;
+  scale: string;
+  mode: string;
+  savedAt: number;
+  exerciseId?: number;
+  exerciseName?: string;
+}
+
+const YT_BT_KEY = "gf-yt-backing-tracks";
+
+export function saveYtBackingTrack(track: YtBackingTrack): void {
+  const existing = getYtBackingTracks();
+  if (existing.some(t => t.videoId === track.videoId)) return;
+  existing.unshift(track);
+  try { localStorage.setItem(YT_BT_KEY, JSON.stringify(existing)); } catch {}
+}
+
+export function getYtBackingTracks(): YtBackingTrack[] {
+  try {
+    const raw = localStorage.getItem(YT_BT_KEY);
+    return raw ? JSON.parse(raw) as YtBackingTrack[] : [];
+  } catch { return []; }
+}
+
+export function deleteYtBackingTrack(id: string): void {
+  const tracks = getYtBackingTracks().filter(t => t.id !== id);
+  try { localStorage.setItem(YT_BT_KEY, JSON.stringify(tracks)); } catch {}
+}
+
+export function isYtBackingTrackSaved(videoId: string): boolean {
+  return getYtBackingTracks().some(t => t.videoId === videoId);
+}
+
 // ── Daily credit usage tracking ──
 
 interface DailyUsage { date: string; used: number; generations: number; }

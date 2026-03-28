@@ -10,6 +10,8 @@ interface DarkAudioPlayerProps {
   autoPlay?: boolean;
   loop?: boolean;
   className?: string;
+  /** Override duration display (seconds) — useful for blob URLs where duration is unknown */
+  knownDuration?: number;
 }
 
 function formatTime(s: number): string {
@@ -27,6 +29,7 @@ export default function DarkAudioPlayer({
   autoPlay = false,
   loop = false,
   className = "",
+  knownDuration,
 }: DarkAudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const seekRef = useRef<HTMLDivElement | null>(null);
@@ -124,14 +127,15 @@ export default function DarkAudioPlayer({
     (clientX: number) => {
       const bar = seekRef.current;
       const a = audioRef.current;
-      if (!bar || !a || !duration) return;
+      const seekDur = (duration > 0 && isFinite(duration)) ? duration : (knownDuration ?? 0);
+      if (!bar || !a || !seekDur) return;
       const rect = bar.getBoundingClientRect();
       const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-      const t = ratio * duration;
+      const t = ratio * seekDur;
       a.currentTime = t;
       setCurrentTime(t);
     },
-    [duration],
+    [duration, knownDuration],
   );
 
   const handleSeekDown = useCallback(
@@ -183,6 +187,8 @@ export default function DarkAudioPlayer({
     };
   }, [draggingVol, setVol]);
 
+  const effectiveDuration = (duration > 0 && isFinite(duration)) ? duration : (knownDuration ?? 0);
+
   // Keyboard controls
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -196,13 +202,13 @@ export default function DarkAudioPlayer({
         a.currentTime = Math.max(0, a.currentTime - 5);
       } else if (e.key === "ArrowRight") {
         e.preventDefault();
-        a.currentTime = Math.min(duration, a.currentTime + 5);
+        a.currentTime = Math.min(effectiveDuration, a.currentTime + 5);
       }
     },
-    [togglePlay, duration],
+    [togglePlay, effectiveDuration],
   );
 
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const progress = effectiveDuration > 0 ? (currentTime / effectiveDuration) * 100 : 0;
   const volPercent = volume * 100;
 
   const displayTitle =
@@ -285,7 +291,7 @@ export default function DarkAudioPlayer({
 
         {/* Time */}
         <span className="font-readout text-[9px] text-[var(--text-muted)] flex-shrink-0 tabular-nums">
-          {formatTime(currentTime)}/{formatTime(duration)}
+          {formatTime(currentTime)}/{formatTime(effectiveDuration)}
         </span>
 
         {/* Seek bar */}
@@ -371,7 +377,7 @@ export default function DarkAudioPlayer({
         </div>
 
         <div className="font-readout text-[10px] text-[var(--text-muted)] flex-shrink-0 tabular-nums">
-          {formatTime(currentTime)} / {formatTime(duration)}
+          {formatTime(currentTime)} / {formatTime(effectiveDuration)}
         </div>
       </div>
 

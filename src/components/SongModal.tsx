@@ -2,9 +2,9 @@
 import { useState, useEffect, useRef } from "react";
 import type { SongEntry, Exercise } from "@/lib/types";
 import { EXERCISES } from "@/lib/exercises";
+import { STYLES, SCALES, MODES } from "@/lib/constants";
 import { ytSearch } from "@/lib/helpers";
 import { useFocusTrap } from "./ExerciseModal";
-import StemSeparator from "./StemSeparator";
 import SongRecorder from "./SongRecorder";
 import dynamic from "next/dynamic";
 const GpFileUploader = dynamic(() => import("./GpFileUploader"), {
@@ -12,12 +12,54 @@ const GpFileUploader = dynamic(() => import("./GpFileUploader"), {
   loading: () => <div className="panel p-4 text-center font-label text-sm text-[var(--text-muted)]">Loading viewer...</div>
 });
 
+/* ── Lock Video helpers (song-specific) ── */
+function getLockedVideo(songId: number | string, type: string): string | null {
+  try { return localStorage.getItem(`gf-locked-yt-song-${songId}-${type}`); } catch { return null; }
+}
+function setLockedVideo(songId: number | string, type: string, videoId: string) {
+  try { localStorage.setItem(`gf-locked-yt-song-${songId}-${type}`, videoId); } catch { /* ignore */ }
+}
+function removeLockedVideo(songId: number | string, type: string) {
+  try { localStorage.removeItem(`gf-locked-yt-song-${songId}-${type}`); } catch { /* ignore */ }
+}
+
+function VideoLockButton({ songId, type, videoId, onUnlock }: {
+  songId: number | string; type: string; videoId: string; onUnlock?: () => void;
+}) {
+  const [locked, setLocked] = useState(() => getLockedVideo(songId, type) === videoId);
+
+  useEffect(() => {
+    setLocked(getLockedVideo(songId, type) === videoId);
+  }, [songId, type, videoId]);
+
+  function toggle() {
+    if (locked) {
+      removeLockedVideo(songId, type);
+      setLocked(false);
+      if (onUnlock) onUnlock();
+    } else {
+      setLockedVideo(songId, type, videoId);
+      setLocked(true);
+    }
+  }
+
+  return (
+    <button type="button" onClick={toggle} title={locked ? "Unlock video (search again next time)" : "Lock this video (always load it)"}
+      className={`w-7 h-7 rounded-md flex items-center justify-center cursor-pointer transition-all duration-200 text-[14px] ${
+        locked ? "bg-amber-500/15 border border-amber-500/30 text-amber-400" : "bg-white/[0.04] border border-white/[0.08] text-zinc-600 hover:text-zinc-400 hover:bg-white/[0.07]"
+      }`}>
+      {locked ? "\uD83D\uDD12" : "\uD83D\uDD13"}
+    </button>
+  );
+}
+
 interface Props {
   song: SongEntry;
   onClose: () => void;
   targetMinutes?: number;
   mySongs?: number[];
   onToggleMySong?: (id: number) => void;
+  onUpdateSong?: (song: SongEntry) => void;
 }
 
 type Tab = "practice" | "tutorial" | "log";
@@ -37,8 +79,14 @@ const PROGRESS_OPTIONS = [
   { value: "mastered", label: "Mastered" },
 ];
 
-export default function SongModal({ song, onClose, targetMinutes, mySongs, onToggleMySong }: Props) {
+const TUNINGS_LIST = ["Standard", "Drop D", "Drop C", "Drop B", "Drop A", "Open G", "Open D", "Open E", "DADGAD", "Eb Standard", "D Standard", "C Standard", "B Standard"];
+const KEYS_LIST = ["", "C", "C#/Db", "D", "D#/Eb", "E", "F", "F#/Gb", "G", "G#/Ab", "A", "A#/Bb", "B", "Cm", "C#m/Dbm", "Dm", "D#m/Ebm", "Em", "Fm", "F#m/Gbm", "Gm", "G#m/Abm", "Am", "A#m/Bbm", "Bm"];
+const DIFFICULTIES_LIST: (string | undefined)[] = [undefined, "Beginner", "Intermediate", "Advanced", "Expert"];
+
+export default function SongModal({ song, onClose, targetMinutes, mySongs, onToggleMySong, onUpdateSong }: Props) {
   const [tab, setTab] = useState<Tab>("practice");
+  const canEdit = !!onUpdateSong;
+  const [editMode, setEditMode] = useState(false);
 
   // Practice timer
   const [timerSec, setTimerSec] = useState(0);
@@ -61,6 +109,13 @@ export default function SongModal({ song, onClose, targetMinutes, mySongs, onTog
   const [btLoading, setBtLoading] = useState(false);
   const [btSearched, setBtSearched] = useState(false);
   const [btUrl, setBtUrl] = useState("");
+  const [btStyle, setBtStyle] = useState("");
+  const [btScale, setBtScale] = useState(SCALES[0]);
+  const [btMode, setBtMode] = useState(MODES[0]);
+  const [btStyleDropOpen, setBtStyleDropOpen] = useState(false);
+  const btStyleRef = useRef<HTMLDivElement>(null);
+  const [btSearchResults, setBtSearchResults] = useState<string[]>([]);
+  const [btResultIndex, setBtResultIndex] = useState(0);
   const [showOriginal, setShowOriginal] = useState(true);
   const [origVideoId, setOrigVideoId] = useState("");
   const [origLoading, setOrigLoading] = useState(false);
@@ -71,6 +126,8 @@ export default function SongModal({ song, onClose, targetMinutes, mySongs, onTog
   const [tutorialVideoId, setTutorialVideoId] = useState("");
   const [tutorialLoading, setTutorialLoading] = useState(false);
   const [tutorialSearched, setTutorialSearched] = useState(false);
+  const [tutorialResults, setTutorialResults] = useState<string[]>([]);
+  const [tutorialResultIndex, setTutorialResultIndex] = useState(0);
   const [manualUrl, setManualUrl] = useState("");
 
   // Notes state — loaded from localStorage
@@ -118,9 +175,11 @@ export default function SongModal({ song, onClose, targetMinutes, mySongs, onTog
     return () => clearTimeout(timer);
   }, [notes, rating, progress, lsKey]);
 
-  // Auto-fetch original video on mount
+  // Auto-fetch original video on mount (check lock first)
   useEffect(() => {
     if (origSearched || origVideoId) return;
+    const locked = getLockedVideo(song.id, "original");
+    if (locked) { setOrigVideoId(locked); setOrigSearched(true); return; }
     setOrigLoading(true);
     setOrigSearched(true);
     const q = `${song.title} ${song.artist} official video`;
@@ -132,27 +191,35 @@ export default function SongModal({ song, onClose, targetMinutes, mySongs, onTog
       })
       .catch(() => {})
       .finally(() => setOrigLoading(false));
-  }, [origSearched, origVideoId, song.title, song.artist]);
+  }, [origSearched, origVideoId, song.id, song.title, song.artist]);
 
-  // Fetch backing track lazily when user switches to it
+  // Fetch backing track lazily when user switches to it (check lock first)
   useEffect(() => {
     if (showOriginal || btSearched || btVideoId) return;
+    const locked = getLockedVideo(song.id, "backing");
+    if (locked) { setBtVideoId(locked); setBtSearched(true); return; }
     setBtLoading(true);
     setBtSearched(true);
     const q = `${song.title} ${song.artist} backing track guitar`;
     fetch(`/api/youtube?q=${encodeURIComponent(q)}`)
       .then(r => r.json())
       .then(data => {
-        const id = data.results?.[0] || data.items?.[0]?.videoId;
-        if (id) setBtVideoId(id);
+        const ids: string[] = data.results || data.items?.map((i: { videoId: string }) => i.videoId).filter(Boolean) || [];
+        if (ids.length > 0) {
+          setBtVideoId(ids[0]);
+          setBtSearchResults(ids);
+          setBtResultIndex(0);
+        }
       })
       .catch(() => {})
       .finally(() => setBtLoading(false));
-  }, [showOriginal, btSearched, btVideoId, song.title, song.artist]);
+  }, [showOriginal, btSearched, btVideoId, song.id, song.title, song.artist]);
 
-  // Auto-fetch tutorial
+  // Auto-fetch tutorial (check lock first)
   useEffect(() => {
     if (tab !== "tutorial" || tutorialSearched || tutorialVideoId) return;
+    const locked = getLockedVideo(song.id, "tutorial");
+    if (locked) { setTutorialVideoId(locked); setTutorialSearched(true); return; }
     setTutorialLoading(true);
     setTutorialSearched(true);
     const q = song.ytTutorial
@@ -161,11 +228,16 @@ export default function SongModal({ song, onClose, targetMinutes, mySongs, onTog
     fetch(`/api/youtube?q=${encodeURIComponent(q)}`)
       .then(r => r.json())
       .then(data => {
-        if (data.items?.[0]?.videoId) setTutorialVideoId(data.items[0].videoId);
+        const ids: string[] = data.results || data.items?.map((i: { videoId: string }) => i.videoId).filter(Boolean) || [];
+        if (ids.length > 0) {
+          setTutorialVideoId(ids[0]);
+          setTutorialResults(ids);
+          setTutorialResultIndex(0);
+        }
       })
       .catch(() => {})
       .finally(() => setTutorialLoading(false));
-  }, [tab, tutorialSearched, tutorialVideoId, song.title, song.artist, song.ytTutorial]);
+  }, [tab, tutorialSearched, tutorialVideoId, song.id, song.title, song.artist, song.ytTutorial]);
 
   function saveSession(sec: number) {
     if (sec < 5) return;
@@ -192,6 +264,39 @@ export default function SongModal({ song, onClose, targetMinutes, mySongs, onTog
   function parseYtUrl(val: string): string | null {
     const m = val.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
     return m ? m[1] : null;
+  }
+
+  async function handleBtSearch() {
+    const stylePart = btStyle.trim();
+    const query = stylePart
+      ? `${stylePart} ${btScale} ${btMode} backing track guitar`
+      : `${song.title} ${song.artist} backing track guitar`;
+    setBtLoading(true);
+    try {
+      const res = await fetch(`/api/youtube?q=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      const ids: string[] = data.results || data.items?.map((i: { videoId: string }) => i.videoId).filter(Boolean) || [];
+      if (ids.length > 0) {
+        setBtVideoId(ids[0]);
+        setBtSearchResults(ids);
+        setBtResultIndex(0);
+      }
+    } catch { /* ignore */ }
+    setBtLoading(false);
+  }
+
+  function handleBtNextVideo() {
+    if (btSearchResults.length <= 1) return;
+    const nextIdx = (btResultIndex + 1) % btSearchResults.length;
+    setBtResultIndex(nextIdx);
+    setBtVideoId(btSearchResults[nextIdx]);
+  }
+
+  function handleTutorialNextVideo() {
+    if (tutorialResults.length <= 1) return;
+    const nextIdx = (tutorialResultIndex + 1) % tutorialResults.length;
+    setTutorialResultIndex(nextIdx);
+    setTutorialVideoId(tutorialResults[nextIdx]);
   }
 
   const ytQuery = song.ytTutorial
@@ -221,16 +326,61 @@ export default function SongModal({ song, onClose, targetMinutes, mySongs, onTog
               <div className="font-heading text-2xl text-[var(--text-primary)] leading-tight">{song.title}</div>
               <div className="font-label text-[14px] text-[var(--text-secondary)] mt-0.5">{song.artist}</div>
               {song.album && <div className="font-readout text-[11px] text-[var(--text-muted)] mt-0.5">{song.album}{song.year ? ` · ${song.year}` : ""}</div>}
-              <div className="flex items-center gap-1.5 flex-wrap mt-2">
-                {song.genre && <span className="font-readout text-[10px] px-2 py-0.5 rounded-full bg-white/[0.06] text-[var(--text-secondary)] border border-white/[0.08]">{song.genre}</span>}
-                {song.difficulty && <span className="font-readout text-[10px] px-2 py-0.5 rounded-full border" style={{ background: dc + "18", color: dc, borderColor: dc + "50" }}>{song.difficulty}</span>}
-                {song.key && <span className="font-readout text-[10px] px-2 py-0.5 rounded-full bg-white/[0.06] text-[var(--text-secondary)] border border-white/[0.08]">♩ {song.key}</span>}
-                {song.tempo && <span className="font-readout text-[10px] px-2 py-0.5 rounded-full bg-white/[0.06] text-[var(--text-secondary)] border border-white/[0.08]">{song.tempo} BPM</span>}
-                {song.tuning && song.tuning !== "Standard" && (
-                  <span className="font-readout text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/40 font-semibold">⚠ {song.tuning}</span>
-                )}
-                {hasGp && <span className="font-readout text-[10px] px-1.5 py-0.5 rounded border border-[var(--gold)]/40 text-[var(--gold)]">GP</span>}
-              </div>
+
+              {/* Edit mode for all songs */}
+              {editMode ? (
+                <div className="mt-3 space-y-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <select value={song.difficulty || ""} onChange={e => onUpdateSong?.({ ...song, difficulty: (e.target.value || undefined) as SongEntry["difficulty"] })}
+                      className="input !text-[11px] !py-1.5">
+                      <option value="">Difficulty...</option>
+                      {DIFFICULTIES_LIST.filter(Boolean).map(d => <option key={d} value={d}>{d}</option>)}
+                    </select>
+                    <select value={song.genre || ""} onChange={e => onUpdateSong?.({ ...song, genre: e.target.value || undefined })}
+                      className="input !text-[11px] !py-1.5">
+                      <option value="">Genre...</option>
+                      {STYLES.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                    <select value={song.tuning || "Standard"} onChange={e => onUpdateSong?.({ ...song, tuning: e.target.value === "Standard" ? undefined : e.target.value })}
+                      className="input !text-[11px] !py-1.5">
+                      {TUNINGS_LIST.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                    <select value={song.key || ""} onChange={e => onUpdateSong?.({ ...song, key: e.target.value || undefined })}
+                      className="input !text-[11px] !py-1.5">
+                      <option value="">Key...</option>
+                      {KEYS_LIST.filter(Boolean).map(k => <option key={k} value={k}>{k}</option>)}
+                    </select>
+                    <input type="number" placeholder="BPM" value={song.tempo || ""} min={20} max={300}
+                      onChange={e => onUpdateSong?.({ ...song, tempo: e.target.value ? Number(e.target.value) : undefined })}
+                      className="input !text-[11px] !py-1.5" />
+                    <button type="button" onClick={() => onUpdateSong?.({ ...song, personal: !song.personal })}
+                      className={`font-label text-[10px] px-3 py-1.5 rounded-lg border transition-all ${song.personal ? "bg-[#8b5cf6]/15 text-[#8b5cf6] border-[#8b5cf6]/40" : "bg-white/[0.04] text-[#666] border-[#333] hover:border-[#8b5cf6]/40 hover:text-[#8b5cf6]"}`}>
+                      {song.personal ? "Personal" : "Mark Personal"}
+                    </button>
+                  </div>
+                  <button type="button" onClick={() => setEditMode(false)}
+                    className="font-label text-[10px] px-3 py-1.5 rounded-lg bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/30 hover:bg-[#22c55e]/20 transition-all">
+                    Done
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 flex-wrap mt-2">
+                  {song.genre && <span className="font-readout text-[10px] px-2 py-0.5 rounded-full bg-white/[0.06] text-[var(--text-secondary)] border border-white/[0.08]">{song.genre}</span>}
+                  {song.difficulty && <span className="font-readout text-[10px] px-2 py-0.5 rounded-full border" style={{ background: dc + "18", color: dc, borderColor: dc + "50" }}>{song.difficulty}</span>}
+                  {song.key && <span className="font-readout text-[10px] px-2 py-0.5 rounded-full bg-white/[0.06] text-[var(--text-secondary)] border border-white/[0.08]">♩ {song.key}</span>}
+                  {song.tempo && <span className="font-readout text-[10px] px-2 py-0.5 rounded-full bg-white/[0.06] text-[var(--text-secondary)] border border-white/[0.08]">{song.tempo} BPM</span>}
+                  {song.tuning && song.tuning !== "Standard" && (
+                    <span className="font-readout text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/40 font-semibold">⚠ {song.tuning}</span>
+                  )}
+                  {hasGp && <span className="font-readout text-[10px] px-1.5 py-0.5 rounded border border-[var(--gold)]/40 text-[var(--gold)]">GP</span>}
+                  {canEdit && (
+                    <button type="button" onClick={() => setEditMode(true)}
+                      className="font-readout text-[10px] px-2 py-0.5 rounded-full bg-white/[0.04] text-[var(--text-muted)] border border-white/[0.08] hover:border-[#D4A843]/40 hover:text-[#D4A843] transition-all cursor-pointer">
+                      Edit
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
               {onToggleMySong && (
@@ -349,39 +499,63 @@ export default function SongModal({ song, onClose, targetMinutes, mySongs, onTog
                   </button>
                 </div>
 
-                {/* Video embed */}
-                {!showOriginal && btVideoId && (
-                  <div className="aspect-video w-full rounded-lg overflow-hidden bg-black mb-3">
-                    <iframe src={`https://www.youtube.com/embed/${btVideoId}?modestbranding=1&rel=0`}
-                      className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen title="Backing Track" />
-                  </div>
-                )}
-                {showOriginal && origVideoId && (
-                  <div className="aspect-video w-full rounded-lg overflow-hidden bg-black mb-3">
-                    <iframe src={`https://www.youtube.com/embed/${origVideoId}?modestbranding=1&rel=0`}
-                      className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen title="Original" />
-                  </div>
-                )}
-
-
-                {/* Paste URL to embed */}
-                <div className="flex gap-2 mt-3">
-                  {!showOriginal ? (
-                    <>
+                {/* Backing track: auto-search by song name */}
+                {!showOriginal && (
+                  <div>
+                    {btVideoId && (
+                      <>
+                        <div className="flex items-center justify-end gap-1.5 mb-1.5">
+                          {btSearchResults.length > 1 && (
+                            <button type="button" onClick={handleBtNextVideo}
+                              className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-white/[0.04] border border-white/[0.08] text-zinc-400 text-[11px] font-medium cursor-pointer hover:bg-white/[0.07] transition-all">
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/><line x1="19" y1="3" x2="19" y2="21"/></svg>
+                              Next Video
+                            </button>
+                          )}
+                          <VideoLockButton songId={song.id} type="backing" videoId={btVideoId} />
+                        </div>
+                        <div className="aspect-video w-full rounded-lg overflow-hidden bg-black mb-3">
+                          <iframe src={`https://www.youtube.com/embed/${btVideoId}?modestbranding=1&rel=0`}
+                            className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen title="Backing Track" />
+                        </div>
+                      </>
+                    )}
+                    {!btVideoId && !btLoading && (
+                      <div className="bg-white/[0.03] border border-dashed border-white/[0.06] rounded-lg p-6 mb-3 text-center">
+                        <div className="font-label text-[12px] text-zinc-500">No backing track found</div>
+                      </div>
+                    )}
+                    <div className="flex gap-2 mt-3">
                       <input value={btUrl} onChange={e => setBtUrl(e.target.value)}
                         onKeyDown={e => { if (e.key === "Enter") { const id = parseYtUrl(btUrl); if (id) setBtVideoId(id); } }}
                         placeholder="Paste YouTube URL..." className="input flex-1 !text-[12px]" />
                       <button type="button" onClick={() => { const id = parseYtUrl(btUrl); if (id) setBtVideoId(id); }} className="btn-gold !text-[11px]">Load</button>
-                    </>
-                  ) : (
-                    <>
+                    </div>
+                  </div>
+                )}
+
+                {/* Original: video + paste URL */}
+                {showOriginal && (
+                  <div>
+                    {origVideoId && (
+                      <>
+                        <div className="flex items-center justify-end gap-1.5 mb-1.5">
+                          <VideoLockButton songId={song.id} type="original" videoId={origVideoId} />
+                        </div>
+                        <div className="aspect-video w-full rounded-lg overflow-hidden bg-black mb-3">
+                          <iframe src={`https://www.youtube.com/embed/${origVideoId}?modestbranding=1&rel=0`}
+                            className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen title="Original" />
+                        </div>
+                      </>
+                    )}
+                    <div className="flex gap-2 mt-3">
                       <input value={origUrl} onChange={e => setOrigUrl(e.target.value)}
                         onKeyDown={e => { if (e.key === "Enter") { const id = parseYtUrl(origUrl); if (id) setOrigVideoId(id); } }}
                         placeholder="Paste YouTube URL..." className="input flex-1 !text-[12px]" />
                       <button type="button" onClick={() => { const id = parseYtUrl(origUrl); if (id) setOrigVideoId(id); }} className="btn-gold !text-[11px]">Load</button>
-                    </>
-                  )}
-                </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Quick search */}
                 <div className="flex items-center gap-2 flex-wrap mt-2">
@@ -391,20 +565,12 @@ export default function SongModal({ song, onClose, targetMinutes, mySongs, onTog
                   <button type="button" onClick={() => window.open(ytSearch(`${song.title} ${song.artist} live`), "_blank")} className="btn-ghost !text-[10px] !px-2.5 !py-1">Live</button>
                 </div>
 
-                {/* Stem Separation */}
-                {btVideoId && (
-                  <StemSeparator
-                    audioUrl={`https://www.youtube.com/watch?v=${btVideoId}`}
-                    cacheKey={`song-stems-${song.id}`}
-                  />
-                )}
               </div>
 
               {/* Song Recorder — dual channel (guitar + song) */}
               <SongRecorder
                 songName={song.title}
                 songId={song.id}
-                isYouTubeSource={true}
               />
 
               {/* GP file uploader */}
@@ -463,10 +629,22 @@ export default function SongModal({ song, onClose, targetMinutes, mySongs, onTog
               )}
 
               {tutorialVideoId && (
-                <div className="aspect-video w-full rounded-lg overflow-hidden bg-black mb-3">
-                  <iframe src={`https://www.youtube.com/embed/${tutorialVideoId}?modestbranding=1&rel=0`}
-                    className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen title="Tutorial" />
-                </div>
+                <>
+                  <div className="flex items-center justify-end gap-1.5 mb-1.5">
+                    {tutorialResults.length > 1 && (
+                      <button type="button" onClick={handleTutorialNextVideo}
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-white/[0.04] border border-white/[0.08] text-zinc-400 text-[11px] font-medium cursor-pointer hover:bg-white/[0.07] transition-all">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/><line x1="19" y1="3" x2="19" y2="21"/></svg>
+                        Next Video
+                      </button>
+                    )}
+                    <VideoLockButton songId={song.id} type="tutorial" videoId={tutorialVideoId} />
+                  </div>
+                  <div className="aspect-video w-full rounded-lg overflow-hidden bg-black mb-3">
+                    <iframe src={`https://www.youtube.com/embed/${tutorialVideoId}?modestbranding=1&rel=0`}
+                      className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen title="Tutorial" />
+                  </div>
+                </>
               )}
 
               {!tutorialVideoId && !tutorialLoading && (

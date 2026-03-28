@@ -155,6 +155,7 @@ const TOOLS_NAV: NavItem[] = [
   { id: "coach", label: "AI Coach", icon: IconCoach },
   { id: "suno", label: "Suno AI", icon: IconSuno },
   { id: "skills", label: "Skills", icon: IconSkills },
+  { id: "tuner", label: "Tuner", icon: IconTuner },
 ];
 
 const MOBILE_TABS: NavItem[] = [
