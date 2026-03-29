@@ -245,6 +245,9 @@ export default function JamLooper({ bpm, jamPlaying }: Props) {
             echoCancellation: false,
             noiseSuppression: false,
             autoGainControl: false,
+            channelCount: 2,
+            sampleRate: 48000,
+            sampleSize: 24,
           },
         });
       } catch (err) {
@@ -279,11 +282,14 @@ export default function JamLooper({ bpm, jamPlaying }: Props) {
 
       if (!mediaStreamRef.current) return;
 
-      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-        ? "audio/webm;codecs=opus"
-        : "audio/webm";
+      const pcmOk = MediaRecorder.isTypeSupported("audio/webm;codecs=pcm");
+      const mimeType = pcmOk ? "audio/webm;codecs=pcm" :
+        MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "audio/webm";
 
-      const recorder = new MediaRecorder(mediaStreamRef.current, { mimeType });
+      const recorder = new MediaRecorder(mediaStreamRef.current, {
+        mimeType,
+        ...(pcmOk ? {} : { audioBitsPerSecond: 320000 }),
+      });
       chunksRef.current = [];
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) chunksRef.current.push(e.data);
@@ -324,7 +330,7 @@ export default function JamLooper({ bpm, jamPlaying }: Props) {
       };
 
       recorderRef.current = recorder;
-      recorder.start(100); // timeslice 100ms for frequent ondataavailable
+      recorder.start();
 
       recordStartRef.current = ctx.currentTime;
 

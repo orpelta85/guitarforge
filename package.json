@@ -32,6 +32,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "playwright": "^1.58.2",
+    "puppeteer-core": "^24.40.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

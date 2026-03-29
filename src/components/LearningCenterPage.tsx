@@ -1881,6 +1881,840 @@ export default function LearningCenterPage() {
                             );
                           })}
                         </div>
+
+                    {/* Inline exercise practice area — renders inside the group that owns the active exercise */}
+                    {activeInGroup && exMode && (
+                      <div className="border-t border-[#333] mt-3 p-2 sm:p-3">
+                        {/* Sub tabs */}
+                        {hasSubTabs && exMode !== "construction" && (
+                          <div className="flex gap-1 mb-3">
+                            {([["exercise","Exercise"],["achievements","Achievements"],["reference","Reference"]] as [SubTab,string][]).map(([t,lbl]) => (
+                              <button key={t} onClick={() => setSubTab(t)}
+                                className={`font-label text-[10px] px-3 py-2 sm:py-1 rounded-sm cursor-pointer border flex-1 transition-all min-h-[36px] ${subTab === t ? "border-[#D4A843] text-[#D4A843]" : "border-[#222] text-[#444]"}`}>{lbl}</button>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* ── Construction Mode (expanded with sub-modes) ── */}
+                        {isConstructionMode && (
+                          <div>
+                            <div className="panel p-3 sm:p-4 mb-3">
+                              <div className="font-label text-[10px] text-[#D4A843] mb-3">Construction — choose mode</div>
+                              <div className="flex gap-1 mb-4 flex-wrap">
+                                {(["scale","interval","chord"] as ConSubMode[]).map(m => (
+                                  <button key={m} onClick={() => { setConSubMode(m); setConSelected(new Set()); setConRevealed(false); }}
+                                    className={`font-label text-[10px] px-3 py-1.5 rounded-sm cursor-pointer border ${conSubMode === m ? "border-[#D4A843] text-[#D4A843] bg-[#D4A843]/8" : "border-[#222] text-[#555]"}`}>
+                                    {m === "scale" ? "Scale" : m === "interval" ? "Interval" : "Chord"}
+                                  </button>
+                                ))}
+                              </div>
+
+                              {/* Root selector */}
+                              <div className="mb-3">
+                                <div className="font-label text-[9px] text-[#555] mb-1">Root</div>
+                                <div className="flex gap-1 flex-wrap">
+                                  {NOTES.map(n => (
+                                    <button key={n} onClick={() => { setConRoot(n); setConSelected(new Set()); setConRevealed(false); }}
+                                      className={`font-readout text-[10px] w-8 h-7 rounded-sm cursor-pointer border flex items-center justify-center ${conRoot === n ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#222] text-[#888]"}`}>{n}</button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Scale sub-mode */}
+                              {conSubMode === "scale" && (
+                                <div className="mb-3">
+                                  <div className="font-label text-[9px] text-[#555] mb-1">Scale</div>
+                                  <div className="flex gap-1 flex-wrap">
+                                    {ALL_SCALES.map(s => (
+                                      <button key={s.name} onClick={() => { setConScale(s.name); setConSelected(new Set()); setConRevealed(false); }}
+                                        className={`font-label text-[10px] px-2 py-1 rounded-sm cursor-pointer border ${conScale === s.name ? "border-[#D4A843] text-[#D4A843]" : "border-[#222] text-[#555]"}`}>{s.name}</button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Interval sub-mode */}
+                              {conSubMode === "interval" && (
+                                <div className="mb-3">
+                                  <div className="font-label text-[9px] text-[#555] mb-1">Interval</div>
+                                  <div className="flex gap-1 flex-wrap">
+                                    {ALL_INTERVALS.map(iv => (
+                                      <button key={iv.name} onClick={() => { setConIvName(iv.name); setConSelected(new Set()); setConRevealed(false); }}
+                                        className={`font-label text-[10px] px-2 py-1 rounded-sm cursor-pointer border ${conIvName === iv.name ? "border-[#D4A843] text-[#D4A843]" : "border-[#222] text-[#555]"}`}>{iv.name}</button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Chord sub-mode */}
+                              {conSubMode === "chord" && (
+                                <div className="mb-3">
+                                  <div className="font-label text-[9px] text-[#555] mb-1">Chord Type</div>
+                                  <div className="flex gap-1 flex-wrap">
+                                    {ALL_CHORDS.map(c => (
+                                      <button key={c.name} onClick={() => { setConChordType(c.name); setConSelected(new Set()); setConRevealed(false); }}
+                                        className={`font-label text-[10px] px-2 py-1 rounded-sm cursor-pointer border ${conChordType === c.name ? "border-[#D4A843] text-[#D4A843]" : "border-[#222] text-[#555]"}`}>{c.name}</button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              <div className="font-label text-[11px] text-[#ccc] mb-2">
+                                Build: {conRoot} {conSubMode === "scale" ? conScale : conSubMode === "interval" ? conIvName : conChordType}
+                              </div>
+                              <div className="text-[10px] text-[#555] mb-3">
+                                Selected: {conSelected.size > 0 ? [...conSelected].join(", ") : "—"}
+                              </div>
+
+                              {/* Clickable note grid */}
+                              <div className="flex gap-1.5 flex-wrap mb-4">
+                                {NOTES.map(n => {
+                                  const selected = conSelected.has(n);
+                                  let bg = "#141414"; let col = "#888"; let brd = "#222";
+                                  if (conRevealed) {
+                                    let expected = new Set<string>();
+                                    if (conSubMode === "scale") {
+                                      const scaleObj = ALL_SCALES.find(s => s.name === conScale);
+                                      const cri = NOTES.indexOf(conRoot);
+                                      expected = new Set(scaleObj ? scaleObj.notes.map(s => NOTES[(cri + s) % 12]) : []);
+                                    } else if (conSubMode === "interval") {
+                                      const iv = ALL_INTERVALS.find(i => i.name === conIvName);
+                                      const cri = NOTES.indexOf(conRoot);
+                                      if (iv) expected = new Set([NOTES[(cri + iv.st) % 12]]);
+                                    } else {
+                                      const ch = ALL_CHORDS.find(c => c.name === conChordType);
+                                      const cri = NOTES.indexOf(conRoot);
+                                      expected = new Set(ch ? ch.iv.map(s => NOTES[(cri + s) % 12]) : []);
+                                    }
+                                    const inScale = expected.has(n);
+                                    if (selected && inScale) { bg = "#22c55e"; col = "#121214"; brd = "#22c55e"; }
+                                    else if (selected && !inScale) { bg = "#C41E3A"; col = "#fff"; brd = "#C41E3A"; }
+                                    else if (!selected && inScale) { bg = "#1a1a1a"; col = "#D4A843"; brd = "#D4A843"; }
+                                  } else if (selected) { bg = "#D4A843"; col = "#121214"; brd = "#D4A843"; }
+                                  return (
+                                    <button key={n} onClick={() => { if (conRevealed) return; const ns = new Set(conSelected); if (ns.has(n)) ns.delete(n); else ns.add(n); setConSelected(ns); }}
+                                      className="w-10 h-10 rounded-sm flex items-center justify-center font-readout text-sm cursor-pointer transition-all border"
+                                      style={{ background: bg, color: col, borderColor: brd }}>{n}</button>
+                                  );
+                                })}
+                              </div>
+
+                              <div className="flex gap-2">
+                                <button onClick={checkConstruction} className="btn-gold !text-[10px]" disabled={conRevealed}>Check</button>
+                                <button onClick={() => { setConSelected(new Set()); setConRevealed(false); }} className="btn-ghost !text-[10px]">Clear</button>
+                                <button onClick={() => {
+                                  let expected = new Set<string>();
+                                  const cri = NOTES.indexOf(conRoot);
+                                  if (conSubMode === "scale") {
+                                    const scaleObj = ALL_SCALES.find(s => s.name === conScale);
+                                    if (scaleObj) expected = new Set(scaleObj.notes.map(s => NOTES[(cri + s) % 12]));
+                                  } else if (conSubMode === "interval") {
+                                    const iv = ALL_INTERVALS.find(i => i.name === conIvName);
+                                    if (iv) expected = new Set([NOTES[(cri + iv.st) % 12]]);
+                                  } else {
+                                    const ch = ALL_CHORDS.find(c => c.name === conChordType);
+                                    if (ch) expected = new Set(ch.iv.map(s => NOTES[(cri + s) % 12]));
+                                  }
+                                  setConSelected(expected);
+                                  setConRevealed(true);
+                                }} className="btn-ghost !text-[10px]">Show answer</button>
+                              </div>
+
+                              {conRevealed && (() => {
+                                let expected = new Set<string>();
+                                const cri = NOTES.indexOf(conRoot);
+                                if (conSubMode === "scale") {
+                                  const scaleObj = ALL_SCALES.find(s => s.name === conScale);
+                                  if (scaleObj) expected = new Set(scaleObj.notes.map(s => NOTES[(cri + s) % 12]));
+                                } else if (conSubMode === "interval") {
+                                  const iv = ALL_INTERVALS.find(i => i.name === conIvName);
+                                  if (iv) expected = new Set([NOTES[(cri + iv.st) % 12]]);
+                                } else {
+                                  const ch = ALL_CHORDS.find(c => c.name === conChordType);
+                                  if (ch) expected = new Set(ch.iv.map(s => NOTES[(cri + s) % 12]));
+                                }
+                                const correct = conSelected.size === expected.size && [...conSelected].every(n => expected.has(n));
+                                return (
+                                  <div className="mt-3 text-center">
+                                    {correct
+                                      ? <div className="font-heading text-lg text-[#22c55e]">Correct! +{conSubMode === "scale" ? 25 : conSubMode === "interval" ? 15 : 20} XP</div>
+                                      : <div className="font-heading text-lg text-[#C41E3A]">Not quite — the correct notes are highlighted</div>
+                                    }
+                                  </div>
+                                );
+                              })()}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* ── Fretboard Visual Exercise Modes (fb-intervals, fb-scales, fb-chords) ── */}
+                        {isFbVisualMode && subTab === "exercise" && (
+                          <div>
+                            {/* Stats bar */}
+                            <div className="panel p-3 mb-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                  <div className="flex items-center gap-1.5">
+                                    <div className={`led ${scorePct >= 80 ? "led-on" : scorePct >= 50 ? "led-gold" : score.total > 0 ? "led-red" : "led-off"}`} />
+                                    <span className="font-readout text-sm text-[#D4A843]">{score.correct}/{score.total}</span>
+                                    {score.total > 0 && <span className="font-readout text-[10px] text-[#555]">({scorePct}%)</span>}
+                                  </div>
+                                  {score.streak > 0 && <span className="font-readout text-sm" style={{ color: score.streak >= 10 ? "#33CC33" : score.streak >= 5 ? "#D4A843" : "#888" }}>{score.streak}x</span>}
+                                </div>
+                                <button onClick={() => { setScore({ correct: 0, total: 0, streak: 0, bestStreak: ls.bestStreak }); setFbExAnswer(null); setFbExRevealed(false); }} className="btn-ghost !text-[10px] !px-2">Reset</button>
+                              </div>
+                            </div>
+
+                            <div className="panel p-3 sm:p-4 mb-3">
+                              <div className="flex justify-between items-center mb-4">
+                                <div className="font-label text-[10px] text-[#555]">
+                                  {exMode === "fb-intervals" ? "What is the interval between the two points?" :
+                                   exMode === "fb-scales" ? "What is the highlighted scale?" :
+                                   "What type of chord is this?"}
+                                </div>
+                                <div className="flex gap-2">
+                                  <button onClick={newQ} className="btn-gold !text-[10px]">New</button>
+                                  {fbExAnswer && <button onClick={replay} className="btn-ghost !text-[10px]">Replay</button>}
+                                </div>
+                              </div>
+
+                              {/* Fretboard with highlighted dots */}
+                              {fbExDots.length > 0 && (
+                                <LCFretboard
+                                  highlightNotes={[]}
+                                  rootNote={NOTES[fbExDots[0] % 12]}
+                                  highlightMidi={new Set(fbExDots)}
+                                  maxFret={15}
+                                />
+                              )}
+
+                              {!fbExAnswer && <div className="text-center font-label text-sm text-[#333] py-4 mt-2">Press New to begin</div>}
+
+                              {/* Answer buttons */}
+                              {fbExAnswer && (
+                                <div className={`grid gap-1.5 mt-4 ${exMode === "fb-intervals" ? "grid-cols-4 sm:grid-cols-5" : "grid-cols-3"}`}>
+                                  {(exMode === "fb-intervals" ? FB_IV_BUTTONS.map(b => b.name) :
+                                    exMode === "fb-scales" ? FB_SCALE_BUTTONS :
+                                    FB_CHORD_BUTTONS
+                                  ).map(name => {
+                                    const ok = fbExRevealed && name === fbExAnswer;
+                                    const wrong = fbExRevealed && name === fbExPicked && name !== fbExAnswer;
+                                    return (
+                                      <button key={name} onClick={() => handleFbExAnswer(name)} disabled={fbExRevealed}
+                                        className="py-2.5 rounded-sm text-center transition-all cursor-pointer border"
+                                        style={ok ? { background: "#22c55e", borderColor: "#22c55e", color: "#121214" }
+                                          : wrong ? { background: "#C41E3A", borderColor: "#C41E3A", color: "#fff" }
+                                          : { background: "#141414", borderColor: "#222", color: "#aaa" }}>
+                                        <div className="font-label text-[11px]">{name}</div>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              )}
+
+                              {fbExRevealed && (
+                                <div className="mt-4 text-center">
+                                  {fbExPicked === fbExAnswer
+                                    ? <><div className="font-heading text-lg text-[#22c55e]">Correct!</div><div className="font-readout text-[11px] text-[#D4A843] mt-1">+{10 + Math.min(score.streak, 20) * 2} XP</div></>
+                                    : <div className="font-heading text-lg text-[#C41E3A]">Answer: {fbExAnswer}</div>
+                                  }
+                                  {!autoAdvance && <button onClick={newQ} className="btn-gold mt-3">Next</button>}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* ── Note Ear Training Mode ── */}
+                        {isNoteEarMode && subTab === "exercise" && (
+                          <div>
+                            <div className="panel p-3 mb-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                  <div className="flex items-center gap-1.5">
+                                    <div className={`led ${scorePct >= 80 ? "led-on" : scorePct >= 50 ? "led-gold" : score.total > 0 ? "led-red" : "led-off"}`} />
+                                    <span className="font-readout text-sm text-[#D4A843]">{score.correct}/{score.total}</span>
+                                    {score.total > 0 && <span className="font-readout text-[10px] text-[#555]">({scorePct}%)</span>}
+                                  </div>
+                                  {score.streak > 0 && <span className="font-readout text-sm" style={{ color: score.streak >= 10 ? "#33CC33" : score.streak >= 5 ? "#D4A843" : "#888" }}>{score.streak}x</span>}
+                                </div>
+                                <button onClick={() => { setScore({ correct: 0, total: 0, streak: 0, bestStreak: ls.bestStreak }); setAnswer(null); setRevealed(false); }} className="btn-ghost !text-[10px] !px-2">Reset</button>
+                              </div>
+                            </div>
+
+                            <div className="panel p-6 mb-3">
+                              <div className="text-center mb-4">
+                                <div className="font-label text-[10px] text-[#555] mb-2">Identify the note you hear</div>
+                              </div>
+                              <div className="flex justify-center gap-3 mb-6">
+                                <button onClick={newQ} className="w-16 h-16 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95 flex items-center justify-center"
+                                  style={{ background: "linear-gradient(145deg, #D4A843, #B8922E)", border: "2px solid #DFBD69", boxShadow: "0 4px 16px rgba(212,168,67,0.25)" }}>
+                                  <span className="text-[#121214] text-xl font-bold ml-0.5">&#9654;</span>
+                                </button>
+                                {answer && <button onClick={replay} className="w-10 h-10 rounded-full cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center mt-3"
+                                  style={{ background: "#1a1a1a", border: "1px solid #333" }}><span className="text-[#888] text-sm">&#8635;</span></button>}
+                              </div>
+                              {!answer && <div className="text-center font-label text-sm text-[#333] py-4">Press play to begin</div>}
+                              {answer && (
+                                <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5">
+                                  {NOTES.map(n => {
+                                    const ok = revealed && n === answer;
+                                    const wrong = revealed && n === picked && n !== answer;
+                                    return (
+                                      <button key={n} onClick={() => handleAnswer(n)} disabled={revealed}
+                                        className="py-3 rounded-sm text-center transition-all cursor-pointer border"
+                                        style={ok ? { background: "#22c55e", borderColor: "#22c55e", color: "#121214" }
+                                          : wrong ? { background: "#C41E3A", borderColor: "#C41E3A", color: "#fff" }
+                                          : { background: "#141414", borderColor: "#222", color: "#aaa" }}>
+                                        <div className="font-readout text-base font-bold">{n}</div>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                              {revealed && (
+                                <div className="mt-4 text-center">
+                                  {picked === answer
+                                    ? <><div className="font-heading text-lg text-[#22c55e]">Correct!</div><div className="font-readout text-[11px] text-[#D4A843] mt-1">+{10 + Math.min(score.streak, 20) * 2} XP</div></>
+                                    : <div className="font-heading text-lg text-[#C41E3A]">Answer: {answer}</div>
+                                  }
+                                  {!autoAdvance && <button onClick={newQ} className="btn-gold mt-3">Next</button>}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* ── Interval Construction Exercise Mode ── */}
+                        {isIvConMode && subTab === "exercise" && (
+                          <div>
+                            <div className="panel p-3 mb-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                  <div className="flex items-center gap-1.5">
+                                    <div className={`led ${scorePct >= 80 ? "led-on" : scorePct >= 50 ? "led-gold" : score.total > 0 ? "led-red" : "led-off"}`} />
+                                    <span className="font-readout text-sm text-[#D4A843]">{score.correct}/{score.total}</span>
+                                    {score.total > 0 && <span className="font-readout text-[10px] text-[#555]">({scorePct}%)</span>}
+                                  </div>
+                                  {score.streak > 0 && <span className="font-readout text-sm" style={{ color: score.streak >= 10 ? "#33CC33" : score.streak >= 5 ? "#D4A843" : "#888" }}>{score.streak}x</span>}
+                                </div>
+                                <button onClick={() => { setScore({ correct: 0, total: 0, streak: 0, bestStreak: ls.bestStreak }); setIvConRoot(null); setIvConRevealed(false); }} className="btn-ghost !text-[10px] !px-2">Reset</button>
+                              </div>
+                            </div>
+
+                            <div className="panel p-6 mb-3">
+                              <div className="flex justify-center gap-3 mb-4">
+                                <button onClick={newQ} className="w-16 h-16 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95 flex items-center justify-center"
+                                  style={{ background: "linear-gradient(145deg, #D4A843, #B8922E)", border: "2px solid #DFBD69", boxShadow: "0 4px 16px rgba(212,168,67,0.25)" }}>
+                                  <span className="text-[#121214] text-xl font-bold ml-0.5">&#9654;</span>
+                                </button>
+                                {ivConRoot && <button onClick={replay} className="w-10 h-10 rounded-full cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center mt-3"
+                                  style={{ background: "#1a1a1a", border: "1px solid #333" }}><span className="text-[#888] text-sm">&#8635;</span></button>}
+                              </div>
+
+                              {!ivConRoot && <div className="text-center font-label text-sm text-[#333] py-4">Press play to begin</div>}
+
+                              {ivConRoot && ivConInterval && (
+                                <div className="text-center mb-4">
+                                  <div className="font-heading text-2xl text-[#D4A843]">Build {ivConInterval} from {ivConRoot}</div>
+                                  <div className="text-[11px] text-[#555] mt-1">Select the note that is {ivConInterval} above {ivConRoot}</div>
+                                </div>
+                              )}
+
+                              {ivConRoot && (
+                                <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5">
+                                  {NOTES.map(n => {
+                                    const ok = ivConRevealed && n === ivConAnswer;
+                                    const wrong = ivConRevealed && n === ivConPicked && n !== ivConAnswer;
+                                    return (
+                                      <button key={n} onClick={() => {
+                                        if (ivConRevealed || !ivConAnswer) return;
+                                        setIvConPicked(n); setIvConRevealed(true);
+                                        const correct = n === ivConAnswer;
+                                        handleAnswer(correct ? ivConAnswer : "__wrong_iv");
+                                        if (correct) { const rootMidi = 60 + NOTES.indexOf(ivConRoot!); const iv = ALL_INTERVALS.find(i => i.name === ivConInterval); if (iv) { tone(rootMidi, 0.5, 0); tone(rootMidi + iv.st, 0.5, 0.5); } }
+                                      }} disabled={ivConRevealed}
+                                        className="py-3 rounded-sm text-center transition-all cursor-pointer border"
+                                        style={ok ? { background: "#22c55e", borderColor: "#22c55e", color: "#121214" }
+                                          : wrong ? { background: "#C41E3A", borderColor: "#C41E3A", color: "#fff" }
+                                          : { background: "#141414", borderColor: "#222", color: "#aaa" }}>
+                                        <div className="font-readout text-base font-bold">{n}</div>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              )}
+
+                              {ivConRevealed && (
+                                <div className="mt-4 text-center">
+                                  {ivConPicked === ivConAnswer
+                                    ? <div className="font-heading text-lg text-[#22c55e]">Correct! {ivConRoot} + {ivConInterval} = {ivConAnswer}</div>
+                                    : <div className="font-heading text-lg text-[#C41E3A]">Answer: {ivConRoot} + {ivConInterval} = {ivConAnswer}</div>
+                                  }
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* ── Chord Construction Exercise Mode ── */}
+                        {isChConMode && (
+                          <div>
+                            <div className="panel p-3 mb-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                  <div className="flex items-center gap-1.5">
+                                    <div className={`led ${scorePct >= 80 ? "led-on" : scorePct >= 50 ? "led-gold" : score.total > 0 ? "led-red" : "led-off"}`} />
+                                    <span className="font-readout text-sm text-[#D4A843]">{score.correct}/{score.total}</span>
+                                    {score.total > 0 && <span className="font-readout text-[10px] text-[#555]">({scorePct}%)</span>}
+                                  </div>
+                                  {score.streak > 0 && <span className="font-readout text-sm" style={{ color: score.streak >= 10 ? "#33CC33" : score.streak >= 5 ? "#D4A843" : "#888" }}>{score.streak}x</span>}
+                                </div>
+                                <button onClick={() => { setScore({ correct: 0, total: 0, streak: 0, bestStreak: ls.bestStreak }); setChConRoot(null); setChConRevealed(false); }} className="btn-ghost !text-[10px] !px-2">Reset</button>
+                              </div>
+                            </div>
+
+                            <div className="panel p-6 mb-3">
+                              <div className="flex justify-center gap-3 mb-4">
+                                <button onClick={newQ} className="w-16 h-16 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95 flex items-center justify-center"
+                                  style={{ background: "linear-gradient(145deg, #D4A843, #B8922E)", border: "2px solid #DFBD69", boxShadow: "0 4px 16px rgba(212,168,67,0.25)" }}>
+                                  <span className="text-[#121214] text-xl font-bold ml-0.5">&#9654;</span>
+                                </button>
+                                {chConRoot && <button onClick={replay} className="w-10 h-10 rounded-full cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center mt-3"
+                                  style={{ background: "#1a1a1a", border: "1px solid #333" }}><span className="text-[#888] text-sm">&#8635;</span></button>}
+                              </div>
+
+                              {!chConRoot && <div className="text-center font-label text-sm text-[#333] py-4">Press play to begin</div>}
+
+                              {chConRoot && chConType && (
+                                <div className="text-center mb-4">
+                                  <div className="font-heading text-2xl text-[#D4A843]">Build: {chConRoot} {chConType}</div>
+                                  <div className="text-[11px] text-[#555] mt-1">Select all notes of the chord</div>
+                                  <div className="text-[10px] text-[#666] mt-1">
+                                    Selected: {chConSelected.size > 0 ? [...chConSelected].join(", ") : "—"}
+                                  </div>
+                                </div>
+                              )}
+
+                              {chConRoot && (
+                                <>
+                                  <div className="flex gap-1.5 flex-wrap justify-center mb-4">
+                                    {NOTES.map(n => {
+                                      const selected = chConSelected.has(n);
+                                      let bg = "#141414"; let col = "#888"; let brd = "#222";
+                                      if (chConRevealed) {
+                                        const inChord = chConExpected.has(n);
+                                        if (selected && inChord) { bg = "#22c55e"; col = "#121214"; brd = "#22c55e"; }
+                                        else if (selected && !inChord) { bg = "#C41E3A"; col = "#fff"; brd = "#C41E3A"; }
+                                        else if (!selected && inChord) { bg = "#1a1a1a"; col = "#D4A843"; brd = "#D4A843"; }
+                                      } else if (selected) { bg = "#D4A843"; col = "#121214"; brd = "#D4A843"; }
+                                      return (
+                                        <button key={n} onClick={() => { if (chConRevealed) return; const ns = new Set(chConSelected); if (ns.has(n)) ns.delete(n); else ns.add(n); setChConSelected(ns); }}
+                                          className="w-10 h-10 rounded-sm flex items-center justify-center font-readout text-sm cursor-pointer transition-all border"
+                                          style={{ background: bg, color: col, borderColor: brd }}>{n}</button>
+                                      );
+                                    })}
+                                  </div>
+                                  <div className="flex justify-center gap-2">
+                                    <button onClick={checkChordConstruction} className="btn-gold !text-[10px]" disabled={chConRevealed || chConSelected.size === 0}>Check</button>
+                                    <button onClick={() => { setChConSelected(new Set()); setChConRevealed(false); }} className="btn-ghost !text-[10px]">Clear</button>
+                                  </div>
+                                </>
+                              )}
+
+                              {chConRevealed && (() => {
+                                const correct = chConSelected.size === chConExpected.size && [...chConSelected].every(n => chConExpected.has(n));
+                                return (
+                                  <div className="mt-4 text-center">
+                                    {correct
+                                      ? <div className="font-heading text-lg text-[#22c55e]">Correct! {chConRoot} {chConType} = {[...chConExpected].join(", ")}</div>
+                                      : <div className="font-heading text-lg text-[#C41E3A]">Answer: {chConRoot} {chConType} = {[...chConExpected].join(", ")}</div>
+                                    }
+                                    {!autoAdvance && <button onClick={newQ} className="btn-gold mt-3">Next</button>}
+                                  </div>
+                                );
+                              })()}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* ── Keyboard Exercises ── */}
+                        {isKbMode && subTab === "exercise" && (<>
+                          {/* Stats */}
+                          <div className="panel p-3 mb-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-1.5">
+                                  <div className={`led ${scorePct >= 80 ? "led-on" : scorePct >= 50 ? "led-gold" : score.total > 0 ? "led-red" : "led-off"}`} />
+                                  <span className="font-readout text-sm text-[#D4A843]">{score.correct}/{score.total}</span>
+                                  {score.total > 0 && <span className="font-readout text-[10px] text-[#555]">({scorePct}%)</span>}
+                                </div>
+                                {score.streak > 0 && <span className="font-readout text-sm" style={{ color: score.streak >= 10 ? "#33CC33" : score.streak >= 5 ? "#D4A843" : "#888" }}>{score.streak}x</span>}
+                              </div>
+                              <button onClick={() => { setScore({ correct: 0, total: 0, streak: 0, bestStreak: ls.bestStreak }); setKbAnswer(null); setKbRevealed(false); setKbHighlight([]); setKbEarMidi(null); }} className="btn-ghost !text-[10px] !px-2">Reset</button>
+                            </div>
+                          </div>
+
+                          <div className="panel p-6 mb-3">
+                            {/* Play / Replay */}
+                            <div className="flex justify-center gap-3 mb-4">
+                              <button onClick={newQ} className="w-16 h-16 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95 flex items-center justify-center"
+                                style={{ background: "linear-gradient(145deg, #D4A843, #B8922E)", border: "2px solid #DFBD69", boxShadow: "0 4px 16px rgba(212,168,67,0.25)" }}>
+                                <span className="text-[#121214] text-xl font-bold ml-0.5">&#9654;</span>
+                              </button>
+                              {(kbAnswer || kbEarMidi) && <button onClick={replay} className="w-10 h-10 rounded-full cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center mt-3"
+                                style={{ background: "#1a1a1a", border: "1px solid #333" }}><span className="text-[#888] text-sm">&#8635;</span></button>}
+                            </div>
+
+                            {!kbAnswer && !kbEarMidi && <div className="text-center font-label text-sm text-[#333] py-4">Press play to begin</div>}
+
+                            {/* Piano visual (shown for all kb modes except kb-ear before answer) */}
+                            {(kbAnswer || kbEarMidi) && (
+                              <div className="mb-4 overflow-x-auto">
+                                <PianoKeyboard
+                                  highlighted={exMode === "kb-ear" ? (kbRevealed ? kbHighlight : []) : kbHighlight}
+                                  onClick={exMode === "kb-ear" && !kbRevealed ? handleKbEarClick : undefined}
+                                  disabled={kbRevealed && exMode === "kb-ear"}
+                                />
+                              </div>
+                            )}
+
+                            {/* Answer buttons for kb-notes */}
+                            {exMode === "kb-notes" && kbAnswer && (
+                              <div className="flex gap-1.5 flex-wrap justify-center mt-4">
+                                {NOTES.map(n => {
+                                  const isCor = kbRevealed && n === kbAnswer;
+                                  const isWrong = kbRevealed && n === kbPicked && n !== kbAnswer;
+                                  return (
+                                    <button key={n} onClick={() => handleKbAnswer(n)}
+                                      className="w-11 h-11 rounded-sm flex items-center justify-center font-readout text-sm cursor-pointer transition-all border"
+                                      style={isCor ? { background: "#22c55e", borderColor: "#22c55e", color: "#121214" }
+                                        : isWrong ? { background: "#C41E3A", borderColor: "#C41E3A", color: "#fff" }
+                                        : kbRevealed ? { background: "#141414", borderColor: "#222", color: "#555" }
+                                        : { background: "#141414", borderColor: "#222", color: "#888" }}>{n}</button>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                            {/* Answer buttons for kb-intervals */}
+                            {exMode === "kb-intervals" && kbAnswer && (
+                              <div className="flex gap-1.5 flex-wrap justify-center mt-4">
+                                {ALL_INTERVALS.map(iv => {
+                                  const isCor = kbRevealed && iv.name === kbAnswer;
+                                  const isWrong = kbRevealed && iv.name === kbPicked && iv.name !== kbAnswer;
+                                  return (
+                                    <button key={iv.name} onClick={() => handleKbAnswer(iv.name)}
+                                      className="px-3 py-2 rounded-sm font-label text-[10px] cursor-pointer transition-all border"
+                                      style={isCor ? { background: "#22c55e", borderColor: "#22c55e", color: "#121214" }
+                                        : isWrong ? { background: "#C41E3A", borderColor: "#C41E3A", color: "#fff" }
+                                        : kbRevealed ? { background: "#141414", borderColor: "#222", color: "#555" }
+                                        : { background: "#141414", borderColor: "#222", color: "#888" }}>{iv.name}</button>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                            {/* Answer buttons for kb-scales */}
+                            {exMode === "kb-scales" && kbAnswer && (
+                              <div className="flex gap-1.5 flex-wrap justify-center mt-4">
+                                {ALL_SCALES.map(sc => {
+                                  const isCor = kbRevealed && sc.name === kbAnswer;
+                                  const isWrong = kbRevealed && sc.name === kbPicked && sc.name !== kbAnswer;
+                                  return (
+                                    <button key={sc.name} onClick={() => handleKbAnswer(sc.name)}
+                                      className="px-3 py-2 rounded-sm font-label text-[10px] cursor-pointer transition-all border"
+                                      style={isCor ? { background: "#22c55e", borderColor: "#22c55e", color: "#121214" }
+                                        : isWrong ? { background: "#C41E3A", borderColor: "#C41E3A", color: "#fff" }
+                                        : kbRevealed ? { background: "#141414", borderColor: "#222", color: "#555" }
+                                        : { background: "#141414", borderColor: "#222", color: "#888" }}>{sc.name}</button>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                            {/* Answer buttons for kb-chords */}
+                            {exMode === "kb-chords" && kbAnswer && (
+                              <div className="flex gap-1.5 flex-wrap justify-center mt-4">
+                                {ALL_CHORDS.map(ch => {
+                                  const isCor = kbRevealed && ch.name === kbAnswer;
+                                  const isWrong = kbRevealed && ch.name === kbPicked && ch.name !== kbAnswer;
+                                  return (
+                                    <button key={ch.name} onClick={() => handleKbAnswer(ch.name)}
+                                      className="px-3 py-2 rounded-sm font-label text-[10px] cursor-pointer transition-all border"
+                                      style={isCor ? { background: "#22c55e", borderColor: "#22c55e", color: "#121214" }
+                                        : isWrong ? { background: "#C41E3A", borderColor: "#C41E3A", color: "#fff" }
+                                        : kbRevealed ? { background: "#141414", borderColor: "#222", color: "#555" }
+                                        : { background: "#141414", borderColor: "#222", color: "#888" }}>{ch.name}</button>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                            {/* kb-ear: feedback after clicking */}
+                            {exMode === "kb-ear" && kbRevealed && kbEarMidi && (
+                              <div className="mt-4 text-center">
+                                {kbPicked === String(kbEarMidi)
+                                  ? <div className="font-heading text-lg text-[#22c55e]">Correct! {NOTES[kbEarMidi % 12]}{kbEarMidi < 60 ? "3" : "4"}</div>
+                                  : <div className="font-heading text-lg text-[#C41E3A]">Answer: {NOTES[kbEarMidi % 12]}{kbEarMidi < 60 ? "3" : "4"}</div>
+                                }
+                                {!autoAdvance && <button onClick={newQ} className="btn-gold mt-3">Next</button>}
+                              </div>
+                            )}
+
+                            {/* Generic revealed feedback for non-ear kb modes */}
+                            {kbRevealed && exMode !== "kb-ear" && (
+                              <div className="mt-4 text-center">
+                                {kbPicked === kbAnswer
+                                  ? <div className="font-heading text-lg text-[#22c55e]">Correct!</div>
+                                  : <div className="font-heading text-lg text-[#C41E3A]">Answer: {kbAnswer}</div>
+                                }
+                                {!autoAdvance && <button onClick={newQ} className="btn-gold mt-3">Next</button>}
+                              </div>
+                            )}
+                          </div>
+                        </>)}
+
+                        {/* ── Standard Ear Training Exercise ── */}
+                        {isStandardEarMode && subTab === "exercise" && (<>
+                          {/* Stats */}
+                          <div className="panel p-3 mb-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-1.5">
+                                  <div className={`led ${scorePct >= 80 ? "led-on" : scorePct >= 50 ? "led-gold" : score.total > 0 ? "led-red" : "led-off"}`} />
+                                  <span className="font-readout text-sm text-[#D4A843]">{score.correct}/{score.total}</span>
+                                  {score.total > 0 && <span className="font-readout text-[10px] text-[#555]">({scorePct}%)</span>}
+                                </div>
+                                {score.streak > 0 && <span className="font-readout text-sm" style={{ color: score.streak >= 10 ? "#33CC33" : score.streak >= 5 ? "#D4A843" : "#888" }}>{score.streak}x</span>}
+                              </div>
+                              <div className="flex gap-1">
+                                <button onClick={() => setShowSettings(!showSettings)} className={`btn-ghost !text-[10px] !px-2 ${showSettings ? "active" : ""}`}>Settings</button>
+                                <button onClick={() => { setScore({ correct: 0, total: 0, streak: 0, bestStreak: ls.bestStreak }); setRevealed(false); setAnswer(null); }} className="btn-ghost !text-[10px] !px-2">Reset</button>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Settings */}
+                          {showSettings && (
+                            <div className="panel p-3 sm:p-4 mb-3">
+                              <div className="font-label text-[10px] text-[#D4A843] mb-3">Exercise Settings</div>
+                              {exMode === "intervals" && (<>
+                                <div className="mb-3"><div className="font-label text-[9px] text-[#555] mb-1">Direction</div>
+                                  <div className="flex gap-1">{(["ascending","descending","harmonic"] as const).map(d => (
+                                    <button key={d} onClick={() => setDirection(d)} className={`font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border ${direction === d ? "border-[#D4A843] text-[#D4A843]" : "border-[#222] text-[#444]"}`}>{d}</button>
+                                  ))}</div></div>
+                                <div className="font-label text-[9px] text-[#555] mb-1">Active Intervals</div>
+                                <div className="flex flex-wrap gap-1">{ALL_INTERVALS.map(i => (
+                                  <button key={i.name} onClick={() => setEnabledIntervals(toggleSet(enabledIntervals, i.st))}
+                                    className="font-label text-[10px] px-2 py-1 rounded-sm cursor-pointer border"
+                                    style={enabledIntervals.has(i.st) ? { borderColor: i.color, color: i.color, background: i.color + "12" } : { borderColor: "#222", color: "#444" }}>{i.name}</button>
+                                ))}</div>
+                              </>)}
+                              {exMode === "chords" && (<><div className="font-label text-[9px] text-[#555] mb-1">Active Chords</div>
+                                <div className="flex flex-wrap gap-1">{ALL_CHORDS.map(c => (
+                                  <button key={c.name} onClick={() => setEnabledChords(toggleSet(enabledChords, c.name))}
+                                    className="font-label text-[10px] px-2 py-1 rounded-sm cursor-pointer border"
+                                    style={enabledChords.has(c.name) ? { borderColor: c.color, color: c.color, background: c.color + "12" } : { borderColor: "#222", color: "#444" }}>{c.name}</button>
+                                ))}</div></>)}
+                              {exMode === "scales" && (<><div className="font-label text-[9px] text-[#555] mb-1">Active Scales</div>
+                                <div className="flex flex-wrap gap-1">{ALL_SCALES.map(s => (
+                                  <button key={s.name} onClick={() => setEnabledScales(toggleSet(enabledScales, s.name))}
+                                    className="font-label text-[10px] px-2 py-1 rounded-sm cursor-pointer border"
+                                    style={enabledScales.has(s.name) ? { borderColor: s.color, color: s.color, background: s.color + "12" } : { borderColor: "#222", color: "#444" }}>{s.name}</button>
+                                ))}</div></>)}
+                              <div className="mt-3 pt-3 border-t border-[#1a1a1a]">
+                                <label className="flex items-center gap-2 cursor-pointer" onClick={() => setAutoAdvance(!autoAdvance)}>
+                                  <div className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center text-[9px] ${autoAdvance ? "border-[#D4A843] bg-[#D4A843] text-[#121214]" : "border-[#444]"}`}>{autoAdvance ? "✓" : ""}</div>
+                                  <span className="font-label text-[10px] text-[#666]">Auto-advance on correct</span>
+                                </label>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Play area */}
+                          <div className="panel p-6 mb-3">
+                            <div className="flex justify-center gap-3 mb-6">
+                              <button onClick={newQ} className="w-16 h-16 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95 flex items-center justify-center"
+                                style={{ background: "linear-gradient(145deg, #D4A843, #B8922E)", border: "2px solid #DFBD69", boxShadow: "0 4px 16px rgba(212,168,67,0.25)" }}>
+                                <span className="text-[#121214] text-xl font-bold ml-0.5">&#9654;</span>
+                              </button>
+                              {answer && <button onClick={replay} className="w-10 h-10 rounded-full cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center mt-3"
+                                style={{ background: "#1a1a1a", border: "1px solid #333" }}><span className="text-[#888] text-sm">&#8635;</span></button>}
+                            </div>
+                            {!answer && <div className="text-center font-label text-sm text-[#333] py-4">Press play to begin</div>}
+                            {answer && (
+                              <div className={`grid gap-1.5 ${pool.length <= 6 ? "grid-cols-3" : "grid-cols-3 sm:grid-cols-4"}`}>
+                                {pool.map(item => {
+                                  const n = item.name, ok = revealed && n === answer, wrong = revealed && n === picked && n !== answer;
+                                  const hk = exMode + "-" + n, hist = ls.history[hk];
+                                  const weak = hist && hist.t >= 3 && (hist.c / hist.t) < 0.6;
+                                  return (
+                                    <button key={n} onClick={() => handleAnswer(n)} disabled={revealed}
+                                      className="py-3 rounded-sm text-center transition-all cursor-pointer border relative overflow-hidden"
+                                      style={ok ? { background: "#22c55e", borderColor: "#22c55e", color: "#121214" }
+                                        : wrong ? { background: "#C41E3A", borderColor: "#C41E3A", color: "#fff" }
+                                        : { background: "#141414", borderColor: "#222", color: "#aaa" }}>
+                                      {!revealed && "color" in item && <div className="absolute bottom-0 left-0 h-[2px] w-full" style={{ background: (item as { color: string }).color }} />}
+                                      {weak && !revealed && <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#C41E3A]" />}
+                                      <div className="font-label text-sm">{n}</div>
+                                      {"label" in item && <div className="text-[8px] opacity-50 mt-0.5">{(item as typeof ALL_INTERVALS[0]).label}</div>}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+                            {revealed && (
+                              <div className="mt-4 text-center">
+                                {picked === answer
+                                  ? <><div className="font-heading text-lg text-[#22c55e]">Correct!</div><div className="font-readout text-[11px] text-[#D4A843] mt-1">+{10 + Math.min(score.streak, 20) * 2} XP</div></>
+                                  : <div className="font-heading text-lg text-[#C41E3A]">Answer: {answer}</div>
+                                }
+                                {!autoAdvance && <button onClick={newQ} className="btn-gold mt-3">Next</button>}
+                              </div>
+                            )}
+                          </div>
+                        </>)}
+
+                        {/* ── Fretboard exercise mode ── */}
+                        {isFretboardMode && subTab === "exercise" && (<>
+                          <div className="panel p-3 mb-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-1.5">
+                                  <div className={`led ${scorePct >= 80 ? "led-on" : scorePct >= 50 ? "led-gold" : score.total > 0 ? "led-red" : "led-off"}`} />
+                                  <span className="font-readout text-sm text-[#D4A843]">{score.correct}/{score.total}</span>
+                                  {score.total > 0 && <span className="font-readout text-[10px] text-[#555]">({scorePct}%)</span>}
+                                </div>
+                                {score.streak > 0 && <span className="font-readout text-sm" style={{ color: score.streak >= 10 ? "#33CC33" : score.streak >= 5 ? "#D4A843" : "#888" }}>{score.streak}x</span>}
+                              </div>
+                              <button onClick={() => { setScore({ correct: 0, total: 0, streak: 0, bestStreak: ls.bestStreak }); setRevealed(false); setAnswer(null); setFbTarget(null); }} className="btn-ghost !text-[10px] !px-2">Reset</button>
+                            </div>
+                          </div>
+
+                          <div className="panel p-3 sm:p-4 mb-3">
+                            <div className="flex justify-between items-center mb-4">
+                              <div>
+                                {fbTarget
+                                  ? <><span className="font-label text-[10px] text-[#555]">Find:</span><span className="font-heading text-3xl text-[#D4A843] mr-3">{fbTarget}</span></>
+                                  : <span className="font-label text-sm text-[#333]">Press New Note</span>}
+                              </div>
+                              <div className="flex gap-2">
+                                <button onClick={newQ} className="btn-gold !text-[10px]">New Note</button>
+                                {fbTarget && <button onClick={replay} className="btn-ghost !text-[10px]">Replay</button>}
+                              </div>
+                            </div>
+                            <div className="overflow-x-auto" dir="ltr">
+                              <div className="min-w-[550px]">
+                                <div className="flex mb-1"><div className="w-6" />{Array.from({length: 13}, (_,f) => <div key={f} className="flex-1 text-center font-readout text-[8px] text-[#333]">{f}</div>)}</div>
+                                {[...Array(6)].map((_, si) => {
+                                  const s = 5 - si;
+                                  return (
+                                    <div key={s} className="flex items-center h-7">
+                                      <div className="w-6 font-readout text-[9px] text-[#444] text-center">{STR[s]}</div>
+                                      {Array.from({length: 13}, (_,f) => {
+                                        const hit = fbFeedback && fbFeedback.str === s && fbFeedback.fret === f;
+                                        return (
+                                          <div key={f} onClick={() => handleFbClick(s, f)}
+                                            className="flex-1 flex items-center justify-center cursor-pointer hover:bg-[#1a1a1a] transition-all h-full"
+                                            style={{ borderRight: "1px solid #1a1a1a", borderBottom: si < 5 ? "1px solid #2a2a2a" : "1px solid #333" }}>
+                                            {hit && <div className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold"
+                                              style={{ background: fbFeedback.ok ? "#22c55e" : "#C41E3A", color: "#fff" }}>{NOTES[(TUNING[s] + f) % 12]}</div>}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                            {revealed && <div className="mt-3 text-center">{fbFeedback?.ok ? <div className="font-heading text-lg text-[#22c55e]">Correct!</div> : <div className="font-heading text-lg text-[#C41E3A]">The note was {fbTarget}</div>}</div>}
+                          </div>
+
+                          {/* Timed Fretboard Challenge */}
+                          <div className="mt-3"><div className="divider-gold mb-3" /><div className="font-label text-[10px] text-[#D4A843] mb-2">Timed Challenge</div><FretboardChallenge /></div>
+                        </>)}
+
+                        {/* Achievements */}
+                        {hasSubTabs && subTab === "achievements" && (
+                          <div className="panel p-3 sm:p-5">
+                            <div className="font-label text-[11px] text-[#D4A843] mb-4">Achievements ({ls.unlocked.length}/{ACHIEVEMENTS.length})</div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              {ACHIEVEMENTS.map(a => {
+                                const done = ls.unlocked.includes(a.id);
+                                return (
+                                  <div key={a.id} className={`p-3 rounded-sm border ${done ? "border-[#D4A843]/40 bg-[#D4A843]/5" : "border-[#1a1a1a]"}`}>
+                                    <div className="flex items-center gap-2">
+                                      <div className={`led ${done ? "led-gold" : "led-off"}`} />
+                                      <div><div className={`font-label text-[11px] ${done ? "text-[#D4A843]" : "text-[#555]"}`}>{a.name}</div><div className="text-[10px] text-[#444]">{a.desc}</div></div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Reference */}
+                        {hasSubTabs && subTab === "reference" && (
+                          <div className="panel p-3 sm:p-4">
+                            {exMode === "intervals" && (
+                              <div>
+                                <div className="font-label text-[10px] text-[#D4A843] mb-3">Interval Reference — Click to hear</div>
+                                {ALL_INTERVALS.map(i => (
+                                  <div key={i.name} className="flex items-center gap-3 py-2 border-b border-[#111] last:border-0 cursor-pointer hover:bg-[#0d0d0d] transition-all px-1 -mx-1 rounded-sm"
+                                    onClick={() => { tone(60, 0.5, 0); tone(60 + i.st, 0.5, 0.6); }}>
+                                    <div className="w-2 h-5 rounded-sm" style={{ background: i.color }} />
+                                    <div className="w-8 font-readout text-sm" style={{ color: i.color }}>{i.name}</div>
+                                    <div className="flex-1"><div className="text-[11px] text-[#aaa]">{i.label}</div><div className="text-[9px] text-[#555] italic">{i.ref}</div></div>
+                                    <div className="font-readout text-[10px] text-[#444]">{i.st}st</div>
+                                    {ls.history["intervals-" + i.name] && (() => {
+                                      const h = ls.history["intervals-" + i.name]; const p = Math.round((h.c / h.t) * 100);
+                                      return <span className="font-readout text-[9px]" style={{ color: p >= 80 ? "#33CC33" : p >= 50 ? "#D4A843" : "#C41E3A" }}>{p}%</span>;
+                                    })()}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            {exMode === "chords" && (
+                              <div>
+                                <div className="font-label text-[10px] text-[#D4A843] mb-3">Chord Reference — Click to hear</div>
+                                {ALL_CHORDS.map(c => (
+                                  <div key={c.name} className="flex items-center gap-3 py-2 border-b border-[#111] last:border-0 cursor-pointer hover:bg-[#0d0d0d] px-1 -mx-1 rounded-sm"
+                                    onClick={() => playChordAudio(c.iv)}>
+                                    <div className="w-2 h-5 rounded-sm" style={{ background: c.color }} />
+                                    <span className="font-label text-sm flex-1" style={{ color: c.color }}>{c.name}</span>
+                                    <span className="font-readout text-[10px] text-[#444]">{c.iv.join("-")}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            {exMode === "scales" && (
+                              <div>
+                                <div className="font-label text-[10px] text-[#D4A843] mb-3">Scale Reference — Click to hear</div>
+                                {ALL_SCALES.map(s => (
+                                  <div key={s.name} className="flex items-center gap-3 py-2 border-b border-[#111] last:border-0 cursor-pointer hover:bg-[#0d0d0d] px-1 -mx-1 rounded-sm"
+                                    onClick={() => playScaleNotes(s.notes)}>
+                                    <div className="w-2 h-5 rounded-sm" style={{ background: s.color }} />
+                                    <span className="font-label text-sm flex-1" style={{ color: s.color }}>{s.name}</span>
+                                    <span className="font-readout text-[10px] text-[#444]">{s.notes.join("-")}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            {(exMode === "fretboard" || exMode === "progressions" || isFbVisualMode || isNoteEarMode || isIvConMode) && (
+                              <div className="py-4 text-center font-label text-sm text-[#444]">
+                                {exMode === "fretboard" ? "Use the fretboard exercise and timed challenge above" :
+                                 exMode === "progressions" ? "Listen for root movement and chord qualities in progressions" :
+                                 isNoteEarMode ? "Train your ear to identify individual notes by their pitch" :
+                                 isIvConMode ? "Given a root and interval name, find the target note" :
+                                 "Identify intervals, scales, and chords visually on the fretboard"}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
                       </div>
                     )}
                   </div>
@@ -1889,835 +2723,6 @@ export default function LearningCenterPage() {
             </div>
           );
         })()}
-
-        {/* Sub tabs */}
-        {hasSubTabs && exMode !== "construction" && (
-          <div className="flex gap-1 mb-3">
-            {([["exercise","Exercise"],["achievements","Achievements"],["reference","Reference"]] as [SubTab,string][]).map(([t,lbl]) => (
-              <button key={t} onClick={() => setSubTab(t)}
-                className={`font-label text-[10px] px-3 py-2 sm:py-1 rounded-sm cursor-pointer border flex-1 transition-all min-h-[36px] ${subTab === t ? "border-[#D4A843] text-[#D4A843]" : "border-[#222] text-[#444]"}`}>{lbl}</button>
-            ))}
-          </div>
-        )}
-
-        {/* ── Construction Mode (expanded with sub-modes) ── */}
-        {isConstructionMode && (
-          <div>
-            <div className="panel p-3 sm:p-4 mb-3">
-              <div className="font-label text-[10px] text-[#D4A843] mb-3">Construction — choose mode</div>
-              <div className="flex gap-1 mb-4 flex-wrap">
-                {(["scale","interval","chord"] as ConSubMode[]).map(m => (
-                  <button key={m} onClick={() => { setConSubMode(m); setConSelected(new Set()); setConRevealed(false); }}
-                    className={`font-label text-[10px] px-3 py-1.5 rounded-sm cursor-pointer border ${conSubMode === m ? "border-[#D4A843] text-[#D4A843] bg-[#D4A843]/8" : "border-[#222] text-[#555]"}`}>
-                    {m === "scale" ? "Scale" : m === "interval" ? "Interval" : "Chord"}
-                  </button>
-                ))}
-              </div>
-
-              {/* Root selector */}
-              <div className="mb-3">
-                <div className="font-label text-[9px] text-[#555] mb-1">Root</div>
-                <div className="flex gap-1 flex-wrap">
-                  {NOTES.map(n => (
-                    <button key={n} onClick={() => { setConRoot(n); setConSelected(new Set()); setConRevealed(false); }}
-                      className={`font-readout text-[10px] w-8 h-7 rounded-sm cursor-pointer border flex items-center justify-center ${conRoot === n ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#222] text-[#888]"}`}>{n}</button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Scale sub-mode */}
-              {conSubMode === "scale" && (
-                <div className="mb-3">
-                  <div className="font-label text-[9px] text-[#555] mb-1">Scale</div>
-                  <div className="flex gap-1 flex-wrap">
-                    {ALL_SCALES.map(s => (
-                      <button key={s.name} onClick={() => { setConScale(s.name); setConSelected(new Set()); setConRevealed(false); }}
-                        className={`font-label text-[10px] px-2 py-1 rounded-sm cursor-pointer border ${conScale === s.name ? "border-[#D4A843] text-[#D4A843]" : "border-[#222] text-[#555]"}`}>{s.name}</button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Interval sub-mode */}
-              {conSubMode === "interval" && (
-                <div className="mb-3">
-                  <div className="font-label text-[9px] text-[#555] mb-1">Interval</div>
-                  <div className="flex gap-1 flex-wrap">
-                    {ALL_INTERVALS.map(iv => (
-                      <button key={iv.name} onClick={() => { setConIvName(iv.name); setConSelected(new Set()); setConRevealed(false); }}
-                        className={`font-label text-[10px] px-2 py-1 rounded-sm cursor-pointer border ${conIvName === iv.name ? "border-[#D4A843] text-[#D4A843]" : "border-[#222] text-[#555]"}`}>{iv.name}</button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Chord sub-mode */}
-              {conSubMode === "chord" && (
-                <div className="mb-3">
-                  <div className="font-label text-[9px] text-[#555] mb-1">Chord Type</div>
-                  <div className="flex gap-1 flex-wrap">
-                    {ALL_CHORDS.map(c => (
-                      <button key={c.name} onClick={() => { setConChordType(c.name); setConSelected(new Set()); setConRevealed(false); }}
-                        className={`font-label text-[10px] px-2 py-1 rounded-sm cursor-pointer border ${conChordType === c.name ? "border-[#D4A843] text-[#D4A843]" : "border-[#222] text-[#555]"}`}>{c.name}</button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="font-label text-[11px] text-[#ccc] mb-2">
-                Build: {conRoot} {conSubMode === "scale" ? conScale : conSubMode === "interval" ? conIvName : conChordType}
-              </div>
-              <div className="text-[10px] text-[#555] mb-3">
-                Selected: {conSelected.size > 0 ? [...conSelected].join(", ") : "—"}
-              </div>
-
-              {/* Clickable note grid */}
-              <div className="flex gap-1.5 flex-wrap mb-4">
-                {NOTES.map(n => {
-                  const selected = conSelected.has(n);
-                  let bg = "#141414"; let col = "#888"; let brd = "#222";
-                  if (conRevealed) {
-                    let expected = new Set<string>();
-                    if (conSubMode === "scale") {
-                      const scaleObj = ALL_SCALES.find(s => s.name === conScale);
-                      const cri = NOTES.indexOf(conRoot);
-                      expected = new Set(scaleObj ? scaleObj.notes.map(s => NOTES[(cri + s) % 12]) : []);
-                    } else if (conSubMode === "interval") {
-                      const iv = ALL_INTERVALS.find(i => i.name === conIvName);
-                      const cri = NOTES.indexOf(conRoot);
-                      if (iv) expected = new Set([NOTES[(cri + iv.st) % 12]]);
-                    } else {
-                      const ch = ALL_CHORDS.find(c => c.name === conChordType);
-                      const cri = NOTES.indexOf(conRoot);
-                      expected = new Set(ch ? ch.iv.map(s => NOTES[(cri + s) % 12]) : []);
-                    }
-                    const inScale = expected.has(n);
-                    if (selected && inScale) { bg = "#22c55e"; col = "#121214"; brd = "#22c55e"; }
-                    else if (selected && !inScale) { bg = "#C41E3A"; col = "#fff"; brd = "#C41E3A"; }
-                    else if (!selected && inScale) { bg = "#1a1a1a"; col = "#D4A843"; brd = "#D4A843"; }
-                  } else if (selected) { bg = "#D4A843"; col = "#121214"; brd = "#D4A843"; }
-                  return (
-                    <button key={n} onClick={() => { if (conRevealed) return; const ns = new Set(conSelected); if (ns.has(n)) ns.delete(n); else ns.add(n); setConSelected(ns); }}
-                      className="w-10 h-10 rounded-sm flex items-center justify-center font-readout text-sm cursor-pointer transition-all border"
-                      style={{ background: bg, color: col, borderColor: brd }}>{n}</button>
-                  );
-                })}
-              </div>
-
-              <div className="flex gap-2">
-                <button onClick={checkConstruction} className="btn-gold !text-[10px]" disabled={conRevealed}>Check</button>
-                <button onClick={() => { setConSelected(new Set()); setConRevealed(false); }} className="btn-ghost !text-[10px]">Clear</button>
-                <button onClick={() => {
-                  let expected = new Set<string>();
-                  const cri = NOTES.indexOf(conRoot);
-                  if (conSubMode === "scale") {
-                    const scaleObj = ALL_SCALES.find(s => s.name === conScale);
-                    if (scaleObj) expected = new Set(scaleObj.notes.map(s => NOTES[(cri + s) % 12]));
-                  } else if (conSubMode === "interval") {
-                    const iv = ALL_INTERVALS.find(i => i.name === conIvName);
-                    if (iv) expected = new Set([NOTES[(cri + iv.st) % 12]]);
-                  } else {
-                    const ch = ALL_CHORDS.find(c => c.name === conChordType);
-                    if (ch) expected = new Set(ch.iv.map(s => NOTES[(cri + s) % 12]));
-                  }
-                  setConSelected(expected);
-                  setConRevealed(true);
-                }} className="btn-ghost !text-[10px]">Show answer</button>
-              </div>
-
-              {conRevealed && (() => {
-                let expected = new Set<string>();
-                const cri = NOTES.indexOf(conRoot);
-                if (conSubMode === "scale") {
-                  const scaleObj = ALL_SCALES.find(s => s.name === conScale);
-                  if (scaleObj) expected = new Set(scaleObj.notes.map(s => NOTES[(cri + s) % 12]));
-                } else if (conSubMode === "interval") {
-                  const iv = ALL_INTERVALS.find(i => i.name === conIvName);
-                  if (iv) expected = new Set([NOTES[(cri + iv.st) % 12]]);
-                } else {
-                  const ch = ALL_CHORDS.find(c => c.name === conChordType);
-                  if (ch) expected = new Set(ch.iv.map(s => NOTES[(cri + s) % 12]));
-                }
-                const correct = conSelected.size === expected.size && [...conSelected].every(n => expected.has(n));
-                return (
-                  <div className="mt-3 text-center">
-                    {correct
-                      ? <div className="font-heading text-lg text-[#22c55e]">Correct! +{conSubMode === "scale" ? 25 : conSubMode === "interval" ? 15 : 20} XP</div>
-                      : <div className="font-heading text-lg text-[#C41E3A]">Not quite — the correct notes are highlighted</div>
-                    }
-                  </div>
-                );
-              })()}
-            </div>
-          </div>
-        )}
-
-        {/* ── Fretboard Visual Exercise Modes (fb-intervals, fb-scales, fb-chords) ── */}
-        {isFbVisualMode && subTab === "exercise" && (
-          <div>
-            {/* Stats bar */}
-            <div className="panel p-3 mb-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1.5">
-                    <div className={`led ${scorePct >= 80 ? "led-on" : scorePct >= 50 ? "led-gold" : score.total > 0 ? "led-red" : "led-off"}`} />
-                    <span className="font-readout text-sm text-[#D4A843]">{score.correct}/{score.total}</span>
-                    {score.total > 0 && <span className="font-readout text-[10px] text-[#555]">({scorePct}%)</span>}
-                  </div>
-                  {score.streak > 0 && <span className="font-readout text-sm" style={{ color: score.streak >= 10 ? "#33CC33" : score.streak >= 5 ? "#D4A843" : "#888" }}>{score.streak}x</span>}
-                </div>
-                <button onClick={() => { setScore({ correct: 0, total: 0, streak: 0, bestStreak: ls.bestStreak }); setFbExAnswer(null); setFbExRevealed(false); }} className="btn-ghost !text-[10px] !px-2">Reset</button>
-              </div>
-            </div>
-
-            <div className="panel p-3 sm:p-4 mb-3">
-              <div className="flex justify-between items-center mb-4">
-                <div className="font-label text-[10px] text-[#555]">
-                  {exMode === "fb-intervals" ? "What is the interval between the two points?" :
-                   exMode === "fb-scales" ? "What is the highlighted scale?" :
-                   "What type of chord is this?"}
-                </div>
-                <div className="flex gap-2">
-                  <button onClick={newQ} className="btn-gold !text-[10px]">New</button>
-                  {fbExAnswer && <button onClick={replay} className="btn-ghost !text-[10px]">Replay</button>}
-                </div>
-              </div>
-
-              {/* Fretboard with highlighted dots */}
-              {fbExDots.length > 0 && (
-                <LCFretboard
-                  highlightNotes={[]}
-                  rootNote={NOTES[fbExDots[0] % 12]}
-                  highlightMidi={new Set(fbExDots)}
-                  maxFret={15}
-                />
-              )}
-
-              {!fbExAnswer && <div className="text-center font-label text-sm text-[#333] py-4 mt-2">Press New to begin</div>}
-
-              {/* Answer buttons */}
-              {fbExAnswer && (
-                <div className={`grid gap-1.5 mt-4 ${exMode === "fb-intervals" ? "grid-cols-4 sm:grid-cols-5" : "grid-cols-3"}`}>
-                  {(exMode === "fb-intervals" ? FB_IV_BUTTONS.map(b => b.name) :
-                    exMode === "fb-scales" ? FB_SCALE_BUTTONS :
-                    FB_CHORD_BUTTONS
-                  ).map(name => {
-                    const ok = fbExRevealed && name === fbExAnswer;
-                    const wrong = fbExRevealed && name === fbExPicked && name !== fbExAnswer;
-                    return (
-                      <button key={name} onClick={() => handleFbExAnswer(name)} disabled={fbExRevealed}
-                        className="py-2.5 rounded-sm text-center transition-all cursor-pointer border"
-                        style={ok ? { background: "#22c55e", borderColor: "#22c55e", color: "#121214" }
-                          : wrong ? { background: "#C41E3A", borderColor: "#C41E3A", color: "#fff" }
-                          : { background: "#141414", borderColor: "#222", color: "#aaa" }}>
-                        <div className="font-label text-[11px]">{name}</div>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-
-              {fbExRevealed && (
-                <div className="mt-4 text-center">
-                  {fbExPicked === fbExAnswer
-                    ? <><div className="font-heading text-lg text-[#22c55e]">Correct!</div><div className="font-readout text-[11px] text-[#D4A843] mt-1">+{10 + Math.min(score.streak, 20) * 2} XP</div></>
-                    : <div className="font-heading text-lg text-[#C41E3A]">Answer: {fbExAnswer}</div>
-                  }
-                  {!autoAdvance && <button onClick={newQ} className="btn-gold mt-3">Next</button>}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ── Note Ear Training Mode ── */}
-        {isNoteEarMode && subTab === "exercise" && (
-          <div>
-            <div className="panel p-3 mb-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1.5">
-                    <div className={`led ${scorePct >= 80 ? "led-on" : scorePct >= 50 ? "led-gold" : score.total > 0 ? "led-red" : "led-off"}`} />
-                    <span className="font-readout text-sm text-[#D4A843]">{score.correct}/{score.total}</span>
-                    {score.total > 0 && <span className="font-readout text-[10px] text-[#555]">({scorePct}%)</span>}
-                  </div>
-                  {score.streak > 0 && <span className="font-readout text-sm" style={{ color: score.streak >= 10 ? "#33CC33" : score.streak >= 5 ? "#D4A843" : "#888" }}>{score.streak}x</span>}
-                </div>
-                <button onClick={() => { setScore({ correct: 0, total: 0, streak: 0, bestStreak: ls.bestStreak }); setAnswer(null); setRevealed(false); }} className="btn-ghost !text-[10px] !px-2">Reset</button>
-              </div>
-            </div>
-
-            <div className="panel p-6 mb-3">
-              <div className="text-center mb-4">
-                <div className="font-label text-[10px] text-[#555] mb-2">Identify the note you hear</div>
-              </div>
-              <div className="flex justify-center gap-3 mb-6">
-                <button onClick={newQ} className="w-16 h-16 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95 flex items-center justify-center"
-                  style={{ background: "linear-gradient(145deg, #D4A843, #B8922E)", border: "2px solid #DFBD69", boxShadow: "0 4px 16px rgba(212,168,67,0.25)" }}>
-                  <span className="text-[#121214] text-xl font-bold ml-0.5">&#9654;</span>
-                </button>
-                {answer && <button onClick={replay} className="w-10 h-10 rounded-full cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center mt-3"
-                  style={{ background: "#1a1a1a", border: "1px solid #333" }}><span className="text-[#888] text-sm">&#8635;</span></button>}
-              </div>
-              {!answer && <div className="text-center font-label text-sm text-[#333] py-4">Press play to begin</div>}
-              {answer && (
-                <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5">
-                  {NOTES.map(n => {
-                    const ok = revealed && n === answer;
-                    const wrong = revealed && n === picked && n !== answer;
-                    return (
-                      <button key={n} onClick={() => handleAnswer(n)} disabled={revealed}
-                        className="py-3 rounded-sm text-center transition-all cursor-pointer border"
-                        style={ok ? { background: "#22c55e", borderColor: "#22c55e", color: "#121214" }
-                          : wrong ? { background: "#C41E3A", borderColor: "#C41E3A", color: "#fff" }
-                          : { background: "#141414", borderColor: "#222", color: "#aaa" }}>
-                        <div className="font-readout text-base font-bold">{n}</div>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-              {revealed && (
-                <div className="mt-4 text-center">
-                  {picked === answer
-                    ? <><div className="font-heading text-lg text-[#22c55e]">Correct!</div><div className="font-readout text-[11px] text-[#D4A843] mt-1">+{10 + Math.min(score.streak, 20) * 2} XP</div></>
-                    : <div className="font-heading text-lg text-[#C41E3A]">Answer: {answer}</div>
-                  }
-                  {!autoAdvance && <button onClick={newQ} className="btn-gold mt-3">Next</button>}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ── Interval Construction Exercise Mode ── */}
-        {isIvConMode && subTab === "exercise" && (
-          <div>
-            <div className="panel p-3 mb-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1.5">
-                    <div className={`led ${scorePct >= 80 ? "led-on" : scorePct >= 50 ? "led-gold" : score.total > 0 ? "led-red" : "led-off"}`} />
-                    <span className="font-readout text-sm text-[#D4A843]">{score.correct}/{score.total}</span>
-                    {score.total > 0 && <span className="font-readout text-[10px] text-[#555]">({scorePct}%)</span>}
-                  </div>
-                  {score.streak > 0 && <span className="font-readout text-sm" style={{ color: score.streak >= 10 ? "#33CC33" : score.streak >= 5 ? "#D4A843" : "#888" }}>{score.streak}x</span>}
-                </div>
-                <button onClick={() => { setScore({ correct: 0, total: 0, streak: 0, bestStreak: ls.bestStreak }); setIvConRoot(null); setIvConRevealed(false); }} className="btn-ghost !text-[10px] !px-2">Reset</button>
-              </div>
-            </div>
-
-            <div className="panel p-6 mb-3">
-              <div className="flex justify-center gap-3 mb-4">
-                <button onClick={newQ} className="w-16 h-16 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95 flex items-center justify-center"
-                  style={{ background: "linear-gradient(145deg, #D4A843, #B8922E)", border: "2px solid #DFBD69", boxShadow: "0 4px 16px rgba(212,168,67,0.25)" }}>
-                  <span className="text-[#121214] text-xl font-bold ml-0.5">&#9654;</span>
-                </button>
-                {ivConRoot && <button onClick={replay} className="w-10 h-10 rounded-full cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center mt-3"
-                  style={{ background: "#1a1a1a", border: "1px solid #333" }}><span className="text-[#888] text-sm">&#8635;</span></button>}
-              </div>
-
-              {!ivConRoot && <div className="text-center font-label text-sm text-[#333] py-4">Press play to begin</div>}
-
-              {ivConRoot && ivConInterval && (
-                <div className="text-center mb-4">
-                  <div className="font-heading text-2xl text-[#D4A843]">Build {ivConInterval} from {ivConRoot}</div>
-                  <div className="text-[11px] text-[#555] mt-1">Select the note that is {ivConInterval} above {ivConRoot}</div>
-                </div>
-              )}
-
-              {ivConRoot && (
-                <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5">
-                  {NOTES.map(n => {
-                    const ok = ivConRevealed && n === ivConAnswer;
-                    const wrong = ivConRevealed && n === ivConPicked && n !== ivConAnswer;
-                    return (
-                      <button key={n} onClick={() => {
-                        if (ivConRevealed || !ivConAnswer) return;
-                        setIvConPicked(n); setIvConRevealed(true);
-                        const correct = n === ivConAnswer;
-                        handleAnswer(correct ? ivConAnswer : "__wrong_iv");
-                        if (correct) { const rootMidi = 60 + NOTES.indexOf(ivConRoot!); const iv = ALL_INTERVALS.find(i => i.name === ivConInterval); if (iv) { tone(rootMidi, 0.5, 0); tone(rootMidi + iv.st, 0.5, 0.5); } }
-                      }} disabled={ivConRevealed}
-                        className="py-3 rounded-sm text-center transition-all cursor-pointer border"
-                        style={ok ? { background: "#22c55e", borderColor: "#22c55e", color: "#121214" }
-                          : wrong ? { background: "#C41E3A", borderColor: "#C41E3A", color: "#fff" }
-                          : { background: "#141414", borderColor: "#222", color: "#aaa" }}>
-                        <div className="font-readout text-base font-bold">{n}</div>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-
-              {ivConRevealed && (
-                <div className="mt-4 text-center">
-                  {ivConPicked === ivConAnswer
-                    ? <div className="font-heading text-lg text-[#22c55e]">Correct! {ivConRoot} + {ivConInterval} = {ivConAnswer}</div>
-                    : <div className="font-heading text-lg text-[#C41E3A]">Answer: {ivConRoot} + {ivConInterval} = {ivConAnswer}</div>
-                  }
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ── Chord Construction Exercise Mode ── */}
-        {isChConMode && (
-          <div>
-            <div className="panel p-3 mb-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1.5">
-                    <div className={`led ${scorePct >= 80 ? "led-on" : scorePct >= 50 ? "led-gold" : score.total > 0 ? "led-red" : "led-off"}`} />
-                    <span className="font-readout text-sm text-[#D4A843]">{score.correct}/{score.total}</span>
-                    {score.total > 0 && <span className="font-readout text-[10px] text-[#555]">({scorePct}%)</span>}
-                  </div>
-                  {score.streak > 0 && <span className="font-readout text-sm" style={{ color: score.streak >= 10 ? "#33CC33" : score.streak >= 5 ? "#D4A843" : "#888" }}>{score.streak}x</span>}
-                </div>
-                <button onClick={() => { setScore({ correct: 0, total: 0, streak: 0, bestStreak: ls.bestStreak }); setChConRoot(null); setChConRevealed(false); }} className="btn-ghost !text-[10px] !px-2">Reset</button>
-              </div>
-            </div>
-
-            <div className="panel p-6 mb-3">
-              <div className="flex justify-center gap-3 mb-4">
-                <button onClick={newQ} className="w-16 h-16 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95 flex items-center justify-center"
-                  style={{ background: "linear-gradient(145deg, #D4A843, #B8922E)", border: "2px solid #DFBD69", boxShadow: "0 4px 16px rgba(212,168,67,0.25)" }}>
-                  <span className="text-[#121214] text-xl font-bold ml-0.5">&#9654;</span>
-                </button>
-                {chConRoot && <button onClick={replay} className="w-10 h-10 rounded-full cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center mt-3"
-                  style={{ background: "#1a1a1a", border: "1px solid #333" }}><span className="text-[#888] text-sm">&#8635;</span></button>}
-              </div>
-
-              {!chConRoot && <div className="text-center font-label text-sm text-[#333] py-4">Press play to begin</div>}
-
-              {chConRoot && chConType && (
-                <div className="text-center mb-4">
-                  <div className="font-heading text-2xl text-[#D4A843]">Build: {chConRoot} {chConType}</div>
-                  <div className="text-[11px] text-[#555] mt-1">Select all notes of the chord</div>
-                  <div className="text-[10px] text-[#666] mt-1">
-                    Selected: {chConSelected.size > 0 ? [...chConSelected].join(", ") : "—"}
-                  </div>
-                </div>
-              )}
-
-              {chConRoot && (
-                <>
-                  <div className="flex gap-1.5 flex-wrap justify-center mb-4">
-                    {NOTES.map(n => {
-                      const selected = chConSelected.has(n);
-                      let bg = "#141414"; let col = "#888"; let brd = "#222";
-                      if (chConRevealed) {
-                        const inChord = chConExpected.has(n);
-                        if (selected && inChord) { bg = "#22c55e"; col = "#121214"; brd = "#22c55e"; }
-                        else if (selected && !inChord) { bg = "#C41E3A"; col = "#fff"; brd = "#C41E3A"; }
-                        else if (!selected && inChord) { bg = "#1a1a1a"; col = "#D4A843"; brd = "#D4A843"; }
-                      } else if (selected) { bg = "#D4A843"; col = "#121214"; brd = "#D4A843"; }
-                      return (
-                        <button key={n} onClick={() => { if (chConRevealed) return; const ns = new Set(chConSelected); if (ns.has(n)) ns.delete(n); else ns.add(n); setChConSelected(ns); }}
-                          className="w-10 h-10 rounded-sm flex items-center justify-center font-readout text-sm cursor-pointer transition-all border"
-                          style={{ background: bg, color: col, borderColor: brd }}>{n}</button>
-                      );
-                    })}
-                  </div>
-                  <div className="flex justify-center gap-2">
-                    <button onClick={checkChordConstruction} className="btn-gold !text-[10px]" disabled={chConRevealed || chConSelected.size === 0}>Check</button>
-                    <button onClick={() => { setChConSelected(new Set()); setChConRevealed(false); }} className="btn-ghost !text-[10px]">Clear</button>
-                  </div>
-                </>
-              )}
-
-              {chConRevealed && (() => {
-                const correct = chConSelected.size === chConExpected.size && [...chConSelected].every(n => chConExpected.has(n));
-                return (
-                  <div className="mt-4 text-center">
-                    {correct
-                      ? <div className="font-heading text-lg text-[#22c55e]">Correct! {chConRoot} {chConType} = {[...chConExpected].join(", ")}</div>
-                      : <div className="font-heading text-lg text-[#C41E3A]">Answer: {chConRoot} {chConType} = {[...chConExpected].join(", ")}</div>
-                    }
-                    {!autoAdvance && <button onClick={newQ} className="btn-gold mt-3">Next</button>}
-                  </div>
-                );
-              })()}
-            </div>
-          </div>
-        )}
-
-        {/* ── Keyboard Exercises ── */}
-        {isKbMode && subTab === "exercise" && (<>
-          {/* Stats */}
-          <div className="panel p-3 mb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1.5">
-                  <div className={`led ${scorePct >= 80 ? "led-on" : scorePct >= 50 ? "led-gold" : score.total > 0 ? "led-red" : "led-off"}`} />
-                  <span className="font-readout text-sm text-[#D4A843]">{score.correct}/{score.total}</span>
-                  {score.total > 0 && <span className="font-readout text-[10px] text-[#555]">({scorePct}%)</span>}
-                </div>
-                {score.streak > 0 && <span className="font-readout text-sm" style={{ color: score.streak >= 10 ? "#33CC33" : score.streak >= 5 ? "#D4A843" : "#888" }}>{score.streak}x</span>}
-              </div>
-              <button onClick={() => { setScore({ correct: 0, total: 0, streak: 0, bestStreak: ls.bestStreak }); setKbAnswer(null); setKbRevealed(false); setKbHighlight([]); setKbEarMidi(null); }} className="btn-ghost !text-[10px] !px-2">Reset</button>
-            </div>
-          </div>
-
-          <div className="panel p-6 mb-3">
-            {/* Play / Replay */}
-            <div className="flex justify-center gap-3 mb-4">
-              <button onClick={newQ} className="w-16 h-16 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95 flex items-center justify-center"
-                style={{ background: "linear-gradient(145deg, #D4A843, #B8922E)", border: "2px solid #DFBD69", boxShadow: "0 4px 16px rgba(212,168,67,0.25)" }}>
-                <span className="text-[#121214] text-xl font-bold ml-0.5">&#9654;</span>
-              </button>
-              {(kbAnswer || kbEarMidi) && <button onClick={replay} className="w-10 h-10 rounded-full cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center mt-3"
-                style={{ background: "#1a1a1a", border: "1px solid #333" }}><span className="text-[#888] text-sm">&#8635;</span></button>}
-            </div>
-
-            {!kbAnswer && !kbEarMidi && <div className="text-center font-label text-sm text-[#333] py-4">Press play to begin</div>}
-
-            {/* Piano visual (shown for all kb modes except kb-ear before answer) */}
-            {(kbAnswer || kbEarMidi) && (
-              <div className="mb-4 overflow-x-auto">
-                <PianoKeyboard
-                  highlighted={exMode === "kb-ear" ? (kbRevealed ? kbHighlight : []) : kbHighlight}
-                  onClick={exMode === "kb-ear" && !kbRevealed ? handleKbEarClick : undefined}
-                  disabled={kbRevealed && exMode === "kb-ear"}
-                />
-              </div>
-            )}
-
-            {/* Answer buttons for kb-notes */}
-            {exMode === "kb-notes" && kbAnswer && (
-              <div className="flex gap-1.5 flex-wrap justify-center mt-4">
-                {NOTES.map(n => {
-                  const isCor = kbRevealed && n === kbAnswer;
-                  const isWrong = kbRevealed && n === kbPicked && n !== kbAnswer;
-                  return (
-                    <button key={n} onClick={() => handleKbAnswer(n)}
-                      className="w-11 h-11 rounded-sm flex items-center justify-center font-readout text-sm cursor-pointer transition-all border"
-                      style={isCor ? { background: "#22c55e", borderColor: "#22c55e", color: "#121214" }
-                        : isWrong ? { background: "#C41E3A", borderColor: "#C41E3A", color: "#fff" }
-                        : kbRevealed ? { background: "#141414", borderColor: "#222", color: "#555" }
-                        : { background: "#141414", borderColor: "#222", color: "#888" }}>{n}</button>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Answer buttons for kb-intervals */}
-            {exMode === "kb-intervals" && kbAnswer && (
-              <div className="flex gap-1.5 flex-wrap justify-center mt-4">
-                {ALL_INTERVALS.map(iv => {
-                  const isCor = kbRevealed && iv.name === kbAnswer;
-                  const isWrong = kbRevealed && iv.name === kbPicked && iv.name !== kbAnswer;
-                  return (
-                    <button key={iv.name} onClick={() => handleKbAnswer(iv.name)}
-                      className="px-3 py-2 rounded-sm font-label text-[10px] cursor-pointer transition-all border"
-                      style={isCor ? { background: "#22c55e", borderColor: "#22c55e", color: "#121214" }
-                        : isWrong ? { background: "#C41E3A", borderColor: "#C41E3A", color: "#fff" }
-                        : kbRevealed ? { background: "#141414", borderColor: "#222", color: "#555" }
-                        : { background: "#141414", borderColor: "#222", color: "#888" }}>{iv.name}</button>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Answer buttons for kb-scales */}
-            {exMode === "kb-scales" && kbAnswer && (
-              <div className="flex gap-1.5 flex-wrap justify-center mt-4">
-                {ALL_SCALES.map(sc => {
-                  const isCor = kbRevealed && sc.name === kbAnswer;
-                  const isWrong = kbRevealed && sc.name === kbPicked && sc.name !== kbAnswer;
-                  return (
-                    <button key={sc.name} onClick={() => handleKbAnswer(sc.name)}
-                      className="px-3 py-2 rounded-sm font-label text-[10px] cursor-pointer transition-all border"
-                      style={isCor ? { background: "#22c55e", borderColor: "#22c55e", color: "#121214" }
-                        : isWrong ? { background: "#C41E3A", borderColor: "#C41E3A", color: "#fff" }
-                        : kbRevealed ? { background: "#141414", borderColor: "#222", color: "#555" }
-                        : { background: "#141414", borderColor: "#222", color: "#888" }}>{sc.name}</button>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Answer buttons for kb-chords */}
-            {exMode === "kb-chords" && kbAnswer && (
-              <div className="flex gap-1.5 flex-wrap justify-center mt-4">
-                {ALL_CHORDS.map(ch => {
-                  const isCor = kbRevealed && ch.name === kbAnswer;
-                  const isWrong = kbRevealed && ch.name === kbPicked && ch.name !== kbAnswer;
-                  return (
-                    <button key={ch.name} onClick={() => handleKbAnswer(ch.name)}
-                      className="px-3 py-2 rounded-sm font-label text-[10px] cursor-pointer transition-all border"
-                      style={isCor ? { background: "#22c55e", borderColor: "#22c55e", color: "#121214" }
-                        : isWrong ? { background: "#C41E3A", borderColor: "#C41E3A", color: "#fff" }
-                        : kbRevealed ? { background: "#141414", borderColor: "#222", color: "#555" }
-                        : { background: "#141414", borderColor: "#222", color: "#888" }}>{ch.name}</button>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* kb-ear: feedback after clicking */}
-            {exMode === "kb-ear" && kbRevealed && kbEarMidi && (
-              <div className="mt-4 text-center">
-                {kbPicked === String(kbEarMidi)
-                  ? <div className="font-heading text-lg text-[#22c55e]">Correct! {NOTES[kbEarMidi % 12]}{kbEarMidi < 60 ? "3" : "4"}</div>
-                  : <div className="font-heading text-lg text-[#C41E3A]">Answer: {NOTES[kbEarMidi % 12]}{kbEarMidi < 60 ? "3" : "4"}</div>
-                }
-                {!autoAdvance && <button onClick={newQ} className="btn-gold mt-3">Next</button>}
-              </div>
-            )}
-
-            {/* Generic revealed feedback for non-ear kb modes */}
-            {kbRevealed && exMode !== "kb-ear" && (
-              <div className="mt-4 text-center">
-                {kbPicked === kbAnswer
-                  ? <div className="font-heading text-lg text-[#22c55e]">Correct!</div>
-                  : <div className="font-heading text-lg text-[#C41E3A]">Answer: {kbAnswer}</div>
-                }
-                {!autoAdvance && <button onClick={newQ} className="btn-gold mt-3">Next</button>}
-              </div>
-            )}
-          </div>
-        </>)}
-
-        {/* ── Standard Ear Training Exercise ── */}
-        {isStandardEarMode && subTab === "exercise" && (<>
-          {/* Stats */}
-          <div className="panel p-3 mb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1.5">
-                  <div className={`led ${scorePct >= 80 ? "led-on" : scorePct >= 50 ? "led-gold" : score.total > 0 ? "led-red" : "led-off"}`} />
-                  <span className="font-readout text-sm text-[#D4A843]">{score.correct}/{score.total}</span>
-                  {score.total > 0 && <span className="font-readout text-[10px] text-[#555]">({scorePct}%)</span>}
-                </div>
-                {score.streak > 0 && <span className="font-readout text-sm" style={{ color: score.streak >= 10 ? "#33CC33" : score.streak >= 5 ? "#D4A843" : "#888" }}>{score.streak}x</span>}
-              </div>
-              <div className="flex gap-1">
-                <button onClick={() => setShowSettings(!showSettings)} className={`btn-ghost !text-[10px] !px-2 ${showSettings ? "active" : ""}`}>Settings</button>
-                <button onClick={() => { setScore({ correct: 0, total: 0, streak: 0, bestStreak: ls.bestStreak }); setRevealed(false); setAnswer(null); }} className="btn-ghost !text-[10px] !px-2">Reset</button>
-              </div>
-            </div>
-          </div>
-
-          {/* Settings */}
-          {showSettings && (
-            <div className="panel p-3 sm:p-4 mb-3">
-              <div className="font-label text-[10px] text-[#D4A843] mb-3">Exercise Settings</div>
-              {exMode === "intervals" && (<>
-                <div className="mb-3"><div className="font-label text-[9px] text-[#555] mb-1">Direction</div>
-                  <div className="flex gap-1">{(["ascending","descending","harmonic"] as const).map(d => (
-                    <button key={d} onClick={() => setDirection(d)} className={`font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border ${direction === d ? "border-[#D4A843] text-[#D4A843]" : "border-[#222] text-[#444]"}`}>{d}</button>
-                  ))}</div></div>
-                <div className="font-label text-[9px] text-[#555] mb-1">Active Intervals</div>
-                <div className="flex flex-wrap gap-1">{ALL_INTERVALS.map(i => (
-                  <button key={i.name} onClick={() => setEnabledIntervals(toggleSet(enabledIntervals, i.st))}
-                    className="font-label text-[10px] px-2 py-1 rounded-sm cursor-pointer border"
-                    style={enabledIntervals.has(i.st) ? { borderColor: i.color, color: i.color, background: i.color + "12" } : { borderColor: "#222", color: "#444" }}>{i.name}</button>
-                ))}</div>
-              </>)}
-              {exMode === "chords" && (<><div className="font-label text-[9px] text-[#555] mb-1">Active Chords</div>
-                <div className="flex flex-wrap gap-1">{ALL_CHORDS.map(c => (
-                  <button key={c.name} onClick={() => setEnabledChords(toggleSet(enabledChords, c.name))}
-                    className="font-label text-[10px] px-2 py-1 rounded-sm cursor-pointer border"
-                    style={enabledChords.has(c.name) ? { borderColor: c.color, color: c.color, background: c.color + "12" } : { borderColor: "#222", color: "#444" }}>{c.name}</button>
-                ))}</div></>)}
-              {exMode === "scales" && (<><div className="font-label text-[9px] text-[#555] mb-1">Active Scales</div>
-                <div className="flex flex-wrap gap-1">{ALL_SCALES.map(s => (
-                  <button key={s.name} onClick={() => setEnabledScales(toggleSet(enabledScales, s.name))}
-                    className="font-label text-[10px] px-2 py-1 rounded-sm cursor-pointer border"
-                    style={enabledScales.has(s.name) ? { borderColor: s.color, color: s.color, background: s.color + "12" } : { borderColor: "#222", color: "#444" }}>{s.name}</button>
-                ))}</div></>)}
-              <div className="mt-3 pt-3 border-t border-[#1a1a1a]">
-                <label className="flex items-center gap-2 cursor-pointer" onClick={() => setAutoAdvance(!autoAdvance)}>
-                  <div className={`w-3.5 h-3.5 rounded-sm border flex items-center justify-center text-[9px] ${autoAdvance ? "border-[#D4A843] bg-[#D4A843] text-[#121214]" : "border-[#444]"}`}>{autoAdvance ? "✓" : ""}</div>
-                  <span className="font-label text-[10px] text-[#666]">Auto-advance on correct</span>
-                </label>
-              </div>
-            </div>
-          )}
-
-          {/* Play area */}
-          <div className="panel p-6 mb-3">
-            <div className="flex justify-center gap-3 mb-6">
-              <button onClick={newQ} className="w-16 h-16 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95 flex items-center justify-center"
-                style={{ background: "linear-gradient(145deg, #D4A843, #B8922E)", border: "2px solid #DFBD69", boxShadow: "0 4px 16px rgba(212,168,67,0.25)" }}>
-                <span className="text-[#121214] text-xl font-bold ml-0.5">&#9654;</span>
-              </button>
-              {answer && <button onClick={replay} className="w-10 h-10 rounded-full cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center mt-3"
-                style={{ background: "#1a1a1a", border: "1px solid #333" }}><span className="text-[#888] text-sm">&#8635;</span></button>}
-            </div>
-            {!answer && <div className="text-center font-label text-sm text-[#333] py-4">Press play to begin</div>}
-            {answer && (
-              <div className={`grid gap-1.5 ${pool.length <= 6 ? "grid-cols-3" : "grid-cols-3 sm:grid-cols-4"}`}>
-                {pool.map(item => {
-                  const n = item.name, ok = revealed && n === answer, wrong = revealed && n === picked && n !== answer;
-                  const hk = exMode + "-" + n, hist = ls.history[hk];
-                  const weak = hist && hist.t >= 3 && (hist.c / hist.t) < 0.6;
-                  return (
-                    <button key={n} onClick={() => handleAnswer(n)} disabled={revealed}
-                      className="py-3 rounded-sm text-center transition-all cursor-pointer border relative overflow-hidden"
-                      style={ok ? { background: "#22c55e", borderColor: "#22c55e", color: "#121214" }
-                        : wrong ? { background: "#C41E3A", borderColor: "#C41E3A", color: "#fff" }
-                        : { background: "#141414", borderColor: "#222", color: "#aaa" }}>
-                      {!revealed && "color" in item && <div className="absolute bottom-0 left-0 h-[2px] w-full" style={{ background: (item as { color: string }).color }} />}
-                      {weak && !revealed && <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#C41E3A]" />}
-                      <div className="font-label text-sm">{n}</div>
-                      {"label" in item && <div className="text-[8px] opacity-50 mt-0.5">{(item as typeof ALL_INTERVALS[0]).label}</div>}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-            {revealed && (
-              <div className="mt-4 text-center">
-                {picked === answer
-                  ? <><div className="font-heading text-lg text-[#22c55e]">Correct!</div><div className="font-readout text-[11px] text-[#D4A843] mt-1">+{10 + Math.min(score.streak, 20) * 2} XP</div></>
-                  : <div className="font-heading text-lg text-[#C41E3A]">Answer: {answer}</div>
-                }
-                {!autoAdvance && <button onClick={newQ} className="btn-gold mt-3">Next</button>}
-              </div>
-            )}
-          </div>
-        </>)}
-
-        {/* ── Fretboard exercise mode ── */}
-        {isFretboardMode && subTab === "exercise" && (<>
-          <div className="panel p-3 mb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1.5">
-                  <div className={`led ${scorePct >= 80 ? "led-on" : scorePct >= 50 ? "led-gold" : score.total > 0 ? "led-red" : "led-off"}`} />
-                  <span className="font-readout text-sm text-[#D4A843]">{score.correct}/{score.total}</span>
-                  {score.total > 0 && <span className="font-readout text-[10px] text-[#555]">({scorePct}%)</span>}
-                </div>
-                {score.streak > 0 && <span className="font-readout text-sm" style={{ color: score.streak >= 10 ? "#33CC33" : score.streak >= 5 ? "#D4A843" : "#888" }}>{score.streak}x</span>}
-              </div>
-              <button onClick={() => { setScore({ correct: 0, total: 0, streak: 0, bestStreak: ls.bestStreak }); setRevealed(false); setAnswer(null); setFbTarget(null); }} className="btn-ghost !text-[10px] !px-2">Reset</button>
-            </div>
-          </div>
-
-          <div className="panel p-3 sm:p-4 mb-3">
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                {fbTarget
-                  ? <><span className="font-label text-[10px] text-[#555]">Find:</span><span className="font-heading text-3xl text-[#D4A843] mr-3">{fbTarget}</span></>
-                  : <span className="font-label text-sm text-[#333]">Press New Note</span>}
-              </div>
-              <div className="flex gap-2">
-                <button onClick={newQ} className="btn-gold !text-[10px]">New Note</button>
-                {fbTarget && <button onClick={replay} className="btn-ghost !text-[10px]">Replay</button>}
-              </div>
-            </div>
-            <div className="overflow-x-auto" dir="ltr">
-              <div className="min-w-[550px]">
-                <div className="flex mb-1"><div className="w-6" />{Array.from({length: 13}, (_,f) => <div key={f} className="flex-1 text-center font-readout text-[8px] text-[#333]">{f}</div>)}</div>
-                {[...Array(6)].map((_, si) => {
-                  const s = 5 - si;
-                  return (
-                    <div key={s} className="flex items-center h-7">
-                      <div className="w-6 font-readout text-[9px] text-[#444] text-center">{STR[s]}</div>
-                      {Array.from({length: 13}, (_,f) => {
-                        const hit = fbFeedback && fbFeedback.str === s && fbFeedback.fret === f;
-                        return (
-                          <div key={f} onClick={() => handleFbClick(s, f)}
-                            className="flex-1 flex items-center justify-center cursor-pointer hover:bg-[#1a1a1a] transition-all h-full"
-                            style={{ borderRight: "1px solid #1a1a1a", borderBottom: si < 5 ? "1px solid #2a2a2a" : "1px solid #333" }}>
-                            {hit && <div className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold"
-                              style={{ background: fbFeedback.ok ? "#22c55e" : "#C41E3A", color: "#fff" }}>{NOTES[(TUNING[s] + f) % 12]}</div>}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            {revealed && <div className="mt-3 text-center">{fbFeedback?.ok ? <div className="font-heading text-lg text-[#22c55e]">Correct!</div> : <div className="font-heading text-lg text-[#C41E3A]">The note was {fbTarget}</div>}</div>}
-          </div>
-
-          {/* Timed Fretboard Challenge */}
-          <div className="mt-3"><div className="divider-gold mb-3" /><div className="font-label text-[10px] text-[#D4A843] mb-2">Timed Challenge</div><FretboardChallenge /></div>
-        </>)}
-
-        {/* Achievements */}
-        {hasSubTabs && subTab === "achievements" && (
-          <div className="panel p-3 sm:p-5">
-            <div className="font-label text-[11px] text-[#D4A843] mb-4">Achievements ({ls.unlocked.length}/{ACHIEVEMENTS.length})</div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {ACHIEVEMENTS.map(a => {
-                const done = ls.unlocked.includes(a.id);
-                return (
-                  <div key={a.id} className={`p-3 rounded-sm border ${done ? "border-[#D4A843]/40 bg-[#D4A843]/5" : "border-[#1a1a1a]"}`}>
-                    <div className="flex items-center gap-2">
-                      <div className={`led ${done ? "led-gold" : "led-off"}`} />
-                      <div><div className={`font-label text-[11px] ${done ? "text-[#D4A843]" : "text-[#555]"}`}>{a.name}</div><div className="text-[10px] text-[#444]">{a.desc}</div></div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Reference */}
-        {hasSubTabs && subTab === "reference" && (
-          <div className="panel p-3 sm:p-4">
-            {exMode === "intervals" && (
-              <div>
-                <div className="font-label text-[10px] text-[#D4A843] mb-3">Interval Reference — Click to hear</div>
-                {ALL_INTERVALS.map(i => (
-                  <div key={i.name} className="flex items-center gap-3 py-2 border-b border-[#111] last:border-0 cursor-pointer hover:bg-[#0d0d0d] transition-all px-1 -mx-1 rounded-sm"
-                    onClick={() => { tone(60, 0.5, 0); tone(60 + i.st, 0.5, 0.6); }}>
-                    <div className="w-2 h-5 rounded-sm" style={{ background: i.color }} />
-                    <div className="w-8 font-readout text-sm" style={{ color: i.color }}>{i.name}</div>
-                    <div className="flex-1"><div className="text-[11px] text-[#aaa]">{i.label}</div><div className="text-[9px] text-[#555] italic">{i.ref}</div></div>
-                    <div className="font-readout text-[10px] text-[#444]">{i.st}st</div>
-                    {ls.history["intervals-" + i.name] && (() => {
-                      const h = ls.history["intervals-" + i.name]; const p = Math.round((h.c / h.t) * 100);
-                      return <span className="font-readout text-[9px]" style={{ color: p >= 80 ? "#33CC33" : p >= 50 ? "#D4A843" : "#C41E3A" }}>{p}%</span>;
-                    })()}
-                  </div>
-                ))}
-              </div>
-            )}
-            {exMode === "chords" && (
-              <div>
-                <div className="font-label text-[10px] text-[#D4A843] mb-3">Chord Reference — Click to hear</div>
-                {ALL_CHORDS.map(c => (
-                  <div key={c.name} className="flex items-center gap-3 py-2 border-b border-[#111] last:border-0 cursor-pointer hover:bg-[#0d0d0d] px-1 -mx-1 rounded-sm"
-                    onClick={() => playChordAudio(c.iv)}>
-                    <div className="w-2 h-5 rounded-sm" style={{ background: c.color }} />
-                    <span className="font-label text-sm flex-1" style={{ color: c.color }}>{c.name}</span>
-                    <span className="font-readout text-[10px] text-[#444]">{c.iv.join("-")}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-            {exMode === "scales" && (
-              <div>
-                <div className="font-label text-[10px] text-[#D4A843] mb-3">Scale Reference — Click to hear</div>
-                {ALL_SCALES.map(s => (
-                  <div key={s.name} className="flex items-center gap-3 py-2 border-b border-[#111] last:border-0 cursor-pointer hover:bg-[#0d0d0d] px-1 -mx-1 rounded-sm"
-                    onClick={() => playScaleNotes(s.notes)}>
-                    <div className="w-2 h-5 rounded-sm" style={{ background: s.color }} />
-                    <span className="font-label text-sm flex-1" style={{ color: s.color }}>{s.name}</span>
-                    <span className="font-readout text-[10px] text-[#444]">{s.notes.join("-")}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-            {(exMode === "fretboard" || exMode === "progressions" || isFbVisualMode || isNoteEarMode || isIvConMode) && (
-              <div className="py-4 text-center font-label text-sm text-[#444]">
-                {exMode === "fretboard" ? "Use the fretboard exercise and timed challenge above" :
-                 exMode === "progressions" ? "Listen for root movement and chord qualities in progressions" :
-                 isNoteEarMode ? "Train your ear to identify individual notes by their pitch" :
-                 isIvConMode ? "Given a root and interval name, find the target note" :
-                 "Identify intervals, scales, and chords visually on the fretboard"}
-              </div>
-            )}
-          </div>
-        )}
       </>)}
 
       {/* ══════════════════════════════════════════════════════

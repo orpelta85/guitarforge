@@ -1066,7 +1066,7 @@ function ExerciseWindow({ exercise: ex, mode, scale, style, week, day, savedYtUr
           )}
 
           {activeTab === "tutorial" && (
-            <TutorialTabContent exerciseName={ex.n} ytQuery={ex.yt} exerciseId={ex.id} />
+            <TutorialTabContent exerciseName={ex.n} ytQuery={ex.n} exerciseId={ex.id} />
           )}
         </div>
       </div>
@@ -1166,7 +1166,7 @@ function TheoryWindow({ exercise: ex, week, day, bpm, note, onBpmChange, onNoteC
 
           {/* TUTORIAL TAB */}
           {activeTab === "tutorial" && (
-            <TutorialTabContent exerciseName={ex.n} ytQuery={ex.yt} exerciseId={ex.id} />
+            <TutorialTabContent exerciseName={ex.n} ytQuery={ex.n} exerciseId={ex.id} />
           )}
 
           {/* LOG TAB */}

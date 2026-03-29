@@ -174,13 +174,13 @@ export async function mixAudioBlobs(
   const channels = Math.max(micBuf.numberOfChannels, browserBuf.numberOfChannels);
   const offline = new OfflineAudioContext(channels, length, sampleRate);
 
-  // Master limiter prevents clipping when mixing two sources
+  // Soft limiter — transparent unless both sources peak simultaneously
   const limiter = offline.createDynamicsCompressor();
-  limiter.threshold.value = -6;
-  limiter.knee.value = 6;
-  limiter.ratio.value = 4;
-  limiter.attack.value = 0.003;
-  limiter.release.value = 0.01;
+  limiter.threshold.value = -1;
+  limiter.knee.value = 10;
+  limiter.ratio.value = 2;
+  limiter.attack.value = 0.01;
+  limiter.release.value = 0.1;
   limiter.connect(offline.destination);
 
   const micSrc = offline.createBufferSource();
@@ -200,8 +200,8 @@ export async function mixAudioBlobs(
   browserSrc.start(0);
 
   const rendered = await offline.startRendering();
-  // Normalize to -0.3dBFS (0.97 linear) for consistent volume
-  normalizeBuffer(rendered, 0.97);
+  // Light normalize — only if peak is very low, preserve dynamics
+  normalizeBuffer(rendered, 0.85);
   const wavData = audioBufferToWav(rendered);
   return new Blob([wavData], { type: "audio/wav" });
 }

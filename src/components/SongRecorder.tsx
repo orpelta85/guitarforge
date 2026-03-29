@@ -4,6 +4,7 @@ import type { SavedRecording } from "@/lib/types";
 import { idbSaveRecording, idbLoadRecordings } from "@/lib/recorderIdb";
 import { saveToLibrary } from "@/lib/recordingsLibrary";
 import { decodeBlobToBuffer, mixAudioBlobs } from "@/lib/audioMix";
+import { useAudioDevices, buildAudioConstraints } from "@/lib/useAudioDevices";
 import DarkAudioPlayer from "./DarkAudioPlayer";
 
 interface SongRecorderProps {
@@ -30,6 +31,7 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
   const [savedList, setSavedList] = useState<SavedRecording[]>([]);
   const [micError, setMicError] = useState("");
   const [mode, setMode] = useState<RecordingMode>("guitar-only");
+  const { devices: audioDevices, selectedDeviceId, selectDevice } = useAudioDevices();
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editName, setEditName] = useState("");
   const [expanded, setExpanded] = useState(false);
@@ -46,6 +48,7 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
   const [playTime, setPlayTime] = useState(0);
   const [playDuration, setPlayDuration] = useState(0);
   const [decoding, setDecoding] = useState(false);
+  const playOffsetRef = useRef(0);
 
   // Refs - recording
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -108,12 +111,22 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Slider → gain node (real-time, no re-render needed)
+  // Slider → gain node (smooth ramp to avoid clicks/crackling)
   useEffect(() => {
-    if (mixMicGainRef.current) mixMicGainRef.current.gain.value = mixMicVol / 100;
+    const g = mixMicGainRef.current;
+    const ctx = mixCtxRef.current;
+    if (g && ctx) {
+      g.gain.cancelScheduledValues(ctx.currentTime);
+      g.gain.setTargetAtTime(mixMicVol / 100, ctx.currentTime, 0.015);
+    }
   }, [mixMicVol]);
   useEffect(() => {
-    if (mixBrowserGainRef.current) mixBrowserGainRef.current.gain.value = mixBrowserVol / 100;
+    const g = mixBrowserGainRef.current;
+    const ctx = mixCtxRef.current;
+    if (g && ctx) {
+      g.gain.cancelScheduledValues(ctx.currentTime);
+      g.gain.setTargetAtTime(mixBrowserVol / 100, ctx.currentTime, 0.015);
+    }
   }, [mixBrowserVol]);
 
   const cleanupRecording = useCallback(() => {
@@ -138,7 +151,8 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
 
   function ensureMixCtx(): AudioContext {
     if (mixCtxRef.current && mixCtxRef.current.state !== "closed") return mixCtxRef.current;
-    const ctx = new AudioContext();
+    const rate = mixMicBufRef.current?.sampleRate || mixBrowserBufRef.current?.sampleRate || 48000;
+    const ctx = new AudioContext({ sampleRate: rate, latencyHint: "interactive" });
     mixCtxRef.current = ctx;
 
     const micGain = ctx.createGain();
@@ -164,79 +178,127 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
     }
     mixCtxRef.current = null;
     if (playTimerRef.current) { clearInterval(playTimerRef.current); playTimerRef.current = null; }
+    playOffsetRef.current = 0;
     setIsPlaying(false);
+    setPlayTime(0);
   }
 
-  async function handlePlay() {
-    if (!pendingMicBlob || !pendingBrowserBlob) return;
-
-    // Decode once — uses robust decoder that handles webm/mp4 containers
-    if (!mixMicBufRef.current || !mixBrowserBufRef.current) {
-      setDecoding(true);
-      try {
-        const [micBuf, browserBuf] = await Promise.all([
-          decodeBlobToBuffer(pendingMicBlob),
-          decodeBlobToBuffer(pendingBrowserBlob),
-        ]);
-        mixMicBufRef.current = micBuf;
-        mixBrowserBufRef.current = browserBuf;
-        setPlayDuration(Math.max(micBuf.duration, browserBuf.duration));
-      } catch (err) {
-        setDecoding(false);
-        setMicError("Failed to decode recording: " + (err instanceof Error ? err.message : "Unknown error"));
-        return;
-      }
+  async function ensureDecoded(): Promise<boolean> {
+    if (mixMicBufRef.current && mixBrowserBufRef.current) return true;
+    if (!pendingMicBlob || !pendingBrowserBlob) return false;
+    setDecoding(true);
+    try {
+      const [micBuf, browserBuf] = await Promise.all([
+        decodeBlobToBuffer(pendingMicBlob),
+        decodeBlobToBuffer(pendingBrowserBlob),
+      ]);
+      mixMicBufRef.current = micBuf;
+      mixBrowserBufRef.current = browserBuf;
+      const dur = Math.max(micBuf.duration, browserBuf.duration);
+      setPlayDuration(dur);
+    } catch (err) {
       setDecoding(false);
+      setMicError("Failed to decode recording: " + (err instanceof Error ? err.message : "Unknown error"));
+      return false;
     }
+    setDecoding(false);
+    return true;
+  }
 
+  function startPlaybackFromOffset(offset: number) {
     const ctx = ensureMixCtx();
-
-    // Stop previous sources if any
     mixSourcesRef.current.forEach(s => { try { s.stop(); } catch { /* ok */ } });
     mixSourcesRef.current = [];
 
-    // Create new source nodes (these are one-shot, that's how Web Audio works)
+    const micBuf = mixMicBufRef.current!;
+    const browserBuf = mixBrowserBufRef.current!;
+    const maxDur = Math.max(micBuf.duration, browserBuf.duration);
+    const clampedOffset = Math.min(Math.max(offset, 0), maxDur);
+
     const micSrc = ctx.createBufferSource();
-    micSrc.buffer = mixMicBufRef.current;
+    micSrc.buffer = micBuf;
     micSrc.connect(mixMicGainRef.current!);
 
     const browserSrc = ctx.createBufferSource();
-    browserSrc.buffer = mixBrowserBufRef.current;
+    browserSrc.buffer = browserBuf;
     browserSrc.connect(mixBrowserGainRef.current!);
 
     mixSourcesRef.current = [micSrc, browserSrc];
+    playStartTimeRef.current = ctx.currentTime;
+    playOffsetRef.current = clampedOffset;
 
-    // Auto-stop when done
-    const maxDur = Math.max(mixMicBufRef.current!.duration, mixBrowserBufRef.current!.duration);
-    const longerSrc = mixMicBufRef.current!.duration >= mixBrowserBufRef.current!.duration ? micSrc : browserSrc;
+    const remaining = maxDur - clampedOffset;
+    const longerSrc = micBuf.duration >= browserBuf.duration ? micSrc : browserSrc;
     longerSrc.onended = () => {
       mixSourcesRef.current = [];
       if (playTimerRef.current) { clearInterval(playTimerRef.current); playTimerRef.current = null; }
       setIsPlaying(false);
       setPlayTime(maxDur);
+      playOffsetRef.current = maxDur;
     };
 
-    playStartTimeRef.current = ctx.currentTime;
-    micSrc.start(0);
-    browserSrc.start(0);
+    micSrc.start(0, Math.min(clampedOffset, micBuf.duration));
+    browserSrc.start(0, Math.min(clampedOffset, browserBuf.duration));
+
+    if (clampedOffset >= micBuf.duration) { try { micSrc.stop(); } catch { /* ok */ } }
+    if (clampedOffset >= browserBuf.duration) { try { browserSrc.stop(); } catch { /* ok */ } }
+
     setIsPlaying(true);
-    setPlayTime(0);
+    setPlayTime(clampedOffset);
     if (playTimerRef.current) clearInterval(playTimerRef.current);
     playTimerRef.current = setInterval(() => {
-      if (mixCtxRef.current) setPlayTime(mixCtxRef.current.currentTime - playStartTimeRef.current);
-    }, 200);
+      if (mixCtxRef.current) {
+        const elapsed = mixCtxRef.current.currentTime - playStartTimeRef.current;
+        const t = playOffsetRef.current + elapsed;
+        setPlayTime(Math.min(t, maxDur));
+      }
+    }, 75);
+
+    setTimeout(() => {
+      if (mixSourcesRef.current.includes(micSrc) || mixSourcesRef.current.includes(browserSrc)) {
+        mixSourcesRef.current.forEach(s => { try { s.stop(); } catch { /* ok */ } });
+        mixSourcesRef.current = [];
+        if (playTimerRef.current) { clearInterval(playTimerRef.current); playTimerRef.current = null; }
+        setIsPlaying(false);
+        setPlayTime(maxDur);
+        playOffsetRef.current = maxDur;
+      }
+    }, (remaining + 0.5) * 1000);
   }
 
-  function handleStop() {
+  function handlePause() {
+    if (!mixCtxRef.current) return;
+    const elapsed = mixCtxRef.current.currentTime - playStartTimeRef.current;
+    const currentPos = playOffsetRef.current + elapsed;
     mixSourcesRef.current.forEach(s => { try { s.stop(); } catch { /* ok */ } });
     mixSourcesRef.current = [];
     if (playTimerRef.current) { clearInterval(playTimerRef.current); playTimerRef.current = null; }
+    playOffsetRef.current = currentPos;
+    setPlayTime(currentPos);
     setIsPlaying(false);
-    // DON'T destroy the context or gain nodes — they stay alive for next play
   }
 
-  function toggleMixPlayback() {
-    if (isPlaying) handleStop(); else handlePlay();
+  async function toggleMixPlayback() {
+    if (isPlaying) {
+      handlePause();
+      return;
+    }
+    const ok = await ensureDecoded();
+    if (!ok) return;
+    const maxDur = Math.max(mixMicBufRef.current!.duration, mixBrowserBufRef.current!.duration);
+    const offset = playOffsetRef.current >= maxDur - 0.1 ? 0 : playOffsetRef.current;
+    startPlaybackFromOffset(offset);
+  }
+
+  function seekTo(time: number) {
+    const maxDur = playDuration || 1;
+    const clamped = Math.min(Math.max(time, 0), maxDur);
+    if (isPlaying) {
+      startPlaybackFromOffset(clamped);
+    } else {
+      playOffsetRef.current = clamped;
+      setPlayTime(clamped);
+    }
   }
 
   // ── Recording ──
@@ -251,17 +313,23 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
     isDualRef.current = false;
 
     try {
-      const micStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          sampleRate: 48000,
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false,
-        }
-      });
+      const micStream = await navigator.mediaDevices.getUserMedia(
+        buildAudioConstraints(selectedDeviceId || undefined)
+      );
       micStreamRef.current = micStream;
 
-      const actualRate = micStream.getAudioTracks()[0]?.getSettings()?.sampleRate || 48000;
+      // Force-disable all processing on the mic track
+      for (const track of micStream.getAudioTracks()) {
+        await track.applyConstraints({
+          autoGainControl: false,
+          echoCancellation: false,
+          noiseSuppression: false,
+        }).catch(() => {});
+      }
+
+      const settings = micStream.getAudioTracks()[0]?.getSettings();
+      const actualRate = settings?.sampleRate || 48000;
+      console.log("[GF Recorder] Mic track settings:", JSON.stringify(settings));
 
       if (analyserCtxRef.current && analyserCtxRef.current.state !== "closed") {
         await analyserCtxRef.current.close().catch(() => {});
@@ -290,12 +358,15 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
       };
       levelAnimRef.current = requestAnimationFrame(updateLevel);
 
-      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" :
+      // Prefer PCM (lossless) for pristine quality; fall back to Opus
+      const pcmSupported = MediaRecorder.isTypeSupported("audio/webm;codecs=pcm");
+      const mimeType = pcmSupported ? "audio/webm;codecs=pcm" :
+                       MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" :
                        MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" :
                        MediaRecorder.isTypeSupported("audio/mp4") ? "audio/mp4" : "";
       const mrOpts: MediaRecorderOptions = {
         ...(mimeType ? { mimeType } : {}),
-        audioBitsPerSecond: 256000,
+        ...(pcmSupported ? {} : { audioBitsPerSecond: 320000 }),
       };
 
       const effectiveMode = (mode === "dual" && !navigator.mediaDevices.getDisplayMedia) ? "guitar-only" : mode;
@@ -308,13 +379,25 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
         let tabAudioStream: MediaStream;
         try {
           const tabStream = await navigator.mediaDevices.getDisplayMedia({
-            audio: true, video: true,
+            audio: {
+              autoGainControl: false,
+              echoCancellation: false,
+              noiseSuppression: false,
+            } as MediaTrackConstraints,
+            video: true,
             // @ts-expect-error -- preferCurrentTab is Chrome-specific
             preferCurrentTab: true,
           });
           tabStreamRef.current = tabStream;
           tabStream.getVideoTracks().forEach(t => t.stop());
           const tabAudioTracks = tabStream.getAudioTracks();
+          for (const track of tabAudioTracks) {
+            await track.applyConstraints({
+              autoGainControl: false,
+              echoCancellation: false,
+              noiseSuppression: false,
+            }).catch(() => {});
+          }
           if (tabAudioTracks.length === 0) {
             tabStream.getTracks().forEach(t => t.stop());
             tabStreamRef.current = null;
@@ -374,8 +457,8 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
         };
 
         // Start both recorders at the same time for sync
-        micRec.start(1000);
-        browserRec.start(1000);
+        micRec.start();
+        browserRec.start();
 
       } else {
         // ── GUITAR ONLY ──
@@ -404,7 +487,7 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
           });
           setExpanded(true);
         };
-        mr.start(1000);
+        mr.start();
         mediaRecorderRef.current = mr;
       }
 
@@ -416,7 +499,7 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
       setMicError(error.name === "NotAllowedError"
         ? "Microphone access denied." : "Microphone error: " + (error.message || "Unknown error"));
     }
-  }, [mode, songName, storageKey, cleanupRecording]);
+  }, [mode, songName, storageKey, cleanupRecording, selectedDeviceId]);
 
   const stopRecording = useCallback(() => {
     if (!isRec) return;
@@ -471,6 +554,9 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
     setIsMixing(false);
     mixMicBufRef.current = null;
     mixBrowserBufRef.current = null;
+    playOffsetRef.current = 0;
+    setPlayTime(0);
+    setPlayDuration(0);
   }
 
   function renameRecording(idx: number, newName: string) {
@@ -555,6 +641,23 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
         </div>
       )}
 
+      {/* Audio input device selector */}
+      {!isRec && !isMixing && audioDevices.length > 1 && (
+        <div className="flex items-center gap-2 mb-3">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" className="flex-shrink-0">
+            <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/>
+          </svg>
+          <select value={selectedDeviceId} onChange={e => selectDevice(e.target.value)}
+            className="flex-1 bg-[#111] border border-[#333] rounded px-2 py-1 font-label text-[10px] text-[#aaa] cursor-pointer focus:border-[#C41E3A]/50 focus:outline-none truncate">
+            {audioDevices.map(d => (
+              <option key={d.deviceId} value={d.deviceId}>
+                {d.label || `Input ${d.deviceId.slice(0, 8)}...`}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {/* Dual mode info */}
       {mode === "dual" && !isRec && !isMixing && (
         <div className="flex items-start gap-2 bg-[#C41E3A]/5 border border-[#C41E3A]/20 rounded px-3 py-2 mb-3">
@@ -570,53 +673,68 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
       {/* ── POST-RECORDING MIX ── */}
       {isMixing && pendingMicBlob && pendingBrowserBlob && (
         <div className="bg-[#0d0d0d] border border-[#D4A843]/30 rounded-lg px-4 py-3 mb-3">
-          <div className="font-label text-[9px] text-[#D4A843] mb-3 tracking-wider">MIX - Adjust volumes and press Play to preview</div>
+          <div className="font-label text-[9px] text-[#D4A843] mb-3 tracking-wider">MIX - Adjust volumes and preview before saving</div>
 
-          {/* Guitar volume */}
-          <div className="mb-3">
-            <div className="flex items-center justify-between mb-1">
-              <span className="font-label text-[10px] text-[#888]">Guitar</span>
-              <span className="font-readout text-[10px] text-[#555] tabular-nums">{mixMicVol}%</span>
-            </div>
-            <input type="range" min="0" max="200" value={mixMicVol}
-              onChange={e => setMixMicVol(Number(e.target.value))}
-              className="w-full h-1.5 appearance-none rounded-full cursor-pointer"
-              style={{ background: `linear-gradient(to right, #C41E3A ${mixMicVol / 2}%, #222 ${mixMicVol / 2}%)` }} />
-          </div>
-
-          {/* Browser volume */}
-          <div className="mb-3">
-            <div className="flex items-center justify-between mb-1">
-              <span className="font-label text-[10px] text-[#888]">Song / Browser</span>
-              <span className="font-readout text-[10px] text-[#555] tabular-nums">{mixBrowserVol}%</span>
-            </div>
-            <input type="range" min="0" max="200" value={mixBrowserVol}
-              onChange={e => setMixBrowserVol(Number(e.target.value))}
-              className="w-full h-1.5 appearance-none rounded-full cursor-pointer"
-              style={{ background: `linear-gradient(to right, #D4A843 ${mixBrowserVol / 2}%, #222 ${mixBrowserVol / 2}%)` }} />
-          </div>
-
-          {/* Play/Stop + time */}
+          {/* Play/Pause + seekable progress bar */}
           <div className="flex items-center gap-3 mb-3">
             <button type="button" onClick={toggleMixPlayback} disabled={decoding}
-              className="w-10 h-10 rounded-full flex items-center justify-center border transition-all cursor-pointer disabled:opacity-50"
-              style={{ borderColor: isPlaying ? "#D4A843" : "#333", background: isPlaying ? "#D4A843" + "20" : "transparent" }}>
+              className="w-9 h-9 rounded-full flex items-center justify-center border transition-all cursor-pointer disabled:opacity-50 flex-shrink-0"
+              style={{ borderColor: isPlaying ? "#D4A843" : "#333", background: isPlaying ? "rgba(212,168,67,0.12)" : "transparent" }}>
               {decoding ? (
                 <svg width="14" height="14" viewBox="0 0 24 24" className="animate-spin" fill="none" stroke="#D4A843" strokeWidth="2"><path d="M12 2v4m0 12v4m10-10h-4M6 12H2m15.07-7.07l-2.83 2.83M9.76 14.24l-2.83 2.83m11.14 0l-2.83-2.83M9.76 9.76L6.93 6.93"/></svg>
               ) : isPlaying ? (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="#D4A843"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="#D4A843"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
               ) : (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="#D4A843"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="#D4A843"><polygon points="6 3 20 12 6 21 6 3"/></svg>
               )}
             </button>
-            <span className="font-readout text-[13px] text-[#888] tabular-nums">
-              {playFmt(playTime)} / {playFmt(playDuration)}
-            </span>
-            {isPlaying && (
-              <span className="font-label text-[9px] text-[#D4A843]/60">
-                Drag sliders to adjust mix in real-time
-              </span>
-            )}
+
+            <div className="flex-1 flex flex-col gap-1">
+              {/* Seek bar */}
+              <div className="relative w-full h-2 bg-[#1a1a1a] rounded-full cursor-pointer group"
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                  const dur = playDuration || 1;
+                  seekTo(pct * dur);
+                }}>
+                <div className="absolute left-0 top-0 h-full bg-[#D4A843] rounded-full"
+                  style={{ width: `${playDuration > 0 ? (playTime / playDuration) * 100 : 0}%`, transition: isPlaying ? "none" : "width 0.15s ease" }} />
+                <div className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-[#D4A843] rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{ left: `calc(${playDuration > 0 ? (playTime / playDuration) * 100 : 0}% - 6px)` }} />
+              </div>
+              {/* Time display */}
+              <div className="flex justify-between">
+                <span className="font-readout text-[10px] text-[#666] tabular-nums">{playFmt(playTime)}</span>
+                <span className="font-readout text-[10px] text-[#444] tabular-nums">{playFmt(playDuration)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Volume sliders */}
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            {/* Guitar volume */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-label text-[10px] text-[#C41E3A]">Guitar</span>
+                <span className="font-readout text-[10px] text-[#555] tabular-nums">{mixMicVol}%</span>
+              </div>
+              <input type="range" min="0" max="150" value={mixMicVol}
+                onChange={e => setMixMicVol(Number(e.target.value))}
+                className="w-full h-1.5 appearance-none rounded-full cursor-pointer"
+                style={{ background: `linear-gradient(to right, #C41E3A ${(mixMicVol / 150) * 100}%, #222 ${(mixMicVol / 150) * 100}%)` }} />
+            </div>
+            {/* Browser volume */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-label text-[10px] text-[#D4A843]">Song / Browser</span>
+                <span className="font-readout text-[10px] text-[#555] tabular-nums">{mixBrowserVol}%</span>
+              </div>
+              <input type="range" min="0" max="150" value={mixBrowserVol}
+                onChange={e => setMixBrowserVol(Number(e.target.value))}
+                className="w-full h-1.5 appearance-none rounded-full cursor-pointer"
+                style={{ background: `linear-gradient(to right, #D4A843 ${(mixBrowserVol / 150) * 100}%, #222 ${(mixBrowserVol / 150) * 100}%)` }} />
+            </div>
           </div>
 
           {/* Save / Discard */}

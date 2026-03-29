@@ -143,7 +143,16 @@ export default function LooperBox({ startBpm, standalone }: Props) {
     // Request microphone
     if (!mediaStreamRef.current) {
       try {
-        mediaStreamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaStreamRef.current = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false,
+            channelCount: 2,
+            sampleRate: 48000,
+            sampleSize: 24,
+          },
+        });
       } catch {
         return; // User denied mic access
       }
@@ -168,10 +177,11 @@ export default function LooperBox({ startBpm, standalone }: Props) {
 
       if (!mediaStreamRef.current) return;
 
+      const pcmOk = MediaRecorder.isTypeSupported("audio/webm;codecs=pcm");
       const recorder = new MediaRecorder(mediaStreamRef.current, {
-        mimeType: MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-          ? "audio/webm;codecs=opus"
-          : "audio/webm",
+        mimeType: pcmOk ? "audio/webm;codecs=pcm" :
+          MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "audio/webm",
+        ...(pcmOk ? {} : { audioBitsPerSecond: 320000 }),
       });
       chunksRef.current = [];
       recorder.ondataavailable = (e) => {

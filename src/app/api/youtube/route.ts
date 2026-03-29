@@ -33,10 +33,13 @@ export async function GET(req: NextRequest) {
   // Method 2: Scrape YouTube search page (no API key needed)
   try {
     const res = await fetch(
-      `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`,
+      `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}&sp=CAASAhAB&gl=US&hl=en&persist_gl=1&persist_hl=1`,
       {
-        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" },
-        next: { revalidate: 3600 },
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+          "Accept-Language": "en-US,en;q=0.9",
+        },
+        next: { revalidate: 0 },
       }
     );
     if (res.ok) {

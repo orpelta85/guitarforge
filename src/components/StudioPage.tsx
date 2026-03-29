@@ -453,10 +453,17 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Master volume sync ──
+  // ── Master volume sync (smooth ramp to avoid clicks) ──
   useEffect(() => {
-    if (masterGainRef.current) masterGainRef.current.gain.value = masterVol / 100;
-    if (drumMasterGainRef.current) drumMasterGainRef.current.gain.value = masterVol / 100;
+    if (masterGainRef.current) {
+      // Tone.js Gain — direct assignment is fine since Tone smooths internally
+      masterGainRef.current.gain.value = masterVol / 100;
+    }
+    if (drumMasterGainRef.current) {
+      const now = drumAudioCtxRef.current?.currentTime ?? 0;
+      drumMasterGainRef.current.gain.cancelScheduledValues(now);
+      drumMasterGainRef.current.gain.setTargetAtTime(masterVol / 100, now, 0.015);
+    }
   }, [masterVol]);
 
   // ── Metronome ──
@@ -654,7 +661,9 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
     if (!drumPlaying || !drumGainRef.current) return;
     const drumTrack = tracks.find(t => t.type === "drum" && t.id === expandedDrumTrackId);
     if (!drumTrack) return;
-    drumGainRef.current.gain.value = drumTrack.muted ? 0 : drumTrack.volume / 100;
+    const now = drumAudioCtxRef.current?.currentTime ?? 0;
+    drumGainRef.current.gain.cancelScheduledValues(now);
+    drumGainRef.current.gain.setTargetAtTime(drumTrack.muted ? 0 : drumTrack.volume / 100, now, 0.015);
   }, [tracks, drumPlaying, expandedDrumTrackId]);
 
   // Save drum patterns to localStorage
@@ -691,13 +700,14 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
     try {
       const constraints: MediaStreamConstraints = {
         audio: selectedInputDevice
-          ? { deviceId: { exact: selectedInputDevice }, echoCancellation: false, noiseSuppression: false, autoGainControl: false }
-          : { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+          ? { deviceId: { exact: selectedInputDevice }, echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 2, sampleRate: 48000, sampleSize: 24 }
+          : { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 2, sampleRate: 48000, sampleSize: 24 },
       };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       mediaStreamRef.current = stream;
 
-      const audioCtx = new AudioContext();
+      const actualRate = stream.getAudioTracks()[0]?.getSettings()?.sampleRate || 48000;
+      const audioCtx = new AudioContext({ sampleRate: actualRate, latencyHint: "interactive" });
       recAudioCtxRef.current = audioCtx;
       const source = audioCtx.createMediaStreamSource(stream);
       const analyser = audioCtx.createAnalyser();
@@ -720,8 +730,14 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
       };
       recLevelAnimRef.current = requestAnimationFrame(tickLevel);
 
-      const mimeType = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "";
-      const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      const pcmSupported = MediaRecorder.isTypeSupported("audio/webm;codecs=pcm");
+      const mimeType = pcmSupported ? "audio/webm;codecs=pcm" :
+                       MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" :
+                       MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "";
+      const mediaRecorder = new MediaRecorder(stream, {
+        ...(mimeType ? { mimeType } : {}),
+        ...(pcmSupported ? {} : { audioBitsPerSecond: 320000 }),
+      });
       mediaRecorderRef.current = mediaRecorder;
       recChunksRef.current = [];
 
@@ -749,7 +765,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
         mediaRecorderRef.current = null;
       };
 
-      mediaRecorder.start(100);
+      mediaRecorder.start();
       setIsRec(true);
       setRecTime(0);
       timerRef.current = setInterval(() => setRecTime((t) => t + 1), 1000);
@@ -769,7 +785,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
     const Tone = await ensureTone();
     await setupMetronome();
 
-    // Apply mute state
+    // Apply mute state at start
     tracks.forEach((t) => {
       const nodes = toneNodesRef.current[t.id];
       if (nodes) nodes.gain.gain.value = t.muted ? 0 : t.volume / 100;
@@ -878,7 +894,10 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
   const updateTrackVol = useCallback((id: number, vol: number) => {
     setTracks((p) => p.map((t) => t.id === id ? { ...t, volume: vol } : t));
     const nodes = toneNodesRef.current[id];
-    if (nodes) nodes.gain.gain.value = vol / 100;
+    if (nodes) {
+      // Tone.js rampTo provides smooth value change without clicks
+      nodes.gain.gain.rampTo(vol / 100, 0.02);
+    }
   }, []);
 
   const toggleMute = useCallback((id: number) => {
@@ -886,7 +905,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
       const next = prev.map((t) => t.id === id ? { ...t, muted: !t.muted } : t);
       next.forEach((t) => {
         const nodes = toneNodesRef.current[t.id];
-        if (nodes) nodes.gain.gain.value = t.muted ? 0 : t.volume / 100;
+        if (nodes) nodes.gain.gain.rampTo(t.muted ? 0 : t.volume / 100, 0.02);
       });
       return next;
     });
