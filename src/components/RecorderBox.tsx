@@ -442,16 +442,24 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
       const settings = micStream.getAudioTracks()[0]?.getSettings();
       const actualRate = settings?.sampleRate || 48000;
       console.log("[GF Recorder] Mic track settings:", JSON.stringify(settings));
+      console.log("[GF Recorder] channelCount:", settings?.channelCount, "sampleSize:", settings?.sampleSize, "sampleRate:", actualRate);
+      if (settings?.channelCount === 1) console.warn("[GF Recorder] Mono capture — browser ignored stereo request. This is normal for most USB audio interfaces.");
+      if (settings?.sampleSize === 16) console.warn("[GF Recorder] 16-bit capture — browser ignored 24-bit request. Recording still uses PCM codec for lossless capture.");
 
       if (analyserCtxRef.current && analyserCtxRef.current.state !== "closed") {
         await analyserCtxRef.current.close().catch(() => {});
         analyserCtxRef.current = null;
       }
+      // Analyser AudioContext MUST match the stream's actual sample rate to avoid
+      // resampling artifacts. The analyser is connected in parallel (not in the
+      // recording path), so it does not affect recording quality.
       const aCtx = new AudioContext({ sampleRate: actualRate, latencyHint: "interactive" });
       const aSource = aCtx.createMediaStreamSource(micStream);
       const analyser = aCtx.createAnalyser();
       analyser.fftSize = 2048;
       aSource.connect(analyser);
+      // Analyser is a dead-end — NOT connected to ctx.destination.
+      // This means it reads the signal without routing audio through the AudioContext.
       analyserCtxRef.current = aCtx;
       analyserSourceRef.current = aSource;
       analyserRef.current = analyser;

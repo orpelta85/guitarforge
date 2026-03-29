@@ -101,8 +101,8 @@ export async function decodeBlobToBuffer(blob: Blob): Promise<AudioBuffer> {
   });
 }
 
-/** Peak-normalize an AudioBuffer in-place to targetDb below 0 dBFS */
-function normalizeBuffer(buffer: AudioBuffer, targetLinear = 0.97): void {
+/** Peak-normalize an AudioBuffer in-place — only boosts quiet signals, never amplifies above target */
+function normalizeBuffer(buffer: AudioBuffer, targetLinear = 0.90): void {
   const numChannels = buffer.numberOfChannels;
   const length = buffer.length;
   let peak = 0;
@@ -113,13 +113,35 @@ function normalizeBuffer(buffer: AudioBuffer, targetLinear = 0.97): void {
       if (abs > peak) peak = abs;
     }
   }
-  if (peak > 0 && peak !== targetLinear) {
+  // Only normalize UP if the signal is quiet (peak < target).
+  // Never boost a signal that is already near or above target — this avoids
+  // amplifying compression artifacts and pushing hot signals into clipping.
+  if (peak > 0.001 && peak < targetLinear) {
     const gain = targetLinear / peak;
     for (let ch = 0; ch < numChannels; ch++) {
       const data = buffer.getChannelData(ch);
       for (let i = 0; i < length; i++) {
         data[i] *= gain;
       }
+    }
+  }
+}
+
+/**
+ * Soft-clip a buffer in-place using tanh saturation.
+ * Prevents hard digital clipping in the 16-bit WAV export.
+ * The tanh curve gently rounds peaks above ~0.8 instead of
+ * chopping them flat at 1.0 (which sounds harsh).
+ */
+function softClipBuffer(buffer: AudioBuffer): void {
+  const numChannels = buffer.numberOfChannels;
+  const length = buffer.length;
+  for (let ch = 0; ch < numChannels; ch++) {
+    const data = buffer.getChannelData(ch);
+    for (let i = 0; i < length; i++) {
+      // tanh soft-clips: values near 0 pass through linearly,
+      // values above ~0.8 are gently compressed toward 1.0
+      data[i] = Math.tanh(data[i]);
     }
   }
 }
@@ -152,7 +174,12 @@ function audioBufferToWav(buffer: AudioBuffer): ArrayBuffer {
   let offset = 44;
   for (let i = 0; i < length; i++) {
     for (let ch = 0; ch < numChannels; ch++) {
-      const sample = Math.max(-1, Math.min(1, buffer.getChannelData(ch)[i]));
+      let sample = buffer.getChannelData(ch)[i];
+      // TPDF dithering: two uniform random values subtracted produces a triangular
+      // probability distribution. This replaces harsh quantization distortion with
+      // inaudible broadband noise, significantly improving perceived quality at 16-bit.
+      const dither = (Math.random() - Math.random()) / 32768;
+      sample = Math.max(-1, Math.min(1, sample + dither));
       view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
       offset += 2;
     }
@@ -174,13 +201,16 @@ export async function mixAudioBlobs(
   const channels = Math.max(micBuf.numberOfChannels, browserBuf.numberOfChannels);
   const offline = new OfflineAudioContext(channels, length, sampleRate);
 
-  // Soft limiter — transparent unless both sources peak simultaneously
+  // True brick-wall limiter — completely transparent below -3dBFS,
+  // only catches intersample peaks when both sources combine.
+  // Previous settings (threshold: -1, ratio: 2, knee: 10) were compressing
+  // almost everything, squashing dynamics and causing harshness.
   const limiter = offline.createDynamicsCompressor();
-  limiter.threshold.value = -1;
-  limiter.knee.value = 10;
-  limiter.ratio.value = 2;
-  limiter.attack.value = 0.01;
-  limiter.release.value = 0.1;
+  limiter.threshold.value = -3;    // only engage on combined peaks above -3dBFS
+  limiter.knee.value = 0;          // hard knee — either limiting or not
+  limiter.ratio.value = 20;        // 20:1 = brick wall, not gentle compression
+  limiter.attack.value = 0.001;    // 1ms — catch transients fast
+  limiter.release.value = 0.05;    // 50ms — release quickly to avoid pumping
   limiter.connect(offline.destination);
 
   const micSrc = offline.createBufferSource();
@@ -200,8 +230,10 @@ export async function mixAudioBlobs(
   browserSrc.start(0);
 
   const rendered = await offline.startRendering();
-  // Light normalize — only if peak is very low, preserve dynamics
-  normalizeBuffer(rendered, 0.85);
+  // Only boost if the signal is quiet; never push a hot signal higher
+  normalizeBuffer(rendered, 0.90);
+  // Soft-clip before 16-bit conversion to avoid harsh digital clipping
+  softClipBuffer(rendered);
   const wavData = audioBufferToWav(rendered);
   return new Blob([wavData], { type: "audio/wav" });
 }

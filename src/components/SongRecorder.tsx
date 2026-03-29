@@ -330,6 +330,9 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
       const settings = micStream.getAudioTracks()[0]?.getSettings();
       const actualRate = settings?.sampleRate || 48000;
       console.log("[GF Recorder] Mic track settings:", JSON.stringify(settings));
+      console.log("[GF Recorder] channelCount:", settings?.channelCount, "sampleSize:", settings?.sampleSize, "sampleRate:", actualRate);
+      if (settings?.channelCount === 1) console.warn("[GF Recorder] Mono capture — browser ignored stereo request. This is normal for most USB audio interfaces.");
+      if (settings?.sampleSize === 16) console.warn("[GF Recorder] 16-bit capture — browser ignored 24-bit request. Recording still uses PCM codec for lossless capture.");
 
       if (analyserCtxRef.current && analyserCtxRef.current.state !== "closed") {
         await analyserCtxRef.current.close().catch(() => {});
