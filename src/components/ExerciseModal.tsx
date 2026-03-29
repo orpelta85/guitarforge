@@ -1017,10 +1017,8 @@ function SongWindow({ exercise: ex, mode, scale, style, week, day, savedYtUrl, b
 /* ════════════════════════════════════════════════════════════════
    EXERCISE WINDOW - Zone-based layout
    ════════════════════════════════════════════════════════════════ */
-const BACKING_CATS = ["Improv", "Riffs", "Composition", "Songs", "Modes"];
-
 function ExerciseWindow({ exercise: ex, mode, scale, style, week, day, savedYtUrl, bpm, note, onBpmChange, onNoteChange, onClose, onDone, onTimeChange }: Props) {
-  const needsBacking = ex.bt || BACKING_CATS.includes(ex.c);
+  const needsBacking = true;
 
   const savedVid = savedYtUrl?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
   const [ytVideoId, setYtVideoId] = useState(savedVid ? savedVid[1] : "");
