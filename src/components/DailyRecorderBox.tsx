@@ -164,6 +164,10 @@ export default function DailyRecorderBox({ storageKey, onStateChange, controlRef
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(t => t.stop());
       }
+      if (pastAudioRef.current) {
+        pastAudioRef.current.pause();
+        pastAudioRef.current.src = '';
+      }
     };
   }, [clearTimer]);
 

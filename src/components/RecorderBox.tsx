@@ -154,6 +154,7 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
       if (analyserCtxRef.current && analyserCtxRef.current.state !== "closed") {
         analyserCtxRef.current.close().catch(() => {});
       }
+      savedListRef.current.forEach(item => { if (item.d) URL.revokeObjectURL(item.d); });
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -306,6 +307,8 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
       blobMapRef.current.set(idx, mixed);
       setSavedList(prev => {
         const next = [newItem, ...prev].slice(0, 10);
+        const evicted = [newItem, ...prev].slice(10);
+        evicted.forEach(r => { if (r.d) URL.revokeObjectURL(r.d); });
         savedListRef.current = next;
         const allKeys = Array.from(blobMapRef.current.keys()).sort((a, b) => b - a);
         const keptBlobs = new Map<number, Blob>();
@@ -347,15 +350,20 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
       const micStream = await navigator.mediaDevices.getUserMedia({
         audio: {
           sampleRate: 48000,
-          echoCancellation: mode === "dual",
+          echoCancellation: false,
           noiseSuppression: false,
           autoGainControl: false,
         }
       });
       micStreamRef.current = micStream;
 
-      // Set up level meter analyser (does NOT connect to destination - no feedback)
-      const aCtx = new AudioContext({ sampleRate: 48000, latencyHint: "interactive" });
+      const actualRate = micStream.getAudioTracks()[0]?.getSettings()?.sampleRate || 48000;
+
+      if (analyserCtxRef.current && analyserCtxRef.current.state !== "closed") {
+        await analyserCtxRef.current.close().catch(() => {});
+        analyserCtxRef.current = null;
+      }
+      const aCtx = new AudioContext({ sampleRate: actualRate, latencyHint: "interactive" });
       const aSource = aCtx.createMediaStreamSource(micStream);
       const analyser = aCtx.createAnalyser();
       analyser.fftSize = 2048;
@@ -386,7 +394,12 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
         audioBitsPerSecond: 256000,
       };
 
-      if (mode === "dual") {
+      const effectiveMode = (mode === "dual" && !navigator.mediaDevices.getDisplayMedia) ? "guitar-only" : mode;
+      if (mode === "dual" && !navigator.mediaDevices.getDisplayMedia) {
+        alert("Dual recording requires Chrome or Edge browser.");
+      }
+
+      if (effectiveMode === "dual") {
         // ── DUAL: record mic + browser as separate tracks ──
         let tabAudioStream: MediaStream;
         try {
@@ -453,8 +466,8 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
           if (timerRef.current) clearInterval(timerRef.current);
         };
 
-        micRec.start();
-        browserRec.start();
+        micRec.start(1000);
+        browserRec.start(1000);
 
       } else {
         // ── GUITAR ONLY ──
@@ -475,6 +488,8 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
 
           setSavedList((prev) => {
             const next = [newItem, ...prev].slice(0, 10);
+            const evicted = [newItem, ...prev].slice(10);
+            evicted.forEach(r => { if (r.d) URL.revokeObjectURL(r.d); });
             savedListRef.current = next;
             const allKeys = Array.from(blobMapRef.current.keys()).sort((a, b) => b - a);
             const keptKeys = allKeys.slice(0, next.length);
@@ -487,7 +502,7 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
             return next;
           });
         };
-        mr.start();
+        mr.start(1000);
         mediaRef.current = mr;
       }
 

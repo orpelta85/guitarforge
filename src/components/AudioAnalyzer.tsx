@@ -130,8 +130,8 @@ async function analyzeAudio(audioUrl: string, expectedNotes?: string[]): Promise
     const sampleRate = audioBuffer.sampleRate;
     const duration = audioBuffer.duration;
 
-    // Split into windows of 4096 samples (~93ms at 44100Hz)
-    const windowSize = 4096;
+    // Split into windows of 8192 samples (~186ms at 44100Hz) for better low-frequency accuracy (B1 = 61.7Hz on 7-string)
+    const windowSize = 8192;
     const hopSize = 2048; // 50% overlap
     const noteEvents: NoteEvent[] = [];
 

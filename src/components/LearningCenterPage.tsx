@@ -1547,7 +1547,7 @@ export default function LearningCenterPage() {
           <button key={k} onClick={() => setMainTab(k)}
             className={`font-label text-[12px] px-4 sm:px-5 py-3 sm:py-2.5 rounded-lg cursor-pointer transition-all flex-1 min-h-[40px] font-semibold ${mainTab === k ? "bg-[#D4A843] text-[#121214] shadow-lg shadow-[#D4A843]/20" : "text-[#666] border border-[#222] hover:border-[#333] hover:text-[#888]"}`}>
             {lbl}
-            <span className={`ml-1.5 text-[9px] ${mainTab === k ? "text-[#121214]/60" : "text-[#444]"}`}>{count}</span>
+            <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] ${mainTab === k ? "bg-[#121214]/20 text-[#121214]/60" : "bg-white/10 text-[#444]"}`}>{count}</span>
           </button>
         ))}
       </div>
@@ -1631,7 +1631,7 @@ export default function LearningCenterPage() {
         ) : (
           /* Single lesson view */
           <div>
-            <button onClick={() => setOpenLesson(null)} className="btn-ghost !text-[10px] !px-3 mb-3">Back to list</button>
+            <button onClick={() => setOpenLesson(null)} className="text-amber-500 hover:text-amber-400 cursor-pointer text-[11px] font-label mb-3 transition-colors">&larr; Back to list</button>
             <div className="panel p-3 sm:p-5 mb-3">
               <div className="font-heading text-base sm:text-lg font-bold text-[#D4A843] mb-1">{activeLessonObj.title}</div>
               <div className="font-label text-[10px] text-[#555] mb-3 sm:mb-4">{activeLessonObj.desc}</div>

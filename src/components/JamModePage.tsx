@@ -547,7 +547,10 @@ export default function JamModePage() {
   const [currentBeat, setCurrentBeat] = useState(0);
   const [chordFlash, setChordFlash] = useState(false);
   const [toneLoaded, setToneLoaded] = useState(false);
-  const [showSettings, setShowSettings] = useState(true);
+  const [showSettings, setShowSettings] = useState(() => {
+    if (typeof window !== "undefined") return window.innerWidth >= 640;
+    return true;
+  });
 
   // Tone.js refs
   const toneRef = useRef<typeof import("tone") | null>(null);
@@ -882,6 +885,7 @@ export default function JamModePage() {
       snareSynthRef.current?.dispose();
       rideSynthRef.current?.dispose();
       crashSynthRef.current?.dispose();
+      toneRef.current = null;
     };
   }, []);
 
@@ -896,16 +900,16 @@ export default function JamModePage() {
   const nextChord = chords[nextChordIdx] || { display: "-", root: "A", quality: "", numeral: "" };
 
   return (
-    <div className="max-w-[960px] lg:max-w-[1100px] xl:max-w-[1280px] mx-auto px-2 sm:px-5 py-3 sm:py-5 pb-16 sm:pb-5">
+    <div className="max-w-[960px] lg:max-w-[1100px] xl:max-w-[1280px] mx-auto px-2 sm:px-5 py-3 sm:py-5 pb-28 sm:pb-5 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between mb-4 sm:mb-6">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-[#e8e4dc] font-heading">Jam Mode</h1>
-          <p className="text-[11px] sm:text-xs text-[#6b6560] mt-0.5">Play along to chord progressions with real-time cues</p>
+          <p className="hidden sm:block text-[11px] sm:text-xs text-[#6b6560] mt-0.5">Play along to chord progressions with real-time cues</p>
         </div>
         <button
           onClick={() => setShowSettings(!showSettings)}
-          className="text-[11px] px-3 py-1.5 rounded font-label transition-colors"
+          className="text-[11px] px-3 py-2.5 sm:py-1.5 rounded font-label transition-colors"
           style={{
             background: showSettings ? "rgba(212,168,67,0.15)" : "rgba(255,255,255,0.05)",
             color: showSettings ? "#D4A843" : "#9a9590",
@@ -918,8 +922,8 @@ export default function JamModePage() {
 
       {/* Settings Panel */}
       {showSettings && (
-        <div className="panel-secondary rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 min-h-[320px]">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 min-h-[64px]">
+        <div className="panel-secondary rounded-lg p-2 sm:p-3 mb-2 sm:mb-4 overflow-hidden">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 min-h-[64px]">
             {/* Key */}
             <div>
               <label className="block text-[10px] text-[#6b6560] font-label mb-1 uppercase tracking-wider">Key</label>
@@ -993,11 +997,9 @@ export default function JamModePage() {
                   <button
                     key={b}
                     onClick={() => updateSetting("barsPerChord", b)}
-                    className="flex-1 rounded px-2 py-1.5 text-xs font-label transition-colors"
-                    style={{
-                      background: settings.barsPerChord === b ? "rgba(212,168,67,0.2)" : "rgba(255,255,255,0.06)",
-                      color: settings.barsPerChord === b ? "#D4A843" : "#9a9590",
-                      border: `1px solid ${settings.barsPerChord === b ? "rgba(212,168,67,0.4)" : "rgba(255,255,255,0.1)"}`,
+                    className={`flex-1 rounded px-2 py-2 sm:py-1.5 min-h-[44px] sm:min-h-0 text-xs font-label transition-colors border ${settings.barsPerChord === b ? "bg-amber-500/20 border-amber-500 text-amber-400 font-semibold" : "text-[#9a9590] border-white/10 hover:border-white/20"}`}
+                    style={settings.barsPerChord === b ? undefined : {
+                      background: "rgba(255,255,255,0.06)",
                     }}
                   >
                     {b}
@@ -1008,10 +1010,10 @@ export default function JamModePage() {
           </div>
 
           {/* BPM Slider */}
-          <div className="mt-3 sm:mt-4">
+          <div className="mt-2 sm:mt-3">
             <div className="flex items-center justify-between mb-1">
               <label className="text-[10px] text-[#6b6560] font-label uppercase tracking-wider">Tempo</label>
-              <span className="text-xs text-[#D4A843] font-mono font-bold">{settings.bpm} BPM</span>
+              <span className="text-xs text-[#D4A843] font-mono font-bold truncate ml-2">{settings.bpm} BPM</span>
             </div>
             <input
               type="range"
@@ -1028,12 +1030,12 @@ export default function JamModePage() {
           </div>
 
           {/* Audio controls row */}
-          <div className="mt-3 sm:mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="mt-2 sm:mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 min-w-0">
             {/* Metronome volume */}
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-[10px] text-[#6b6560] font-label uppercase tracking-wider">Click</label>
-                <span className="text-[10px] text-[#9a9590] font-mono">{Math.round(settings.metronomeVol * 100)}%</span>
+            <div className="min-w-0">
+              <div className="flex items-center justify-between mb-1 min-w-0">
+                <label className="text-[10px] text-[#6b6560] font-label uppercase tracking-wider shrink-0">Click</label>
+                <span className="text-[10px] text-[#9a9590] font-mono shrink-0">{Math.round(settings.metronomeVol * 100)}%</span>
               </div>
               <input
                 type="range"
@@ -1046,13 +1048,13 @@ export default function JamModePage() {
             </div>
 
             {/* Bass */}
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-2">
-                  <label className="text-[10px] text-[#6b6560] font-label uppercase tracking-wider">Bass</label>
+            <div className="min-w-0">
+              <div className="flex items-center justify-between mb-1 min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
+                  <label className="text-[10px] text-[#6b6560] font-label uppercase tracking-wider shrink-0">Bass</label>
                   <button
                     onClick={() => updateSetting("bassEnabled", !settings.bassEnabled)}
-                    className="text-[9px] px-1.5 py-0.5 rounded font-label transition-colors"
+                    className="text-[9px] px-1.5 py-1.5 sm:py-0.5 min-h-[36px] sm:min-h-0 rounded font-label transition-colors"
                     style={{
                       background: settings.bassEnabled ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.05)",
                       color: settings.bassEnabled ? "#22c55e" : "#555",
@@ -1062,7 +1064,7 @@ export default function JamModePage() {
                     {settings.bassEnabled ? "ON" : "OFF"}
                   </button>
                 </div>
-                <span className="text-[10px] text-[#9a9590] font-mono">{Math.round(settings.bassVol * 100)}%</span>
+                <span className="text-[10px] text-[#9a9590] font-mono shrink-0">{Math.round(settings.bassVol * 100)}%</span>
               </div>
               <input
                 type="range"
@@ -1076,13 +1078,13 @@ export default function JamModePage() {
             </div>
 
             {/* Drums */}
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-2">
-                  <label className="text-[10px] text-[#6b6560] font-label uppercase tracking-wider">Drums</label>
+            <div className="min-w-0">
+              <div className="flex items-center justify-between mb-1 min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
+                  <label className="text-[10px] text-[#6b6560] font-label uppercase tracking-wider shrink-0">Drums</label>
                   <button
                     onClick={() => updateSetting("drumEnabled", !settings.drumEnabled)}
-                    className="text-[9px] px-1.5 py-0.5 rounded font-label transition-colors"
+                    className="text-[9px] px-1.5 py-1.5 sm:py-0.5 min-h-[36px] sm:min-h-0 rounded font-label transition-colors"
                     style={{
                       background: settings.drumEnabled ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.05)",
                       color: settings.drumEnabled ? "#22c55e" : "#555",
@@ -1092,7 +1094,7 @@ export default function JamModePage() {
                     {settings.drumEnabled ? "ON" : "OFF"}
                   </button>
                 </div>
-                <span className="text-[10px] text-[#9a9590] font-mono">{Math.round(settings.drumVol * 100)}%</span>
+                <span className="text-[10px] text-[#9a9590] font-mono shrink-0">{Math.round(settings.drumVol * 100)}%</span>
               </div>
               <input
                 type="range"
@@ -1107,9 +1109,9 @@ export default function JamModePage() {
           </div>
 
           {/* Groove style selector (unified drum + bass) */}
-          <div className="mt-3 sm:mt-4 min-h-[56px]">
+          <div className="mt-2 sm:mt-3 min-h-[56px]">
             <label className="block text-[10px] text-[#6b6560] font-label mb-1 uppercase tracking-wider">Groove Style</label>
-            <div className="flex flex-wrap gap-1.5 min-h-[32px]">
+            <div className="flex gap-1.5 overflow-x-auto scrollbar-hide sm:flex-wrap min-h-[32px]">
               {GROOVE_STYLE_LIST.map(g => {
                 const isActive = settings.grooveStyle === g;
                 const enabled = settings.drumEnabled || settings.bassEnabled;
@@ -1118,7 +1120,7 @@ export default function JamModePage() {
                     key={g}
                     onClick={() => updateSetting("grooveStyle", g)}
                     disabled={!enabled}
-                    className="px-3 py-1.5 rounded text-[11px] font-label transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="shrink-0 px-2 sm:px-3 py-2 sm:py-1.5 rounded text-[10px] sm:text-[11px] font-label transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                     style={{
                       background: isActive ? "rgba(212,168,67,0.2)" : "rgba(255,255,255,0.05)",
                       color: isActive ? "#D4A843" : "#9a9590",
@@ -1133,10 +1135,10 @@ export default function JamModePage() {
           </div>
 
           {/* Toggles row */}
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-2 sm:mt-3 flex flex-wrap gap-2">
             <button
               onClick={() => updateSetting("loop", !settings.loop)}
-              className="text-[10px] px-3 py-1 rounded font-label transition-colors"
+              className="text-[10px] px-3 py-2 sm:py-1 rounded font-label transition-colors"
               style={{
                 background: settings.loop ? "rgba(212,168,67,0.15)" : "rgba(255,255,255,0.05)",
                 color: settings.loop ? "#D4A843" : "#6b6560",
@@ -1147,7 +1149,7 @@ export default function JamModePage() {
             </button>
             <button
               onClick={() => updateSetting("randomMode", !settings.randomMode)}
-              className="text-[10px] px-3 py-1 rounded font-label transition-colors"
+              className="text-[10px] px-3 py-2 sm:py-1 rounded font-label transition-colors"
               style={{
                 background: settings.randomMode ? "rgba(139,92,246,0.15)" : "rgba(255,255,255,0.05)",
                 color: settings.randomMode ? "#a78bfa" : "#6b6560",
@@ -1197,7 +1199,7 @@ export default function JamModePage() {
         </div>
 
         {/* Big chord display */}
-        <div className="relative flex flex-col items-center justify-center py-8 sm:py-14 px-4">
+        <div className="relative flex flex-col items-center justify-center py-4 sm:py-14 px-4">
           {/* Current chord numeral */}
           <div className="text-[11px] sm:text-sm text-[#6b6560] font-mono mb-2 tracking-wider">
             {currentChord.numeral}
@@ -1254,19 +1256,19 @@ export default function JamModePage() {
           </div>
 
           {/* Bar indicator */}
-          <div className="mt-2 text-[10px] text-[#555] font-mono">
+          <div className="mt-2 text-[9px] sm:text-[10px] text-[#555] font-mono truncate max-w-full px-2">
             Bar {Math.floor(currentBeat / 4) + 1} of {settings.barsPerChord}
             {" | "}
             Chord {currentChordIdx + 1} of {chords.length}
           </div>
         </div>
 
-        {/* Transport controls */}
-        <div className="flex items-center justify-center gap-3 px-4 py-4" style={{ background: "rgba(255,255,255,0.02)", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+        {/* Transport controls - fixed bottom bar on mobile, inline on desktop */}
+        <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center gap-3 px-4 py-4 bg-[#0a0a0a] border-t border-[#1a1a1a] sm:relative sm:bottom-auto sm:left-auto sm:right-auto sm:z-auto sm:border-[rgba(255,255,255,0.05)] sm:bg-[rgba(255,255,255,0.02)]">
           <button
             onClick={handleStop}
             disabled={!playing && !paused}
-            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all"
+            className="w-11 h-11 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all"
             style={{
               background: playing || paused ? "rgba(239,68,68,0.15)" : "rgba(255,255,255,0.05)",
               border: `1px solid ${playing || paused ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.08)"}`,
@@ -1315,7 +1317,8 @@ export default function JamModePage() {
               <button
                 key={t}
                 onClick={() => updateSetting("scaleType", t)}
-                className="text-[10px] px-2 py-1 rounded font-label capitalize transition-colors"
+                title={`${t.charAt(0).toUpperCase() + t.slice(1)} scale for ${settings.key}`}
+                className="text-[10px] px-2 py-2 sm:py-1 rounded font-label capitalize transition-colors"
                 style={{
                   background: settings.scaleType === t ? "rgba(212,168,67,0.15)" : "rgba(255,255,255,0.05)",
                   color: settings.scaleType === t ? "#D4A843" : "#6b6560",
@@ -1364,24 +1367,24 @@ export default function JamModePage() {
 
       {/* ── Progression Info ── */}
       {currentProgression && (
-        <div className="panel-secondary mt-4 sm:mt-6 rounded-lg p-3 sm:p-4">
+        <div className="panel-secondary mt-4 sm:mt-6 rounded-lg p-3 sm:p-4 overflow-hidden">
           <h2 className="text-sm font-bold text-[#e8e4dc] font-heading mb-2">Progression Details</h2>
-          <div className="flex flex-wrap gap-x-6 gap-y-1 text-[11px]">
-            <div>
+          <div className="flex flex-wrap gap-x-6 gap-y-1 text-[11px] min-w-0 overflow-hidden">
+            <div className="shrink-0">
               <span className="text-[#6b6560] font-label">Name: </span>
               <span className="text-[#9a9590]">{currentProgression.name}</span>
             </div>
-            <div>
+            <div className="shrink-0">
               <span className="text-[#6b6560] font-label">Genre: </span>
               <span className="text-[#9a9590]">{currentProgression.genre}</span>
             </div>
-            <div>
+            <div className="min-w-0 max-w-full">
               <span className="text-[#6b6560] font-label">Chords: </span>
-              <span className="text-[#D4A843] font-mono">{chords.map(c => c.display).join(" - ")}</span>
+              <span className="text-[#D4A843] font-mono break-all">{chords.map(c => c.display).join(" - ")}</span>
             </div>
-            <div>
+            <div className="min-w-0 max-w-full">
               <span className="text-[#6b6560] font-label">Numerals: </span>
-              <span className="text-[#9a9590] font-mono">{currentProgression.degrees.map(d => d.numeral).join(" - ")}</span>
+              <span className="text-[#9a9590] font-mono break-all">{currentProgression.degrees.map(d => d.numeral).join(" - ")}</span>
             </div>
           </div>
         </div>

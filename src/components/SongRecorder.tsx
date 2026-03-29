@@ -103,6 +103,7 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
       if (analyserCtxRef.current && analyserCtxRef.current.state !== "closed") {
         analyserCtxRef.current.close().catch(() => {});
       }
+      savedListRef.current.forEach(item => { if (item.d) URL.revokeObjectURL(item.d); });
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -253,15 +254,20 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
       const micStream = await navigator.mediaDevices.getUserMedia({
         audio: {
           sampleRate: 48000,
-          echoCancellation: mode === "dual",
+          echoCancellation: false,
           noiseSuppression: false,
           autoGainControl: false,
         }
       });
       micStreamRef.current = micStream;
 
-      // Set up level meter analyser (does NOT connect to destination - no feedback)
-      const aCtx = new AudioContext({ sampleRate: 48000, latencyHint: "interactive" });
+      const actualRate = micStream.getAudioTracks()[0]?.getSettings()?.sampleRate || 48000;
+
+      if (analyserCtxRef.current && analyserCtxRef.current.state !== "closed") {
+        await analyserCtxRef.current.close().catch(() => {});
+        analyserCtxRef.current = null;
+      }
+      const aCtx = new AudioContext({ sampleRate: actualRate, latencyHint: "interactive" });
       const aSource = aCtx.createMediaStreamSource(micStream);
       const analyser = aCtx.createAnalyser();
       analyser.fftSize = 2048;
@@ -292,7 +298,12 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
         audioBitsPerSecond: 256000,
       };
 
-      if (mode === "dual") {
+      const effectiveMode = (mode === "dual" && !navigator.mediaDevices.getDisplayMedia) ? "guitar-only" : mode;
+      if (mode === "dual" && !navigator.mediaDevices.getDisplayMedia) {
+        alert("Dual recording requires Chrome or Edge browser.");
+      }
+
+      if (effectiveMode === "dual") {
         // ── DUAL: record mic + browser as separate tracks ──
         let tabAudioStream: MediaStream;
         try {
@@ -363,8 +374,8 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
         };
 
         // Start both recorders at the same time for sync
-        micRec.start();
-        browserRec.start();
+        micRec.start(1000);
+        browserRec.start(1000);
 
       } else {
         // ── GUITAR ONLY ──
@@ -382,6 +393,8 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
           blobMapRef.current.set(idx, blob);
           setSavedList(prev => {
             const next = [newItem, ...prev].slice(0, 10);
+            const evicted = [newItem, ...prev].slice(10);
+            evicted.forEach(r => { if (r.d) URL.revokeObjectURL(r.d); });
             savedListRef.current = next;
             const allKeys = Array.from(blobMapRef.current.keys()).sort((a, b) => b - a);
             const keptBlobs = new Map<number, Blob>();
@@ -391,7 +404,7 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
           });
           setExpanded(true);
         };
-        mr.start();
+        mr.start(1000);
         mediaRecorderRef.current = mr;
       }
 
@@ -431,6 +444,8 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
       blobMapRef.current.set(idx, mixed);
       setSavedList(prev => {
         const next = [newItem, ...prev].slice(0, 10);
+        const evicted = [newItem, ...prev].slice(10);
+        evicted.forEach(r => { if (r.d) URL.revokeObjectURL(r.d); });
         savedListRef.current = next;
         const allKeys = Array.from(blobMapRef.current.keys()).sort((a, b) => b - a);
         const keptBlobs = new Map<number, Blob>();
@@ -470,6 +485,8 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
 
   function deleteRecording(idx: number) {
     setSavedList(prev => {
+      const removed = prev[idx];
+      if (removed?.d) URL.revokeObjectURL(removed.d);
       const next = prev.filter((_, i) => i !== idx);
       savedListRef.current = next;
       const allKeys = Array.from(blobMapRef.current.keys()).sort((a, b) => b - a);

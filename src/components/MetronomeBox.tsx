@@ -161,6 +161,7 @@ export default function MetronomeBox({ startBpm: propBpm, standalone }: Props) {
       gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
       osc.start(time);
       osc.stop(time + 0.05);
+      osc.onended = () => { osc.disconnect(); gain.disconnect(); };
     },
     []
   );
@@ -275,6 +276,10 @@ export default function MetronomeBox({ startBpm: propBpm, standalone }: Props) {
     return () => {
       isPlayingRef.current = false;
       if (schedulerRef.current) clearTimeout(schedulerRef.current);
+      if (ctxRef.current && ctxRef.current.state !== "closed") {
+        ctxRef.current.close().catch(() => {});
+      }
+      ctxRef.current = null;
     };
   }, []);
 

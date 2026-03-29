@@ -21,6 +21,13 @@ Next.js 16 + TypeScript + Tailwind CSS 4 + Supabase.
 - Primary accent color: amber (#f59e0b). Success: green (#22c55e). Danger: red (#ef4444).
 - Category colors defined in COL (constants.ts) — always use those.
 
+## Auto-Save Rule
+Every ~1 hour of active work, automatically commit and push all changes to GitHub.
+- Don't ask permission — just do it
+- Commit message should summarize what was done in that period
+- Only commit source code files (src/, .claude/) — skip screenshots and temp files
+- If TypeScript doesn't compile, fix it before committing
+
 ## Running
 ```bash
 cd C:\Users\User\guitarforge

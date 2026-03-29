@@ -176,9 +176,9 @@ export async function mixAudioBlobs(
 
   // Master limiter prevents clipping when mixing two sources
   const limiter = offline.createDynamicsCompressor();
-  limiter.threshold.value = -1;
-  limiter.knee.value = 0;
-  limiter.ratio.value = 20;
+  limiter.threshold.value = -6;
+  limiter.knee.value = 6;
+  limiter.ratio.value = 4;
   limiter.attack.value = 0.003;
   limiter.release.value = 0.01;
   limiter.connect(offline.destination);

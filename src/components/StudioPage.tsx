@@ -580,6 +580,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
     };
     setTracks((p) => [...p, newTrack]);
     setExpandedDrumTrackId(id);
+    setDockPanel("drums");
     setShowAddTrackMenu(false);
   }, []);
 
@@ -1285,9 +1286,9 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
         </div>
 
         {/* CENTER: Transport controls */}
-        <div className="flex-1 flex items-center justify-center gap-1.5">
+        <div className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5">
           <button onClick={rewindToStart} title="Rewind (Enter)"
-            className="w-8 h-8 rounded flex items-center justify-center transition-all cursor-pointer group"
+            className="w-10 h-10 sm:w-8 sm:h-8 rounded flex items-center justify-center transition-all cursor-pointer group"
             style={{ background: "#1a1a1a", border: "1px solid #252525" }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-[#777] group-hover:text-[#ccc] transition-colors">
               <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
@@ -1296,7 +1297,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
 
           {!playing ? (
             <button onClick={playAll} title="Play (Space)" disabled={tracks.length === 0}
-              className="w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer group disabled:opacity-30"
+              className="w-11 h-11 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer group disabled:opacity-30"
               style={{ background: "linear-gradient(180deg, #1a3a1a 0%, #143014 100%)", border: "1px solid #33aa3355", boxShadow: "0 2px 8px rgba(34,197,94,0.1)" }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="ml-0.5 text-[#4ade80] group-hover:text-white transition-colors">
                 <path d="M8 5v14l11-7z"/>
@@ -1304,7 +1305,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
             </button>
           ) : (
             <button onClick={stopAll} title="Pause (Space)"
-              className="w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer"
+              className="w-11 h-11 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer"
               style={{ background: "linear-gradient(180deg, #1a3a1a 0%, #143014 100%)", border: "1px solid #22c55e", boxShadow: "0 0 12px rgba(34,197,94,0.25)" }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="text-white">
                 <path d="M6 4h4v16H6zM14 4h4v16h-4z"/>
@@ -1313,7 +1314,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
           )}
 
           <button onClick={stopAll} title="Stop"
-            className="w-8 h-8 rounded flex items-center justify-center transition-all cursor-pointer group"
+            className="w-10 h-10 sm:w-8 sm:h-8 rounded flex items-center justify-center transition-all cursor-pointer group"
             style={{ background: "#1a1a1a", border: "1px solid #252525" }}>
             <div className="w-3 h-3 rounded-[2px] bg-[#777] group-hover:bg-[#ccc] transition-colors" />
           </button>
@@ -1321,13 +1322,13 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
           {/* Record */}
           {!isRec ? (
             <button onClick={startRec} title="Record (R)"
-              className="w-8 h-8 rounded flex items-center justify-center transition-all cursor-pointer group"
+              className="w-10 h-10 sm:w-8 sm:h-8 rounded flex items-center justify-center transition-all cursor-pointer group"
               style={{ background: "#1e1215", border: "1px solid #C41E3A44" }}>
               <div className="w-3.5 h-3.5 rounded-full group-hover:scale-110 transition-transform" style={{ background: "radial-gradient(circle at 40% 35%, #ff4466, #C41E3A)" }} />
             </button>
           ) : (
             <button onClick={stopRec} title="Stop Recording"
-              className="w-8 h-8 rounded flex items-center justify-center transition-all cursor-pointer"
+              className="w-10 h-10 sm:w-8 sm:h-8 rounded flex items-center justify-center transition-all cursor-pointer"
               style={{ background: "#C41E3A", border: "1px solid #ee3355", animation: "pulse 1.5s ease-in-out infinite" }}>
               <div className="w-3 h-3 rounded-sm bg-white" />
             </button>
@@ -1335,23 +1336,23 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
 
           {/* Loop */}
           <button onClick={() => setLooping(!looping)} title="Loop (C)"
-            className={`w-8 h-8 rounded flex items-center justify-center transition-all cursor-pointer ${looping ? "text-[#D4A843]" : "text-[#555] hover:text-[#888]"}`}
+            className={`hidden sm:flex w-8 h-8 rounded items-center justify-center transition-all cursor-pointer ${looping ? "text-[#D4A843]" : "text-[#555] hover:text-[#888]"}`}
             style={{ background: looping ? "#2a2418" : "#1a1a1a", border: looping ? "1px solid #D4A84355" : "1px solid #252525" }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/>
             </svg>
           </button>
 
-          <div className="w-px h-6 bg-[#1e1e1e] mx-1" />
+          <div className="hidden sm:block w-px h-6 bg-[#1e1e1e] mx-1" />
 
           {/* Time display */}
-          <div className="px-3 py-1 rounded font-mono text-sm flex items-center min-w-[120px] justify-center relative overflow-hidden"
+          <div className="hidden sm:flex px-3 py-1 rounded font-mono text-sm items-center min-w-[120px] justify-center relative overflow-hidden"
             style={{ background: "#050505", border: "1px solid #1a1a1a", boxShadow: "inset 0 1px 4px rgba(0,0,0,0.5)" }}>
             <span className="text-[#D4A84322] absolute tracking-[2px]" style={{ fontFamily: "'Courier New', monospace", fontSize: "15px" }}>88:88.8</span>
             <span className="text-[#D4A843] relative tracking-[2px]" style={{ fontFamily: "'Courier New', monospace", fontSize: "15px", textShadow: "0 0 8px rgba(212,168,67,0.4)" }}>{fmtTime(currentTime)}</span>
           </div>
-          <span className="text-[10px] text-[#333] font-mono">/</span>
-          <span className="text-[10px] text-[#444] font-mono">{fmtTime(duration)}</span>
+          <span className="hidden sm:inline text-[10px] text-[#333] font-mono">/</span>
+          <span className="hidden sm:inline text-[10px] text-[#444] font-mono">{fmtTime(duration)}</span>
 
           {/* Recording indicator */}
           {isRec && (
@@ -1532,11 +1533,34 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
 
           {/* ─── EMPTY STATE / ADD TRACK ─── */}
           {tracks.length === 0 && !isRec ? (
-            <div className="flex items-center justify-center py-20" style={{ background: "#0a0a0a" }}>
-              <div className="border-2 border-dashed rounded-2xl px-16 py-12 text-center" style={{ borderColor: "#222", maxWidth: "420px" }}>
-                <div className="text-[48px] leading-none mb-4 opacity-15" style={{ color: "#555" }}>{"\u266A"}</div>
-                <div className="text-[#555] text-[14px] font-medium mb-2">Drop a loop or audio file</div>
-                <div className="text-[#333] text-[11px]">or use the buttons below to get started</div>
+            <div className="flex items-center justify-center py-16 sm:py-24 px-4" style={{ background: "#0a0a0a" }}>
+              <div className="border-2 border-dashed rounded-2xl px-8 sm:px-20 py-14 sm:py-16 text-center w-full" style={{ borderColor: "#252525", maxWidth: "560px" }}>
+                <div className="text-[64px] leading-none mb-5 opacity-20" style={{ color: "#D4A843" }}>{"\uD83C\uDFB8"}</div>
+                <div className="text-[#aaa] text-[18px] font-semibold mb-1.5">Start Creating</div>
+                <div className="text-[#444] text-[12px] mb-8">Drop an audio file here or pick an option below</div>
+                <div className="flex flex-wrap items-center justify-center gap-2.5">
+                  <button onClick={startRec}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-[12px] font-medium transition-all cursor-pointer hover:brightness-110"
+                    style={{ background: "linear-gradient(180deg, #D4A843 0%, #B8922E 100%)", color: "#111" }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg>
+                    Record
+                  </button>
+                  <button onClick={addDrumTrack}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-[12px] font-medium text-[#ccc] hover:text-white transition-all cursor-pointer"
+                    style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+                    {"\uD83E\uDD41"} Drum Machine
+                  </button>
+                  <button onClick={() => { setDockPanel("suno"); setShowSunoPanel(true); }}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-[12px] font-medium text-[#ccc] hover:text-white transition-all cursor-pointer"
+                    style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+                    {"\uD83C\uDFB5"} AI Backing
+                  </button>
+                  <button onClick={() => fileRef.current?.click()}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-[12px] font-medium text-[#ccc] hover:text-white transition-all cursor-pointer"
+                    style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+                    {"\uD83D\uDCC1"} Import File
+                  </button>
+                </div>
               </div>
             </div>
           ) : null}
