@@ -679,18 +679,18 @@ export default function LibraryPage(props: LibraryPageProps) {
             const ex = getEditedEx(rawEx), c = COL[ex.c], isEd = editingId === ex.id;
             const practiceCount = Object.keys(doneMap).filter(k => k.includes("-" + ex.id) && doneMap[k]).length;
             return (
-              <div key={ex.id} className={`panel mb-1.5 overflow-hidden group ${isEd ? "!border-[#D4A843]/30" : ""}`}>
+              <div key={ex.id} className={`panel mb-1.5 overflow-hidden ${isEd ? "!border-[#D4A843]/30" : ""}`}>
                 <div onClick={() => setEditingId(isEd ? null : ex.id)} className="flex items-center gap-3 px-4 py-3 cursor-pointer">
                   <span className="tag min-w-[48px] text-center" style={{ border: `1px solid ${c}40`, color: c }}>{ex.c}</span>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <div className="font-heading text-[13px] !font-medium !normal-case !tracking-normal">{ex.n}</div>
                     <div className="font-readout text-[10px] text-[#444]">{ex.f} · {ex.m}min {ex.b ? "· " + ex.b : ""}</div>
                   </div>
                   {practiceCount > 0 && (
-                    <span className="font-readout text-[9px] px-1.5 py-0.5 rounded-sm bg-[#D4A843]/10 text-[#D4A843] border border-[#D4A843]/20">{practiceCount}x</span>
+                    <span className="font-readout text-[9px] px-1.5 py-0.5 rounded-sm bg-[#D4A843]/10 text-[#D4A843] border border-[#D4A843]/20" title={`Practiced ${practiceCount} time${practiceCount > 1 ? "s" : ""}`}>{practiceCount}x practiced</span>
                   )}
                   <button type="button" title="Delete exercise" onClick={e => { e.stopPropagation(); hideExercise(ex.id); }}
-                    className="w-6 h-6 rounded flex items-center justify-center text-[10px] text-[#555] hover:text-[#C41E3A] hover:bg-[#C41E3A]/10 transition-all opacity-0 group-hover:opacity-100">
+                    className="w-6 h-6 rounded flex items-center justify-center text-[#333] hover:text-[#C41E3A] hover:bg-[#C41E3A]/10 transition-all shrink-0">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                   </button>
                   <span className="text-[10px] text-[#333]">{isEd ? "\u2212" : "+"}</span>
@@ -1064,6 +1064,18 @@ export default function LibraryPage(props: LibraryPageProps) {
               filteredCount={Math.min(songLibLimit, songLibFiltered.length)}
               totalCount={songLibAllSongs.length}
             />
+            {/* Letter filter bar */}
+            <div className="flex gap-0.5 flex-wrap mb-3">
+              {["All", "#", "A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","א-ת"].map(letter => (
+                <button key={letter} type="button"
+                  onClick={() => setSongLibSearch(letter === "All" ? "" : letter === "#" ? "0" : letter === "א-ת" ? "א" : letter)}
+                  className={`font-label text-[9px] w-7 h-7 rounded flex items-center justify-center cursor-pointer border transition-all ${
+                    (letter === "All" && !songLibSearch) || (letter !== "All" && songLibSearch === (letter === "#" ? "0" : letter === "א-ת" ? "א" : letter))
+                      ? "bg-[#D4A843] text-[#121214] border-[#D4A843]"
+                      : "border-[#222] text-[#555] hover:border-[#444] hover:text-[#888]"
+                  }`}>{letter}</button>
+              ))}
+            </div>
             <div className="mb-4">
               <button type="button" onClick={() => setAddSongModalOpen(true)}
                 className="font-label text-[11px] px-3 py-2 rounded-lg cursor-pointer border border-[#D4A843] bg-[#D4A843]/10 text-[#D4A843] hover:bg-[#D4A843]/20 transition-all flex-shrink-0 flex items-center gap-1.5 mb-2">

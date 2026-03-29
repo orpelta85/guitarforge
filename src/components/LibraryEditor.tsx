@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import type { Exercise, ExEditMap } from "@/lib/types";
+import { CATS, COL } from "@/lib/constants";
 import { ytSearch } from "@/lib/helpers";
 import dynamic from "next/dynamic";
 const GpFileUploader = dynamic(() => import("./GpFileUploader"), {
@@ -75,9 +76,14 @@ export default function LibraryEditor({ ex, exEdits, setExEdits }: Props) {
   return (
     <div className="px-4 py-4 border-t border-[#1a1a1a] bg-[#121214]">
       {/* Basic info */}
-      <div className="grid grid-cols-2 gap-3 mb-3">
+      <div className="grid grid-cols-3 gap-3 mb-3">
         <label className="font-label text-[10px] text-[#555]">Name
           <input value={ex.n} onChange={e => update("n", e.target.value)} className="input mt-1" />
+        </label>
+        <label className="font-label text-[10px] text-[#555]">Category
+          <select value={ex.c} onChange={e => update("c", e.target.value)} className="input mt-1" style={{ borderColor: (COL[ex.c] || "#333") + "40", color: COL[ex.c] || "#ccc" }}>
+            {CATS.filter(c => c !== "Songs").map(c => <option key={c} value={c} style={{ color: "#ccc" }}>{c}</option>)}
+          </select>
         </label>
         <label className="font-label text-[10px] text-[#555]">Duration (min)
           <input type="number" value={ex.m} min={1} max={60} onChange={e => update("m", Number(e.target.value))} className="input input-gold mt-1" />

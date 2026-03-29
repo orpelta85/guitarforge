@@ -27,6 +27,7 @@ interface Props {
   onNoteChange: (v: string) => void;
   onClose: () => void;
   onDone?: () => void;
+  onTimeChange?: (minutes: number) => void;
 }
 
 /* ── Modal type routing ── */
@@ -569,6 +570,35 @@ function TutorialTabContent({ exerciseName, ytQuery, exerciseId }: { exerciseNam
 }
 
 
+/* ── Editable duration badge ── */
+function EditableDuration({ minutes, onTimeChange }: { minutes: number; onTimeChange?: (m: number) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [val, setVal] = useState(String(minutes));
+
+  if (!onTimeChange) {
+    return <span className="font-readout text-[10px] text-zinc-500 bg-white/[0.04] border border-white/[0.06] rounded px-1.5 py-0.5 flex-shrink-0">{minutes}m</span>;
+  }
+
+  if (editing) {
+    return (
+      <input type="number" autoFocus min={1} max={120} value={val}
+        className="input !w-14 !py-0.5 !px-1.5 !text-[10px] text-center flex-shrink-0"
+        onChange={e => setVal(e.target.value)}
+        onBlur={() => { const n = parseInt(val); if (n > 0 && n <= 120) onTimeChange(n); setEditing(false); }}
+        onKeyDown={e => { if (e.key === "Enter") { const n = parseInt(val); if (n > 0 && n <= 120) onTimeChange(n); setEditing(false); } if (e.key === "Escape") setEditing(false); }} />
+    );
+  }
+
+  return (
+    <button type="button" onClick={() => { setVal(String(minutes)); setEditing(true); }}
+      className="font-readout text-[10px] text-zinc-500 bg-white/[0.04] border border-white/[0.06] rounded px-1.5 py-0.5 flex-shrink-0 cursor-pointer hover:text-[#D4A843] hover:border-[#D4A843]/30 transition-colors"
+      title="Click to edit duration">
+      {minutes}m
+      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="inline ml-0.5 opacity-50"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    </button>
+  );
+}
+
 /* ── Inline timer for toolbar ── */
 function InlineTimer({ durationSec }: { durationSec: number }) {
   const [remaining, setRemaining] = useState(durationSec);
@@ -692,12 +722,13 @@ function RecordsPanel({ exerciseId, exerciseName, storageKey }: {
    ZONE 1: TOOLBAR (shared across all window types)
    Bigger, contains: exercise info + Record + Records + Timer + Done + Close
    ════════════════════════════════════════════════════════════════ */
-function Toolbar({ ex, week, day, onClose, onDone, bpm, note, onBpmChange, onNoteChange }: { ex: Exercise; week: number; day: string; onClose: () => void; onDone?: () => void; bpm?: string; note?: string; onBpmChange?: (v: string) => void; onNoteChange?: (v: string) => void }) {
+function Toolbar({ ex, week, day, onClose, onDone, bpm, note, onBpmChange, onNoteChange, onTimeChange }: { ex: Exercise; week: number; day: string; onClose: () => void; onDone?: () => void; bpm?: string; note?: string; onBpmChange?: (v: string) => void; onNoteChange?: (v: string) => void; onTimeChange?: (m: number) => void }) {
   const cc = COL[ex.c] || "#888";
   const songName = ex.songName || ex.n;
   const recKey = week + "-" + day + "-" + ex.id;
   const [notesOpen, setNotesOpen] = useState(false);
   const [recordsOpen, setRecordsOpen] = useState(false);
+  const [recorderOpen, setRecorderOpen] = useState(false);
   const [recordsKey, setRecordsKey] = useState(0);
   return (
     <div className="sticky top-0 z-20 px-4 sm:px-5 py-3"
@@ -709,12 +740,19 @@ function Toolbar({ ex, week, day, onClose, onDone, bpm, note, onBpmChange, onNot
         {ex.b && (
           <span className="font-readout text-[10px] text-zinc-500 bg-white/[0.04] border border-white/[0.06] rounded px-1.5 py-0.5 flex-shrink-0">{ex.b} BPM</span>
         )}
-        <span className="font-readout text-[10px] text-zinc-500 bg-white/[0.04] border border-white/[0.06] rounded px-1.5 py-0.5 flex-shrink-0">{ex.m}m</span>
+        <EditableDuration minutes={ex.m} onTimeChange={onTimeChange} />
       </div>
       {/* Row 2: Controls */}
       <div className="flex items-center gap-2 flex-wrap">
         <InlineTimer durationSec={(ex.m || 5) * 60} />
-        <RecorderBox storageKey={recKey} exerciseName={songName} compact onRecordSaved={() => { setRecordsKey(k => k + 1); setRecordsOpen(true); }} />
+        <button type="button" onClick={() => { setRecorderOpen(!recorderOpen); if (!recorderOpen) setRecordsOpen(false); }}
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium cursor-pointer transition-all border ${
+            recorderOpen ? "bg-[#C41E3A]/15 border-[#C41E3A]/30 text-[#C41E3A]" : "border-white/[0.08] text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.04]"
+          }`}
+          title="Open recorder">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+          Record
+        </button>
         <button type="button" onClick={() => setRecordsOpen(!recordsOpen)}
           className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium cursor-pointer transition-all border ${
             recordsOpen ? "bg-white/[0.06] border-white/[0.12] text-zinc-200" : "border-white/[0.08] text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.04]"
@@ -744,13 +782,19 @@ function Toolbar({ ex, week, day, onClose, onDone, bpm, note, onBpmChange, onNot
         )}
         <CloseButton onClick={onClose} />
       </div>
-      {/* Row 3: Records panel */}
-      {recordsOpen && (
+      {/* Row 3: Full Recorder panel */}
+      {recorderOpen && (
+        <div className="mt-2 pt-2 border-t border-white/[0.06]">
+          <RecorderBox storageKey={recKey} exerciseName={songName} onRecordSaved={() => { setRecordsKey(k => k + 1); setRecordsOpen(true); }} />
+        </div>
+      )}
+      {/* Row 4: Records panel */}
+      {recordsOpen && !recorderOpen && (
         <div className="mt-2 pt-2 border-t border-white/[0.06]">
           <RecordsPanel key={recordsKey} exerciseId={String(ex.id)} exerciseName={songName} storageKey={recKey} />
         </div>
       )}
-      {/* Row 4: Notes collapse */}
+      {/* Row 5: Notes collapse */}
       {notesOpen && onNoteChange && (
         <div className="mt-2 pt-2 border-t border-white/[0.06] flex gap-3 items-start">
           <label className="w-28 flex-shrink-0">
@@ -812,7 +856,7 @@ function PracticeTabContent({ ex }: { ex: Exercise }) {
 /* ════════════════════════════════════════════════════════════════
    SONG WINDOW - Zone-based layout
    ════════════════════════════════════════════════════════════════ */
-function SongWindow({ exercise: ex, mode, scale, style, week, day, savedYtUrl, bpm, note, onBpmChange, onNoteChange, onClose, onDone }: Props) {
+function SongWindow({ exercise: ex, mode, scale, style, week, day, savedYtUrl, bpm, note, onBpmChange, onNoteChange, onClose, onDone, onTimeChange }: Props) {
   const savedVid = savedYtUrl?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
   const lockedSongBt = getLockedVideo(ex.id, "backing");
   const lockedSongOrig = getLockedVideo(ex.id, "original");
@@ -880,7 +924,7 @@ function SongWindow({ exercise: ex, mode, scale, style, week, day, savedYtUrl, b
   return (
     <div className="flex flex-col h-full">
       {/* ZONE 1: Toolbar */}
-      <Toolbar ex={ex} week={week} day={day} onClose={onClose} onDone={onDone} bpm={bpm} note={note} onBpmChange={onBpmChange} onNoteChange={onNoteChange} />
+      <Toolbar ex={ex} week={week} day={day} onClose={onClose} onDone={onDone} bpm={bpm} note={note} onBpmChange={onBpmChange} onNoteChange={onNoteChange} onTimeChange={onTimeChange} />
 
       {/* ZONE 2: Main Content */}
       <div className="flex-1 overflow-y-auto p-4 sm:p-5">
@@ -975,7 +1019,7 @@ function SongWindow({ exercise: ex, mode, scale, style, week, day, savedYtUrl, b
    ════════════════════════════════════════════════════════════════ */
 const BACKING_CATS = ["Improv", "Riffs", "Composition", "Songs", "Modes"];
 
-function ExerciseWindow({ exercise: ex, mode, scale, style, week, day, savedYtUrl, bpm, note, onBpmChange, onNoteChange, onClose, onDone }: Props) {
+function ExerciseWindow({ exercise: ex, mode, scale, style, week, day, savedYtUrl, bpm, note, onBpmChange, onNoteChange, onClose, onDone, onTimeChange }: Props) {
   const needsBacking = ex.bt || BACKING_CATS.includes(ex.c);
 
   const savedVid = savedYtUrl?.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
@@ -991,7 +1035,7 @@ function ExerciseWindow({ exercise: ex, mode, scale, style, week, day, savedYtUr
   return (
     <div className="flex flex-col h-full">
       {/* ZONE 1: Toolbar */}
-      <Toolbar ex={ex} week={week} day={day} onClose={onClose} onDone={onDone} bpm={bpm} note={note} onBpmChange={onBpmChange} onNoteChange={onNoteChange} />
+      <Toolbar ex={ex} week={week} day={day} onClose={onClose} onDone={onDone} bpm={bpm} note={note} onBpmChange={onBpmChange} onNoteChange={onNoteChange} onTimeChange={onTimeChange} />
 
       {/* ZONE 2: Main Content */}
       <div className="flex-1 overflow-y-auto p-4 sm:p-5">
@@ -1044,7 +1088,7 @@ const TOOL_MAP: Record<string, { label: string; hint: string }> = {
   "Chords": { label: "Chord Diagram", hint: "Open Chord tools in the Learning Center" },
 };
 
-function TheoryWindow({ exercise: ex, week, day, bpm, note, onBpmChange, onNoteChange, onClose, onDone }: Props) {
+function TheoryWindow({ exercise: ex, week, day, bpm, note, onBpmChange, onNoteChange, onClose, onDone, onTimeChange }: Props) {
   type TheoryTab = "lesson" | "tool" | "tutorial" | "log";
   const [activeTab, setActiveTab] = useState<TheoryTab>("lesson");
   const tool = TOOL_MAP[ex.c] || { label: "Learning Center", hint: "Open the Learning Center for interactive tools" };
@@ -1056,7 +1100,7 @@ function TheoryWindow({ exercise: ex, week, day, bpm, note, onBpmChange, onNoteC
   return (
     <div className="flex flex-col h-full">
       {/* ZONE 1: Toolbar */}
-      <Toolbar ex={ex} week={week} day={day} onClose={onClose} onDone={onDone} bpm={bpm} note={note} onBpmChange={onBpmChange} onNoteChange={onNoteChange} />
+      <Toolbar ex={ex} week={week} day={day} onClose={onClose} onDone={onDone} bpm={bpm} note={note} onBpmChange={onBpmChange} onNoteChange={onNoteChange} onTimeChange={onTimeChange} />
 
       {/* ZONE 2: Main Content */}
       <div className="flex-1 overflow-y-auto p-4 sm:p-5">

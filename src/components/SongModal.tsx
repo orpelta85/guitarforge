@@ -60,6 +60,7 @@ interface Props {
   mySongs?: number[];
   onToggleMySong?: (id: number) => void;
   onUpdateSong?: (song: SongEntry) => void;
+  onTargetTimeChange?: (minutes: number) => void;
 }
 
 type Tab = "practice" | "tutorial" | "log";
@@ -83,7 +84,7 @@ const TUNINGS_LIST = ["Standard", "Drop D", "Drop C", "Drop B", "Drop A", "Open 
 const KEYS_LIST = ["", "C", "C#/Db", "D", "D#/Eb", "E", "F", "F#/Gb", "G", "G#/Ab", "A", "A#/Bb", "B", "Cm", "C#m/Dbm", "Dm", "D#m/Ebm", "Em", "Fm", "F#m/Gbm", "Gm", "G#m/Abm", "Am", "A#m/Bbm", "Bm"];
 const DIFFICULTIES_LIST: (string | undefined)[] = [undefined, "Beginner", "Intermediate", "Advanced", "Expert"];
 
-export default function SongModal({ song, onClose, targetMinutes, mySongs, onToggleMySong, onUpdateSong }: Props) {
+export default function SongModal({ song, onClose, targetMinutes, mySongs, onToggleMySong, onUpdateSong, onTargetTimeChange }: Props) {
   const [tab, setTab] = useState<Tab>("practice");
   const canEdit = !!onUpdateSong;
   const [editMode, setEditMode] = useState(false);
@@ -99,7 +100,10 @@ export default function SongModal({ song, onClose, targetMinutes, mySongs, onTog
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [timerActive, timerSec]);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
-  const targetSec = (targetMinutes || 0) * 60;
+  const [customTargetMin, setCustomTargetMin] = useState<number | null>(null);
+  const [editingTarget, setEditingTarget] = useState(false);
+  const effectiveTarget = customTargetMin ?? targetMinutes ?? 0;
+  const targetSec = effectiveTarget * 60;
   const timerMm = String(Math.floor(timerSec / 60)).padStart(2, "0");
   const timerSs = String(timerSec % 60).padStart(2, "0");
   const timerOver = targetSec > 0 && timerSec >= targetSec;
@@ -430,10 +434,16 @@ export default function SongModal({ song, onClose, targetMinutes, mySongs, onTog
               <span className={`font-readout text-[13px] tabular-nums ${timerActive ? "text-green-400" : timerOver ? "text-amber-400" : "text-zinc-400"}`}>
                 {timerMm}:{timerSs}
               </span>
-              {targetSec > 0 && (
-                <span className="font-label text-[10px] text-zinc-600">
-                  / {targetMinutes}m
-                </span>
+              {editingTarget ? (
+                <input type="number" autoFocus min={1} max={120} value={effectiveTarget || ""} className="input !w-12 !py-0.5 !px-1 !text-[11px] text-center"
+                  onChange={e => { const v = e.target.value ? Number(e.target.value) : null; setCustomTargetMin(v); }}
+                  onBlur={() => { setEditingTarget(false); if (effectiveTarget > 0 && onTargetTimeChange) onTargetTimeChange(effectiveTarget); }}
+                  onKeyDown={e => { if (e.key === "Enter") { setEditingTarget(false); if (effectiveTarget > 0 && onTargetTimeChange) onTargetTimeChange(effectiveTarget); } }} />
+              ) : (
+                <button type="button" onClick={() => setEditingTarget(true)} title="Click to set target time"
+                  className="font-label text-[10px] text-zinc-600 hover:text-[#D4A843] cursor-pointer transition-colors">
+                  {effectiveTarget > 0 ? `${effectiveTarget}m` : "Set"}
+                </button>
               )}
               {timerSec > 0 && !timerActive && (
                 <button type="button" onClick={() => { setTimerSec(0); setTimerActive(false); }}

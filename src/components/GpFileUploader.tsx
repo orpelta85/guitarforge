@@ -64,11 +64,15 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
   const workerBlobUrlRef = useRef<string | null>(null);
   const audioNodesRef = useRef<{
     ctx: AudioContext;
+    highpass: BiquadFilterNode;
+    saturation: WaveShaperNode;
+    cabinetConvolver: ConvolverNode;
+    lowpass: BiquadFilterNode;
     compressor: DynamicsCompressorNode;
-    convolver: ConvolverNode;
-    dryGain: GainNode;
-    wetGain: GainNode;
-    masterGain: GainNode;
+    roomConvolver: ConvolverNode;
+    roomDry: GainNode;
+    roomWet: GainNode;
+    limiter: DynamicsCompressorNode;
   } | null>(null);
 
   const MAX_SAVE_SIZE = 2 * 1024 * 1024; // 2MB
@@ -204,94 +208,156 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
     reader.readAsArrayBuffer(file);
   }
 
-  // Generate a synthetic impulse response for reverb (small room / cabinet sim)
-  function createImpulseResponse(ctx: AudioContext): AudioBuffer {
+  // Synthesized cabinet impulse response - simulates 4x12 guitar cabinet resonances
+  function createCabinetIR(ctx: AudioContext): AudioBuffer {
     const sampleRate = ctx.sampleRate;
-    const length = Math.floor(sampleRate * 1.2); // 1.2 second reverb tail
-    const impulse = ctx.createBuffer(2, length, sampleRate);
+    const length = Math.floor(sampleRate * 0.15); // 150ms - cabinet IRs are short
+    const buffer = ctx.createBuffer(2, length, sampleRate);
     for (let ch = 0; ch < 2; ch++) {
-      const data = impulse.getChannelData(ch);
+      const data = buffer.getChannelData(ch);
       for (let i = 0; i < length; i++) {
-        // Exponential decay with slight randomness for natural sound
         const t = i / sampleRate;
-        const decay = Math.exp(-3.5 * t); // Natural decay curve
-        // Early reflections (first 30ms) + late reverb tail
-        const early = t < 0.03 ? 0.7 : 0.3;
-        data[i] = (Math.random() * 2 - 1) * decay * early;
+        // Cabinet resonance - multiple resonant frequencies typical of a 4x12 cab
+        const resonance1 = Math.sin(2 * Math.PI * 120 * t) * Math.exp(-t * 40); // low thump
+        const resonance2 = Math.sin(2 * Math.PI * 400 * t) * Math.exp(-t * 60); // mid body
+        const resonance3 = Math.sin(2 * Math.PI * 1200 * t) * Math.exp(-t * 80); // presence
+        const resonance4 = Math.sin(2 * Math.PI * 2500 * t) * Math.exp(-t * 120); // brightness
+        // Early reflections (box resonance)
+        const earlyRef = (Math.random() * 2 - 1) * Math.exp(-t * 100) * 0.15;
+        // Combine with natural decay
+        data[i] = (resonance1 * 0.4 + resonance2 * 0.3 + resonance3 * 0.2 + resonance4 * 0.1 + earlyRef)
+                  * Math.exp(-t * 25);
+        // Slight stereo variation
+        if (ch === 1) {
+          data[i] *= 0.95;
+          if (i > 3) data[i] += data[i - 3] * 0.1;
+        }
       }
     }
-    return impulse;
+    return buffer;
+  }
+
+  // Mild soft-clipping saturation for warmth and harmonics
+  function createWarmSaturation(ctx: AudioContext): WaveShaperNode {
+    const shaper = ctx.createWaveShaper();
+    const samples = 44100;
+    const curve = new Float32Array(samples);
+    for (let i = 0; i < samples; i++) {
+      const x = (i * 2) / samples - 1;
+      curve[i] = Math.tanh(x * 1.5) * 0.9;
+    }
+    shaper.curve = curve;
+    shaper.oversample = '2x';
+    return shaper;
+  }
+
+  // Small room reverb IR for subtle spatial feel (separate from cabinet)
+  function createRoomReverbIR(ctx: AudioContext): AudioBuffer {
+    const sampleRate = ctx.sampleRate;
+    const length = Math.floor(sampleRate * 0.8); // 800ms room
+    const buffer = ctx.createBuffer(2, length, sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const data = buffer.getChannelData(ch);
+      for (let i = 0; i < length; i++) {
+        const t = i / sampleRate;
+        let sample = 0;
+        // Early reflections at specific delays (simulating wall bounces)
+        if (i === Math.floor(sampleRate * 0.012)) sample += 0.4 * (ch === 0 ? 1 : 0.8);
+        if (i === Math.floor(sampleRate * 0.025)) sample += 0.3 * (ch === 0 ? 0.7 : 1);
+        if (i === Math.floor(sampleRate * 0.038)) sample += 0.2;
+        // Late diffuse reverb
+        if (t > 0.04) {
+          sample += (Math.random() * 2 - 1) * Math.exp(-t * 4) * 0.15;
+        }
+        data[i] = sample;
+      }
+    }
+    return buffer;
   }
 
   // Hook into alphaTab's audio output to add effects chain
+  // Chain: source -> highpass 80Hz -> saturation -> cabinet IR -> lowpass 6kHz ->
+  //        compressor -> dry/wet room reverb -> master limiter -> output
   function enhanceAudioOutput(api: any) {
     try {
       const output = (api as any).player?.output;
       if (!output) return;
 
-      // Wait for audioContext to be available
       const checkCtx = () => {
         const ctx: AudioContext | undefined = output.audioContext ?? output._context;
         if (!ctx) return;
-
-        // Check if we already hooked in
         if (audioNodesRef.current?.ctx === ctx) return;
 
-        // Create effects chain: source -> lowpass -> highshelf cut -> compressor -> dry/wet reverb -> master
-        // Lowpass: cuts harsh metallic harmonics above 5kHz from distorted guitar soundfont
+        // 1. High-pass at 80Hz to remove low-end mud
+        const highpass = ctx.createBiquadFilter();
+        highpass.type = "highpass";
+        highpass.frequency.value = 80;
+        highpass.Q.value = 0.7;
+
+        // 2. Warm saturation (mild soft clipping for harmonics)
+        const saturation = createWarmSaturation(ctx);
+
+        // 3. Cabinet IR convolver (100% wet - this is processing, not an effect)
+        const cabinetConvolver = ctx.createConvolver();
+        cabinetConvolver.buffer = createCabinetIR(ctx);
+
+        // 4. Lowpass at 6kHz to smooth cabinet output
         const lowpass = ctx.createBiquadFilter();
         lowpass.type = "lowpass";
-        lowpass.frequency.value = 5000;
+        lowpass.frequency.value = 6000;
         lowpass.Q.value = 0.7;
 
-        // High shelf cut: reduce 3-8kHz presence/harshness by 6dB
-        const highShelf = ctx.createBiquadFilter();
-        highShelf.type = "highshelf";
-        highShelf.frequency.value = 3000;
-        highShelf.gain.value = -6;
-
+        // 5. Gentle compressor
         const compressor = ctx.createDynamicsCompressor();
-        compressor.threshold.value = -3;
-        compressor.knee.value = 6;
-        compressor.ratio.value = 2;
-        compressor.attack.value = 0.02;
-        compressor.release.value = 0.3;
+        compressor.threshold.value = -6;
+        compressor.knee.value = 10;
+        compressor.ratio.value = 3;
+        compressor.attack.value = 0.01;
+        compressor.release.value = 0.2;
 
-        const convolver = ctx.createConvolver();
-        convolver.buffer = createImpulseResponse(ctx);
+        // 6. Room reverb (dry/wet mix, subtle spatial feel)
+        const roomConvolver = ctx.createConvolver();
+        roomConvolver.buffer = createRoomReverbIR(ctx);
+        const roomDry = ctx.createGain();
+        roomDry.gain.value = reverbEnabled ? 1 - reverbMix : 1;
+        const roomWet = ctx.createGain();
+        roomWet.gain.value = reverbEnabled ? reverbMix : 0;
 
-        const dryGain = ctx.createGain();
-        dryGain.gain.value = 1 - reverbMix;
-
-        const wetGain = ctx.createGain();
-        wetGain.gain.value = reverbEnabled ? reverbMix : 0;
-
-        const masterGain = ctx.createGain();
-        masterGain.gain.value = 1.0;
+        // 7. Master limiter (prevents clipping)
+        const limiter = ctx.createDynamicsCompressor();
+        limiter.threshold.value = -1;
+        limiter.knee.value = 0;
+        limiter.ratio.value = 20;
+        limiter.attack.value = 0.003;
+        limiter.release.value = 0.01;
 
         const sourceNode = output._gainNode ?? output.gainNode ?? output._masterGain;
         if (sourceNode) {
           try { sourceNode.disconnect(); } catch {}
 
-          // Route: source -> lowpass -> highShelf -> compressor -> split (dry + wet) -> master
-          sourceNode.connect(lowpass);
-          lowpass.connect(highShelf);
-          highShelf.connect(compressor);
+          // Wire: source -> highpass -> saturation -> cabinet -> lowpass -> compressor
+          sourceNode.connect(highpass);
+          highpass.connect(saturation);
+          saturation.connect(cabinetConvolver);
+          cabinetConvolver.connect(lowpass);
+          lowpass.connect(compressor);
 
-          compressor.connect(dryGain);
-          dryGain.connect(masterGain);
+          // Split for room reverb dry/wet
+          compressor.connect(roomDry);
+          roomDry.connect(limiter);
+          compressor.connect(roomConvolver);
+          roomConvolver.connect(roomWet);
+          roomWet.connect(limiter);
 
-          compressor.connect(convolver);
-          convolver.connect(wetGain);
-          wetGain.connect(masterGain);
+          limiter.connect(ctx.destination);
 
-          masterGain.connect(ctx.destination);
-
-          audioNodesRef.current = { ctx, compressor, convolver, dryGain, wetGain, masterGain };
+          audioNodesRef.current = {
+            ctx, highpass, saturation, cabinetConvolver, lowpass,
+            compressor, roomConvolver, roomDry, roomWet, limiter,
+          };
         }
       };
 
-      // Try immediately and also after a delay (audioContext may initialize later)
       checkCtx();
       setTimeout(checkCtx, 500);
       setTimeout(checkCtx, 1500);
@@ -301,15 +367,15 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
     }
   }
 
-  // Update reverb mix when settings change
+  // Update room reverb mix when settings change
   useEffect(() => {
     const nodes = audioNodesRef.current;
     if (!nodes) return;
     const now = nodes.ctx.currentTime;
-    nodes.wetGain.gain.cancelScheduledValues(now);
-    nodes.dryGain.gain.cancelScheduledValues(now);
-    nodes.wetGain.gain.linearRampToValueAtTime(reverbEnabled ? reverbMix : 0, now + 0.05);
-    nodes.dryGain.gain.linearRampToValueAtTime(reverbEnabled ? 1 - reverbMix : 1, now + 0.05);
+    nodes.roomWet.gain.cancelScheduledValues(now);
+    nodes.roomDry.gain.cancelScheduledValues(now);
+    nodes.roomWet.gain.linearRampToValueAtTime(reverbEnabled ? reverbMix : 0, now + 0.05);
+    nodes.roomDry.gain.linearRampToValueAtTime(reverbEnabled ? 1 - reverbMix : 1, now + 0.05);
   }, [reverbEnabled, reverbMix]);
 
   useEffect(() => {
@@ -328,11 +394,15 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
         // Clean up previous audio nodes
         if (audioNodesRef.current) {
           try {
+            audioNodesRef.current.highpass.disconnect();
+            audioNodesRef.current.saturation.disconnect();
+            audioNodesRef.current.cabinetConvolver.disconnect();
+            audioNodesRef.current.lowpass.disconnect();
             audioNodesRef.current.compressor.disconnect();
-            audioNodesRef.current.convolver.disconnect();
-            audioNodesRef.current.dryGain.disconnect();
-            audioNodesRef.current.wetGain.disconnect();
-            audioNodesRef.current.masterGain.disconnect();
+            audioNodesRef.current.roomConvolver.disconnect();
+            audioNodesRef.current.roomDry.disconnect();
+            audioNodesRef.current.roomWet.disconnect();
+            audioNodesRef.current.limiter.disconnect();
           } catch {}
           audioNodesRef.current = null;
         }

@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import type { SavedRecording } from "@/lib/types";
 import { idbSaveRecording, idbLoadRecordings } from "@/lib/recorderIdb";
 import { saveToLibrary } from "@/lib/recordingsLibrary";
+import { decodeBlobToBuffer, mixAudioBlobs } from "@/lib/audioMix";
 import DarkAudioPlayer from "./DarkAudioPlayer";
 
 interface SongRecorderProps {
@@ -19,177 +20,6 @@ function generateRecordingName(songName: string, existingList: SavedRecording[])
   const sameName = existingList.filter(r => r.name?.startsWith(base));
   if (sameName.length === 0) return base;
   return `${base} (${sameName.length})`;
-}
-
-/**
- * Decode an audio blob to AudioBuffer.
- * decodeAudioData can fail with webm/mp4 containers from MediaRecorder.
- * Fallback: play through <audio> element + ScriptProcessorNode to capture PCM.
- */
-async function decodeBlobToBuffer(blob: Blob): Promise<AudioBuffer> {
-  // Attempt 1: direct decodeAudioData (works for WAV, ogg, and some webm)
-  try {
-    const ctx = new AudioContext();
-    const arrayBuf = await blob.arrayBuffer();
-    const buf = await ctx.decodeAudioData(arrayBuf);
-    await ctx.close();
-    return buf;
-  } catch {
-    // decodeAudioData failed — use audio element fallback
-  }
-
-  // Attempt 2: Play through <audio> element + ScriptProcessor to capture samples
-  return new Promise<AudioBuffer>((resolve, reject) => {
-    const url = URL.createObjectURL(blob);
-    const audio = new Audio(url);
-    audio.crossOrigin = "anonymous";
-
-    const cleanup = () => { URL.revokeObjectURL(url); };
-
-    audio.addEventListener("error", () => {
-      cleanup();
-      reject(new Error("Cannot decode audio blob — format not supported."));
-    }, { once: true });
-
-    audio.addEventListener("loadedmetadata", () => {
-      const duration = audio.duration;
-      if (!isFinite(duration) || duration <= 0) {
-        cleanup();
-        reject(new Error("Audio blob has invalid duration."));
-        return;
-      }
-
-      const ctx = new AudioContext();
-      const src = ctx.createMediaElementSource(audio);
-      // 2 input channels (mono sources auto-upmix), 2 output channels
-      const processor = ctx.createScriptProcessor(4096, 2, 2);
-      const pcmL: Float32Array[] = [];
-      const pcmR: Float32Array[] = [];
-
-      processor.onaudioprocess = (e) => {
-        // Read from inputBuffer (incoming audio data from source)
-        pcmL.push(new Float32Array(e.inputBuffer.getChannelData(0)));
-        if (e.inputBuffer.numberOfChannels > 1) {
-          pcmR.push(new Float32Array(e.inputBuffer.getChannelData(1)));
-        } else {
-          // Mono source: duplicate to right channel
-          pcmR.push(new Float32Array(e.inputBuffer.getChannelData(0)));
-        }
-      };
-
-      // Route: src -> processor -> near-silent gain -> destination
-      // processor.connect(destination) is required for onaudioprocess to fire
-      const gain = ctx.createGain();
-      gain.gain.value = 0.001;
-      src.connect(processor);
-      processor.connect(gain);
-      gain.connect(ctx.destination);
-
-      audio.addEventListener("ended", () => {
-        processor.disconnect();
-        src.disconnect();
-        gain.disconnect();
-
-        const totalLen = pcmL.reduce((a, c) => a + c.length, 0);
-        if (totalLen === 0) {
-          ctx.close().catch(() => {});
-          cleanup();
-          reject(new Error("No audio data captured from blob."));
-          return;
-        }
-
-        const result = ctx.createBuffer(2, totalLen, ctx.sampleRate);
-        let off = 0;
-        for (const chunk of pcmL) { result.getChannelData(0).set(chunk, off); off += chunk.length; }
-        off = 0;
-        for (const chunk of pcmR) { result.getChannelData(1).set(chunk, off); off += chunk.length; }
-
-        ctx.close().catch(() => {});
-        cleanup();
-        resolve(result);
-      }, { once: true });
-
-      audio.currentTime = 0;
-      audio.play().catch(() => {
-        ctx.close().catch(() => {});
-        cleanup();
-        reject(new Error("Cannot play audio for decoding."));
-      });
-    }, { once: true });
-
-    audio.load();
-  });
-}
-
-/** Merge two audio blobs at given volume levels using OfflineAudioContext */
-async function mixAudioBlobs(
-  micBlob: Blob, browserBlob: Blob, micLevel: number, browserLevel: number
-): Promise<Blob> {
-  const [micBuf, browserBuf] = await Promise.all([
-    decodeBlobToBuffer(micBlob),
-    decodeBlobToBuffer(browserBlob),
-  ]);
-
-  const length = Math.max(micBuf.length, browserBuf.length);
-  const sampleRate = micBuf.sampleRate;
-  const channels = Math.max(micBuf.numberOfChannels, browserBuf.numberOfChannels);
-  const offline = new OfflineAudioContext(channels, length, sampleRate);
-
-  const micSrc = offline.createBufferSource();
-  micSrc.buffer = micBuf;
-  const micGain = offline.createGain();
-  micGain.gain.value = micLevel;
-  micSrc.connect(micGain);
-  micGain.connect(offline.destination);
-  micSrc.start(0);
-
-  const browserSrc = offline.createBufferSource();
-  browserSrc.buffer = browserBuf;
-  const browserGain = offline.createGain();
-  browserGain.gain.value = browserLevel;
-  browserSrc.connect(browserGain);
-  browserGain.connect(offline.destination);
-  browserSrc.start(0);
-
-  const rendered = await offline.startRendering();
-  const wavData = audioBufferToWav(rendered);
-  return new Blob([wavData], { type: "audio/wav" });
-}
-
-function audioBufferToWav(buffer: AudioBuffer): ArrayBuffer {
-  const numChannels = buffer.numberOfChannels;
-  const sampleRate = buffer.sampleRate;
-  const length = buffer.length;
-  const bytesPerSample = 2;
-  const blockAlign = numChannels * bytesPerSample;
-  const dataSize = length * blockAlign;
-  const arrayBuffer = new ArrayBuffer(44 + dataSize);
-  const view = new DataView(arrayBuffer);
-  function writeString(offset: number, str: string) {
-    for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
-  }
-  writeString(0, "RIFF");
-  view.setUint32(4, 36 + dataSize, true);
-  writeString(8, "WAVE");
-  writeString(12, "fmt ");
-  view.setUint32(16, 16, true);
-  view.setUint16(20, 1, true);
-  view.setUint16(22, numChannels, true);
-  view.setUint32(24, sampleRate, true);
-  view.setUint32(28, sampleRate * blockAlign, true);
-  view.setUint16(32, blockAlign, true);
-  view.setUint16(34, 16, true);
-  writeString(36, "data");
-  view.setUint32(40, dataSize, true);
-  let offset = 44;
-  for (let i = 0; i < length; i++) {
-    for (let ch = 0; ch < numChannels; ch++) {
-      const sample = Math.max(-1, Math.min(1, buffer.getChannelData(ch)[i]));
-      view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
-      offset += 2;
-    }
-  }
-  return arrayBuffer;
 }
 
 export default function SongRecorder({ songName, songId }: SongRecorderProps) {
@@ -230,6 +60,13 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
   const tabStreamRef = useRef<MediaStream | null>(null);
   const isDualRef = useRef(false);
 
+  // Level meter refs
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const analyserSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const analyserCtxRef = useRef<AudioContext | null>(null);
+  const levelAnimRef = useRef<number>(0);
+  const [micLevel, setMicLevel] = useState(0);
+
   // Refs - post-mix playback (persistent AudioContext pattern)
   const mixCtxRef = useRef<AudioContext | null>(null);
   const mixMicGainRef = useRef<GainNode | null>(null);
@@ -261,6 +98,11 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
       tabStreamRef.current?.getTracks().forEach(t => t.stop());
       micStreamRef.current?.getTracks().forEach(t => t.stop());
       destroyMixCtx();
+      if (levelAnimRef.current) cancelAnimationFrame(levelAnimRef.current);
+      analyserSourceRef.current?.disconnect();
+      if (analyserCtxRef.current && analyserCtxRef.current.state !== "closed") {
+        analyserCtxRef.current.close().catch(() => {});
+      }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -278,6 +120,15 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
     micStreamRef.current = null;
     tabStreamRef.current?.getTracks().forEach(t => t.stop());
     tabStreamRef.current = null;
+    if (levelAnimRef.current) cancelAnimationFrame(levelAnimRef.current);
+    analyserSourceRef.current?.disconnect();
+    analyserRef.current = null;
+    analyserSourceRef.current = null;
+    if (analyserCtxRef.current && analyserCtxRef.current.state !== "closed") {
+      analyserCtxRef.current.close().catch(() => {});
+    }
+    analyserCtxRef.current = null;
+    setMicLevel(0);
   }, []);
 
   // ── Persistent AudioContext for mix playback ──
@@ -399,18 +250,47 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
     isDualRef.current = false;
 
     try {
-      // In dual mode, enable echoCancellation so the mic doesn't pick up
-      // the song playing through speakers (prevents phasing when mixed)
       const micStream = await navigator.mediaDevices.getUserMedia({
-        audio: mode === "dual"
-          ? { echoCancellation: true, noiseSuppression: false, autoGainControl: false }
-          : { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+        audio: {
+          sampleRate: 48000,
+          echoCancellation: mode === "dual",
+          noiseSuppression: false,
+          autoGainControl: false,
+        }
       });
       micStreamRef.current = micStream;
 
-      const mimeType = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" :
+      // Set up level meter analyser (does NOT connect to destination - no feedback)
+      const aCtx = new AudioContext({ sampleRate: 48000, latencyHint: "interactive" });
+      const aSource = aCtx.createMediaStreamSource(micStream);
+      const analyser = aCtx.createAnalyser();
+      analyser.fftSize = 2048;
+      aSource.connect(analyser);
+      analyserCtxRef.current = aCtx;
+      analyserSourceRef.current = aSource;
+      analyserRef.current = analyser;
+
+      const dataArr = new Float32Array(analyser.fftSize);
+      const updateLevel = () => {
+        if (!analyserRef.current) return;
+        analyserRef.current.getFloatTimeDomainData(dataArr);
+        let peak = 0;
+        for (let i = 0; i < dataArr.length; i++) {
+          const abs = Math.abs(dataArr[i]);
+          if (abs > peak) peak = abs;
+        }
+        setMicLevel(peak);
+        levelAnimRef.current = requestAnimationFrame(updateLevel);
+      };
+      levelAnimRef.current = requestAnimationFrame(updateLevel);
+
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" :
+                       MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" :
                        MediaRecorder.isTypeSupported("audio/mp4") ? "audio/mp4" : "";
-      const mrOpts = mimeType ? { mimeType } : undefined;
+      const mrOpts: MediaRecorderOptions = {
+        ...(mimeType ? { mimeType } : {}),
+        audioBitsPerSecond: 256000,
+      };
 
       if (mode === "dual") {
         // ── DUAL: record mic + browser as separate tracks ──
@@ -614,6 +494,19 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
   const fmt = Math.floor(totalSec / 60) + ":" + String(totalSec % 60).padStart(2, "0");
   const playFmt = (s: number) => Math.floor(s / 60) + ":" + String(Math.floor(s) % 60).padStart(2, "0");
 
+  const levelMeter = isRec && (
+    <div className="flex items-center gap-1.5" title={`Input level: ${Math.round(micLevel * 100)}%`}>
+      <div className="w-24 h-1.5 bg-[#1a1a1a] rounded-full overflow-hidden">
+        <div className="h-full rounded-full transition-[width] duration-75"
+          style={{
+            width: `${Math.min(micLevel * 100, 100)}%`,
+            background: micLevel > 0.8 ? "#ef4444" : micLevel > 0.5 ? "#f59e0b" : "#22c55e",
+          }} />
+      </div>
+      <span className="font-readout text-[8px] text-[#444] tabular-nums w-6">{Math.round(micLevel * 100)}%</span>
+    </div>
+  );
+
   return (
     <div className={`panel p-4 mb-4 ${isRec ? "!border-[#C41E3A]/40" : isMixing ? "!border-[#D4A843]/40" : ""}`}>
       <div className="font-label text-[10px] text-[#C41E3A] mb-3 flex items-center justify-between">
@@ -741,6 +634,7 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-[#C41E3A] animate-pulse" />
               <span className="font-readout text-lg text-[#C41E3A] tabular-nums">{fmt}</span>
+              {levelMeter}
             </div>
           )}
           {!isRec && (

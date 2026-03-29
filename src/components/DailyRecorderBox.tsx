@@ -66,13 +66,18 @@ export default function DailyRecorderBox({ storageKey, onStateChange, controlRef
     setSaved(false);
 
     navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+      audio: { sampleRate: 48000, echoCancellation: false, noiseSuppression: false, autoGainControl: false }
     }).then((stream) => {
       streamRef.current = stream;
       chunksRef.current = [];
-      const mimeType = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" :
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" :
+                       MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" :
                        MediaRecorder.isTypeSupported("audio/mp4") ? "audio/mp4" : "";
-      const mr = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      const mrOpts: MediaRecorderOptions = {
+        ...(mimeType ? { mimeType } : {}),
+        audioBitsPerSecond: 256000,
+      };
+      const mr = new MediaRecorder(stream, mrOpts);
 
       mr.ondataavailable = (e) => {
         if (e.data.size > 0) chunksRef.current.push(e.data);

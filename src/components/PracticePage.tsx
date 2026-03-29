@@ -147,6 +147,8 @@ export default function PracticePage(props: PracticePageProps) {
   const [showTuner, setShowTuner] = useState(false);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+  const [editingTimeIdx, setEditingTimeIdx] = useState<number | null>(null);
+  const [editingTimeVal, setEditingTimeVal] = useState("");
 
   // Copy/Paste clipboard for day routine
   const [copiedDayRoutine, setCopiedDayRoutine] = useState<{ cats: string[]; hrs: number; exs: Exercise[] } | null>(null);
@@ -301,10 +303,12 @@ export default function PracticePage(props: PracticePageProps) {
             <div className="flex items-center gap-2">
               <div className="font-heading text-lg sm:text-xl font-bold text-[#D4A843]">{selDay}</div>
               <button type="button" onClick={() => setShowDayEditor(!showDayEditor)}
-                className="text-[#555] hover:text-[#D4A843] transition-colors bg-transparent border-none cursor-pointer p-0.5" title="Edit day schedule">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                className={`font-label text-[9px] px-2 py-1 rounded-lg border transition-all flex items-center gap-1 cursor-pointer ${showDayEditor ? "bg-[#D4A843]/15 text-[#D4A843] border-[#D4A843]/40" : "border-[#333] text-[#555] hover:border-[#D4A843]/40 hover:text-[#D4A843]"}`}
+                title="Edit day schedule">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
                 </svg>
+                Edit
               </button>
             </div>
             <div className="font-readout text-[10px] sm:text-[11px] text-[#555] mt-0.5">
@@ -684,7 +688,23 @@ export default function PracticePage(props: PracticePageProps) {
               <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: cc }} />
               <div className="flex-1 min-w-0 cursor-pointer" tabIndex={0} role="button" onClick={() => setModal(ex)} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setModal(ex); } }}>
                 <div className="font-heading text-[13px] sm:text-sm !font-medium !normal-case !tracking-normal leading-snug">{ex.n}</div>
-                <div className="font-readout text-[10px] text-[#555] mt-0.5">{isSong ? "Song" : ex.c} &middot; {ex.m}min {ex.b ? "&middot; " + ex.b + " BPM" : ""}</div>
+                <div className="font-readout text-[10px] text-[#555] mt-0.5 flex items-center gap-0.5">
+                  <span>{isSong ? "Song" : ex.c} &middot; </span>
+                  {editingTimeIdx === idx ? (
+                    <input type="number" autoFocus min={1} max={120} value={editingTimeVal}
+                      className="input !w-10 !py-0 !px-1 !text-[10px] text-center !h-4 !min-h-0"
+                      onClick={e => e.stopPropagation()}
+                      onChange={e => setEditingTimeVal(e.target.value)}
+                      onBlur={() => { const n = parseInt(editingTimeVal); if (n > 0 && n <= 120) { setDayExMap(p => { const l = (p[selDay] || []).slice(); l[idx] = { ...l[idx], m: n }; return { ...p, [selDay]: l }; }); } setEditingTimeIdx(null); }}
+                      onKeyDown={e => { if (e.key === "Enter") { const n = parseInt(editingTimeVal); if (n > 0 && n <= 120) { setDayExMap(p => { const l = (p[selDay] || []).slice(); l[idx] = { ...l[idx], m: n }; return { ...p, [selDay]: l }; }); } setEditingTimeIdx(null); } if (e.key === "Escape") setEditingTimeIdx(null); }} />
+                  ) : (
+                    <button type="button" onClick={e => { e.stopPropagation(); setEditingTimeIdx(idx); setEditingTimeVal(String(ex.m)); }}
+                      className="cursor-pointer hover:text-[#D4A843] transition-colors" title="Click to edit time">
+                      {ex.m}min
+                    </button>
+                  )}
+                  {ex.b ? <span>&middot; {ex.b} BPM</span> : null}
+                </div>
               </div>
               <div className="hidden sm:flex items-center gap-1 flex-shrink-0">
                 <button onClick={() => { if (!idx) return; setDayExMap((p) => { const l = (p[selDay] || []).slice(); [l[idx], l[idx-1]] = [l[idx-1], l[idx]]; return { ...p, [selDay]: l }; }); }}

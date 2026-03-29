@@ -864,7 +864,8 @@ export default function GuitarForgeApp() {
             || { id: modal.id, title: modal.songName || modal.n, artist: "" };
           return <SongModal song={entry} onClose={() => setModal(null)}
             targetMinutes={modal.m || undefined}
-            mySongs={mySongs} onToggleMySong={(id) => setMySongs(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id])} />;
+            mySongs={mySongs} onToggleMySong={(id) => setMySongs(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id])}
+            onTargetTimeChange={(m) => { setDayExMap(p => { const list = (p[selDay] || []).slice(); const idx = list.findIndex(e => e.id === modal.id); if (idx >= 0) { list[idx] = { ...list[idx], m }; } return { ...p, [selDay]: list }; }); setModal({ ...modal, m }); }} />;
         }
         return <ExerciseModal exercise={modal} mode={mode} scale={scale} style={style} week={week} day={selDay}
           savedYtUrl={exEdits[modal.id]?.ytUrl || ""}
@@ -872,7 +873,8 @@ export default function GuitarForgeApp() {
           onBpmChange={(v) => setBpmLog((p) => ({ ...p, [week + "-" + selDay + "-" + modal.id]: v }))}
           onNoteChange={(v) => setNoteLog((p) => ({ ...p, [week + "-" + selDay + "-" + modal.id]: v }))}
           onClose={() => setModal(null)}
-          onDone={() => { const k = week + "-" + selDay + "-" + modal.id; markDone(k, true); setModal(null); }} />;
+          onDone={() => { const k = week + "-" + selDay + "-" + modal.id; markDone(k, true); setModal(null); }}
+          onTimeChange={(m) => { setDayExMap(p => { const list = (p[selDay] || []).slice(); const idx = list.findIndex(e => e.id === modal.id); if (idx >= 0) { list[idx] = { ...list[idx], m }; } return { ...p, [selDay]: list }; }); setModal({ ...modal, m }); }} />;
       })()}
       {songModal && <SongModal song={songModal} onClose={() => setSongModal(null)}
         targetMinutes={songs.some(s => s.id === songModal.id) && songs.length > 0 && (dayHrs[selDay] || 0) > 0
