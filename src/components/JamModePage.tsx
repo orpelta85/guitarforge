@@ -552,6 +552,13 @@ export default function JamModePage() {
     return true;
   });
 
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 640px)");
+    const handler = (e: MediaQueryListEvent) => setShowSettings(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
   // Tone.js refs
   const toneRef = useRef<typeof import("tone") | null>(null);
   const metronomeSynthRef = useRef<InstanceType<typeof import("tone").MembraneSynth> | null>(null);
