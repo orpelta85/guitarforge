@@ -15,16 +15,16 @@ const IV_NAMES = ["R","b2","2","b3","3","4","b5","5","b6","6","b7","7"];
 const ALL_INTERVALS = [
   { name: "m2", label: "Minor 2nd", st: 1, color: "#ef4444", ref: "Jaws" },
   { name: "M2", label: "Major 2nd", st: 2, color: "#f97316", ref: "Happy Birthday" },
-  { name: "m3", label: "Minor 3rd", st: 3, color: "#eab308", ref: "Greensleeves" },
-  { name: "M3", label: "Major 3rd", st: 4, color: "#84cc16", ref: "When the Saints" },
+  { name: "m3", label: "Minor 3rd", st: 3, color: "#eab308", ref: "Smoke on the Water" },
+  { name: "M3", label: "Major 3rd", st: 4, color: "#84cc16", ref: "Kumbaya" },
   { name: "P4", label: "Perfect 4th", st: 5, color: "#22c55e", ref: "Here Comes the Bride" },
   { name: "TT", label: "Tritone", st: 6, color: "#14b8a6", ref: "Black Sabbath" },
   { name: "P5", label: "Perfect 5th", st: 7, color: "#06b6d4", ref: "Star Wars" },
-  { name: "m6", label: "Minor 6th", st: 8, color: "#3b82f6", ref: "Go Down Moses" },
-  { name: "M6", label: "Major 6th", st: 9, color: "#6366f1", ref: "My Bonnie" },
-  { name: "m7", label: "Minor 7th", st: 10, color: "#8b5cf6", ref: "Somewhere (WSS)" },
+  { name: "m6", label: "Minor 6th", st: 8, color: "#3b82f6", ref: "Love Story" },
+  { name: "M6", label: "Major 6th", st: 9, color: "#6366f1", ref: "My Way (Sinatra)" },
+  { name: "m7", label: "Minor 7th", st: 10, color: "#8b5cf6", ref: "Star Trek Theme" },
   { name: "M7", label: "Major 7th", st: 11, color: "#a855f7", ref: "Superman Theme" },
-  { name: "P8", label: "Octave", st: 12, color: "#ec4899", ref: "Over the Rainbow" },
+  { name: "P8", label: "Octave", st: 12, color: "#ec4899", ref: "Starman (Bowie)" },
 ];
 const ALL_CHORDS = [
   { name: "Major", iv: [0,4,7], color: "#22c55e" },
@@ -885,6 +885,9 @@ export default function LearningCenterPage() {
   const [pianoRoot, setPianoRoot] = useState("C");
   const [pianoScale, setPianoScale] = useState<string | null>(null);
 
+  /* ── Playback root for replay consistency ── */
+  const [lastPlayRoot, setLastPlayRoot] = useState(60);
+
   /* ── Tools state ── */
   const [toolTab, setToolTab] = useState<ToolTab>("scales");
   const [root, setRoot] = useState("A");
@@ -968,14 +971,15 @@ export default function LearningCenterPage() {
     g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + delay + dur);
     o.start(c.currentTime + delay); o.stop(c.currentTime + delay + dur + 0.1);
   }
-  function playIv(st: number, dir: Direction) {
-    const r = 55 + Math.floor(Math.random() * 12);
+  function playIv(st: number, dir: Direction, forceRoot?: number) {
+    const r = forceRoot ?? 55 + Math.floor(Math.random() * 12);
+    setLastPlayRoot(r);
     if (dir === "harmonic") { tone(r); tone(r + st); }
     else if (dir === "descending") { tone(r + st, 0.6, 0); tone(r, 0.6, 0.7); }
     else { tone(r, 0.6, 0); tone(r + st, 0.6, 0.7); }
   }
-  function playChordAudio(iv: number[]) { const r = 55 + Math.floor(Math.random() * 12); iv.forEach(s => tone(r + s, 1.2)); }
-  function playScaleNotes(ns: number[]) { const r = 55 + Math.floor(Math.random() * 12); ns.forEach((n, i) => tone(r + n, 0.35, i * 0.2)); }
+  function playChordAudio(iv: number[], forceRoot?: number) { const r = forceRoot ?? 55 + Math.floor(Math.random() * 12); setLastPlayRoot(r); iv.forEach(s => tone(r + s, 1.2)); }
+  function playScaleNotes(ns: number[], forceRoot?: number) { const r = forceRoot ?? 55 + Math.floor(Math.random() * 12); setLastPlayRoot(r); ns.forEach((n, i) => tone(r + n, 0.35, i * 0.2)); }
   function playProg(chords: number[][]) { chords.forEach((ch, i) => { const r = 48; ch.forEach(n => tone(r + n, 0.8, i * 1.0)); }); }
   function playNote(midi: number, delay = 0) {
     const c = ctx(), o = c.createOscillator(), g = c.createGain();
@@ -1207,9 +1211,9 @@ export default function LearningCenterPage() {
 
   function replay() {
     if (!answer) return;
-    if (exMode === "intervals") { const it = ALL_INTERVALS.find(i => i.name === answer); if (it) playIv(it.st, direction); }
-    else if (exMode === "chords") { const it = ALL_CHORDS.find(c => c.name === answer); if (it) playChordAudio(it.iv); }
-    else if (exMode === "scales") { const it = ALL_SCALES.find(s => s.name === answer); if (it) playScaleNotes(it.notes); }
+    if (exMode === "intervals") { const it = ALL_INTERVALS.find(i => i.name === answer); if (it) playIv(it.st, direction, lastPlayRoot); }
+    else if (exMode === "chords") { const it = ALL_CHORDS.find(c => c.name === answer); if (it) playChordAudio(it.iv, lastPlayRoot); }
+    else if (exMode === "scales") { const it = ALL_SCALES.find(s => s.name === answer); if (it) playScaleNotes(it.notes, lastPlayRoot); }
     else if (exMode === "fretboard") { const i = NOTES.indexOf(answer); if (i >= 0) tone(60 + i); }
     else if (exMode === "progressions") { const p = PROG_QUESTIONS.find(q => q.name === answer); if (p) playProg(p.chords); }
     else if (exMode === "fb-intervals" && fbExDots.length >= 2) { tone(fbExDots[0], 0.5, 0); tone(fbExDots[1], 0.5, 0.6); }
@@ -1767,6 +1771,29 @@ export default function LearningCenterPage() {
             ) : (
               <div className="text-center font-label text-[11px] text-[#D4A843] py-3">Lesson completed ✓</div>
             )}
+
+            {/* Next Lesson button */}
+            {(() => {
+              const currentIdx = LESSONS.findIndex(l => l.id === activeLessonObj.id);
+              const nextLesson = currentIdx >= 0 && currentIdx < LESSONS.length - 1 ? LESSONS[currentIdx + 1] : null;
+              if (!nextLesson) return null;
+              return (
+                <button onClick={() => { setOpenLesson(nextLesson.id); setQuizPicked(null); setCurrentStep(0); setLessonCat(nextLesson.cat); }}
+                  className="mt-3 w-full flex items-center justify-between p-3 rounded-lg border border-[#222] hover:border-[#D4A843]/40 bg-[#111] hover:bg-[#141414] cursor-pointer transition-all group">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-sm"
+                      style={{ background: (CAT_COLORS[nextLesson.cat] || "#D4A843") + "15", color: CAT_COLORS[nextLesson.cat] || "#D4A843" }}>
+                      {LESSON_META[nextLesson.id]?.icon || "?"}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-label text-[10px] text-[#555]">Next Lesson</div>
+                      <div className="font-heading text-[13px] text-[#ccc] truncate group-hover:text-[#eee] transition-colors">{nextLesson.title}</div>
+                    </div>
+                  </div>
+                  <span className="text-[#555] group-hover:text-[#D4A843] transition-colors text-sm flex-shrink-0 ml-2">&rarr;</span>
+                </button>
+              );
+            })()}
           </div>
         )}
       </>)}
@@ -2203,6 +2230,9 @@ export default function LearningCenterPage() {
                             </div>
 
                             <div className="panel p-6 mb-3">
+                              <div className="text-center mb-2">
+                                <div className="font-label text-[10px] text-[#555]">Find the note at the given interval</div>
+                              </div>
                               <div className="flex justify-center gap-3 mb-4">
                                 <button onClick={newQ} className="w-16 h-16 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95 flex items-center justify-center"
                                   style={{ background: "linear-gradient(145deg, #D4A843, #B8922E)", border: "2px solid #DFBD69", boxShadow: "0 4px 16px rgba(212,168,67,0.25)" }}>
@@ -2275,6 +2305,9 @@ export default function LearningCenterPage() {
                             </div>
 
                             <div className="panel p-6 mb-3">
+                              <div className="text-center mb-2">
+                                <div className="font-label text-[10px] text-[#555]">Select all notes of the chord</div>
+                              </div>
                               <div className="flex justify-center gap-3 mb-4">
                                 <button onClick={newQ} className="w-16 h-16 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95 flex items-center justify-center"
                                   style={{ background: "linear-gradient(145deg, #D4A843, #B8922E)", border: "2px solid #DFBD69", boxShadow: "0 4px 16px rgba(212,168,67,0.25)" }}>
@@ -2356,7 +2389,16 @@ export default function LearningCenterPage() {
                           </div>
 
                           <div className="panel p-6 mb-3">
-                            {/* Play / Replay */}
+                            <div className="text-center mb-2">
+                              <div className="font-label text-[10px] text-[#555]">
+                                {exMode === "kb-notes" ? "Identify the highlighted piano key" :
+                                 exMode === "kb-intervals" ? "Identify the interval on the keyboard" :
+                                 exMode === "kb-scales" ? "Identify the scale pattern on keys" :
+                                 exMode === "kb-chords" ? "Identify the chord shape on keys" :
+                                 "Click the key you hear"}
+                              </div>
+                            </div>
+                            {/* Play / Next */}
                             <div className="flex justify-center gap-3 mb-4">
                               <button onClick={newQ} className="w-16 h-16 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95 flex items-center justify-center"
                                 style={{ background: "linear-gradient(145deg, #D4A843, #B8922E)", border: "2px solid #DFBD69", boxShadow: "0 4px 16px rgba(212,168,67,0.25)" }}>
@@ -2534,6 +2576,14 @@ export default function LearningCenterPage() {
 
                           {/* Play area */}
                           <div className="panel p-6 mb-3">
+                            <div className="text-center mb-4">
+                              <div className="font-label text-[10px] text-[#555] mb-2">
+                                {exMode === "intervals" ? "Identify the interval you hear" :
+                                 exMode === "chords" ? "Identify the chord type you hear" :
+                                 exMode === "scales" ? "Identify the scale you hear" :
+                                 "Identify the chord progression you hear"}
+                              </div>
+                            </div>
                             <div className="flex justify-center gap-3 mb-6">
                               <button onClick={newQ} className="w-16 h-16 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95 flex items-center justify-center"
                                 style={{ background: "linear-gradient(145deg, #D4A843, #B8922E)", border: "2px solid #DFBD69", boxShadow: "0 4px 16px rgba(212,168,67,0.25)" }}>
@@ -3004,21 +3054,15 @@ export default function LearningCenterPage() {
           <div className="panel p-3 sm:p-5">
             <div className="font-label text-[11px] text-[#D4A843] mb-3">Intervals from {root} — click to hear</div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-              {[
-                { n: "m2", st: 1, f: "Tense" },{ n: "M2", st: 2, f: "Whole step" },
-                { n: "m3", st: 3, f: "Minor" },{ n: "M3", st: 4, f: "Major" },
-                { n: "P4", st: 5, f: "Open" },{ n: "TT", st: 6, f: "Devil's interval" },
-                { n: "P5", st: 7, f: "Power chord" },{ n: "m6", st: 8, f: "Bittersweet" },
-                { n: "M6", st: 9, f: "Sweet" },{ n: "m7", st: 10, f: "Bluesy" },
-                { n: "M7", st: 11, f: "Dreamy" },{ n: "P8", st: 12, f: "Octave" },
-              ].map(i => (
-                <div key={i.n} className="bg-[#121214] border border-[#1a1a1a] rounded-sm p-2.5 cursor-pointer hover:border-[#333] transition-all"
+              {ALL_INTERVALS.map(i => (
+                <div key={i.name} className="bg-[#121214] border border-[#1a1a1a] rounded-sm p-2.5 cursor-pointer hover:border-[#333] transition-all"
                   onClick={() => { playNote(57 + ri); playNote(57 + ri + i.st, 0.5); }}>
                   <div className="flex justify-between items-center">
-                    <span className="font-readout font-bold text-[#D4A843]">{i.n}</span>
+                    <span className="font-readout font-bold" style={{ color: i.color }}>{i.name}</span>
                     <span className="font-readout text-[10px] text-[#888]">{root} → {NOTES[(ri + i.st) % 12]}</span>
                   </div>
-                  <div className="text-[9px] text-[#444] italic">{i.f}</div>
+                  <div className="text-[9px] text-[#555]">{i.label}</div>
+                  <div className="text-[9px] text-[#444] italic mt-0.5">🎵 {i.ref}</div>
                 </div>
               ))}
             </div>
