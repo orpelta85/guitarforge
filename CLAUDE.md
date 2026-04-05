@@ -6,6 +6,7 @@ Next.js 16 + TypeScript + Tailwind CSS 4 + Supabase.
 
 ## Key Files
 - `SPEC.md` — Full implementation specification. READ THIS FIRST for any feature work.
+- `STATUS.md` — Current project status, updated at end of each session. READ THIS for context.
 - `src/lib/exercises.ts` — 67 exercises data (DO NOT lose any)
 - `src/lib/constants.ts` — All constants (days, categories, colors, modes, scales, styles)
 - `src/lib/types.ts` — TypeScript type definitions
