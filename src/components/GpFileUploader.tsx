@@ -429,7 +429,7 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
         s.player.enableAnimatedBeatCursor = true;
         s.player.enableElementHighlighting = true;
         s.player.enableUserInteraction = true;
-        s.player.soundFont = base + "/alphatab/soundfont/MuseScore_General.sf3";
+        s.player.soundFont = base + "/alphatab/soundfont/sonivox.sf2";
         s.player.scrollElement = mainRef.current;
         s.player.scrollOffsetY = -10;
         s.display.layoutMode = 0;
