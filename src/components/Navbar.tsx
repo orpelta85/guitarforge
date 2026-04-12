@@ -203,7 +203,7 @@ export default function Navbar({ view, onViewChange, onShowAuth, onOpenTuner, on
         {/* Logo + Profile (Suno-style top section) */}
         <div className="px-3 pt-3 pb-2">
           <div className="flex justify-center">
-            <Image src="/logo.png" alt="Guitar Practice" width={110} height={70} className="object-contain logo-blend" priority />
+            <Image src="/logo.png" alt="Guitar Practice" width={110} height={70} className="object-contain logo-blend" style={{ width: "auto", height: "auto" }} priority />
           </div>
         </div>
 
