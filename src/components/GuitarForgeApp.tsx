@@ -141,8 +141,10 @@ export default function GuitarForgeApp() {
     return VALID_VIEWS.has(v) ? v : null;
   };
   const [pendingTuner, setPendingTuner] = useState(false);
+  const [pendingSuno, setPendingSuno] = useState(false);
   const setView = (v: View) => { setViewRaw(v); setViewKey(k => k + 1); history.pushState(null, "", `#${v}`); };
   const openTuner = () => { setPendingTuner(true); setView("daily"); };
+  const openSuno = () => { setPendingSuno(true); setView("studio"); };
 
   // Apply stored edits to any song
   const applySongEdits = useCallback((s: SongEntry): SongEntry => {
@@ -723,9 +725,9 @@ export default function GuitarForgeApp() {
   return (
     <ErrorBoundary>
     <div className="flex h-screen text-white" style={{ background: "#121214" }} dir="ltr">
-      <Navbar view={view} onViewChange={setView} onShowAuth={() => setShowAuthPage(true)} onOpenTuner={openTuner} lastSynced={lastSynced} syncing={syncing} />
+      <Navbar view={view} onViewChange={setView} onShowAuth={() => setShowAuthPage(true)} onOpenTuner={openTuner} onOpenSuno={openSuno} lastSynced={lastSynced} syncing={syncing} />
       <div id="main-content" className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden">
-      {view === "studio" && <StudioPage channelScale={scale} channelMode={mode} channelStyle={style} />}
+      {view === "studio" && <StudioPage channelScale={scale} channelMode={mode} channelStyle={style} pendingSuno={pendingSuno} setPendingSuno={setPendingSuno} />}
       {view === "jam" && <JamModePage />}
       <div key={viewKey} className="view-transition px-2 sm:px-5 py-3 sm:py-5 pb-16 md:pb-5 max-w-[960px] lg:max-w-[1100px] xl:max-w-[1280px] mx-auto w-full">
 

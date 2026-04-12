@@ -52,6 +52,19 @@ function Stepper({
   const inc = () => onChange(Math.min(max, value + step));
   const opacity = disabled ? "opacity-30 pointer-events-none" : "";
 
+  // Local draft lets the user type freely (including partial values like "1" en route to "150")
+  // without being clamped on every keystroke. Commits on blur or Enter.
+  const [draft, setDraft] = useState<string>(String(value));
+  useEffect(() => { setDraft(String(value)); }, [value]);
+
+  const commit = () => {
+    const v = parseInt(draft, 10);
+    if (isNaN(v)) { setDraft(String(value)); return; }
+    const clamped = Math.max(min, Math.min(max, v));
+    setDraft(String(clamped));
+    if (clamped !== value) onChange(clamped);
+  };
+
   return (
     <div className={`flex flex-col items-center gap-1 ${opacity}`}>
       <span className="font-label text-[9px] text-[#555] uppercase tracking-wider">
@@ -66,17 +79,22 @@ function Stepper({
         >
           -
         </button>
-        <div
-          className="h-8 min-w-[36px] flex items-center justify-center bg-[#0d0d0d] px-1.5 border-x border-[#2a2a2a]"
-        >
-          <span
-            className={`text-xs font-mono font-semibold ${
-              amber ? "text-[#D4A843]" : "text-[#ccc]"
-            }`}
-          >
-            {value}
-          </span>
-        </div>
+        <input
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          value={draft}
+          disabled={disabled}
+          onChange={(e) => setDraft(e.target.value.replace(/[^0-9]/g, ""))}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") { e.currentTarget.blur(); }
+            else if (e.key === "Escape") { setDraft(String(value)); e.currentTarget.blur(); }
+          }}
+          className={`h-8 w-[48px] text-center bg-[#0d0d0d] px-1 border-x border-[#2a2a2a] text-xs font-mono font-semibold outline-none focus:ring-1 focus:ring-[#D4A843] ${
+            amber ? "text-[#D4A843]" : "text-[#ccc]"
+          }`}
+        />
         <button
           type="button"
           onClick={inc}

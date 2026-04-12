@@ -11,6 +11,7 @@ interface NavbarProps {
   onViewChange: (view: View) => void;
   onShowAuth?: () => void;
   onOpenTuner?: () => void;
+  onOpenSuno?: () => void;
   lastSynced?: Date | null;
   syncing?: boolean;
 }
@@ -174,14 +175,14 @@ const MORE_DRAWER_ITEMS: NavItem[] = [
   { id: "suno", label: "Suno AI", icon: IconSuno },
 ];
 
-export default function Navbar({ view, onViewChange, onShowAuth, onOpenTuner, lastSynced, syncing }: NavbarProps) {
+export default function Navbar({ view, onViewChange, onShowAuth, onOpenTuner, onOpenSuno, lastSynced, syncing }: NavbarProps) {
   const [moreOpen, setMoreOpen] = useState(false);
   const { user, logout } = useAuth();
 
   const handleNav = (id: View | "suno" | "tuner") => {
     if (id === "suno") {
-      // Navigate to studio and trigger suno panel
-      onViewChange("studio");
+      // Navigate to studio and open the Suno panel
+      onOpenSuno?.();
     } else if (id === "tuner") {
       // Navigate to practice page — onOpenTuner callback opens the tuner panel
       onOpenTuner?.();

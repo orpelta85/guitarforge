@@ -359,9 +359,11 @@ interface StudioPageProps {
   channelScale?: string;
   channelMode?: string;
   channelStyle?: string;
+  pendingSuno?: boolean;
+  setPendingSuno?: (v: boolean) => void;
 }
 
-export default function StudioPage({ channelScale, channelMode, channelStyle }: StudioPageProps = {}) {
+export default function StudioPage({ channelScale, channelMode, channelStyle, pendingSuno, setPendingSuno }: StudioPageProps = {}) {
   // ── State ──
   const [tracks, setTracks] = useState<StudioTrack[]>([]);
   const [isRec, setIsRec] = useState(false);
@@ -1254,6 +1256,15 @@ export default function StudioPage({ channelScale, channelMode, channelStyle }: 
   // ── Bottom dock panel state ──
   const [dockPanel, setDockPanel] = useState<"drums" | "looper" | "suno" | "mixer" | "recordings" | null>(null);
   const activeDrumTrack = useMemo(() => tracks.find(t => t.type === "drum" && t.id === expandedDrumTrackId), [tracks, expandedDrumTrackId]);
+
+  // Open Suno panel when navigated from the navbar "Suno AI" button
+  useEffect(() => {
+    if (pendingSuno) {
+      setDockPanel("suno");
+      setShowSunoPanel(true);
+      setPendingSuno?.(false);
+    }
+  }, [pendingSuno, setPendingSuno]);
 
   // Auto-open drum dock when a drum track grid is toggled
   const handleDrumGridToggle = useCallback((trackId: number) => {
