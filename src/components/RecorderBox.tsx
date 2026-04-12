@@ -120,6 +120,7 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
   const mixSourcesRef = useRef<AudioBufferSourceNode[]>([]);
   const playStartTimeRef = useRef(0);
   const playTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const playRafRef = useRef<number>(0);
 
   function renameRecording(idx: number, newName: string) {
     setSavedList(prev => {
@@ -170,7 +171,7 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
     const ctx = mixCtxRef.current;
     if (g && ctx) {
       g.gain.cancelScheduledValues(ctx.currentTime);
-      g.gain.setTargetAtTime(mixMicVol / 100, ctx.currentTime, 0.015);
+      g.gain.setTargetAtTime(mixMicVol / 100, ctx.currentTime, 0.05);
     }
   }, [mixMicVol]);
   useEffect(() => {
@@ -178,7 +179,7 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
     const ctx = mixCtxRef.current;
     if (g && ctx) {
       g.gain.cancelScheduledValues(ctx.currentTime);
-      g.gain.setTargetAtTime(mixBrowserVol / 100, ctx.currentTime, 0.015);
+      g.gain.setTargetAtTime(mixBrowserVol / 100, ctx.currentTime, 0.05);
     }
   }, [mixBrowserVol]);
 
@@ -242,6 +243,7 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
     }
     mixCtxRef.current = null;
     if (playTimerRef.current) { clearInterval(playTimerRef.current); playTimerRef.current = null; }
+    if (playRafRef.current) { cancelAnimationFrame(playRafRef.current); playRafRef.current = 0; }
     playOffsetRef.current = 0;
     setIsPlaying(false);
     setPlayTime(0);
@@ -294,38 +296,40 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
     const remaining = maxDur - clampedOffset;
     const longerSrc = micBuf.duration >= browserBuf.duration ? micSrc : browserSrc;
     longerSrc.onended = () => {
+      mixSourcesRef.current.forEach(s => { try { s.stop(); s.disconnect(); } catch { /* ok */ } });
       mixSourcesRef.current = [];
       if (playTimerRef.current) { clearInterval(playTimerRef.current); playTimerRef.current = null; }
+      if (playRafRef.current) { cancelAnimationFrame(playRafRef.current); playRafRef.current = 0; }
       setIsPlaying(false);
       setPlayTime(maxDur);
       playOffsetRef.current = maxDur;
     };
 
-    // Start each source at the clamped offset, but only if offset < that buffer's duration
     micSrc.start(0, Math.min(clampedOffset, micBuf.duration));
     browserSrc.start(0, Math.min(clampedOffset, browserBuf.duration));
 
-    // If offset is past a buffer's duration, stop it immediately so it doesn't replay from 0
     if (clampedOffset >= micBuf.duration) { try { micSrc.stop(); } catch { /* ok */ } }
     if (clampedOffset >= browserBuf.duration) { try { browserSrc.stop(); } catch { /* ok */ } }
 
     setIsPlaying(true);
     setPlayTime(clampedOffset);
-    if (playTimerRef.current) clearInterval(playTimerRef.current);
-    playTimerRef.current = setInterval(() => {
-      if (mixCtxRef.current) {
-        const elapsed = mixCtxRef.current.currentTime - playStartTimeRef.current;
-        const t = playOffsetRef.current + elapsed;
-        setPlayTime(Math.min(t, maxDur));
-      }
-    }, 75);
+    if (playTimerRef.current) { clearInterval(playTimerRef.current); playTimerRef.current = null; }
+    if (playRafRef.current) cancelAnimationFrame(playRafRef.current);
+    const tick = () => {
+      if (!mixCtxRef.current || mixSourcesRef.current.length === 0) return;
+      const elapsed = mixCtxRef.current.currentTime - playStartTimeRef.current;
+      const t = playOffsetRef.current + elapsed;
+      setPlayTime(Math.min(t, maxDur));
+      playRafRef.current = requestAnimationFrame(tick);
+    };
+    playRafRef.current = requestAnimationFrame(tick);
 
-    // Safety timeout to stop if onended doesn't fire
     setTimeout(() => {
       if (mixSourcesRef.current.includes(micSrc) || mixSourcesRef.current.includes(browserSrc)) {
-        mixSourcesRef.current.forEach(s => { try { s.stop(); } catch { /* ok */ } });
+        mixSourcesRef.current.forEach(s => { try { s.stop(); s.disconnect(); } catch { /* ok */ } });
         mixSourcesRef.current = [];
         if (playTimerRef.current) { clearInterval(playTimerRef.current); playTimerRef.current = null; }
+        if (playRafRef.current) { cancelAnimationFrame(playRafRef.current); playRafRef.current = 0; }
         setIsPlaying(false);
         setPlayTime(maxDur);
         playOffsetRef.current = maxDur;
@@ -337,9 +341,10 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
     if (!mixCtxRef.current) return;
     const elapsed = mixCtxRef.current.currentTime - playStartTimeRef.current;
     const currentPos = playOffsetRef.current + elapsed;
-    mixSourcesRef.current.forEach(s => { try { s.stop(); } catch { /* ok */ } });
+    mixSourcesRef.current.forEach(s => { try { s.stop(); s.disconnect(); } catch { /* ok */ } });
     mixSourcesRef.current = [];
     if (playTimerRef.current) { clearInterval(playTimerRef.current); playTimerRef.current = null; }
+    if (playRafRef.current) { cancelAnimationFrame(playRafRef.current); playRafRef.current = 0; }
     playOffsetRef.current = currentPos;
     setPlayTime(currentPos);
     setIsPlaying(false);
@@ -657,6 +662,7 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
 
   // ── Mode toggle (shared between compact and full) ──
   const modeToggle = !isRec && !isMixing && (
+    <div className="flex items-center gap-2">
     <button type="button" onClick={() => setMode(m => m === "guitar-only" ? "dual" : "guitar-only")}
       className={`flex items-center gap-1 px-2 py-1 rounded text-[9px] font-medium cursor-pointer border transition-all ${
         mode === "dual" ? "bg-[#C41E3A]/15 text-[#C41E3A] border-[#C41E3A]/30" : "border-[#333] text-[#555] hover:text-[#888] hover:border-[#555]"
@@ -669,6 +675,10 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
       )}
       {mode === "dual" ? "Guitar + Browser" : "Guitar"}
     </button>
+    {mode === "dual" && (
+      <span className="font-label text-[9px] text-[#f59e0b]">Wear headphones to avoid mic bleed</span>
+    )}
+    </div>
   );
 
   // ── Mixer UI (shared between compact and full) ──

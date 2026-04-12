@@ -101,8 +101,8 @@ export async function decodeBlobToBuffer(blob: Blob): Promise<AudioBuffer> {
   });
 }
 
-/** Peak-normalize an AudioBuffer in-place — only boosts quiet signals, never amplifies above target */
-function normalizeBuffer(buffer: AudioBuffer, targetLinear = 0.90): void {
+/** Safety-only peak check — scales DOWN if the buffer exceeds 0.99, never boosts. */
+function peakSafety(buffer: AudioBuffer, ceiling = 0.99): void {
   const numChannels = buffer.numberOfChannels;
   const length = buffer.length;
   let peak = 0;
@@ -113,16 +113,11 @@ function normalizeBuffer(buffer: AudioBuffer, targetLinear = 0.90): void {
       if (abs > peak) peak = abs;
     }
   }
-  // Only normalize UP if the signal is quiet (peak < target).
-  // Never boost a signal that is already near or above target — this avoids
-  // amplifying compression artifacts and pushing hot signals into clipping.
-  if (peak > 0.001 && peak < targetLinear) {
-    const gain = targetLinear / peak;
+  if (peak > ceiling) {
+    const gain = ceiling / peak;
     for (let ch = 0; ch < numChannels; ch++) {
       const data = buffer.getChannelData(ch);
-      for (let i = 0; i < length; i++) {
-        data[i] *= gain;
-      }
+      for (let i = 0; i < length; i++) data[i] *= gain;
     }
   }
 }
@@ -201,38 +196,58 @@ export async function mixAudioBlobs(
   const channels = Math.max(micBuf.numberOfChannels, browserBuf.numberOfChannels);
   const offline = new OfflineAudioContext(channels, length, sampleRate);
 
-  // True brick-wall limiter — completely transparent below -3dBFS,
-  // only catches intersample peaks when both sources combine.
-  // Previous settings (threshold: -1, ratio: 2, knee: 10) were compressing
-  // almost everything, squashing dynamics and causing harshness.
-  const limiter = offline.createDynamicsCompressor();
-  limiter.threshold.value = -3;    // only engage on combined peaks above -3dBFS
-  limiter.knee.value = 0;          // hard knee — either limiting or not
-  limiter.ratio.value = 20;        // 20:1 = brick wall, not gentle compression
-  limiter.attack.value = 0.001;    // 1ms — catch transients fast
-  limiter.release.value = 0.05;    // 50ms — release quickly to avoid pumping
-  limiter.connect(offline.destination);
+  // Final brick-wall limiter on the sum only.
+  // Per-stream soft compressors feed into this so dynamics of each source are
+  // preserved independently — no more shared ducking when both play together.
+  const finalLimiter = offline.createDynamicsCompressor();
+  finalLimiter.threshold.value = -0.3;
+  finalLimiter.knee.value = 0;
+  finalLimiter.ratio.value = 20;
+  finalLimiter.attack.value = 0.0005;
+  finalLimiter.release.value = 0.03;
+  finalLimiter.connect(offline.destination);
 
+  // Mic chain: highpass (80Hz) → gain → per-stream soft compressor → sum
   const micSrc = offline.createBufferSource();
   micSrc.buffer = micBuf;
+  const micHP = offline.createBiquadFilter();
+  micHP.type = "highpass";
+  micHP.frequency.value = 80;
+  micHP.Q.value = 0.7;
   const micGain = offline.createGain();
   micGain.gain.value = micLevel;
-  micSrc.connect(micGain);
-  micGain.connect(limiter);
+  const micComp = offline.createDynamicsCompressor();
+  micComp.threshold.value = -12;
+  micComp.knee.value = 6;
+  micComp.ratio.value = 3;
+  micComp.attack.value = 0.015;
+  micComp.release.value = 0.15;
+  micSrc.connect(micHP);
+  micHP.connect(micGain);
+  micGain.connect(micComp);
+  micComp.connect(finalLimiter);
   micSrc.start(0);
 
+  // Browser chain: gain → per-stream soft compressor → sum (no HP, preserves bass)
   const browserSrc = offline.createBufferSource();
   browserSrc.buffer = browserBuf;
   const browserGain = offline.createGain();
   browserGain.gain.value = browserLevel;
+  const browserComp = offline.createDynamicsCompressor();
+  browserComp.threshold.value = -12;
+  browserComp.knee.value = 6;
+  browserComp.ratio.value = 3;
+  browserComp.attack.value = 0.015;
+  browserComp.release.value = 0.15;
   browserSrc.connect(browserGain);
-  browserGain.connect(limiter);
+  browserGain.connect(browserComp);
+  browserComp.connect(finalLimiter);
   browserSrc.start(0);
 
   const rendered = await offline.startRendering();
-  // Only boost if the signal is quiet; never push a hot signal higher
-  normalizeBuffer(rendered, 0.90);
-  // Soft-clip before 16-bit conversion to avoid harsh digital clipping
+  // Safety only — scale down if the limiter let anything slip above 0.99. Never boost.
+  peakSafety(rendered, 0.99);
+  // Soft-clip before 16-bit conversion as final safety net
   softClipBuffer(rendered);
   const wavData = audioBufferToWav(rendered);
   return new Blob([wavData], { type: "audio/wav" });

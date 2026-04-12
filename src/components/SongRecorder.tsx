@@ -79,6 +79,7 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
   const mixSourcesRef = useRef<AudioBufferSourceNode[]>([]);
   const playStartTimeRef = useRef(0);
   const playTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const playRafRef = useRef<number>(0);
 
   // Load saved recordings
   useEffect(() => {
@@ -117,7 +118,7 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
     const ctx = mixCtxRef.current;
     if (g && ctx) {
       g.gain.cancelScheduledValues(ctx.currentTime);
-      g.gain.setTargetAtTime(mixMicVol / 100, ctx.currentTime, 0.015);
+      g.gain.setTargetAtTime(mixMicVol / 100, ctx.currentTime, 0.05);
     }
   }, [mixMicVol]);
   useEffect(() => {
@@ -125,7 +126,7 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
     const ctx = mixCtxRef.current;
     if (g && ctx) {
       g.gain.cancelScheduledValues(ctx.currentTime);
-      g.gain.setTargetAtTime(mixBrowserVol / 100, ctx.currentTime, 0.015);
+      g.gain.setTargetAtTime(mixBrowserVol / 100, ctx.currentTime, 0.05);
     }
   }, [mixBrowserVol]);
 
@@ -178,6 +179,7 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
     }
     mixCtxRef.current = null;
     if (playTimerRef.current) { clearInterval(playTimerRef.current); playTimerRef.current = null; }
+    if (playRafRef.current) { cancelAnimationFrame(playRafRef.current); playRafRef.current = 0; }
     playOffsetRef.current = 0;
     setIsPlaying(false);
     setPlayTime(0);
@@ -230,8 +232,10 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
     const remaining = maxDur - clampedOffset;
     const longerSrc = micBuf.duration >= browserBuf.duration ? micSrc : browserSrc;
     longerSrc.onended = () => {
+      mixSourcesRef.current.forEach(s => { try { s.stop(); s.disconnect(); } catch { /* ok */ } });
       mixSourcesRef.current = [];
       if (playTimerRef.current) { clearInterval(playTimerRef.current); playTimerRef.current = null; }
+      if (playRafRef.current) { cancelAnimationFrame(playRafRef.current); playRafRef.current = 0; }
       setIsPlaying(false);
       setPlayTime(maxDur);
       playOffsetRef.current = maxDur;
@@ -245,20 +249,23 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
 
     setIsPlaying(true);
     setPlayTime(clampedOffset);
-    if (playTimerRef.current) clearInterval(playTimerRef.current);
-    playTimerRef.current = setInterval(() => {
-      if (mixCtxRef.current) {
-        const elapsed = mixCtxRef.current.currentTime - playStartTimeRef.current;
-        const t = playOffsetRef.current + elapsed;
-        setPlayTime(Math.min(t, maxDur));
-      }
-    }, 75);
+    if (playTimerRef.current) { clearInterval(playTimerRef.current); playTimerRef.current = null; }
+    if (playRafRef.current) cancelAnimationFrame(playRafRef.current);
+    const tick = () => {
+      if (!mixCtxRef.current || mixSourcesRef.current.length === 0) return;
+      const elapsed = mixCtxRef.current.currentTime - playStartTimeRef.current;
+      const t = playOffsetRef.current + elapsed;
+      setPlayTime(Math.min(t, maxDur));
+      playRafRef.current = requestAnimationFrame(tick);
+    };
+    playRafRef.current = requestAnimationFrame(tick);
 
     setTimeout(() => {
       if (mixSourcesRef.current.includes(micSrc) || mixSourcesRef.current.includes(browserSrc)) {
-        mixSourcesRef.current.forEach(s => { try { s.stop(); } catch { /* ok */ } });
+        mixSourcesRef.current.forEach(s => { try { s.stop(); s.disconnect(); } catch { /* ok */ } });
         mixSourcesRef.current = [];
         if (playTimerRef.current) { clearInterval(playTimerRef.current); playTimerRef.current = null; }
+        if (playRafRef.current) { cancelAnimationFrame(playRafRef.current); playRafRef.current = 0; }
         setIsPlaying(false);
         setPlayTime(maxDur);
         playOffsetRef.current = maxDur;
@@ -270,9 +277,10 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
     if (!mixCtxRef.current) return;
     const elapsed = mixCtxRef.current.currentTime - playStartTimeRef.current;
     const currentPos = playOffsetRef.current + elapsed;
-    mixSourcesRef.current.forEach(s => { try { s.stop(); } catch { /* ok */ } });
+    mixSourcesRef.current.forEach(s => { try { s.stop(); s.disconnect(); } catch { /* ok */ } });
     mixSourcesRef.current = [];
     if (playTimerRef.current) { clearInterval(playTimerRef.current); playTimerRef.current = null; }
+    if (playRafRef.current) { cancelAnimationFrame(playRafRef.current); playRafRef.current = 0; }
     playOffsetRef.current = currentPos;
     setPlayTime(currentPos);
     setIsPlaying(false);
@@ -669,6 +677,7 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
           </svg>
           <span className="font-label text-[10px] text-[#C41E3A]/80">
             Guitar and browser audio are recorded as separate tracks. After recording you can mix the volumes in real-time before saving.
+            <span className="block mt-1 text-[#f59e0b]">Wear headphones to avoid mic bleed.</span>
           </span>
         </div>
       )}
