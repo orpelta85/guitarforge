@@ -4,6 +4,7 @@ import { SCALES, MODES, STYLES } from "@/lib/constants";
 import { buildStyle, saveToLibrary as saveSunoToLibrary, getAllLibraryTracks, deleteFromLibrary, updateLibraryTrack, getLibraryStats, getDailyUsage, recordUsage } from "@/lib/suno";
 import type { LibraryTrack } from "@/lib/suno";
 import LooperBox from "./LooperBox";
+import { ensureYT, parseYouTubeId, type YTPlayerInstance } from "@/lib/youtubeApi";
 
 // ── Types ──
 interface StudioTrack {
@@ -14,8 +15,11 @@ interface StudioTrack {
   audioUrl: string | null;
   volume: number;
   muted: boolean;
-  type: "recording" | "import" | "suno" | "drum";
+  type: "recording" | "import" | "suno" | "drum" | "youtube";
   drumPattern?: boolean[][];
+  videoId?: string;
+  videoTitle?: string;
+  videoThumbnail?: string;
 }
 
 type ToneModule = typeof import("tone");
@@ -443,6 +447,14 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
   const drumCurrentStepRef = useRef(0);
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
 
+  // ── YouTube ──
+  const ytPlayersRef = useRef<Record<number, YTPlayerInstance>>({});
+  const ytContainersRef = useRef<Record<number, HTMLDivElement | null>>({});
+  const [showYouTubeModal, setShowYouTubeModal] = useState(false);
+  const [ytInput, setYtInput] = useState("");
+  const [ytParsedId, setYtParsedId] = useState<string | null>(null);
+  const [ytAdding, setYtAdding] = useState(false);
+
   // ── Tone.js initialization ──
   const ensureTone = useCallback(async () => {
     if (toneRef.current) return toneRef.current;
@@ -591,6 +603,71 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
     setExpandedDrumTrackId(id);
     setDockPanel("drums");
     setShowAddTrackMenu(false);
+  }, []);
+
+  // ── Add YouTube track ──
+  const addYouTubeTrack = useCallback(async (videoId: string, title?: string, thumbnail?: string) => {
+    ctr.current++;
+    const id = Date.now() + ctr.current;
+    const color = TRACK_COLORS[(id - 1) % TRACK_COLORS.length];
+    const newTrack: StudioTrack = {
+      id,
+      name: title || `YouTube ${videoId}`,
+      color,
+      audioBlob: null,
+      audioUrl: null,
+      volume: 100,
+      muted: false,
+      type: "youtube",
+      videoId,
+      videoTitle: title,
+      videoThumbnail: thumbnail || `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+    };
+    setTracks((p) => [...p, newTrack]);
+
+    // Fetch title/thumbnail if not provided
+    if (!title) {
+      try {
+        const res = await fetch(`/api/youtube?videoId=${encodeURIComponent(videoId)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.title) {
+            setTracks((prev) => prev.map((t) => t.id === id ? { ...t, name: data.title, videoTitle: data.title, videoThumbnail: data.thumbnail || t.videoThumbnail } : t));
+          }
+        }
+      } catch { /* ignore */ }
+    }
+
+    // Initialize YT player after mount
+    setTimeout(async () => {
+      if (!mountedRef.current) return;
+      try {
+        await ensureYT();
+        const container = ytContainersRef.current[id];
+        if (!container || !window.YT?.Player) return;
+        const player = new window.YT.Player(container, {
+          height: "100%",
+          width: "100%",
+          videoId,
+          playerVars: { controls: 0, disablekb: 1, modestbranding: 1, rel: 0, playsinline: 1 },
+          events: {
+            onReady: (e: { target: YTPlayerInstance }) => {
+              try {
+                e.target.setVolume(100);
+                setTracks((prev) => {
+                  const tr = prev.find((t) => t.id === id);
+                  const dur = e.target.getDuration();
+                  if (dur > 0) setDuration((d) => Math.max(d, dur));
+                  if (tr) e.target.setVolume(tr.muted ? 0 : tr.volume);
+                  return prev;
+                });
+              } catch { /* ignore */ }
+            },
+          },
+        });
+        ytPlayersRef.current[id] = player;
+      } catch { /* ignore */ }
+    }, 100);
   }, []);
 
   // ── Drum pattern toggle ──
@@ -800,6 +877,18 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
       }
     });
 
+    // Start YouTube tracks in sync
+    tracks.forEach((t) => {
+      if (t.type !== "youtube") return;
+      const yp = ytPlayersRef.current[t.id];
+      if (!yp) return;
+      try {
+        yp.seekTo(startOffset, true);
+        yp.setVolume(t.muted ? 0 : t.volume);
+        yp.playVideo();
+      } catch { /* ignore */ }
+    });
+
     if (metronomeOn) {
       Tone.getTransport().bpm.value = bpm;
       Tone.getTransport().start();
@@ -864,6 +953,9 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
     Object.values(toneNodesRef.current).forEach((nodes) => {
       try { nodes.player.stop(); } catch { /* ok */ }
     });
+    Object.values(ytPlayersRef.current).forEach((yp) => {
+      try { yp.pauseVideo(); } catch { /* ok */ }
+    });
     if (toneRef.current) {
       toneRef.current.getTransport().stop();
       toneRef.current.getTransport().position = 0;
@@ -884,6 +976,9 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
     Object.values(wsRef.current).forEach((ws) => {
       try { ws.setTime(0); } catch { /* skip */ }
     });
+    Object.values(ytPlayersRef.current).forEach((yp) => {
+      try { yp.seekTo(0, true); if (!playing) yp.pauseVideo(); } catch { /* ok */ }
+    });
     if (playing) {
       Object.values(toneNodesRef.current).forEach((nodes) => {
         try { nodes.player.stop(); nodes.player.start(undefined, 0); } catch { /* ok */ }
@@ -900,6 +995,10 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
       // Tone.js rampTo provides smooth value change without clicks
       nodes.gain.gain.rampTo(vol / 100, 0.02);
     }
+    const yp = ytPlayersRef.current[id];
+    if (yp) {
+      try { yp.setVolume(vol); } catch { /* ok */ }
+    }
   }, []);
 
   const toggleMute = useCallback((id: number) => {
@@ -908,6 +1007,10 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
       next.forEach((t) => {
         const nodes = toneNodesRef.current[t.id];
         if (nodes) nodes.gain.gain.rampTo(t.muted ? 0 : t.volume / 100, 0.02);
+        const yp = ytPlayersRef.current[t.id];
+        if (yp) {
+          try { yp.setVolume(t.muted ? 0 : t.volume); } catch { /* ok */ }
+        }
       });
       return next;
     });
@@ -924,6 +1027,12 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
       delete toneNodesRef.current[id];
     }
     delete trackContainersRef.current[id];
+    const yp = ytPlayersRef.current[id];
+    if (yp) {
+      try { yp.destroy(); } catch { /* ok */ }
+      delete ytPlayersRef.current[id];
+    }
+    delete ytContainersRef.current[id];
     setTracks((prev) => {
       const track = prev.find((t) => t.id === id);
       if (track?.audioUrl) URL.revokeObjectURL(track.audioUrl);
@@ -1213,6 +1322,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
       if (timerRef.current) clearInterval(timerRef.current);
       if (animRef.current) cancelAnimationFrame(animRef.current);
       Object.values(wsRef.current).forEach((ws) => { try { ws.destroy(); } catch { /* ok */ } });
+      Object.values(ytPlayersRef.current).forEach((yp) => { try { yp.destroy(); } catch { /* ok */ } });
       Object.values(toneNodesRef.current).forEach((nodes) => {
         try { nodes.player.stop(); } catch { /* ok */ }
         try { nodes.player.dispose(); } catch { /* ok */ }
@@ -1444,7 +1554,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
                 <div className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: tr.color }} />
                   <span className="text-[9px] text-[#444] flex-shrink-0">
-                    {tr.type === "drum" ? "\uD83E\uDD41" : tr.type === "suno" ? "\uD83C\uDFB5" : tr.type === "recording" ? "\uD83C\uDF99" : "\uD83D\uDCC1"}
+                    {tr.type === "drum" ? "\uD83E\uDD41" : tr.type === "suno" ? "\uD83C\uDFB5" : tr.type === "recording" ? "\uD83C\uDF99" : tr.type === "youtube" ? "\uD83C\uDFAC" : "\uD83D\uDCC1"}
                   </span>
                   {editingTrackName === tr.id ? (
                     <input autoFocus defaultValue={tr.name}
@@ -1524,7 +1634,27 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
 
               {/* ─── Waveform / Pattern area (fills remaining width) ─── */}
               <div className="flex-1 min-w-0" style={{ background: "#0c0c0c" }}>
-                {tr.type !== "drum" ? (
+                {tr.type === "youtube" ? (
+                  <div className="h-[90px] flex items-center gap-3 px-3" style={{ opacity: tr.muted ? 0.3 : 1 }}>
+                    {/* Thumbnail */}
+                    {tr.videoThumbnail && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={tr.videoThumbnail} alt="" className="h-[72px] w-[128px] object-cover rounded flex-shrink-0" style={{ border: "1px solid #222" }} />
+                    )}
+                    {/* Hidden-ish iframe container (must be in DOM for YT API) */}
+                    <div
+                      ref={(el) => { if (el) ytContainersRef.current[tr.id] = el; }}
+                      className="flex-shrink-0"
+                      style={{ width: 140, height: 80, overflow: "hidden", borderRadius: 4, border: "1px solid #222" }}
+                    />
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[11px] text-[#ccc] font-medium truncate">{tr.videoTitle || tr.name}</div>
+                      <div className="text-[9px] text-[#666] truncate">youtube.com/watch?v={tr.videoId}</div>
+                      <div className="text-[8px] mt-1" style={{ color: "#D4A843" }}>Plays live only - not included in WAV export</div>
+                    </div>
+                  </div>
+                ) : tr.type !== "drum" ? (
                   <div ref={(el) => { if (el) trackContainersRef.current[tr.id] = el; }}
                     className="h-[90px]" style={{ opacity: tr.muted ? 0.3 : 1 }} />
                 ) : (
@@ -1643,6 +1773,11 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
                   className="w-full text-left text-[11px] text-[#ccc] hover:bg-[#222] px-4 py-2.5 cursor-pointer transition-colors flex items-center gap-3">
                   <span className="text-[14px]">{"\uD83C\uDFB5"}</span>
                   <div><div className="font-medium">AI Backing Track</div><div className="text-[9px] text-[#555]">Generate with Suno AI</div></div>
+                </button>
+                <button onClick={() => { setShowYouTubeModal(true); setShowAddTrackMenu(false); }}
+                  className="w-full text-left text-[11px] text-[#ccc] hover:bg-[#222] px-4 py-2.5 cursor-pointer transition-colors flex items-center gap-3">
+                  <span className="text-[14px]">{"\uD83C\uDFAC"}</span>
+                  <div><div className="font-medium">YouTube</div><div className="text-[9px] text-[#555]">Paste URL or video ID</div></div>
                 </button>
                 <button onClick={() => { setDockPanel("looper"); setShowLooper(true); setShowAddTrackMenu(false); }}
                   className="w-full text-left text-[11px] text-[#ccc] hover:bg-[#222] px-4 py-2.5 cursor-pointer transition-colors flex items-center gap-3">
@@ -2106,6 +2241,84 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
           </div>
         )}
       </div>
+
+      {/* ═══════════ YouTube Add Track Modal ═══════════ */}
+      {showYouTubeModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.75)" }}
+          onClick={() => { if (!ytAdding) { setShowYouTubeModal(false); setYtInput(""); setYtParsedId(null); } }}>
+          <div className="bg-[#111] rounded-xl w-full max-w-[480px] p-5 shadow-2xl"
+            style={{ border: "1px solid #2a2a2a" }}
+            onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-[18px]">{"\uD83C\uDFAC"}</span>
+              <h3 className="text-[14px] font-semibold text-[#ccc]">Add YouTube Track</h3>
+            </div>
+
+            <label className="text-[10px] text-[#888] block mb-1.5">Paste YouTube URL or video ID</label>
+            <input
+              type="text"
+              value={ytInput}
+              onChange={(e) => {
+                const v = e.target.value;
+                setYtInput(v);
+                setYtParsedId(parseYouTubeId(v));
+              }}
+              placeholder="https://youtube.com/watch?v=..."
+              autoFocus
+              className="w-full bg-[#0a0a0a] border rounded px-3 py-2 text-[12px] text-[#ccc] outline-none mb-3"
+              style={{ borderColor: ytInput && !ytParsedId ? "#ef4444" : "#2a2a2a" }}
+            />
+
+            {ytInput && !ytParsedId && (
+              <div className="text-[10px] text-[#ef4444] mb-3">Invalid YouTube URL or video ID</div>
+            )}
+
+            {ytParsedId && (
+              <div className="mb-4 p-2 rounded flex items-center gap-3" style={{ background: "#0a0a0a", border: "1px solid #222" }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={`https://img.youtube.com/vi/${ytParsedId}/hqdefault.jpg`} alt="preview"
+                  className="w-[120px] h-[68px] object-cover rounded" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-[11px] text-[#ccc] font-medium">Video ID: {ytParsedId}</div>
+                  <div className="text-[9px] text-[#666]">Title will load after adding</div>
+                </div>
+              </div>
+            )}
+
+            <div className="text-[9px] text-[#666] mb-4 leading-relaxed">
+              Note: YouTube tracks play live only - they are not included in the WAV export mix (YouTube blocks audio capture).
+            </div>
+
+            <div className="flex items-center justify-end gap-2">
+              <button
+                onClick={() => { setShowYouTubeModal(false); setYtInput(""); setYtParsedId(null); }}
+                disabled={ytAdding}
+                className="text-[11px] text-[#888] hover:text-[#ccc] px-3 py-1.5 cursor-pointer transition-colors disabled:opacity-50">
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!ytParsedId || ytAdding) return;
+                  setYtAdding(true);
+                  try {
+                    await addYouTubeTrack(ytParsedId);
+                    setShowYouTubeModal(false);
+                    setYtInput("");
+                    setYtParsedId(null);
+                  } finally {
+                    setYtAdding(false);
+                  }
+                }}
+                disabled={!ytParsedId || ytAdding}
+                className="text-[11px] font-medium px-4 py-1.5 rounded cursor-pointer transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ background: "#D4A843", color: "#111" }}>
+                {ytAdding ? "Adding..." : "Add to Session"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

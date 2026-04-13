@@ -4,18 +4,41 @@ import { NextRequest, NextResponse } from "next/server";
 // Returns first video ID by scraping YouTube search results (no API key needed)
 // If YOUTUBE_API_KEY is set, uses official API instead
 export async function GET(req: NextRequest) {
+  // oEmbed lookup by video ID — returns { title, author_name, thumbnail_url }
+  const videoId = req.nextUrl.searchParams.get("videoId");
+  if (videoId) {
+    try {
+      const res = await fetch(
+        `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}&format=json`,
+        { next: { revalidate: 86400 } }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        return NextResponse.json({
+          videoId,
+          title: data.title || "",
+          channel: data.author_name || "",
+          thumbnail: data.thumbnail_url || `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+        });
+      }
+      return NextResponse.json({ videoId, title: "", channel: "", thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` });
+    } catch {
+      return NextResponse.json({ videoId, title: "", channel: "", thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` });
+    }
+  }
+
   const q = req.nextUrl.searchParams.get("q");
-  if (!q) return NextResponse.json({ error: "Missing 'q'" }, { status: 400 });
+  if (!q) return NextResponse.json({ error: "Missing 'q' or 'videoId'" }, { status: 400 });
+  const pageToken = req.nextUrl.searchParams.get("pageToken") || "";
 
   const apiKey = process.env.YOUTUBE_API_KEY;
 
   // Method 1: Official API (if key exists)
   if (apiKey) {
     try {
-      const res = await fetch(
-        `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=5&q=${encodeURIComponent(q)}&key=${apiKey}`,
-        { next: { revalidate: 3600 } }
-      );
+      let url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=20&q=${encodeURIComponent(q)}&key=${apiKey}`;
+      if (pageToken) url += `&pageToken=${encodeURIComponent(pageToken)}`;
+      const res = await fetch(url, { next: { revalidate: 3600 } });
       if (res.ok) {
         const data = await res.json();
         const items = (data.items || []).map((item: Record<string, Record<string, unknown>>) => ({
@@ -25,7 +48,7 @@ export async function GET(req: NextRequest) {
           thumbnail: ((item.snippet as Record<string, Record<string, Record<string, string>>>)?.thumbnails?.medium?.url) || "",
         }));
         const results = items.map((i: { videoId: string }) => i.videoId).filter(Boolean);
-        return NextResponse.json({ items, results, fallback: false });
+        return NextResponse.json({ items, results, fallback: false, nextPageToken: data.nextPageToken || null });
       }
     } catch {}
   }
@@ -72,10 +95,10 @@ export async function GET(req: NextRequest) {
                     channel: v.ownerText?.runs?.[0]?.text || "",
                     thumbnail: v.thumbnail?.thumbnails?.pop()?.url || `https://img.youtube.com/vi/${v.videoId}/mqdefault.jpg`,
                   });
-                  if (items.length >= 5) break;
+                  if (items.length >= 20) break;
                 }
               }
-              if (items.length >= 5) break;
+              if (items.length >= 20) break;
             }
           }
         } catch { /* fall through to regex */ }
@@ -90,7 +113,7 @@ export async function GET(req: NextRequest) {
             seen.add(match[1]);
             items.push({ videoId: match[1], title: "", channel: "", thumbnail: `https://img.youtube.com/vi/${match[1]}/mqdefault.jpg` });
           }
-          if (items.length >= 5) break;
+          if (items.length >= 20) break;
         }
       }
 
