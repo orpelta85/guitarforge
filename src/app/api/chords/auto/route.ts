@@ -2,6 +2,40 @@ import { NextRequest, NextResponse } from "next/server";
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_MODELS = ["gemini-flash-latest", "gemini-2.5-flash", "gemini-2.5-flash-lite"];
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+async function fetchFromSupabase(songId: number): Promise<{ chord_sheet: string; source: string } | null> {
+  if (!SUPABASE_URL || !SUPABASE_ANON) return null;
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/song_chords?song_id=eq.${songId}&select=chord_sheet,source&limit=1`,
+      { headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` } }
+    );
+    if (!res.ok) return null;
+    const rows = await res.json();
+    if (rows && rows[0] && rows[0].chord_sheet) {
+      return { chord_sheet: rows[0].chord_sheet, source: rows[0].source || "supabase" };
+    }
+  } catch {}
+  return null;
+}
+
+async function saveToSupabase(row: { song_id: number; title: string; artist: string; chord_sheet: string; source: string }): Promise<void> {
+  if (!SUPABASE_URL || !SUPABASE_ANON) return;
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/song_chords`, {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_ANON,
+        Authorization: `Bearer ${SUPABASE_ANON}`,
+        "Content-Type": "application/json",
+        Prefer: "resolution=merge-duplicates,return=minimal"
+      },
+      body: JSON.stringify([row])
+    });
+  } catch {}
+}
 
 async function fetchFromGemini(title: string, artist: string) {
   if (!GEMINI_KEY) throw new Error("GEMINI_API_KEY not configured");
@@ -117,16 +151,27 @@ async function fetchFromUG(title: string, artist: string): Promise<string | null
 
 export async function POST(req: NextRequest) {
   try {
-    const { title, artist } = await req.json();
+    const { title, artist, songId } = await req.json();
     if (!title) return NextResponse.json({ error: "Missing title" }, { status: 400 });
+
+    if (typeof songId === "number") {
+      const cached = await fetchFromSupabase(songId);
+      if (cached) return NextResponse.json(cached);
+    }
 
     const ug = await fetchFromUG(title, artist || "");
     if (ug && ug.length > 50) {
+      if (typeof songId === "number") {
+        await saveToSupabase({ song_id: songId, title, artist: artist || "", chord_sheet: ug, source: "ultimate-guitar" });
+      }
       return NextResponse.json({ chord_sheet: ug, source: "ultimate-guitar" });
     }
 
     const gem = await fetchFromGemini(title, artist || "");
     if (gem) {
+      if (typeof songId === "number") {
+        await saveToSupabase({ song_id: songId, title, artist: artist || "", chord_sheet: gem, source: "gemini" });
+      }
       return NextResponse.json({ chord_sheet: gem, source: "gemini" });
     }
 

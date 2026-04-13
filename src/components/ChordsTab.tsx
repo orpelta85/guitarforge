@@ -99,7 +99,7 @@ export default function ChordsTab({ songId, title, artist }: Props) {
       const r = await fetch("/api/chords/auto", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, artist })
+        body: JSON.stringify({ title, artist, songId })
       });
       const data = await r.json();
       if (!r.ok) {
