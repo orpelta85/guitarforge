@@ -440,15 +440,30 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
 
         api.scoreLoaded.on((score: any) => {
           if (dead) return;
-          // Override distorted/overdriven guitar programs to clean nylon/steel acoustic
           score.tracks?.forEach((track: any) => {
             track.playbackInfo?.channels?.forEach((ch: any) => {
               const p = ch.program;
-              // GM programs 27-31 = distortion/overdrive/muted electric → replace with 25 (steel acoustic)
               if (p >= 27 && p <= 31) ch.program = 25;
-              // GM 29 = overdriven, 30 = distortion
             });
           });
+
+          // alphaTex stretches sixteenth notes to quarters when a bar has fewer
+          // notes than the time signature expects. Compensate by detecting the
+          // intended duration from the tex string and adjusting playbackSpeed.
+          if (tex && !fileData) {
+            const durMatch = tex.match(/:(\d+)/);
+            const intended = durMatch ? parseInt(durMatch[1], 10) : 0;
+            const firstBeat = score.tracks?.[0]?.staves?.[0]?.bars?.[0]?.voices?.[0]?.beats?.[0];
+            const renderedTicks = firstBeat?.playbackDuration || 0;
+            // alphaTab uses 960 ticks per quarter. :16 intended = 240 ticks.
+            // If rendered > intended, ratio is the stretch factor.
+            if (intended >= 8 && renderedTicks > 0) {
+              const intendedTicks = 3840 / intended; // :16 → 240, :8 → 480, :4 → 960
+              const stretch = renderedTicks / intendedTicks;
+              if (stretch > 1.1) api.playbackSpeed = stretch;
+            }
+          }
+
           setLoading(false); setReady(true);
           setSongInfo({ title: score.title || "Untitled", artist: score.artist || "", tempo: score.tempo || 120 });
           setTracks(score.tracks.map((t: any, i: number) => ({
