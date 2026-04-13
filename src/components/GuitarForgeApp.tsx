@@ -22,6 +22,7 @@ import type { SongEntry } from "@/lib/types";
 import { buildStyle, recordUsage, saveToLibrary, getAllLibraryTracks, deleteFromLibrary } from "@/lib/suno";
 import type { LibraryTrack } from "@/lib/suno";
 import { syncData, uploadSettings } from "@/lib/cloud-sync";
+import { useSessionState } from "@/lib/useSessionState";
 
 // ── Page Components ──
 import HomePage from "./HomePage";
@@ -38,7 +39,7 @@ export default function GuitarForgeApp() {
   const [style, setStyle] = useState("Metal");
   const [dayCats, setDayCats] = useState<DayCats>(DEFAULT_DAY_CATS);
   const [dayHrs, setDayHrs] = useState<DayHrs>(DEFAULT_DAY_HRS);
-  const [selDay, setSelDay] = useState(() => DAYS[new Date().getDay()]);
+  const [selDay, setSelDay] = useSessionState<string>("gf-sel-day", DAYS[new Date().getDay()]);
   const [dayExMap, setDayExMap] = useState<DayExMap>({});
   const [doneMap, setDoneMap] = useState<BoolMap>({});
   const [bpmLog, setBpmLog] = useState<StringMap>({});
@@ -47,19 +48,19 @@ export default function GuitarForgeApp() {
   const [showEditor, setShowEditor] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [libFilter, setLibFilter] = useState("All");
-  const [modal, setModal] = useState<Exercise | null>(null);
+  const [modal, setModal] = useSessionState<Exercise | null>("gf-modal", null);
   const [songs, setSongs] = useState<Song[]>([]);
   const [newSongName, setNewSongName] = useState("");
   const [newSongUrl, setNewSongUrl] = useState("");
   const [songProgress, setSongProgress] = useState<SongProgressMap>({});
   const [exEdits, setExEdits] = useState<ExEditMap>({});
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [libSearch, setLibSearch] = useState("");
-  const [libTab, setLibTab] = useState<"exercises" | "styles" | "mysongs" | "recordings" | "backing" | "songlib">("exercises");
-  const [songModal, setSongModal] = useState<SongEntry | null>(null);
+  const [editingId, setEditingId] = useSessionState<number | null>("gf-editing-id", null);
+  const [libSearch, setLibSearch] = useSessionState<string>("gf-lib-search", "");
+  const [libTab, setLibTab] = useSessionState<"exercises" | "styles" | "mysongs" | "recordings" | "backing" | "songlib">("gf-lib-tab", "exercises");
+  const [songModal, setSongModal] = useSessionState<SongEntry | null>("gf-song-modal", null);
   const [customSongs, setCustomSongs] = useState<SongEntry[]>([]);
-  const [songLibSearch, setSongLibSearch] = useState("");
-  const [songLibFilter, setSongLibFilter] = useState<"all" | "Beginner" | "Intermediate" | "Advanced" | "Expert">("all");
+  const [songLibSearch, setSongLibSearch] = useSessionState<string>("gf-song-search", "");
+  const [songLibFilter, setSongLibFilter] = useSessionState<"all" | "Beginner" | "Intermediate" | "Advanced" | "Expert">("gf-song-filter", "all");
   const [showAddSong, setShowAddSong] = useState(false);
   const [songLibProgress, setSongLibProgress] = useState<Record<number, number>>({});
   const [newSongTitle, setNewSongTitle] = useState("");
@@ -69,9 +70,9 @@ export default function GuitarForgeApp() {
   const [exPickerCat, setExPickerCat] = useState("All");
   const [libShowAll, setLibShowAll] = useState(false);
   const [libCollapsed, setLibCollapsed] = useState<Record<string, boolean>>(() => Object.fromEntries(Object.keys(CAT_GROUPS).map(g => [g, true])));
-  const [songLibGenre, setSongLibGenre] = useState("all");
+  const [songLibGenre, setSongLibGenre] = useSessionState<string>("gf-song-genre", "all");
   const [songLibGenres, setSongLibGenres] = useState<string[]>([]);
-  const [songLibSort, setSongLibSort] = useState<"popular" | "artist" | "title" | "recent">("popular");
+  const [songLibSort, setSongLibSort] = useSessionState<"popular" | "artist" | "title" | "recent">("gf-song-sort", "popular");
   const [songLibHasGP, setSongLibHasGP] = useState(false);
   const [songLibLimit, setSongLibLimit] = useState(20);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -182,6 +183,7 @@ export default function GuitarForgeApp() {
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, []);
+
 
   useEffect(() => {
     try {

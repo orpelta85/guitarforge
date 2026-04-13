@@ -5,6 +5,11 @@ import { COL, STYLES, SCALES, MODES } from "@/lib/constants";
 import { EXERCISES } from "@/lib/exercises";
 import { ytSearch, ssSearch } from "@/lib/helpers";
 import { buildCacheKey, getCachedTrack, downloadAndCache, type CachedTrack, saveYtBackingTrack, isYtBackingTrackSaved } from "@/lib/suno";
+
+/** Build an accurate backing track search query — style first, then key + mode */
+function btQuery(style: string, scale: string, mode: string): string {
+  return `${style} ${scale} ${mode} backing track guitar`;
+}
 import { idbLoadRecordings, idbDeleteRecording } from "@/lib/recorderIdb";
 import { saveToLibrary } from "@/lib/recordingsLibrary";
 import MetronomeBox from "./MetronomeBox";
@@ -97,7 +102,7 @@ function YtSaveButton({ videoId, style, scale, mode, exerciseId, exerciseName }:
       id: `yt-${videoId}-${Date.now()}`,
       videoId,
       title: exerciseName,
-      searchQuery: `${style} ${scale} ${mode} backing track guitar`,
+      searchQuery: btQuery(style, scale, mode),
       style,
       scale,
       mode,
@@ -379,28 +384,48 @@ function YouTubeBackingSection({ scale, mode, style, ex, ytVideoId, setYtVideoId
     if (didAutoLoad.current || ytVideoId) return;
     didAutoLoad.current = true;
     if (lockedBacking) { setYtVideoId(lockedBacking); return; }
-    runSearch(`${defaultStyle} ${defaultScale} ${defaultMode} backing track guitar`);
+    runSearch(btQuery(defaultStyle, defaultScale, defaultMode));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function runSearch(query: string) {
+  const lastQueryRef = useRef("");
+  const nextPageTokenRef = useRef<string | null>(null);
+
+  async function runSearch(query: string, append = false) {
     const urlMatch = query.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
     if (urlMatch) { setYtVideoId(urlMatch[1]); return; }
     try {
-      const res = await fetch(`/api/youtube?q=${encodeURIComponent(query)}`);
+      let url = `/api/youtube?q=${encodeURIComponent(query)}`;
+      if (append && nextPageTokenRef.current) url += `&pageToken=${encodeURIComponent(nextPageTokenRef.current)}`;
+      const res = await fetch(url);
       const data = await res.json();
       const ids: string[] = data.results || data.items?.map((i: { videoId: string }) => i.videoId).filter(Boolean) || [];
+      lastQueryRef.current = query;
+      nextPageTokenRef.current = data.nextPageToken || null;
       if (ids.length > 0) {
-        setYtVideoId(ids[0]);
-        if (setYtSearchResults) setYtSearchResults(ids);
-        if (setYtResultIndex) setYtResultIndex(0);
+        if (append && setYtSearchResults && ytSearchResults) {
+          const merged = [...ytSearchResults, ...ids.filter(id => !ytSearchResults.includes(id))];
+          setYtSearchResults(merged);
+        } else {
+          setYtVideoId(ids[0]);
+          if (setYtSearchResults) setYtSearchResults(ids);
+          if (setYtResultIndex) setYtResultIndex(0);
+        }
       }
     } catch { /* ignore */ }
   }
 
   function handleNextVideo() {
     if (!ytSearchResults || ytSearchResults.length <= 1) return;
-    const nextIdx = ((ytResultIndex ?? 0) + 1) % ytSearchResults.length;
+    const curIdx = ytResultIndex ?? 0;
+    const nextIdx = curIdx + 1;
+    // If at end, try to fetch more results
+    if (nextIdx >= ytSearchResults.length) {
+      if (nextPageTokenRef.current && lastQueryRef.current) {
+        runSearch(lastQueryRef.current, true);
+      }
+      return;
+    }
     if (setYtResultIndex) setYtResultIndex(nextIdx);
     setYtVideoId(ytSearchResults[nextIdx]);
   }
@@ -432,7 +457,7 @@ function YouTubeBackingSection({ scale, mode, style, ex, ytVideoId, setYtVideoId
             onChange={(e) => { setFilterStyle(e.target.value); setStyleDropOpen(true); }}
             onFocus={() => setStyleDropOpen(true)}
             onBlur={(e) => { if (!styleRef.current?.contains(e.relatedTarget as Node)) setStyleDropOpen(false); }}
-            onKeyDown={e => { if (e.key === "Enter") { setStyleDropOpen(false); runSearch(`${filterStyle} ${filterScale} ${filterMode} backing track guitar`); } }}
+            onKeyDown={e => { if (e.key === "Enter") { setStyleDropOpen(false); runSearch(btQuery(filterStyle, filterScale, filterMode)); } }}
             placeholder="Type or select style..."
             className={`${selectCls} w-[140px]`}
             autoComplete="off"
@@ -463,7 +488,7 @@ function YouTubeBackingSection({ scale, mode, style, ex, ytVideoId, setYtVideoId
         <select title="Mode" value={filterMode} onChange={e => setFilterMode(e.target.value)} className={selectCls}>
           {MODES.map(m => <option key={m} value={m}>{m}</option>)}
         </select>
-        <button onClick={() => runSearch(`${filterStyle} ${filterScale} ${filterMode} backing track guitar`)}
+        <button onClick={() => runSearch(btQuery(filterStyle, filterScale, filterMode))}
           className="btn-gold !text-[11px] flex-shrink-0">Search</button>
         {(ytSearchResults?.length ?? 0) > 1 && (
           <button onClick={handleNextVideo}
@@ -872,10 +897,12 @@ function SongWindow({ exercise: ex, mode, scale, style, week, day, savedYtUrl, b
     setBtLoading(true);
     setBtSearched(true);
     const q = `${ex.songName || ex.n} backing track guitar`;
+    songBtQueryRef.current = q;
     fetch(`/api/youtube?q=${encodeURIComponent(q)}`)
       .then(r => r.json())
       .then(data => {
         const ids: string[] = data.results || data.items?.map((i: { videoId: string }) => i.videoId).filter(Boolean) || [];
+        songBtPageTokenRef.current = data.nextPageToken || null;
         if (ids.length > 0) {
           setBtVideoId(ids[0]);
           setBtSearchResults(ids);
@@ -899,10 +926,12 @@ function SongWindow({ exercise: ex, mode, scale, style, week, day, savedYtUrl, b
     const urlMatch = raw.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
     if (urlMatch) { setBtVideoId(urlMatch[1]); return; }
     const query = raw || `${songName} backing track guitar`;
+    songBtQueryRef.current = query;
     try {
       const res = await fetch(`/api/youtube?q=${encodeURIComponent(query)}`);
       const data = await res.json();
       const ids: string[] = data.results || data.items?.map((i: { videoId: string }) => i.videoId).filter(Boolean) || [];
+      songBtPageTokenRef.current = data.nextPageToken || null;
       if (ids.length > 0) {
         setBtVideoId(ids[0]);
         setBtSearchResults(ids);
@@ -911,9 +940,30 @@ function SongWindow({ exercise: ex, mode, scale, style, week, day, savedYtUrl, b
     } catch { /* ignore */ }
   }
 
+  const songBtQueryRef = useRef("");
+  const songBtPageTokenRef = useRef<string | null>(null);
+
+  async function fetchMoreSongBt() {
+    if (!songBtPageTokenRef.current || !songBtQueryRef.current) return;
+    try {
+      const res = await fetch(`/api/youtube?q=${encodeURIComponent(songBtQueryRef.current)}&pageToken=${encodeURIComponent(songBtPageTokenRef.current)}`);
+      const data = await res.json();
+      const ids: string[] = data.results || data.items?.map((i: { videoId: string }) => i.videoId).filter(Boolean) || [];
+      songBtPageTokenRef.current = data.nextPageToken || null;
+      if (ids.length > 0) {
+        const merged = [...btSearchResults, ...ids.filter(id => !btSearchResults.includes(id))];
+        setBtSearchResults(merged);
+      }
+    } catch { /* ignore */ }
+  }
+
   function handleSongBtNext() {
     if (btSearchResults.length <= 1) return;
-    const nextIdx = (btResultIndex + 1) % btSearchResults.length;
+    const nextIdx = btResultIndex + 1;
+    if (nextIdx >= btSearchResults.length) {
+      fetchMoreSongBt();
+      return;
+    }
     setBtResultIndex(nextIdx);
     setBtVideoId(btSearchResults[nextIdx]);
   }

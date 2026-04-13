@@ -2,6 +2,7 @@
 import { useState, useCallback, useMemo, useRef } from "react";
 import type { Exercise, Song, DayCats, DayHrs, DayExMap, BoolMap, StringMap, ExEditMap, SongEntry } from "@/lib/types";
 import { DAYS, CATS, COL, MODES, SCALES, STYLES, CAT_GROUPS } from "@/lib/constants";
+
 import { EXERCISES } from "@/lib/exercises";
 import { SONG_LIBRARY } from "@/lib/songs-data";
 import WeeklyCharts from "./WeeklyCharts";
@@ -150,7 +151,7 @@ export default function HomePage(props: HomePageProps) {
     setJamYtLoading(true);
     setJamVideoId(null);
     setJamSearchFailed(false);
-    const query = `${jamKey} ${jamScale} ${jamStyle} backing track guitar`;
+    const query = `${jamStyle} ${jamKey} ${jamScale} backing track guitar`;
     const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
     try {
       const res = await fetch(`/api/youtube?q=${encodeURIComponent(query)}`);

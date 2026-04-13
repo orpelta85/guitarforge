@@ -6,6 +6,7 @@ import { STYLES, SCALES, MODES } from "@/lib/constants";
 import { ytSearch } from "@/lib/helpers";
 import { useFocusTrap } from "./ExerciseModal";
 import SongRecorder from "./SongRecorder";
+import ChordsTab from "./ChordsTab";
 import dynamic from "next/dynamic";
 const GpFileUploader = dynamic(() => import("./GpFileUploader"), {
   ssr: false,
@@ -63,7 +64,7 @@ interface Props {
   onTargetTimeChange?: (minutes: number) => void;
 }
 
-type Tab = "practice" | "tutorial" | "log";
+type Tab = "practice" | "chords" | "tutorial" | "log";
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   Beginner: "#22c55e",
@@ -459,6 +460,7 @@ export default function SongModal({ song, onClose, targetMinutes, mySongs, onTog
         <div className="flex border-b border-[var(--border-subtle)] bg-[var(--bg-recess)] flex-shrink-0">
           {([
             { id: "practice" as Tab, label: "Practice" },
+            { id: "chords" as Tab, label: "Chords" },
             { id: "tutorial" as Tab, label: "Tutorial" },
             { id: "log" as Tab, label: "Log" },
           ]).map(({ id, label }) => (
@@ -624,6 +626,13 @@ export default function SongModal({ song, onClose, targetMinutes, mySongs, onTog
                   {song.difficulty && <div><span className="text-[var(--text-muted)]">Difficulty: </span><span style={{ color: dc }}>{song.difficulty}</span></div>}
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Chords Tab */}
+          {tab === "chords" && (
+            <div className="-m-4 sm:-m-6 h-[calc(100vh-220px)]">
+              <ChordsTab songId={song.id} title={song.title} artist={song.artist} />
             </div>
           )}
 
