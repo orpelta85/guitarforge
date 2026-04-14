@@ -472,15 +472,15 @@ export default function HomePage(props: HomePageProps) {
       {/* Quick Jam (collapsible)                                          */}
       {/* ================================================================ */}
       <div className="mb-4 rounded-xl overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.05)", background: "#111114" }}>
-        <button onClick={() => setJamOpen(p => !p)} className="panel-header flex items-center gap-2 w-full cursor-pointer bg-transparent border-0 text-left">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <button onClick={() => setJamOpen(p => !p)} className="panel-header flex items-center gap-3 w-full cursor-pointer bg-transparent border-0 text-left px-5 py-4 hover:bg-white/[0.02] transition-colors">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
           </svg>
-          <span className="flex-1">Quick Jam</span>
-          <span className="font-readout text-[10px] text-[#555]">
+          <span className="flex-1 font-heading text-[15px] font-semibold text-[#e5e5e5]">Quick Jam</span>
+          <span className="font-readout text-[12px] text-[#888]">
             {!jamOpen && `${jamKey} ${jamScale} \u00B7 ${jamStyle}`}
           </span>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" className={`transition-transform ${jamOpen ? "rotate-180" : ""}`}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" className={`transition-transform ${jamOpen ? "rotate-180" : ""}`}>
             <path d="M6 9l6 6 6-6" />
           </svg>
         </button>
