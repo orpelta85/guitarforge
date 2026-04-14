@@ -723,16 +723,22 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
   useEffect(() => {
     const el = mainRef.current;
     if (!el) return;
+    let rafId = 0;
     function bump() {
-      if (scrollTickRef.current) clearTimeout(scrollTickRef.current);
-      scrollTickRef.current = setTimeout(() => setOverlayTick(t => t + 1), 16);
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = 0;
+        setOverlayTick(t => t + 1);
+      });
     }
     el.addEventListener("scroll", bump, { passive: true });
+    window.addEventListener("scroll", bump, { passive: true });
     window.addEventListener("resize", bump);
     return () => {
       el.removeEventListener("scroll", bump);
+      window.removeEventListener("scroll", bump);
       window.removeEventListener("resize", bump);
-      if (scrollTickRef.current) clearTimeout(scrollTickRef.current);
+      if (rafId) cancelAnimationFrame(rafId);
     };
   }, [ready]);
 
@@ -944,10 +950,19 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
     const mainEl: HTMLDivElement = main;
     dragStateRef.current = { mode: side, anchorBar: side === "left" ? selEnd : selStart };
 
-    function onMove(e: MouseEvent) {
+    // Track latest selection locally so onUp uses current drag values, not stale closure state
+    let latestA = selStart;
+    let latestB = selEnd;
+    let rafId = 0;
+    let pendingEvent: MouseEvent | null = null;
+
+    function process(e: MouseEvent) {
       const rect = mainEl.getBoundingClientRect();
-      const x = e.clientX - rect.left + mainEl.scrollLeft;
-      const y = e.clientY - rect.top + mainEl.scrollTop;
+      // Clamp pointer position into the visible viewport so running off the edge doesn't jump
+      const clampedClientX = Math.max(rect.left, Math.min(rect.right, e.clientX));
+      const clampedClientY = Math.max(rect.top, Math.min(rect.bottom, e.clientY));
+      const x = clampedClientX - rect.left + mainEl.scrollLeft;
+      const y = clampedClientY - rect.top + mainEl.scrollTop;
       const beat = api.renderer.boundsLookup.getBeatAtPos?.(x, y);
       if (!beat?.voice?.bar) return;
       const barIdx = beat.voice.bar.index + 1;
@@ -955,14 +970,24 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
       if (anchor == null) return;
       const a = Math.min(anchor, barIdx);
       const b = Math.max(anchor, barIdx);
+      latestA = a; latestB = b;
       setSelStart(a); setSelEnd(b);
     }
+
+    function onMove(e: MouseEvent) {
+      pendingEvent = e;
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = 0;
+        if (pendingEvent) { process(pendingEvent); pendingEvent = null; }
+      });
+    }
     function onUp() {
-      const s = selStart, e = selEnd;
+      if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
       dragStateRef.current = { mode: "none", anchorBar: null };
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", onUp);
-      if (s && e) applyLoopRange(s, e);
+      if (latestA && latestB) applyLoopRange(latestA, latestB);
     }
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
@@ -1401,7 +1426,7 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
 
             {/* Interactive overlay: hover + selection + drag handles + playing-bar highlight */}
             {ready && !viewerCollapsed && (
-              <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+              <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" }}>
                 {/* Playing-bar subtle highlight */}
                 {playingBarRects.map((r, i) => (
                   <div key={`pb-${i}`} style={{
