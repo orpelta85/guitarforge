@@ -5,6 +5,33 @@ import { loadMetronomeVolume, saveMetronomeVolume, METRONOME_VOL_KEY, DEFAULT_ME
 interface TrackInfo { index: number; name: string; volume: number; isMuted: boolean; isSolo: boolean }
 interface Bookmark { name: string; startBar: number; endBar: number }
 
+// Order two beats by absolute playback position (earliest first).
+function orderBeats(a: any, b: any): [any, any] {
+  const aT = a?.absolutePlaybackStart ?? 0;
+  const bT = b?.absolutePlaybackStart ?? 0;
+  return aT <= bT ? [a, b] : [b, a];
+}
+
+// Walk the beat chain from startBeat to endBeat (inclusive) within the same voice/track.
+// Uses beat.nextBeat when available (alphaTab flattens this across bars in a voice).
+function collectBeatsBetween(startBeat: any, endBeat: any): any[] {
+  if (!startBeat || !endBeat) return [];
+  if (startBeat === endBeat) return [startBeat];
+  const [a, b] = orderBeats(startBeat, endBeat);
+  const out: any[] = [];
+  let cur: any = a;
+  let guard = 0;
+  while (cur && guard < 10000) {
+    out.push(cur);
+    if (cur === b) break;
+    const next = cur.nextBeat;
+    if (!next) break;
+    cur = next;
+    guard++;
+  }
+  return out;
+}
+
 export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { exerciseId?: string; tex?: string; songName?: string; gpUrl?: string }) {
   const [fileData, setFileData] = useState<Uint8Array | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -71,12 +98,15 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
   const workerBlobUrlRef = useRef<string | null>(null);
 
   // Interactive bar selection overlay (UG-style drag-to-loop)
-  const [selStart, setSelStart] = useState<number | null>(null);
-  const [selEnd, setSelEnd] = useState<number | null>(null);
+  // Beat-level selection: selStart/selEnd hold beat references, not bar numbers.
+  const [selStart, setSelStart] = useState<any | null>(null);
+  const [selEnd, setSelEnd] = useState<any | null>(null);
   const [hoverBar, setHoverBar] = useState<number | null>(null);
+  const [playingBeat, setPlayingBeat] = useState<any | null>(null);
   const [overlayTick, setOverlayTick] = useState(0);
-  const dragStateRef = useRef<{ mode: "none" | "new" | "left" | "right"; anchorBar: number | null }>({ mode: "none", anchorBar: null });
+  const dragStateRef = useRef<{ mode: "none" | "new" | "left" | "right"; anchorBeat: any | null }>({ mode: "none", anchorBeat: null });
   const scrollTickRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const applyLoopRangeByBeatsRef = useRef<((a: any, b: any) => void) | null>(null);
   const audioNodesRef = useRef<{
     ctx: AudioContext;
     highpass: BiquadFilterNode;
@@ -547,6 +577,7 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
           if (dead || !beat) return;
           const bar = beat.voice?.bar;
           if (bar?.index !== undefined) setCurrentBar(bar.index + 1);
+          setPlayingBeat(beat);
           // Extract note info for fretboard
           const notes = beat.notes || [];
           const noteData = notes.map((n: any) => ({ fret: n.fret, string: n.string })).filter((n: any) => n.fret >= 0);
@@ -565,29 +596,29 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
           setTotalTime(e.endTime ?? 0);
         });
 
-        // Drag-to-select (UG-style): mouseDown starts, mouseMove updates, mouseUp finalizes
+        // Drag-to-select (GP-style): mouseDown starts, mouseMove updates, mouseUp finalizes.
+        // Selection is beat-level, not bar-level — user can highlight 2 notes in the middle of a bar.
         api.beatMouseDown?.on?.((beat: any) => {
           if (dead || !beat?.voice?.bar) return;
           const barIdx = beat.voice.bar.index + 1;
           (api as any)._lastClickedBar = barIdx;
           (api as any)._dragDidMove = false;
-          dragStateRef.current = { mode: "new", anchorBar: barIdx };
+          dragStateRef.current = { mode: "new", anchorBeat: beat };
+          setSelStart(beat); setSelEnd(beat);
         });
         api.beatMouseMove?.on?.((beat: any) => {
           if (dead || !beat?.voice?.bar) return;
           const st = dragStateRef.current;
-          if (st.mode !== "new" || st.anchorBar == null) return;
-          const barIdx = beat.voice.bar.index + 1;
-          if (barIdx !== st.anchorBar) (api as any)._dragDidMove = true;
-          const a = Math.min(st.anchorBar, barIdx);
-          const b = Math.max(st.anchorBar, barIdx);
+          if (st.mode !== "new" || !st.anchorBeat) return;
+          if (beat !== st.anchorBeat) (api as any)._dragDidMove = true;
+          const [a, b] = orderBeats(st.anchorBeat, beat);
           setSelStart(a); setSelEnd(b);
         });
         api.beatMouseUp?.on?.((beat: any) => {
           if (dead) return;
           const st = dragStateRef.current;
           const didMove = !!(api as any)._dragDidMove;
-          dragStateRef.current = { mode: "none", anchorBar: null };
+          dragStateRef.current = { mode: "none", anchorBeat: null };
 
           if (!beat?.voice?.bar) {
             // click outside any beat = clear selection
@@ -597,15 +628,16 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
           const barIdx = beat.voice.bar.index + 1;
           (api as any)._lastClickedBar = barIdx;
 
-          if (didMove && st.anchorBar != null) {
-            const a = Math.min(st.anchorBar, barIdx);
-            const b = Math.max(st.anchorBar, barIdx);
+          if (didMove && st.anchorBeat) {
+            const [a, b] = orderBeats(st.anchorBeat, beat);
             setSelStart(a); setSelEnd(b);
-            // Auto-activate loop on drag selection
-            window.dispatchEvent(new CustomEvent("gf-range-selected", { detail: { start: a, end: b } }));
+            // Auto-activate loop on drag selection (beat-level)
+            applyLoopRangeByBeatsRef.current?.(a, b);
           } else {
             // Pure click (no drag) — legacy behavior for A/B pick modes, else jump
             window.dispatchEvent(new CustomEvent("gf-bar-click", { detail: { bar: barIdx } }));
+            // Clear any existing selection when clicking on a beat without drag
+            setSelStart(null); setSelEnd(null);
           }
         });
 
@@ -662,6 +694,25 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
     api.isLooping = true;
     setIsLooping(true); setLoopStart(s); setLoopEnd(e);
   }, [totalBars]);
+
+  // Beat-level loop: uses absolutePlaybackStart + playbackDuration for precise sub-bar looping.
+  const applyLoopRangeByBeats = useCallback((beatA: any, beatB: any) => {
+    const api = apiRef.current;
+    if (!api || !beatA || !beatB) return;
+    const [a, b] = orderBeats(beatA, beatB);
+    const startTick = a.absolutePlaybackStart ?? 0;
+    const endTick = (b.absolutePlaybackStart ?? 0) + (b.playbackDuration ?? 0);
+    if (!Number.isFinite(startTick) || !Number.isFinite(endTick) || endTick <= startTick) return;
+    api.playbackRange = { startTick, endTick };
+    api.isLooping = true;
+    setIsLooping(true);
+    const aBar = (a.voice?.bar?.index ?? 0) + 1;
+    const bBar = (b.voice?.bar?.index ?? 0) + 1;
+    setLoopStart(aBar); setLoopEnd(bBar);
+  }, []);
+
+  // Keep ref updated so event handlers (inside scoreLoaded closure) can call current version.
+  useEffect(() => { applyLoopRangeByBeatsRef.current = applyLoopRangeByBeats; }, [applyLoopRangeByBeats]);
 
   // Handle bar clicks from tab notation
   useEffect(() => {
@@ -934,13 +985,59 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
     return rects.map(r => ({ x: r.x - main.scrollLeft, y: r.y - main.scrollTop, w: r.w, h: r.h }));
   }
 
-  const selRects = (selStart && selEnd) ? computeBarRects(selStart, selEnd) : [];
-  const hoverRects = (hoverBar && (!selStart || !selEnd)) ? computeBarRects(hoverBar, hoverBar) : [];
-  const playingBarRects = (playing && currentBar > 0) ? computeBarRects(currentBar, currentBar) : [];
+  // --- Beat-level rect computation ---
+  // Returns rectangles covering the beats from startBeat to endBeat inclusive.
+  // Multiple rects when the selection spans multiple staff-system lines.
+  // Uses beat.visualBounds (tighter) for the X span, but expands Y to cover the entire
+  // staff system (realBounds of the master bar) so the highlight feels like GP.
+  function computeBeatRects(startBeat: any, endBeat: any): Array<{ x: number; y: number; w: number; h: number }> {
+    const api = apiRef.current;
+    const main = mainRef.current;
+    if (!api?.renderer?.boundsLookup || !main || !startBeat || !endBeat) return [];
+    const lookup = api.renderer.boundsLookup;
+    const beats = collectBeatsBetween(startBeat, endBeat);
+    if (beats.length === 0) return [];
+
+    type Row = { y: number; h: number; xMin: number; xMax: number };
+    const rows: Row[] = [];
+    for (const beat of beats) {
+      const bb: any = lookup.findBeat?.(beat);
+      if (!bb) continue;
+      // Prefer visualBounds for X (tight around the note), use parent barBounds for full staff height.
+      const vis: any = bb.visualBounds || bb.realBounds;
+      if (!vis) continue;
+      // Try to expand vertically to the bar's staff-system height
+      const barB: any = bb.barBounds || lookup.findMasterBarByIndex?.(beat.voice?.bar?.index ?? -1);
+      const y = barB?.realBounds?.y ?? vis.y;
+      const h = barB?.realBounds?.h ?? vis.h;
+      const x = vis.x;
+      const w = vis.w;
+
+      // Group by staff row (same y within 2px)
+      const existing = rows.find(r => Math.abs(r.y - y) < 2);
+      if (existing) {
+        existing.xMin = Math.min(existing.xMin, x);
+        existing.xMax = Math.max(existing.xMax, x + w);
+        existing.h = Math.max(existing.h, h);
+      } else {
+        rows.push({ y, h, xMin: x, xMax: x + w });
+      }
+    }
+    return rows.map(r => ({
+      x: r.xMin - main.scrollLeft,
+      y: r.y - main.scrollTop,
+      w: r.xMax - r.xMin,
+      h: r.h,
+    }));
+  }
+
+  const selRects = (selStart && selEnd) ? computeBeatRects(selStart, selEnd) : [];
+  const hoverRects = (hoverBar && !(selStart && selEnd)) ? computeBarRects(hoverBar, hoverBar) : [];
+  const playingBeatRects = (playing && playingBeat) ? computeBeatRects(playingBeat, playingBeat) : [];
   // overlayTick is consumed so React re-renders when layout changes
   void overlayTick;
 
-  // --- Drag handle logic ---
+  // --- Drag handle logic (beat-level) ---
   function onHandleMouseDown(side: "left" | "right", ev: React.MouseEvent) {
     ev.preventDefault();
     ev.stopPropagation();
@@ -948,28 +1045,23 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
     const api = apiRef.current;
     if (!main || !api?.renderer?.boundsLookup) return;
     const mainEl: HTMLDivElement = main;
-    dragStateRef.current = { mode: side, anchorBar: side === "left" ? selEnd : selStart };
+    const anchorBeat = side === "left" ? selEnd : selStart;
+    dragStateRef.current = { mode: side, anchorBeat };
 
-    // Track latest selection locally so onUp uses current drag values, not stale closure state
-    let latestA = selStart;
-    let latestB = selEnd;
+    let latestA: any = selStart;
+    let latestB: any = selEnd;
     let rafId = 0;
     let pendingEvent: MouseEvent | null = null;
 
     function process(e: MouseEvent) {
       const rect = mainEl.getBoundingClientRect();
-      // Clamp pointer position into the visible viewport so running off the edge doesn't jump
       const clampedClientX = Math.max(rect.left, Math.min(rect.right, e.clientX));
       const clampedClientY = Math.max(rect.top, Math.min(rect.bottom, e.clientY));
       const x = clampedClientX - rect.left + mainEl.scrollLeft;
       const y = clampedClientY - rect.top + mainEl.scrollTop;
       const beat = api.renderer.boundsLookup.getBeatAtPos?.(x, y);
-      if (!beat?.voice?.bar) return;
-      const barIdx = beat.voice.bar.index + 1;
-      const anchor = dragStateRef.current.anchorBar;
-      if (anchor == null) return;
-      const a = Math.min(anchor, barIdx);
-      const b = Math.max(anchor, barIdx);
+      if (!beat || !dragStateRef.current.anchorBeat) return;
+      const [a, b] = orderBeats(dragStateRef.current.anchorBeat, beat);
       latestA = a; latestB = b;
       setSelStart(a); setSelEnd(b);
     }
@@ -984,10 +1076,10 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
     }
     function onUp() {
       if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
-      dragStateRef.current = { mode: "none", anchorBar: null };
+      dragStateRef.current = { mode: "none", anchorBeat: null };
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", onUp);
-      if (latestA && latestB) applyLoopRange(latestA, latestB);
+      if (latestA && latestB) applyLoopRangeByBeats(latestA, latestB);
     }
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
@@ -1002,9 +1094,9 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
     const y = ev.clientY - rect.top + main.scrollTop;
     const beat = api.renderer.boundsLookup.getBeatAtPos?.(x, y);
     if (!beat?.voice?.bar) return;
-    const barIdx = beat.voice.bar.index + 1;
-    setSelStart(barIdx); setSelEnd(barIdx);
-    applyLoopRange(barIdx, barIdx);
+    // Double-click on beat = loop this single beat
+    setSelStart(beat); setSelEnd(beat);
+    applyLoopRangeByBeats(beat, beat);
   }
 
   return (
@@ -1427,12 +1519,14 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
             {/* Interactive overlay: hover + selection + drag handles + playing-bar highlight */}
             {ready && !viewerCollapsed && (
               <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" }}>
-                {/* Playing-bar subtle highlight */}
-                {playingBarRects.map((r, i) => (
+                {/* Playing-beat highlight (GP-style cream/yellow wash on the current beat) */}
+                {playingBeatRects.map((r, i) => (
                   <div key={`pb-${i}`} style={{
-                    position: "absolute", left: r.x, top: r.y, width: r.w, height: r.h,
-                    background: "rgba(245,158,11,0.08)",
-                    transition: "all 120ms ease-out",
+                    position: "absolute", left: r.x - 2, top: r.y, width: r.w + 4, height: r.h,
+                    background: "rgba(255, 235, 120, 0.35)",
+                    borderRadius: 2,
+                    transition: "left 80ms linear, top 80ms linear, width 80ms linear",
+                    pointerEvents: "none",
                   }} />
                 ))}
                 {/* Hover bar outline */}
@@ -1444,15 +1538,15 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
                     transition: "opacity 100ms ease-out",
                   }} />
                 ))}
-                {/* Selection fill + border */}
+                {/* Selection fill + border (beat-level) */}
                 {selRects.map((r, i) => (
                   <div key={`s-${i}`} style={{
-                    position: "absolute", left: r.x, top: r.y, width: r.w, height: r.h,
-                    background: "rgba(245,158,11,0.25)",
-                    border: "2px solid rgba(245,158,11,0.8)",
+                    position: "absolute", left: r.x - 2, top: r.y, width: r.w + 4, height: r.h,
+                    background: "rgba(245,158,11,0.22)",
+                    border: "2px solid rgba(245,158,11,0.85)",
                     borderRadius: 3,
-                    boxShadow: "0 0 12px rgba(245,158,11,0.25)",
-                    animation: "gfSelFadeIn 150ms ease-out",
+                    boxShadow: "0 0 10px rgba(245,158,11,0.22)",
+                    animation: "gfSelFadeIn 120ms ease-out",
                   }} />
                 ))}
                 {/* Drag handles (left = first rect's left edge, right = last rect's right edge) */}
