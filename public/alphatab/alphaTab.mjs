@@ -1,5 +1,5 @@
 /*!
- * alphaTab v1.8.1 (, build 30)
+ * alphaTab v1.8.2 (, build 31)
  *
  * Copyright © 2026, Daniel Kuschny and Contributors, All rights reserved.
  *

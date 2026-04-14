@@ -447,7 +447,7 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
         s.player.enableAnimatedBeatCursor = true;
         s.player.enableElementHighlighting = true;
         s.player.enableUserInteraction = true;
-        s.player.soundFont = base + "/alphatab/soundfont/sonivox.sf2";
+        s.player.soundFont = base + "/alphatab/soundfont/GeneralUser-GS.sf2";
         s.player.scrollElement = mainRef.current;
         s.player.scrollOffsetY = -10;
         s.display.layoutMode = 0;
@@ -458,12 +458,10 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
 
         api.scoreLoaded.on((score: any) => {
           if (dead) return;
-          score.tracks?.forEach((track: any) => {
-            track.playbackInfo?.channels?.forEach((ch: any) => {
-              const p = ch.program;
-              if (p >= 27 && p <= 31) ch.program = 25;
-            });
-          });
+          // GeneralUser GS provides high-quality samples for all guitar programs
+          // (24-31), so no program remapping is needed. The previous hack that
+          // forced overdriven/distortion (27-31) to clean guitar (25) was a
+          // workaround for sonivox.sf2's poor distorted tones.
 
           // alphaTex stretches sixteenth notes to quarters when a bar has fewer
           // notes than the time signature expects. Compensate by detecting the
