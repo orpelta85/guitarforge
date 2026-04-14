@@ -485,8 +485,8 @@ export default function HomePage(props: HomePageProps) {
           </svg>
         </button>
         {jamOpen && (
-          <div className="p-4 sm:p-5">
-            <div className="font-readout text-[10px] text-[#555] mb-3">Find a backing track to jam over</div>
+          <div className="p-5 sm:p-7">
+            <div className="font-readout text-[11px] text-[#666] mb-4">Find a backing track to jam over</div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 mb-4">
               <div className="font-label text-[11px] text-[#666] relative" ref={jamStyleRef}>
                 Style
@@ -585,14 +585,14 @@ export default function HomePage(props: HomePageProps) {
             )}
             {jamCountInPending && (
               <div className="w-full rounded-xl overflow-hidden bg-[#0e0e10] mb-3 flex items-center justify-center"
-                style={{ minHeight: 480, aspectRatio: "16 / 9", maxWidth: 960, border: "1px solid rgba(245,158,11,0.15)" }}>
-                <div className="font-label text-[12px] text-[#f59e0b] animate-pulse">Count-in...</div>
+                style={{ aspectRatio: "16 / 9", minHeight: 640, border: "1px solid rgba(245,158,11,0.15)" }}>
+                <div className="font-label text-[14px] text-[#f59e0b] animate-pulse">Count-in...</div>
               </div>
             )}
             {jamVideoId && !jamYtLoading && !jamCountInPending && (
               <div className="mb-3">
-                <div className="w-full rounded-xl overflow-hidden bg-black shadow-lg"
-                  style={{ minHeight: 480, aspectRatio: "16 / 9", maxWidth: 960, border: "1px solid rgba(245,158,11,0.15)" }}>
+                <div className="w-full rounded-xl overflow-hidden bg-black shadow-xl"
+                  style={{ aspectRatio: "16 / 9", minHeight: 640, border: "1px solid rgba(245,158,11,0.15)" }}>
                   <iframe
                     key={jamVideoId}
                     src={`https://www.youtube.com/embed/${jamVideoId}?modestbranding=1&rel=0${jamAutoPlay ? "&autoplay=1" : ""}`}
