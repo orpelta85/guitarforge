@@ -31,12 +31,12 @@ export function saveMetronomeVolume(v: number) {
 
 /**
  * Historical base gain values were: accent 0.4, normal 0.2, sub 0.1.
- * We roughly triple them and clamp at 0.9 to avoid clipping.
+ * Boosted ~4x from historical (3x + extra 50%) and clamped just under 1.0.
  */
 export function clickGain(kind: "accent" | "normal" | "sub", userVol: number): number {
-  const base = kind === "accent" ? 1.1 : kind === "normal" ? 0.7 : 0.35;
+  const base = kind === "accent" ? 1.65 : kind === "normal" ? 1.05 : 0.525;
   const v = Math.max(0, Math.min(1, userVol));
-  return Math.min(0.9, base * v);
+  return Math.min(0.98, base * v);
 }
 
 export function loadBackingCountIn(): boolean {
