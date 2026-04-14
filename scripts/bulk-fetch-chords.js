@@ -91,12 +91,25 @@ async function supa(method, pathRel, body) {
 }
 
 async function getExistingIds() {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/song_chords?select=song_id&limit=20000`, {
-    headers: { "apikey": SUPABASE_ANON, "Authorization": `Bearer ${SUPABASE_ANON}` }
-  });
-  if (!res.ok) throw new Error("Could not list existing");
-  const rows = await res.json();
-  return new Set(rows.map(r => r.song_id));
+  const all = new Set();
+  const PAGE = 1000;
+  let from = 0;
+  while (true) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/song_chords?select=song_id&order=song_id.asc`, {
+      headers: {
+        apikey: SUPABASE_ANON,
+        Authorization: `Bearer ${SUPABASE_ANON}`,
+        Range: `${from}-${from + PAGE - 1}`,
+        "Range-Unit": "items"
+      }
+    });
+    if (!res.ok) throw new Error("Could not list existing");
+    const rows = await res.json();
+    for (const r of rows) all.add(r.song_id);
+    if (rows.length < PAGE) break;
+    from += PAGE;
+  }
+  return all;
 }
 
 async function upsert(row) {

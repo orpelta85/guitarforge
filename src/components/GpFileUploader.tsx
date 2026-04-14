@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
+import { loadMetronomeVolume, saveMetronomeVolume, METRONOME_VOL_KEY, DEFAULT_METRONOME_VOLUME } from "@/lib/metronomeAudio";
 
 interface TrackInfo { index: number; name: string; volume: number; isMuted: boolean; isSolo: boolean }
 interface Bookmark { name: string; startBar: number; endBar: number }
@@ -21,7 +22,10 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
 
   // Player state
   const [masterVolume, setMasterVolume] = useState(1);
-  const [metronomeVolume, setMetronomeVolume] = useState(0);
+  const [metronomeVolume, setMetronomeVolume] = useState<number>(() =>
+    typeof window !== "undefined" ? loadMetronomeVolume() : DEFAULT_METRONOME_VOLUME
+  );
+  const [metronomeOn, setMetronomeOn] = useState(false);
   const [countInVolume, setCountInVolume] = useState(0);
   const [isLooping, setIsLooping] = useState(false);
   const [loopStart, setLoopStart] = useState<number | null>(null);
@@ -76,6 +80,20 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
   } | null>(null);
 
   const MAX_SAVE_SIZE = 2 * 1024 * 1024; // 2MB
+
+  // Listen for external changes to the shared metronome volume key
+  useEffect(() => {
+    function onStorage(e: StorageEvent) {
+      if (e.key !== METRONOME_VOL_KEY) return;
+      const v = loadMetronomeVolume();
+      setMetronomeVolume(v);
+      if (apiRef.current) {
+        try { apiRef.current.metronomeVolume = metronomeOn ? v : 0; } catch { /* ok */ }
+      }
+    }
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [metronomeOn]);
 
   // Auto-load saved tab from localStorage on mount
   useEffect(() => {
@@ -477,6 +495,8 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
             setPlayerReady(true);
             // Hook audio enhancement chain after player is ready
             enhanceAudioOutput(api);
+            // Apply shared metronome volume (respects ON/OFF state)
+            try { api.metronomeVolume = metronomeOn ? loadMetronomeVolume() : 0; } catch { /* ok */ }
           }
         });
 
@@ -595,22 +615,29 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
     return () => window.removeEventListener("gf-bar-click", onBarClick);
   }, [selectMode, loopStart, loopEnd, totalBars, applyLoopRange]);
 
-  // Speed trainer: increase speed each loop iteration
+  // Speed trainer: increase speed each loop iteration.
+  // Detect loop restart by watching position: when currentTime drops
+  // significantly (big backwards jump), it means alphaTab looped back to A.
   useEffect(() => {
     if (!speedTrainer || !isLooping || !playing) return;
     const api = apiRef.current;
     if (!api) return;
 
-    const handler = () => {
-      loopCountRef.current++;
-      const newSpeed = Math.min(trainerEndSpeed, trainerStartSpeed + loopCountRef.current * trainerStep);
-      api.playbackSpeed = newSpeed;
-      setSpeed(newSpeed);
+    let lastTime = -1;
+    const handler = (e: any) => {
+      const t = e?.currentTime ?? 0;
+      // Loop restart heuristic: time jumped backwards by >500ms
+      if (lastTime > 0 && t + 500 < lastTime) {
+        loopCountRef.current++;
+        const newSpeed = Math.min(trainerEndSpeed, trainerStartSpeed + loopCountRef.current * trainerStep);
+        api.playbackSpeed = newSpeed;
+        setSpeed(newSpeed);
+      }
+      lastTime = t;
     };
 
-    // Listen for playback range changed which fires on each loop restart
-    api.playbackRangeChanged?.on?.(handler);
-    return () => { api.playbackRangeChanged?.off?.(handler); };
+    api.playerPositionChanged?.on?.(handler);
+    return () => { api.playerPositionChanged?.off?.(handler); };
   }, [speedTrainer, isLooping, playing, trainerStartSpeed, trainerEndSpeed, trainerStep]);
 
   // --- Controls ---
@@ -645,7 +672,17 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
   }
 
   function setMasterVol(v: number) { if (apiRef.current) apiRef.current.masterVolume = v; setMasterVolume(v); }
-  function setMetVol(v: number) { if (apiRef.current) apiRef.current.metronomeVolume = v; setMetronomeVolume(v); }
+  function setMetVol(v: number) {
+    const clamped = Math.max(0, Math.min(1, v));
+    if (apiRef.current) apiRef.current.metronomeVolume = metronomeOn ? clamped : 0;
+    setMetronomeVolume(clamped);
+    saveMetronomeVolume(clamped);
+  }
+  function toggleMetronome() {
+    const next = !metronomeOn;
+    setMetronomeOn(next);
+    if (apiRef.current) apiRef.current.metronomeVolume = next ? metronomeVolume : 0;
+  }
   function setCountIn(v: number) { if (apiRef.current) apiRef.current.countInVolume = v; setCountInVolume(v); }
 
   function toggleLoop() {
@@ -803,11 +840,25 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
               {/* Row 1: Play, position, speed */}
               <div className="flex items-center gap-2 flex-wrap">
                 <button onClick={togglePlay}
+                  title={playing ? "Pause" : "Play"}
+                  aria-label={playing ? "Pause" : "Play"}
                   className="w-8 h-8 rounded-full cursor-pointer flex items-center justify-center shrink-0"
-                  style={{ background: playing ? "#C41E3A" : playerReady ? "#33CC33" : "#555", border: "2px solid #555", opacity: playerReady ? 1 : 0.5 }}>
-                  {playing ? <div className="w-2.5 h-2.5 bg-white rounded-sm" /> : <span className="text-[#121214] text-xs ml-0.5">&#9654;</span>}
+                  style={{ background: playing ? "#3a3a3a" : playerReady ? "#33CC33" : "#555", border: "2px solid #555", opacity: playerReady ? 1 : 0.5 }}>
+                  {playing ? (
+                    <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><rect width="10" height="10" fill="#e5e5e5" /></svg>
+                  ) : (
+                    <span className="text-[#121214] text-xs ml-0.5">&#9654;</span>
+                  )}
                 </button>
-                {playing && <button onClick={doStop} className="btn-ghost !text-[9px] !px-2 !py-1">Stop</button>}
+                {playing && (
+                  <button onClick={doStop}
+                    title="Stop"
+                    aria-label="Stop"
+                    className="btn-ghost !text-[9px] !px-2 !py-1 flex items-center gap-1 text-[#aaa] hover:!text-white">
+                    <svg width="8" height="8" viewBox="0 0 10 10" aria-hidden="true"><rect width="10" height="10" fill="currentColor" /></svg>
+                    Stop
+                  </button>
+                )}
 
                 <span className="font-readout text-[10px] text-[#888] min-w-[80px]">{fmtTime(currentTime)} / {fmtTime(totalTime)}</span>
 
@@ -829,6 +880,8 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
                   <span className="font-readout text-[11px] text-[#555]">{"\u2669"}=</span>
                   <input
                     type="number"
+                    disabled={speedTrainer}
+                    title={speedTrainer ? "Speed Trainer is ON - it controls BPM automatically. Turn it OFF to change manually." : "Playback BPM (main speed)"}
                     value={bpmInput ?? (songInfo ? Math.round(songInfo.tempo * speed) : Math.round(120 * speed))}
                     onChange={e => setBpmInput(e.target.value)}
                     onBlur={() => {
@@ -848,7 +901,7 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
                         (e.target as HTMLInputElement).blur();
                       }
                     }}
-                    className="w-16 text-center font-readout text-[12px] bg-[#1a1a1a] border border-[#333] rounded-md px-1.5 py-1 text-[#D4A843] outline-none focus:border-[#D4A843] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    className="w-16 text-center font-readout text-[12px] bg-[#1a1a1a] border border-[#333] rounded-md px-1.5 py-1 text-[#D4A843] outline-none focus:border-[#D4A843] disabled:opacity-40 disabled:cursor-not-allowed [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
                   <span className="font-readout text-[9px] text-[#444]">{Math.round(speed * 100)}%</span>
                 </div>
@@ -889,14 +942,12 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
 
                 <div className="w-px h-4 bg-[#222]" />
 
-                <button onClick={() => setMetVol(metronomeVolume > 0 ? 0 : 1)}
-                  className={`font-label text-[9px] px-2 py-1 rounded cursor-pointer border ${metronomeVolume > 0 ? "border-[#33CC33] text-[#33CC33] bg-[#33CC33]/10" : "border-[#222] text-[#555]"}`}>
+                <button onClick={toggleMetronome}
+                  className={`font-label text-[9px] px-2 py-1 rounded cursor-pointer border ${metronomeOn ? "border-[#33CC33] text-[#33CC33] bg-[#33CC33]/10" : "border-[#222] text-[#555]"}`}>
                   Met
                 </button>
-                {metronomeVolume > 0 && (
-                  <input type="range" min="0" max="1" step="0.1" value={metronomeVolume}
-                    onChange={e => setMetVol(Number(e.target.value))} className="w-12 h-1 accent-[#33CC33]" />
-                )}
+                <input type="range" min="0" max="1" step="0.05" value={metronomeVolume}
+                  onChange={e => setMetVol(Number(e.target.value))} className="w-12 h-1 accent-[#33CC33]" />
 
                 <button onClick={() => setCountIn(countInVolume > 0 ? 0 : 1)}
                   className={`font-label text-[9px] px-2 py-1 rounded cursor-pointer border ${countInVolume > 0 ? "border-[#D4A843] text-[#D4A843] bg-[#D4A843]/10" : "border-[#222] text-[#555]"}`}>
@@ -973,7 +1024,7 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
               <div className="relative" style={{ minWidth: 600 }}>
                 {Array.from({ length: STRINGS }, (_, si) => (
                   <div key={si} className="flex items-center h-5">
-                    <span className="font-readout text-[8px] text-[#555] w-4 text-right mr-1">{stringNames[si]}</span>
+                    <span className="font-readout text-[8px] text-[#bbb] font-semibold w-4 text-right mr-1">{stringNames[si]}</span>
                     <div className="flex flex-1 relative">
                       {/* Nut */}
                       <div className="w-1 h-5 bg-[#888] mr-px" />
@@ -998,7 +1049,7 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
                 <div className="flex ml-5">
                   <div className="w-1 mr-px" />
                   {Array.from({ length: FRETS }, (_, fi) => (
-                    <div key={fi} className="text-center font-readout text-[7px] text-[#333]"
+                    <div key={fi} className={`text-center font-readout text-[7px] ${[3,5,7,9,12,15,17,19,21,24].includes(fi) ? "text-[#D4A843]" : "text-[#888]"}`}
                       style={{ width: Math.max(16, 32 - fi * 0.4) }}>
                       {[1, 3, 5, 7, 9, 12, 15, 17, 19, 21, 24].includes(fi) ? fi : ""}
                     </div>
@@ -1013,22 +1064,29 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
             <div className="px-4 py-2 border-b border-[#1a1a1a] bg-[#080808]">
               <div className="flex items-center gap-2 flex-wrap">
                 <button onClick={() => speedTrainer ? setSpeedTrainer(false) : startSpeedTrainer()}
+                  title="Speed Trainer: gradually increases BPM after each successful loop (e.g. +5% every loop). When ON, it drives the main BPM automatically."
                   className={`font-label text-[9px] px-2 py-1 rounded cursor-pointer border ${speedTrainer ? "border-[#33CC33] text-[#33CC33] bg-[#33CC33]/10" : "border-[#222] text-[#555]"}`}>
                   Speed Trainer {speedTrainer ? "ON" : "OFF"}
                 </button>
+                <span className="font-label text-[9px] text-[#666] italic">
+                  Gradually raises BPM after each loop. When ON, it overrides the main speed.
+                </span>
                 {speedTrainer && (
                   <>
                     <div className="flex items-center gap-1">
-                      <span className="font-label text-[8px] text-[#555]">From</span>
+                      <span className="font-label text-[8px] text-[#555]" title="Starting speed multiplier (1.0 = original BPM)">From</span>
                       <input type="number" min={0.1} max={2} step={0.05} value={trainerStartSpeed}
+                        title="Starting speed multiplier (e.g. 0.5 = half speed)"
                         onChange={e => setTrainerStartSpeed(Number(e.target.value))}
                         className="w-14 bg-[#111] border border-[#333] text-[#D4A843] text-[10px] text-center rounded px-1 py-0.5 font-readout" />
-                      <span className="font-label text-[8px] text-[#555]">To</span>
+                      <span className="font-label text-[8px] text-[#555]" title="Target (max) speed multiplier">To</span>
                       <input type="number" min={0.1} max={3} step={0.05} value={trainerEndSpeed}
+                        title="Target speed multiplier (e.g. 1.0 = full speed)"
                         onChange={e => setTrainerEndSpeed(Number(e.target.value))}
                         className="w-14 bg-[#111] border border-[#333] text-[#D4A843] text-[10px] text-center rounded px-1 py-0.5 font-readout" />
-                      <span className="font-label text-[8px] text-[#555]">+</span>
+                      <span className="font-label text-[8px] text-[#555]" title="Step added each loop iteration">Step</span>
                       <input type="number" min={0.01} max={0.5} step={0.01} value={trainerStep}
+                        title="Speed increment per completed loop (e.g. 0.05 = +5%)"
                         onChange={e => setTrainerStep(Number(e.target.value))}
                         className="w-14 bg-[#111] border border-[#333] text-[#D4A843] text-[10px] text-center rounded px-1 py-0.5 font-readout" />
                     </div>

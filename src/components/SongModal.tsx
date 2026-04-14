@@ -7,6 +7,8 @@ import { ytSearch } from "@/lib/helpers";
 import { useFocusTrap } from "./ExerciseModal";
 import SongRecorder from "./SongRecorder";
 import ChordsTab from "./ChordsTab";
+import CountInToggle from "./CountInToggle";
+import { loadBackingCountIn, playCountIn } from "@/lib/metronomeAudio";
 import dynamic from "next/dynamic";
 const GpFileUploader = dynamic(() => import("./GpFileUploader"), {
   ssr: false,
@@ -121,6 +123,15 @@ export default function SongModal({ song, onClose, targetMinutes, mySongs, onTog
   const btStyleRef = useRef<HTMLDivElement>(null);
   const [btSearchResults, setBtSearchResults] = useState<string[]>([]);
   const [btResultIndex, setBtResultIndex] = useState(0);
+  // Free-text search (independent of category selectors). Debounced 150ms.
+  const [btTextSearch, setBtTextSearch] = useState("");
+  const [btDebouncedText, setBtDebouncedText] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setBtDebouncedText(btTextSearch.trim()), 150);
+    return () => clearTimeout(t);
+  }, [btTextSearch]);
+  // Auto-play only when the user explicitly clicks "Next Video" (initial mount must NOT auto-play).
+  const [btAutoPlay, setBtAutoPlay] = useState(false);
   const [showOriginal, setShowOriginal] = useState(true);
   const [origVideoId, setOrigVideoId] = useState("");
   const [origLoading, setOrigLoading] = useState(false);
@@ -290,12 +301,57 @@ export default function SongModal({ song, onClose, targetMinutes, mySongs, onTog
     setBtLoading(false);
   }
 
-  function handleBtNextVideo() {
+  const [btPendingCountIn, setBtPendingCountIn] = useState(false);
+  async function handleBtNextVideo() {
     if (btSearchResults.length <= 1) return;
     const nextIdx = (btResultIndex + 1) % btSearchResults.length;
+    const nextId = btSearchResults[nextIdx];
     setBtResultIndex(nextIdx);
-    setBtVideoId(btSearchResults[nextIdx]);
+    if (loadBackingCountIn()) {
+      setBtPendingCountIn(true);
+      await playCountIn({ bpm: 120, beats: 4 });
+      setBtPendingCountIn(false);
+    }
+    setBtAutoPlay(true);
+    setBtVideoId(nextId);
   }
+
+  // Free-text search: when user types, fire YouTube search using ONLY that text (tokens AND-joined),
+  // independent of style/scale/mode. When input is cleared, snap back to song-name default.
+  const lastBtTextRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (showOriginal) return;
+    const q = btDebouncedText;
+    if (lastBtTextRef.current === q) return;
+    lastBtTextRef.current = q;
+    if (q.length === 0) {
+      // Don't override the initial song-name search until it has happened.
+      if (!btSearched) return;
+      const defaultQ = `${song.title} ${song.artist} backing track guitar`;
+      setBtLoading(true);
+      fetch(`/api/youtube?q=${encodeURIComponent(defaultQ)}`)
+        .then(r => r.json())
+        .then(data => {
+          const ids: string[] = data.results || data.items?.map((i: { videoId: string }) => i.videoId).filter(Boolean) || [];
+          if (ids.length > 0) { setBtVideoId(ids[0]); setBtSearchResults(ids); setBtResultIndex(0); }
+        })
+        .catch(() => {})
+        .finally(() => setBtLoading(false));
+      return;
+    }
+    const tokens = q.split(/\s+/).filter(Boolean);
+    const query = `${tokens.join(" ")} backing track guitar`;
+    setBtLoading(true);
+    fetch(`/api/youtube?q=${encodeURIComponent(query)}`)
+      .then(r => r.json())
+      .then(data => {
+        const ids: string[] = data.results || data.items?.map((i: { videoId: string }) => i.videoId).filter(Boolean) || [];
+        if (ids.length > 0) { setBtVideoId(ids[0]); setBtSearchResults(ids); setBtResultIndex(0); }
+      })
+      .catch(() => {})
+      .finally(() => setBtLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [btDebouncedText, showOriginal]);
 
   function handleTutorialNextVideo() {
     if (tutorialResults.length <= 1) return;
@@ -517,6 +573,7 @@ export default function SongModal({ song, onClose, targetMinutes, mySongs, onTog
                     {btVideoId && (
                       <>
                         <div className="flex items-center justify-end gap-1.5 mb-1.5">
+                          <CountInToggle />
                           {btSearchResults.length > 1 && (
                             <button type="button" onClick={handleBtNextVideo}
                               className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-white/[0.04] border border-white/[0.08] text-zinc-400 text-[11px] font-medium cursor-pointer hover:bg-white/[0.07] transition-all">
@@ -527,8 +584,12 @@ export default function SongModal({ song, onClose, targetMinutes, mySongs, onTog
                           <VideoLockButton songId={song.id} type="backing" videoId={btVideoId} />
                         </div>
                         <div className="aspect-video w-full rounded-lg overflow-hidden bg-black mb-3">
-                          <iframe src={`https://www.youtube.com/embed/${btVideoId}?modestbranding=1&rel=0`}
-                            className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen title="Backing Track" />
+                          {btPendingCountIn ? (
+                            <div className="w-full h-full flex items-center justify-center text-[#D4A843] font-label text-[14px] tracking-wider">Count-in...</div>
+                          ) : (
+                            <iframe key={btVideoId} src={`https://www.youtube.com/embed/${btVideoId}?modestbranding=1&rel=0${btAutoPlay ? "&autoplay=1" : ""}`}
+                              className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen title="Backing Track" />
+                          )}
                         </div>
                       </>
                     )}
@@ -537,7 +598,16 @@ export default function SongModal({ song, onClose, targetMinutes, mySongs, onTog
                         <div className="font-label text-[12px] text-zinc-500">No backing track found</div>
                       </div>
                     )}
+                    {/* Free-text search (independent of category/style/scale/mode) */}
                     <div className="flex gap-2 mt-3">
+                      <input value={btTextSearch} onChange={e => setBtTextSearch(e.target.value)}
+                        placeholder="Search text (e.g. pop funky) - overrides category"
+                        className="input flex-1 !text-[12px]" />
+                      {btTextSearch && (
+                        <button type="button" onClick={() => setBtTextSearch("")} className="btn-ghost !text-[11px] flex-shrink-0">Clear</button>
+                      )}
+                    </div>
+                    <div className="flex gap-2 mt-2">
                       <input value={btUrl} onChange={e => setBtUrl(e.target.value)}
                         onKeyDown={e => { if (e.key === "Enter") { const id = parseYtUrl(btUrl); if (id) setBtVideoId(id); } }}
                         placeholder="Paste YouTube URL..." className="input flex-1 !text-[12px]" />

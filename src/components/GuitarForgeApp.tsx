@@ -23,6 +23,7 @@ import { buildStyle, recordUsage, saveToLibrary, getAllLibraryTracks, deleteFrom
 import type { LibraryTrack } from "@/lib/suno";
 import { syncData, uploadSettings } from "@/lib/cloud-sync";
 import { useSessionState } from "@/lib/useSessionState";
+import { loadBackingCountIn, saveBackingCountIn, playCountIn } from "@/lib/metronomeAudio";
 
 // ── Page Components ──
 import HomePage from "./HomePage";
@@ -481,7 +482,7 @@ export default function GuitarForgeApp() {
     }
   }
 
-  function toggleSongBackingPlay(songId: number) {
+  async function toggleSongBackingPlay(songId: number) {
     const url = songBackingTracks[songId];
     if (!url) return;
     if (songBackingPlaying === songId && songAudioRef.current) {
@@ -494,9 +495,13 @@ export default function GuitarForgeApp() {
     }
     const audio = new Audio(url);
     audio.onended = () => setSongBackingPlaying(null);
-    audio.play();
     songAudioRef.current = audio;
     setSongBackingPlaying(songId);
+    if (loadBackingCountIn()) {
+      await playCountIn({ bpm: 120, beats: 4 });
+      if (songAudioRef.current !== audio) return; // user clicked away during count-in
+    }
+    audio.play().catch(() => { /* ok */ });
   }
 
   function buildAll() {

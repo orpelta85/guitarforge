@@ -5,6 +5,8 @@ import { COL, STYLES, SCALES, MODES } from "@/lib/constants";
 import { EXERCISES } from "@/lib/exercises";
 import { ytSearch, ssSearch } from "@/lib/helpers";
 import { buildCacheKey, getCachedTrack, downloadAndCache, type CachedTrack, saveYtBackingTrack, isYtBackingTrackSaved } from "@/lib/suno";
+import CountInToggle from "./CountInToggle";
+import { loadBackingCountIn, playCountIn } from "@/lib/metronomeAudio";
 
 /** Build an accurate backing track search query — style first, then key + mode */
 function btQuery(style: string, scale: string, mode: string): string {
@@ -211,7 +213,7 @@ function useSunoTrack(ex: Exercise, scale: string, mode: string, style: string, 
   const [sunoError, setSunoError] = useState("");
   const [sunoCredits, setSunoCredits] = useState<number | null>(null);
   const [sunoConfirm, setSunoConfirm] = useState(false);
-  const [sunoStyle, setSunoStyle] = useState(ex.styles?.[0] || style);
+  const [sunoStyle, setSunoStyle] = useState(style || ex.styles?.[0] || STYLES[0]);
   const sunoAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const parseBpmMid = (bpmStr: string): number => {
@@ -290,9 +292,11 @@ function SunoSection({ ex, scale, mode, suno }: {
               <span className="text-[9px] text-zinc-600 block mb-0.5">Style</span>
               <select value={suno.sunoStyle} onChange={(e) => suno.setSunoStyle(e.target.value)}
                 className="w-full bg-[#0c0c0e] border border-white/[0.08] rounded px-2 py-1.5 text-[11px] text-zinc-400 outline-none focus:border-[#8b5cf6] cursor-pointer">
-                {(ex.styles && ex.styles.length > 0 ? ex.styles : STYLES).map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
+                {(() => {
+                  const exStyles = ex.styles && ex.styles.length > 0 ? ex.styles : [];
+                  const merged = [...exStyles, ...STYLES.filter(s => !exStyles.includes(s))];
+                  return merged.map((s) => <option key={s} value={s}>{s}</option>);
+                })()}
               </select>
             </label>
             <div className="text-[10px] text-zinc-600 pb-1">{scale} {mode} / {suno.sunoBpm} BPM</div>
@@ -367,7 +371,8 @@ function YouTubeBackingSection({ scale, mode, style, ex, ytVideoId, setYtVideoId
   ytResultIndex?: number;
   setYtResultIndex?: (i: number) => void;
 }) {
-  const defaultStyle = (ex.styles && ex.styles.length > 0 ? ex.styles[0] : null) || style || STYLES[0];
+  // Prefer weekly focus style so users can steer all exercise backing tracks from the dashboard
+  const defaultStyle = style || (ex.styles && ex.styles.length > 0 ? ex.styles[0] : null) || STYLES[0];
   const defaultScale = scale || SCALES[0];
   const defaultMode = mode || MODES[0];
 
@@ -376,6 +381,15 @@ function YouTubeBackingSection({ scale, mode, style, ex, ytVideoId, setYtVideoId
   const [filterStyle, setFilterStyle] = useState(defaultStyle);
   const [styleDropOpen, setStyleDropOpen] = useState(false);
   const styleRef = useRef<HTMLDivElement>(null);
+  // Free-text search (independent of category). When non-empty it takes over from category filters.
+  const [textSearch, setTextSearch] = useState("");
+  const [debouncedText, setDebouncedText] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedText(textSearch.trim()), 150);
+    return () => clearTimeout(t);
+  }, [textSearch]);
+  // Auto-play only when the user explicitly advances (respects YouTube autoplay policy on mount).
+  const [autoPlay, setAutoPlay] = useState(false);
 
   // Check for locked video first
   const lockedBacking = getLockedVideo(ex.id, "backing");
@@ -415,7 +429,8 @@ function YouTubeBackingSection({ scale, mode, style, ex, ytVideoId, setYtVideoId
     } catch { /* ignore */ }
   }
 
-  function handleNextVideo() {
+  const [pendingCountIn, setPendingCountIn] = useState(false);
+  async function handleNextVideo() {
     if (!ytSearchResults || ytSearchResults.length <= 1) return;
     const curIdx = ytResultIndex ?? 0;
     const nextIdx = curIdx + 1;
@@ -426,9 +441,33 @@ function YouTubeBackingSection({ scale, mode, style, ex, ytVideoId, setYtVideoId
       }
       return;
     }
+    const nextId = ytSearchResults[nextIdx];
     if (setYtResultIndex) setYtResultIndex(nextIdx);
-    setYtVideoId(ytSearchResults[nextIdx]);
+    if (loadBackingCountIn()) {
+      setPendingCountIn(true);
+      await playCountIn({ bpm: 120, beats: 4 });
+      setPendingCountIn(false);
+    }
+    setAutoPlay(true);
+    setYtVideoId(nextId);
   }
+
+  // Free-text search effect: run a YouTube search using ONLY the typed text (AND-joined tokens),
+  // independent of style/scale/mode. When input clears, snap back to the category query.
+  const lastTextSearchRef = useRef("");
+  useEffect(() => {
+    const q = debouncedText;
+    if (q === lastTextSearchRef.current) return;
+    lastTextSearchRef.current = q;
+    if (q.length === 0) {
+      runSearch(btQuery(filterStyle, filterScale, filterMode));
+      return;
+    }
+    // Tokens AND semantic: append all tokens + "backing track guitar" context
+    const tokens = q.split(/\s+/).filter(Boolean);
+    runSearch(`${tokens.join(" ")} backing track guitar`);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedText]);
 
   const selectCls = "input !text-[12px] !w-auto";
 
@@ -445,6 +484,22 @@ function YouTubeBackingSection({ scale, mode, style, ex, ytVideoId, setYtVideoId
             <YtSaveButton videoId={ytVideoId} style={filterStyle} scale={filterScale} mode={filterMode} exerciseId={ex.id} exerciseName={ex.n} />
             <VideoLockButton exerciseId={ex.id} type="backing" videoId={ytVideoId} onUnlock={handleBackingUnlock} />
           </div>
+        )}
+      </div>
+
+      {/* Free-text search row (independent of category filters) */}
+      <div className="flex gap-2 items-center mb-2">
+        <input
+          type="text"
+          value={textSearch}
+          onChange={e => setTextSearch(e.target.value)}
+          placeholder="Search text (e.g. pop funky) - overrides category"
+          className="input flex-1 !text-[12px]"
+          autoComplete="off"
+        />
+        {textSearch && (
+          <button type="button" onClick={() => setTextSearch("")}
+            className="btn-ghost !text-[11px] flex-shrink-0">Clear</button>
         )}
       </div>
 
@@ -497,12 +552,17 @@ function YouTubeBackingSection({ scale, mode, style, ex, ytVideoId, setYtVideoId
             Next Video
           </button>
         )}
+        <CountInToggle className="flex-shrink-0" />
       </div>
       {/* Video display */}
       {ytVideoId && (
-        <div className="aspect-video w-full rounded-lg overflow-hidden bg-black">
-          <iframe src={`https://www.youtube.com/embed/${ytVideoId}?modestbranding=1&rel=0`}
-            className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen title="Backing Track" />
+        <div className="aspect-video w-full rounded-lg overflow-hidden bg-black relative">
+          {pendingCountIn ? (
+            <div className="w-full h-full flex items-center justify-center text-[#D4A843] font-label text-[14px] tracking-wider">Count-in...</div>
+          ) : (
+            <iframe key={ytVideoId} src={`https://www.youtube.com/embed/${ytVideoId}?modestbranding=1&rel=0${autoPlay ? "&autoplay=1" : ""}`}
+              className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen title="Backing Track" />
+          )}
         </div>
       )}
     </div>
@@ -891,6 +951,12 @@ function SongWindow({ exercise: ex, mode, scale, style, week, day, savedYtUrl, b
   const [btSearchResults, setBtSearchResults] = useState<string[]>([]);
   const [btResultIndex, setBtResultIndex] = useState(0);
   const [btSearchInput, setBtSearchInput] = useState("");
+  const [btDebouncedInput, setBtDebouncedInput] = useState("");
+  const [btAutoPlay, setBtAutoPlay] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setBtDebouncedInput(btSearchInput.trim()), 150);
+    return () => clearTimeout(t);
+  }, [btSearchInput]);
 
   useEffect(() => {
     if (btSearched || btVideoId || savedVid?.[1]) return;
@@ -957,16 +1023,56 @@ function SongWindow({ exercise: ex, mode, scale, style, week, day, savedYtUrl, b
     } catch { /* ignore */ }
   }
 
-  function handleSongBtNext() {
+  const [btPendingCountIn, setBtPendingCountIn] = useState(false);
+  async function handleSongBtNext() {
     if (btSearchResults.length <= 1) return;
     const nextIdx = btResultIndex + 1;
     if (nextIdx >= btSearchResults.length) {
       fetchMoreSongBt();
       return;
     }
+    const nextId = btSearchResults[nextIdx];
     setBtResultIndex(nextIdx);
-    setBtVideoId(btSearchResults[nextIdx]);
+    if (loadBackingCountIn()) {
+      setBtPendingCountIn(true);
+      await playCountIn({ bpm: 120, beats: 4 });
+      setBtPendingCountIn(false);
+    }
+    setBtAutoPlay(true);
+    setBtVideoId(nextId);
   }
+
+  // Free-text search: debounced, runs YouTube search with tokens (AND semantic). When input clears,
+  // revert to the default song-backing query. Independent of any category selector.
+  const lastBtTextRef = useRef<string | null>(null);
+  useEffect(() => {
+    const q = btDebouncedInput;
+    // Skip URL pastes - the Search button handles those explicitly.
+    if (/(?:youtube\.com|youtu\.be)/.test(q)) return;
+    if (lastBtTextRef.current === q) return;
+    lastBtTextRef.current = q;
+    // On first effect run (both empty), don't override the initial load.
+    if (q.length === 0 && !btSearched) return;
+    const defaultQ = `${ex.songName || ex.n} backing track guitar`;
+    const query = q.length === 0
+      ? defaultQ
+      : `${q.split(/\s+/).filter(Boolean).join(" ")} backing track guitar`;
+    songBtQueryRef.current = query;
+    (async () => {
+      try {
+        const res = await fetch(`/api/youtube?q=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        const ids: string[] = data.results || data.items?.map((i: { videoId: string }) => i.videoId).filter(Boolean) || [];
+        songBtPageTokenRef.current = data.nextPageToken || null;
+        if (ids.length > 0) {
+          setBtVideoId(ids[0]);
+          setBtSearchResults(ids);
+          setBtResultIndex(0);
+        }
+      } catch { /* ignore */ }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [btDebouncedInput]);
 
   type SongTab = "practice" | "tabs" | "backing" | "tutorial";
   const [activeTab, setActiveTab] = useState<SongTab>("practice");
@@ -1017,7 +1123,7 @@ function SongWindow({ exercise: ex, mode, scale, style, week, day, savedYtUrl, b
                   <div className="flex gap-2 mb-3">
                     <input value={btSearchInput} onChange={e => setBtSearchInput(e.target.value)}
                       onKeyDown={e => { if (e.key === "Enter") handleSongBtSearch(); }}
-                      placeholder={`${songName} backing track guitar...`}
+                      placeholder="Search text (e.g. pop funky) - overrides category"
                       className="input flex-1 !text-[12px] min-w-0" />
                     <button type="button" onClick={handleSongBtSearch} className="btn-gold !text-[11px] flex-shrink-0">Search</button>
                   </div>
@@ -1025,16 +1131,23 @@ function SongWindow({ exercise: ex, mode, scale, style, week, day, savedYtUrl, b
                   {btVideoId && (
                     <div className="relative mb-3">
                       <div className="aspect-video w-full rounded-lg overflow-hidden bg-black">
-                        <iframe src={`https://www.youtube.com/embed/${btVideoId}?modestbranding=1&rel=0`}
-                          className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen title="Backing Track" />
+                        {btPendingCountIn ? (
+                          <div className="w-full h-full flex items-center justify-center text-[#D4A843] font-label text-[14px] tracking-wider">Count-in...</div>
+                        ) : (
+                          <iframe key={btVideoId} src={`https://www.youtube.com/embed/${btVideoId}?modestbranding=1&rel=0${btAutoPlay ? "&autoplay=1" : ""}`}
+                            className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen title="Backing Track" />
+                        )}
                       </div>
-                      {btSearchResults.length > 1 && (
-                        <button type="button" onClick={handleSongBtNext}
-                          className="absolute bottom-2 right-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/70 border border-white/[0.12] text-zinc-300 text-[11px] font-medium cursor-pointer hover:bg-black/90 transition-all backdrop-blur-sm">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/><line x1="19" y1="3" x2="19" y2="21"/></svg>
-                          Next Video
-                        </button>
-                      )}
+                      <div className="absolute bottom-2 right-2 flex items-center gap-2">
+                        <CountInToggle />
+                        {btSearchResults.length > 1 && (
+                          <button type="button" onClick={handleSongBtNext}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/70 border border-white/[0.12] text-zinc-300 text-[11px] font-medium cursor-pointer hover:bg-black/90 transition-all backdrop-blur-sm">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/><line x1="19" y1="3" x2="19" y2="21"/></svg>
+                            Next Video
+                          </button>
+                        )}
+                      </div>
                     </div>
                   )}
                   {!btVideoId && !btLoading && (

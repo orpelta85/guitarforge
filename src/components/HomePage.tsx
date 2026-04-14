@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, useMemo, useRef } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import type { Exercise, Song, DayCats, DayHrs, DayExMap, BoolMap, StringMap, ExEditMap, SongEntry } from "@/lib/types";
 import { DAYS, CATS, COL, MODES, SCALES, STYLES, CAT_GROUPS } from "@/lib/constants";
 
@@ -7,6 +7,8 @@ import { EXERCISES } from "@/lib/exercises";
 import { SONG_LIBRARY } from "@/lib/songs-data";
 import WeeklyCharts from "./WeeklyCharts";
 import DarkAudioPlayer from "./DarkAudioPlayer";
+import CountInToggle from "./CountInToggle";
+import { playCountIn, loadBackingCountIn } from "@/lib/metronomeAudio";
 import type { View } from "./Navbar";
 
 interface HomePageProps {
@@ -102,14 +104,19 @@ export default function HomePage(props: HomePageProps) {
 
   // Quick Jam state
   const [jamStyle, setJamStyle] = useState(style);
+  useEffect(() => { setJamStyle(style); }, [style]);
   const [jamScale, setJamScale] = useState(scale);
   const [jamKey, setJamKey] = useState("Am");
   const [jamYtUrl, setJamYtUrl] = useState<string | null>(null);
   const [jamYtLoading, setJamYtLoading] = useState(false);
   const [jamSunoLoading, setJamSunoLoading] = useState(false);
-  const [jamOpen, setJamOpen] = useState(false);
+  const [jamOpen, setJamOpen] = useState(true);
   const [jamStyleDropOpen, setJamStyleDropOpen] = useState(false);
   const jamStyleRef = useRef<HTMLDivElement>(null);
+  const [jamFreeQuery, setJamFreeQuery] = useState("");
+  const jamFreeQueryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [jamAutoPlay, setJamAutoPlay] = useState(false);
+  const [jamCountInPending, setJamCountInPending] = useState(false);
 
   const KEYS_LIST = ["C", "Cm", "C#", "C#m", "D", "Dm", "Eb", "Ebm", "E", "Em", "F", "Fm", "F#", "F#m", "G", "Gm", "Ab", "Abm", "A", "Am", "Bb", "Bbm", "B", "Bm"];
 
@@ -146,19 +153,29 @@ export default function HomePage(props: HomePageProps) {
   }, [setSongs]);
 
   const [jamVideoId, setJamVideoId] = useState<string | null>(null);
+  const [jamVideoIds, setJamVideoIds] = useState<string[]>([]);
+  const [jamVideoIdx, setJamVideoIdx] = useState(0);
   const [jamSearchFailed, setJamSearchFailed] = useState(false);
+  const jamSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchJamBacking = useCallback(async () => {
     setJamYtLoading(true);
     setJamVideoId(null);
+    setJamVideoIds([]);
+    setJamVideoIdx(0);
     setJamSearchFailed(false);
-    const query = `${jamStyle} ${jamKey} ${jamScale} backing track guitar`;
+    const freeTokens = jamFreeQuery.trim();
+    const query = freeTokens
+      ? `${freeTokens} backing track guitar`
+      : `${jamStyle} ${jamKey} ${jamScale} backing track guitar`;
     const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
     try {
       const res = await fetch(`/api/youtube?q=${encodeURIComponent(query)}`);
       const data = await res.json();
-      const videoId = data.items?.[0]?.videoId;
-      if (videoId) {
-        setJamVideoId(videoId);
+      const ids: string[] = (data.items || []).map((it: { videoId: string }) => it.videoId).filter(Boolean);
+      if (ids.length > 0) {
+        setJamVideoIds(ids);
+        setJamVideoIdx(0);
+        setJamVideoId(ids[0]);
       } else {
         setJamSearchFailed(true);
       }
@@ -168,7 +185,64 @@ export default function HomePage(props: HomePageProps) {
       setJamYtUrl(searchUrl);
     }
     setJamYtLoading(false);
-  }, [jamKey, jamScale, jamStyle]);
+  }, [jamKey, jamScale, jamStyle, jamFreeQuery]);
+
+  // Next video: cycle through the fetched list, refetch at the end
+  const nextJamVideo = useCallback(async () => {
+    setJamAutoPlay(true);
+    const useCountIn = loadBackingCountIn();
+    const swap = () => {
+      if (jamVideoIds.length === 0) { searchJamBacking(); return; }
+      const nextIdx = jamVideoIdx + 1;
+      if (nextIdx >= jamVideoIds.length) { searchJamBacking(); return; }
+      setJamVideoIdx(nextIdx);
+      setJamVideoId(jamVideoIds[nextIdx]);
+    };
+    if (useCountIn) {
+      setJamCountInPending(true);
+      setJamVideoId(null);
+      try { await playCountIn({ bpm: 120, beats: 4 }); } catch { /* ok */ }
+      setJamCountInPending(false);
+      swap();
+    } else {
+      swap();
+    }
+  }, [jamVideoIds, jamVideoIdx, searchJamBacking]);
+
+  // Auto-load first backing track on mount so the iframe is populated immediately
+  const didAutoSearchRef = useRef(false);
+  useEffect(() => {
+    if (didAutoSearchRef.current) return;
+    didAutoSearchRef.current = true;
+    searchJamBacking();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Debounce re-search when style/scale/key change after the initial load
+  useEffect(() => {
+    if (!didAutoSearchRef.current) return;
+    if (jamSearchTimerRef.current) clearTimeout(jamSearchTimerRef.current);
+    jamSearchTimerRef.current = setTimeout(() => {
+      searchJamBacking();
+    }, 500);
+    return () => {
+      if (jamSearchTimerRef.current) clearTimeout(jamSearchTimerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jamStyle, jamScale, jamKey]);
+
+  // Debounce re-search on free-text query changes (150ms per spec)
+  useEffect(() => {
+    if (!didAutoSearchRef.current) return;
+    if (jamFreeQueryTimerRef.current) clearTimeout(jamFreeQueryTimerRef.current);
+    jamFreeQueryTimerRef.current = setTimeout(() => {
+      searchJamBacking();
+    }, 150);
+    return () => {
+      if (jamFreeQueryTimerRef.current) clearTimeout(jamFreeQueryTimerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jamFreeQuery]);
 
   // Quick Jam Suno generate
   const [sunoError, setSunoError] = useState<string | null>(null);
@@ -206,7 +280,23 @@ export default function HomePage(props: HomePageProps) {
     return curExList.filter(e => !doneMap[week + "-" + selDay + "-" + e.id]).slice(0, 3);
   }, [curExList, doneMap, week, selDay]);
 
-  // Songs of the week - all unique songs from this week's practice schedule
+  // Dismissed "song of the week" ids (persisted in localStorage)
+  const [dismissedSongIds, setDismissedSongIds] = useState<Record<string, boolean>>(() => {
+    if (typeof window === "undefined") return {};
+    try {
+      const raw = localStorage.getItem("gf-dismissed-week-songs");
+      return raw ? JSON.parse(raw) : {};
+    } catch { return {}; }
+  });
+  const dismissSongOfWeek = useCallback((id: number | string) => {
+    setDismissedSongIds(prev => {
+      const next = { ...prev, [String(id)]: true };
+      try { localStorage.setItem("gf-dismissed-week-songs", JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }, []);
+
+  // Songs of the week - all unique songs from this week's practice schedule (minus dismissed)
   const songsOfTheWeek = useMemo(() => {
     const seen = new Set<number | string>();
     const songs: SongEntry[] = [];
@@ -215,6 +305,7 @@ export default function HomePage(props: HomePageProps) {
       for (const ex of exs) {
         if (ex.c === "Songs" && ex.songId && !seen.has(ex.songId)) {
           seen.add(ex.songId);
+          if (dismissedSongIds[String(ex.songId)]) continue;
           const entry = SONG_LIBRARY.find(s => s.id === ex.songId);
           if (entry) songs.push(entry);
           else songs.push({ id: ex.songId!, title: ex.songName || ex.n, artist: "" } as SongEntry);
@@ -222,7 +313,7 @@ export default function HomePage(props: HomePageProps) {
       }
     }
     return songs;
-  }, [dayExMap]);
+  }, [dayExMap, dismissedSongIds]);
 
   const todayDayOfWeek = todayDate.getDay();
 
@@ -448,6 +539,21 @@ export default function HomePage(props: HomePageProps) {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
                 {jamYtLoading ? "Searching..." : "Search YouTube"}
               </button>
+              <button onClick={nextJamVideo} disabled={jamYtLoading}
+                className="btn-ghost !text-[11px] flex items-center gap-2 !border-[#f59e0b]/30 !text-[#f59e0b]"
+                title="Load the next matching video">
+                Next Video
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </button>
+              <CountInToggle />
+              <input
+                type="text"
+                value={jamFreeQuery}
+                onChange={(e) => setJamFreeQuery(e.target.value)}
+                placeholder="Search text (e.g. pop funky) - overrides category"
+                className="input !text-[11px] flex-1 min-w-[240px]"
+                aria-label="Free-text backing track search"
+              />
               <button onClick={generateJamSuno} disabled={jamSunoLoading}
                 className="btn-ghost !text-[11px] flex items-center gap-2 !border-[#D4A843]/30 !text-[#D4A843]">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -472,21 +578,32 @@ export default function HomePage(props: HomePageProps) {
               </div>
             )}
             {jamYtLoading && (
-              <div className="aspect-video w-full rounded-lg overflow-hidden bg-[#0e0e10] mb-3 flex items-center justify-center">
+              <div className="w-full rounded-xl overflow-hidden bg-[#0e0e10] mb-3 flex items-center justify-center"
+                style={{ minHeight: 480, aspectRatio: "16 / 9", maxWidth: 960 }}>
                 <div className="font-label text-[12px] text-[#555] animate-pulse">Searching YouTube...</div>
               </div>
             )}
-            {jamVideoId && !jamYtLoading && (
+            {jamCountInPending && (
+              <div className="w-full rounded-xl overflow-hidden bg-[#0e0e10] mb-3 flex items-center justify-center"
+                style={{ minHeight: 480, aspectRatio: "16 / 9", maxWidth: 960, border: "1px solid rgba(245,158,11,0.15)" }}>
+                <div className="font-label text-[12px] text-[#f59e0b] animate-pulse">Count-in...</div>
+              </div>
+            )}
+            {jamVideoId && !jamYtLoading && !jamCountInPending && (
               <div className="mb-3">
-                <div className="aspect-video w-full rounded-lg overflow-hidden bg-black">
+                <div className="w-full rounded-xl overflow-hidden bg-black shadow-lg"
+                  style={{ minHeight: 480, aspectRatio: "16 / 9", maxWidth: 960, border: "1px solid rgba(245,158,11,0.15)" }}>
                   <iframe
                     key={jamVideoId}
-                    src={`https://www.youtube.com/embed/${jamVideoId}?modestbranding=1&rel=0&autoplay=1`}
+                    src={`https://www.youtube.com/embed/${jamVideoId}?modestbranding=1&rel=0${jamAutoPlay ? "&autoplay=1" : ""}`}
                     className="w-full h-full"
                     allow="autoplay; encrypted-media"
                     allowFullScreen
                     title="Jam Backing Track"
                   />
+                </div>
+                <div className="font-readout text-[10px] text-[#555] mt-2">
+                  {jamVideoIds.length > 0 && `Video ${jamVideoIdx + 1} of ${jamVideoIds.length} \u00B7 `}{jamKey} {jamScale} &middot; {jamStyle}
                 </div>
               </div>
             )}
@@ -529,32 +646,81 @@ export default function HomePage(props: HomePageProps) {
           {songsOfTheWeek.length > 0 ? (
             <div className="flex flex-col gap-2">
               {songsOfTheWeek.map(song => (
-                <button key={song.id} type="button" onClick={() => setSongModal(song)} className="w-full text-left">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg, #1a1a2e, #16213e)" }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                <div key={song.id} className="flex items-center gap-2 group">
+                  <button type="button" onClick={() => setSongModal(song)} className="flex-1 min-w-0 text-left">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg, #1a1a2e, #16213e)" }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="1.5"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[13px] text-[#ccc] font-medium truncate">{song.title}</div>
+                        <div className="text-[11px] text-[#555] truncate">{song.artist}</div>
+                        {song.difficulty && (
+                          <span className={`text-[9px] mt-0.5 inline-block px-1.5 py-0.5 rounded ${song.difficulty === "Beginner" ? "text-[#22c55e] bg-[#22c55e10]" : song.difficulty === "Intermediate" ? "text-[#D4A843] bg-[#D4A84310]" : "text-[#ef4444] bg-[#ef444410]"}`}>
+                            {song.difficulty}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-[13px] text-[#ccc] font-medium truncate">{song.title}</div>
-                      <div className="text-[11px] text-[#555] truncate">{song.artist}</div>
-                      {song.difficulty && (
-                        <span className={`text-[9px] mt-0.5 inline-block px-1.5 py-0.5 rounded ${song.difficulty === "Beginner" ? "text-[#22c55e] bg-[#22c55e10]" : song.difficulty === "Intermediate" ? "text-[#D4A843] bg-[#D4A84310]" : "text-[#ef4444] bg-[#ef444410]"}`}>
-                          {song.difficulty}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </button>
+                  </button>
+                  <button
+                    type="button"
+                    title="Dismiss"
+                    aria-label={`Dismiss ${song.title}`}
+                    onClick={() => dismissSongOfWeek(song.id)}
+                    className="flex-shrink-0 p-1 rounded text-[#555] hover:text-[#D4A843] hover:bg-white/[0.04] transition-colors opacity-60 group-hover:opacity-100"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                  </button>
+                </div>
               ))}
             </div>
           ) : (
-            <div className="text-[12px] text-[#444]">No songs scheduled this week</div>
+            <div className="text-[12px] text-[#444]">
+              No songs scheduled this week
+              {Object.keys(dismissedSongIds).length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDismissedSongIds({});
+                    try { localStorage.removeItem("gf-dismissed-week-songs"); } catch {}
+                  }}
+                  className="ml-2 text-[11px] text-[#D4A843] hover:text-[#DFBD69] transition-colors bg-transparent border-0 cursor-pointer p-0"
+                >
+                  Restore dismissed
+                </button>
+              )}
+            </div>
           )}
         </div>
 
         {/* Weekly Progress mini */}
         <div className="rounded-xl p-4 transition-all hover:border-white/10" style={{ background: "#111114", border: "1px solid rgba(255,255,255,0.05)" }}>
-          <div className="text-[10px] font-semibold text-[#D4A843] uppercase tracking-wider mb-3">This Week</div>
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-[10px] font-semibold text-[#D4A843] uppercase tracking-wider">This Week</div>
+            <button
+              type="button"
+              title="Reset this week's progress"
+              onClick={() => {
+                if (!window.confirm("Reset this week's progress?")) return;
+                const prefix = week + "-";
+                setDoneMap(prev => {
+                  const next: BoolMap = {};
+                  for (const k in prev) { if (!k.startsWith(prefix)) next[k] = prev[k]; }
+                  return next;
+                });
+                setBpmLog(prev => {
+                  const next: StringMap = {};
+                  for (const k in prev) { if (!k.startsWith(prefix)) next[k] = prev[k]; }
+                  return next;
+                });
+              }}
+              className="flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wider transition-all hover:bg-[#D4A843]/10 bg-transparent border border-white/[0.06] text-[#888] hover:text-[#D4A843] hover:border-[#D4A843]/30 cursor-pointer"
+            >
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 4v5h5"/></svg>
+              Reset
+            </button>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <div className="font-bold text-xl text-[#D4A843]">{wPct}%</div>

@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useCallback, useEffect } from "react";
+import { loadMetronomeVolume, saveMetronomeVolume, clickGain } from "@/lib/metronomeAudio";
 
 interface Props {
   startBpm?: number;
@@ -45,6 +46,10 @@ export default function LooperBox({ startBpm, standalone }: Props) {
   const [countingIn, setCountingIn] = useState(false);
   const [countInBeat, setCountInBeat] = useState(-1);
   const [currentBeat, setCurrentBeat] = useState(-1);
+  const [metVolume, setMetVolume] = useState(1);
+  const metVolumeRef = useRef(1);
+  useEffect(() => { setMetVolume(loadMetronomeVolume()); }, []);
+  useEffect(() => { metVolumeRef.current = metVolume; }, [metVolume]);
 
   const bpmRef = useRef(bpm);
   useEffect(() => { bpmRef.current = bpm; }, [bpm]);
@@ -74,7 +79,7 @@ export default function LooperBox({ startBpm, standalone }: Props) {
     osc.connect(gain);
     gain.connect(ctx.destination);
     osc.frequency.value = accent ? 1200 : 900;
-    gain.gain.setValueAtTime(accent ? 0.3 : 0.15, time);
+    gain.gain.setValueAtTime(clickGain(accent ? "accent" : "normal", metVolumeRef.current), time);
     gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
     osc.start(time);
     osc.stop(time + 0.05);
@@ -425,6 +430,22 @@ export default function LooperBox({ startBpm, standalone }: Props) {
         <span className="font-readout text-[10px] text-[#444] ml-auto">
           {loopDuration.toFixed(1)}s
         </span>
+        <div className="flex items-center gap-1.5 ml-2" title={`Metronome volume ${Math.round(metVolume * 100)}%`}>
+          <span className="font-label text-[9px] text-[#555] uppercase">Vol</span>
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.05}
+            value={metVolume}
+            onChange={(e) => {
+              const v = parseFloat(e.target.value);
+              setMetVolume(v);
+              saveMetronomeVolume(v);
+            }}
+            className="w-[60px] accent-[#D4A843]"
+          />
+        </div>
       </div>
 
       {/* Layers */}

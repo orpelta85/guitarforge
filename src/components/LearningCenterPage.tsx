@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import FretboardChallenge from "./FretboardChallenge";
+import ChromaticTuner from "./ChromaticTuner";
 
 /* ═══════════════════════════════════════════════════════════
    DATA
@@ -27,16 +28,16 @@ const ALL_INTERVALS = [
   { name: "P8", label: "Octave", st: 12, color: "#ec4899", ref: "Starman (Bowie)" },
 ];
 const ALL_CHORDS = [
-  { name: "Major", iv: [0,4,7], color: "#22c55e" },
-  { name: "Minor", iv: [0,3,7], color: "#3b82f6" },
-  { name: "Dim", iv: [0,3,6], color: "#ef4444" },
-  { name: "Aug", iv: [0,4,8], color: "#f97316" },
-  { name: "Dom7", iv: [0,4,7,10], color: "#eab308" },
-  { name: "Maj7", iv: [0,4,7,11], color: "#84cc16" },
-  { name: "Min7", iv: [0,3,7,10], color: "#6366f1" },
-  { name: "Dim7", iv: [0,3,6,9], color: "#ec4899" },
-  { name: "Sus2", iv: [0,2,7], color: "#14b8a6" },
-  { name: "Sus4", iv: [0,5,7], color: "#06b6d4" },
+  { name: "Major", short: "major", iv: [0,4,7], color: "#22c55e" },
+  { name: "Minor", short: "minor", iv: [0,3,7], color: "#3b82f6" },
+  { name: "Dim", short: "dim", iv: [0,3,6], color: "#ef4444" },
+  { name: "Aug", short: "aug", iv: [0,4,8], color: "#f97316" },
+  { name: "Dom7", short: "7", iv: [0,4,7,10], color: "#eab308" },
+  { name: "Maj7", short: "maj7", iv: [0,4,7,11], color: "#84cc16" },
+  { name: "Min7", short: "m7", iv: [0,3,7,10], color: "#6366f1" },
+  { name: "Dim7", short: "dim7", iv: [0,3,6,9], color: "#ec4899" },
+  { name: "Sus2", short: "sus2", iv: [0,2,7], color: "#14b8a6" },
+  { name: "Sus4", short: "sus4", iv: [0,5,7], color: "#06b6d4" },
 ];
 const ALL_SCALES = [
   { name: "Major", notes: [0,2,4,5,7,9,11], color: "#22c55e" },
@@ -78,20 +79,58 @@ const PROG_QUESTIONS = [
   { name: "I - vi - IV - V", chords: [[0,4,7],[9,12,16],[5,9,12],[7,11,14]] },
   { name: "i - iv - v - i", chords: [[0,3,7],[5,8,12],[7,10,14],[0,3,7]] },
 ];
-const PROG_PRESETS = [
-  { g: "Metal", n: "i–bVI–bVII–i", ch: ["Am","F","G","Am"] },
-  { g: "Blues 12-Bar", n: "I7–IV7–V7–I7", ch: ["A7","D7","E7","A7"] },
-  { g: "Classic Rock", n: "I–IV–V–I", ch: ["A","D","E","A"] },
-  { g: "Doom", n: "i–bII–i", ch: ["Am","Bb","Am"] },
-  { g: "Pop-Punk", n: "I–V–vi–IV", ch: ["C","G","Am","F"] },
-  { g: "Jazz", n: "ii–V–I", ch: ["Bm7","E7","Amaj7"] },
-  { g: "Grunge", n: "i–iv–i–v", ch: ["Em","Am","Em","Bm"] },
-  { g: "Ballad", n: "I–vi–IV–V", ch: ["C","Am","F","G"] },
-  { g: "Progressive Metal", n: "i–bVI–bVII–iv", ch: ["Am","F","G","Dm"] },
-  { g: "Neo-Classical", n: "i–bII–V–i", ch: ["Am","Bb","E","Am"] },
-  { g: "Funk", n: "I7–IV7–I7–V7", ch: ["A7","D7","A7","E7"] },
-  { g: "Country", n: "I–IV–V–I", ch: ["A","D","E","A"] },
+type ProgQuality = "major" | "minor";
+interface ProgPreset { g: string; n: string; quality: ProgQuality; degrees: string[]; vibe: string; }
+const PROG_PRESETS: ProgPreset[] = [
+  { g: "Pop Axis",      n: "I-V-vi-IV",            quality: "major", degrees: ["I","V","vi","IV"],                     vibe: "Uplifting, anthemic, the classic pop ballad feel" },
+  { g: "'50s Doo-Wop",  n: "I-vi-IV-V",            quality: "major", degrees: ["I","vi","IV","V"],                     vibe: "Nostalgic, romantic, vintage rock 'n' roll" },
+  { g: "Jazz ii-V-I",   n: "ii-V-I",               quality: "major", degrees: ["iim7","V7","Imaj7"],                   vibe: "Sophisticated, resolving, the jazz essential" },
+  { g: "Sad Pop",       n: "vi-IV-I-V",            quality: "major", degrees: ["vi","IV","I","V"],                     vibe: "Bittersweet, emotional, melancholic pop" },
+  { g: "Blues",         n: "I-IV-V",               quality: "major", degrees: ["I","IV","V"],                          vibe: "Straightforward, bluesy, foundational rock" },
+  { g: "Blues 12-Bar",  n: "I7-IV7-V7",            quality: "major", degrees: ["I7","IV7","V7","I7"],                  vibe: "Shuffle groove, the bedrock of rock and roll" },
+  { g: "Minor Rock",    n: "i-VI-III-VII",         quality: "minor", degrees: ["i","VI","III","VII"],                  vibe: "Epic, dramatic, cinematic minor feel" },
+  { g: "Minor Blues",   n: "i-iv-v",               quality: "minor", degrees: ["i","iv","v"],                          vibe: "Dark, brooding, classic minor blues" },
+  { g: "Canon",         n: "I-V-vi-iii-IV-I-IV-V", quality: "major", degrees: ["I","V","vi","iii","IV","I","IV","V"], vibe: "Hopeful, classical, Pachelbel vibes" },
+  { g: "Metal",         n: "i-VI-VII-i",           quality: "minor", degrees: ["i","VI","VII","i"],                    vibe: "Heavy, driving, the metal staple" },
+  { g: "Doom",          n: "i-bII-i",              quality: "minor", degrees: ["i","bII","i"],                         vibe: "Menacing, oppressive, slow and crushing" },
+  { g: "Pop-Punk",      n: "I-V-vi-IV",            quality: "major", degrees: ["I","V","vi","IV"],                     vibe: "Energetic, youthful, chorus-ready" },
+  { g: "Grunge",        n: "i-iv-i-v",             quality: "minor", degrees: ["i","iv","i","v"],                      vibe: "Moody, raw, 90s alt-rock angst" },
+  { g: "Neo-Classical", n: "i-bII-V-i",            quality: "minor", degrees: ["i","bII","V","i"],                     vibe: "Exotic, theatrical, Phrygian drama" },
+  { g: "Andalusian",    n: "i-VII-VI-V",           quality: "minor", degrees: ["i","VII","VI","V"],                    vibe: "Flamenco fire, descending Spanish staircase" },
 ];
+
+const MAJOR_STEPS = [0, 2, 4, 5, 7, 9, 11];
+const MINOR_STEPS = [0, 2, 3, 5, 7, 8, 10];
+const MAJOR_QUALITIES = ["", "m", "m", "", "", "m", "dim"];
+const MINOR_QUALITIES = ["m", "dim", "", "m", "m", "", ""];
+const ROMAN_TO_DEGREE: Record<string, number> = {
+  i: 1, ii: 2, iii: 3, iv: 4, v: 5, vi: 6, vii: 7,
+  I: 1, II: 2, III: 3, IV: 4, V: 5, VI: 6, VII: 7,
+};
+function transposeProgression(degrees: string[], root: string, quality: ProgQuality): string[] {
+  const ri = NOTES.indexOf(root);
+  if (ri < 0) return [];
+  const steps = quality === "major" ? MAJOR_STEPS : MINOR_STEPS;
+  const defaults = quality === "major" ? MAJOR_QUALITIES : MINOR_QUALITIES;
+  return degrees.map(tok => {
+    const m = tok.match(/^(b|#)?(iii|ii|iv|vii|vi|v|i|III|II|IV|VII|VI|V|I)(.*)$/);
+    if (!m) return tok;
+    const [, acc, rom, rawSuffix] = m;
+    const deg = ROMAN_TO_DEGREE[rom];
+    const isUpper = rom === rom.toUpperCase();
+    const base = steps[deg - 1];
+    const semis = base + (acc === "b" ? -1 : acc === "#" ? 1 : 0);
+    const note = NOTES[(ri + semis + 120) % 12];
+    let suffix = rawSuffix;
+    const defQ = defaults[deg - 1];
+    if (!suffix) {
+      if (isUpper && defQ !== "dim") suffix = "";
+      else if (!isUpper) suffix = defQ === "dim" ? "dim" : "m";
+      else suffix = defQ;
+    }
+    return note + suffix;
+  });
+}
 const ACHIEVEMENTS = [
   { id: "first10", name: "First Steps", desc: "10 answers", need: 10, key: "total" },
   { id: "first50", name: "Warming Up", desc: "50 answers", need: 50, key: "total" },
@@ -130,7 +169,7 @@ interface Lesson {
   audioDemo?: { type: "scale"|"chord"|"interval"; data: number[] };
   quiz?: { q: string; opts: string[]; ans: number };
   steps?: LessonStep[];
-  visual?: "fretboard" | "piano" | "none";
+  visual?: "fretboard" | "none";
 }
 
 const LESSONS: Lesson[] = [
@@ -172,7 +211,7 @@ const LESSONS: Lesson[] = [
   { id: "b4", title: "The Octave", cat: "Fundamentals", desc: "Why C sounds like C, just higher",
     content: ["Octave = 12 semitones. A note an octave higher sounds \"the same\" but higher.","The reason: the frequency ratio is 2:1. A4 = 440Hz, A5 = 880Hz.","On guitar: octave = 12 frets, or 2 strings up + 2 frets over."],
     audioDemo: { type: "interval", data: [12] },
-    visual: "piano",
+    visual: "fretboard",
     steps: [
       { text: "Octave = 12 semitones. Same note, double the frequency.", highlight: [48], label: "C3" },
       { text: "C3 (low) and C4 (high). Sound \"the same\" but C4 is higher.", highlight: [48, 60], label: "C3 → C4" },
@@ -271,7 +310,7 @@ const LESSONS: Lesson[] = [
     content: ["Every note in a scale has a name and function. These are the Scale Degrees:","Degree 1 — Tonic: \"home\", center of gravity. Degree 2 — Supertonic: above the tonic. Degree 3 — Mediant: between tonic and dominant.","Degree 4 — Subdominant: below the dominant. Degree 5 — Dominant: strongest after the tonic, creates tension. Degree 6 — Submediant: between subdominant and octave.","Degree 7 — Leading Tone: a semitone below the tonic, \"pulls\" toward it. In Natural Minor it's the Subtonic (a whole tone below).","In C Major: C=Tonic, D=Supertonic, E=Mediant, F=Subdominant, G=Dominant, A=Submediant, B=Leading Tone."],
     fretboardRoot: "C", fretboardNotes: ["C","D","E","F","G","A","B"],
     audioDemo: { type: "scale", data: [0,2,4,5,7,9,11,12] },
-    visual: "piano",
+    visual: "fretboard",
     steps: [
       { text: "Degree 1 — Tonic: \"home\", the gravitational center of the scale. C.", highlight: [48, 60], label: "1 — Tonic (C)" },
       { text: "Degree 2 — Supertonic: above the tonic. D.", highlight: [50, 62], label: "2 — Supertonic (D)" },
@@ -303,7 +342,7 @@ const LESSONS: Lesson[] = [
   { id: "i2", title: "Interval Quality", cat: "Intervals", desc: "Perfect, Major, Minor, Augmented, Diminished",
     content: ["Every interval has a number (2nd, 3rd, 4th...) and a quality (Perfect, Major, Minor, Augmented, Diminished).","Perfect Intervals: P1 (Unison), P4 (5 st), P5 (7 st), P8 (12 st). Sound stable and \"open\". They are the basis for power chords.","Major Intervals: M2 (2 st), M3 (4 st), M6 (9 st), M7 (11 st). Sound happy/bright.","Minor Intervals: m2 (1 st), m3 (3 st), m6 (8 st), m7 (10 st). Sound sad/dark.","Augmented = a semitone above Perfect/Major. Diminished = a semitone below Perfect/Minor.","Tritone (TT) = 6 semitones. Aug 4th or Dim 5th. \"The Devil's Interval\" — the foundation of the Black Sabbath sound."],
     audioDemo: { type: "interval", data: [5,7,3,4] },
-    visual: "piano",
+    visual: "fretboard",
     steps: [
       { text: "Perfect Intervals — sound stable, \"open\". Basis for Power Chords.", highlight: [48], label: "Perfect Intervals" },
       { text: "P1 (Unison) — same note. P4 — 5 semitones: C → F.", highlight: [48, 53], label: "P4 — C→F (5 st)" },
@@ -329,7 +368,7 @@ const LESSONS: Lesson[] = [
   { id: "c1", title: "Triads", cat: "Chords", desc: "3 notes: Major, Minor, Dim, Aug",
     content: ["A chord = 3+ notes sounding together. The most basic is a triad (3 notes).","Triad = Root + 3rd + 5th.","Major triad: R-M3-P5 (0-4-7). Happy/bright. Minor triad: R-m3-P5 (0-3-7). Sad/dark.","Diminished: R-m3-b5 (0-3-6). Tense, unstable. Augmented: R-M3-#5 (0-4-8). Dreamy, strange.","Major and Minor are 90% of chords you'll hear. Dim and Aug add color and tension."],
     audioDemo: { type: "chord", data: [0,4,7] },
-    visual: "piano",
+    visual: "fretboard",
     steps: [
       { text: "Triad = 3 notes: Root + 3rd + 5th. Starting with C as root.", highlight: [48], label: "C — Root" },
       { text: "C Major Triad: C-E-G (0-4-7). Happy, bright sound.", highlight: [48, 52, 55], label: "C Major (0-4-7)" },
@@ -364,7 +403,7 @@ const LESSONS: Lesson[] = [
   { id: "c5", title: "Seventh Chords", cat: "Chords", desc: "Dom7, Maj7, Min7, m7b5, Dim7 — all types",
     content: ["7th chord = triad + 7th degree. Five main types:","1) Dominant 7 (dom7) = Major + m7: 0-4-7-10. Most common in blues and rock. Example: A7 = A-C#-E-G.","2) Major 7 (Maj7) = Major + M7: 0-4-7-11. Warm, romantic sound. Example: Amaj7 = A-C#-E-G#.","3) Minor 7 (m7) = Minor + m7: 0-3-7-10. Jazzy, sad sound. Example: Am7 = A-C-E-G.","4) Half-diminished (m7b5) = Dim + m7: 0-3-6-10. Tense sound. Example: Am7b5 = A-C-Eb-G.","5) Fully-diminished (dim7) = Dim + dim7: 0-3-6-9. Completely symmetrical. Example: Adim7 = A-C-Eb-Gb."],
     audioDemo: { type: "chord", data: [0,4,7,10] },
-    visual: "piano",
+    visual: "fretboard",
     steps: [
       { text: "Seventh chord = triad + 7th degree. Building from C as root.", highlight: [48], label: "C — Root" },
       { text: "C Dominant 7 (C7): C-E-G-Bb (0-4-7-10). Most common in blues.", highlight: [48, 52, 55, 58], label: "C7 (dom7)" },
@@ -383,7 +422,7 @@ const LESSONS: Lesson[] = [
   // ═══ Diatonic Chords (4 lessons) ═══
   { id: "dc1", title: "Diatonic Triads", cat: "Diatonic Chords", desc: "How scale notes form chords — I ii iii IV V vi vii°",
     content: ["A diatonic chord = a chord built only from notes of the scale.","Take each scale degree and build a triad by skipping: degrees 1-3-5, degrees 2-4-6, etc.","In C Major: C-E-G = C (I), D-F-A = Dm (ii), E-G-B = Em (iii), F-A-C = F (IV), G-B-D = G (V), A-C-E = Am (vi), B-D-F = Bdim (vii°).","The pattern is fixed for every Major scale: Major-minor-minor-Major-Major-minor-diminished.","The uppercase Roman numerals (I, IV, V) are Major. The lowercase (ii, iii, vi) are Minor. vii° is Diminished."],
-    visual: "piano",
+    visual: "fretboard",
     steps: [
       { text: "Building diatonic triads from C Major notes only: C-D-E-F-G-A-B.", highlight: [48, 50, 52, 53, 55, 57, 59], label: "C Major Scale" },
       { text: "I — C Major: C-E-G (1-3-5). Tonic. Home.", highlight: [48, 52, 55], label: "I — C Major" },
@@ -446,11 +485,10 @@ const LESSONS: Lesson[] = [
    ═══════════════════════════════════════════════════════════ */
 type MainTab = "lessons" | "exercises" | "tools";
 type ExMode = "intervals" | "chords" | "scales" | "fretboard" | "progressions" | "construction"
-  | "fb-intervals" | "fb-scales" | "fb-chords" | "note-ear" | "iv-construction" | "chord-construction"
-  | "kb-notes" | "kb-intervals" | "kb-scales" | "kb-chords" | "kb-ear";
+  | "fb-intervals" | "fb-scales" | "fb-chords" | "note-ear" | "iv-construction" | "chord-construction";
 type Direction = "ascending" | "descending" | "harmonic";
 type SubTab = "exercise" | "achievements" | "reference";
-type ToolTab = "scales" | "chords" | "fretboard" | "progressions" | "circle" | "intervals" | "tempo" | "iv-calc" | "piano" | "tuner";
+type ToolTab = "scales" | "chords" | "fretboard" | "progressions" | "circle" | "intervals" | "tempo" | "iv-calc" | "tuner";
 type ConSubMode = "scale" | "interval" | "chord";
 
 interface LearnState {
@@ -493,14 +531,14 @@ function LCFretboard({ highlightNotes, rootNote, showIntervals, onClick, maxFret
         <div className="flex mb-0.5">
           <div className="w-8 flex-shrink-0" />
           {Array.from({ length: maxFret + 1 }, (_, f) => (
-            <div key={f} className={`flex-1 text-center font-readout text-[9px] ${FRET_MARKERS.includes(f) ? "text-[#D4A843]" : "text-[#333]"}`}>{f}</div>
+            <div key={f} className={`flex-1 text-center font-readout text-[10px] font-semibold ${FRET_MARKERS.includes(f) ? "text-[#D4A843]" : "text-[#888]"}`}>{f}</div>
           ))}
         </div>
         {[...Array(6)].map((_, si) => {
           const s = 5 - si;
           return (
             <div key={s} className="flex items-center" style={{ height: 28 }}>
-              <div className="w-8 flex-shrink-0 font-readout text-[10px] text-[#555] text-center">{STR[s]}</div>
+              <div className="w-8 flex-shrink-0 font-readout text-[11px] font-semibold text-[#bbb] text-center">{STR[s]}</div>
               {Array.from({ length: maxFret + 1 }, (_, f) => {
                 const midi = TUNING[s] + f;
                 const n = NOTES[midi % 12];
@@ -512,10 +550,10 @@ function LCFretboard({ highlightNotes, rootNote, showIntervals, onClick, maxFret
                   <div key={f}
                     onClick={() => { if (onClick) onClick(s, f); else if (inSet) play(midi); }}
                     className={`flex-1 flex items-center justify-center ${inSet || onClick ? "cursor-pointer" : ""} ${inSet ? "hover:scale-110" : ""} transition-all`}
-                    style={{ height: 28, borderRight: f > 0 ? "1px solid #1a1a1a" : "none", borderLeft: isNut ? "3px solid #D4A843" : "none", borderBottom: si < 5 ? `1px solid ${si < 3 ? "#333" : "#444"}` : "1px solid #555", background: isNut ? "#0d0d0d" : "transparent" }}>
+                    style={{ height: 28, borderRight: f > 0 ? "1px solid #2a2a2a" : "none", borderLeft: isNut ? "3px solid #D4A843" : "none", borderBottom: si < 5 ? `1px solid ${si < 3 ? "#555" : "#666"}` : "1px solid #777", background: isNut ? "#0d0d0d" : "transparent" }}>
                     {inSet && (
-                      <div className="rounded-full flex items-center justify-center text-[7px] font-bold"
-                        style={{ width: 20, height: 20, background: isR ? "#D4A843" : "#2a2a2a", color: isR ? "#121214" : "#ddd", border: isR ? "none" : "1px solid #444" }}>
+                      <div className="rounded-full flex items-center justify-center text-[9px] font-bold shadow-md"
+                        style={{ width: 22, height: 22, background: isR ? "#D4A843" : "#3a3a3a", color: isR ? "#121214" : "#ffffff", border: isR ? "none" : "1px solid #777" }}>
                         {showIntervals ? IV_NAMES[semi] : n}
                       </div>
                     )}
@@ -531,7 +569,7 @@ function LCFretboard({ highlightNotes, rootNote, showIntervals, onClick, maxFret
             <div key={f} className="flex-1 flex justify-center">
               {FRET_MARKERS.includes(f) && (
                 <div className="flex gap-0.5">
-                  <div className={`w-1.5 h-1.5 rounded-full ${f === 12 ? "bg-[#D4A843]/50" : "bg-[#333]"}`} />
+                  <div className={`w-1.5 h-1.5 rounded-full ${f === 12 ? "bg-[#D4A843]/70" : "bg-[#666]"}`} />
                   {f === 12 && <div className="w-1.5 h-1.5 rounded-full bg-[#D4A843]/50" />}
                 </div>
               )}
@@ -585,233 +623,9 @@ function ChordDiagram({ pos, onPlay }: { pos: ChordPosition; onPlay: () => void 
   );
 }
 
-/* ═══════════════════════════════════════════════════════════
-   PIANO KEYBOARD
-   ═══════════════════════════════════════════════════════════ */
-const PIANO_WHITE_KEYS = [0,2,4,5,7,9,11]; // C D E F G A B semitone offsets
-const PIANO_BLACK_KEYS = [1,3,6,8,10]; // C# D# F# G# A#
-const PIANO_C3 = 48;
+/* PIANO KEYBOARD REMOVED - piano-based exercises removed per user request */
 
-function PianoKeyboard({ highlighted, onClick, disabled }: {
-  highlighted?: number[]; onClick?: (midi: number) => void; disabled?: boolean;
-}) {
-  const hlSet = new Set(highlighted || []);
-  const whiteKeys: { midi: number; label: string }[] = [];
-  const blackKeys: { midi: number; label: string; leftOffset: number }[] = [];
-  for (let oct = 0; oct < 2; oct++) {
-    const base = PIANO_C3 + oct * 12;
-    PIANO_WHITE_KEYS.forEach((semi, i) => {
-      whiteKeys.push({ midi: base + semi, label: NOTES[semi] + (oct === 0 ? "3" : "4") });
-    });
-    const blackPositions = [0.65, 1.75, 3.6, 4.7, 5.8];
-    PIANO_BLACK_KEYS.forEach((semi, i) => {
-      blackKeys.push({ midi: base + semi, label: NOTES[semi], leftOffset: (oct * 7 + blackPositions[i]) * 40 });
-    });
-  }
-  return (
-    <div className="relative select-none" dir="ltr" style={{ width: whiteKeys.length * 40, height: 120, margin: "0 auto" }}>
-      {whiteKeys.map((k, i) => {
-        const isHl = hlSet.has(k.midi);
-        return (
-          <div key={k.midi}
-            onClick={() => { if (!disabled && onClick) onClick(k.midi); }}
-            className={`absolute border border-[#333] rounded-b-sm flex items-end justify-center pb-1 text-[8px] font-bold transition-all ${!disabled && onClick ? "cursor-pointer hover:brightness-110" : ""}`}
-            style={{ left: i * 40, top: 0, width: 38, height: 120,
-              background: isHl ? "#D4A843" : "#e8e8e8",
-              color: isHl ? "#121214" : "#555" }}>
-            {k.label}
-          </div>
-        );
-      })}
-      {blackKeys.map(k => {
-        const isHl = hlSet.has(k.midi);
-        return (
-          <div key={k.midi}
-            onClick={() => { if (!disabled && onClick) onClick(k.midi); }}
-            className={`absolute rounded-b-sm flex items-end justify-center pb-1 text-[7px] font-bold z-10 transition-all ${!disabled && onClick ? "cursor-pointer hover:brightness-125" : ""}`}
-            style={{ left: k.leftOffset, top: 0, width: 24, height: 80,
-              background: isHl ? "#D4A843" : "#1a1a1a",
-              color: isHl ? "#121214" : "#666",
-              border: isHl ? "1px solid #D4A843" : "1px solid #333" }}>
-            {k.label}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════
-   CHROMATIC TUNER (Web Audio API)
-   ═══════════════════════════════════════════════════════════ */
-const TUNER_NOTES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
-const STD_TUNING_REF = [
-  { note: "E", octave: 2, freq: 82.41 },
-  { note: "A", octave: 2, freq: 110.00 },
-  { note: "D", octave: 3, freq: 146.83 },
-  { note: "G", octave: 3, freq: 196.00 },
-  { note: "B", octave: 3, freq: 246.94 },
-  { note: "E", octave: 4, freq: 329.63 },
-];
-
-function autoCorrelate(buf: Float32Array, sampleRate: number): number {
-  let SIZE = buf.length;
-  let rms = 0;
-  for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
-  rms = Math.sqrt(rms / SIZE);
-  if (rms < 0.01) return -1;
-
-  let r1 = 0, r2 = SIZE - 1;
-  const thres = 0.2;
-  for (let i = 0; i < SIZE / 2; i++) { if (Math.abs(buf[i]) < thres) { r1 = i; break; } }
-  for (let i = 1; i < SIZE / 2; i++) { if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; } }
-
-  const trimmed = buf.slice(r1, r2);
-  SIZE = trimmed.length;
-  const c = new Float32Array(SIZE);
-  for (let i = 0; i < SIZE; i++) {
-    let sum = 0;
-    for (let j = 0; j < SIZE - i; j++) sum += trimmed[j] * trimmed[j + i];
-    c[i] = sum;
-  }
-
-  let d = 0;
-  while (c[d] > c[d + 1]) d++;
-
-  let maxVal = -1, maxPos = -1;
-  for (let i = d; i < SIZE; i++) {
-    if (c[i] > maxVal) { maxVal = c[i]; maxPos = i; }
-  }
-
-  let T0 = maxPos;
-  const x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
-  const a = (x1 + x3 - 2 * x2) / 2;
-  const b = (x3 - x1) / 2;
-  if (a) T0 = T0 - b / (2 * a);
-
-  return sampleRate / T0;
-}
-
-function freqToNote(freq: number): { note: string; octave: number; cents: number } {
-  const noteNum = 12 * (Math.log2(freq / 440));
-  const noteIdx = Math.round(noteNum) + 69;
-  const cents = Math.round((noteNum - Math.round(noteNum)) * 100);
-  const note = TUNER_NOTES[((noteIdx % 12) + 12) % 12];
-  const octave = Math.floor(noteIdx / 12) - 1;
-  return { note, octave, cents };
-}
-
-function ChromaticTuner() {
-  const [listening, setListening] = useState(false);
-  const [detected, setDetected] = useState<{ note: string; octave: number; cents: number; freq: number } | null>(null);
-  const ctxRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const rafRef = useRef<number>(0);
-
-  const startTuner = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
-      const ctx = new AudioContext();
-      ctxRef.current = ctx;
-      const src = ctx.createMediaStreamSource(stream);
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 4096;
-      src.connect(analyser);
-      analyserRef.current = analyser;
-      setListening(true);
-
-      const buf = new Float32Array(analyser.fftSize);
-      const tick = () => {
-        analyser.getFloatTimeDomainData(buf);
-        const freq = autoCorrelate(buf, ctx.sampleRate);
-        if (freq > 50 && freq < 1500) {
-          const info = freqToNote(freq);
-          setDetected({ ...info, freq: Math.round(freq * 10) / 10 });
-        }
-        rafRef.current = requestAnimationFrame(tick);
-      };
-      tick();
-    } catch {
-      // mic permission denied
-    }
-  };
-
-  const stopTuner = () => {
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
-    if (ctxRef.current) ctxRef.current.close();
-    setListening(false);
-    setDetected(null);
-  };
-
-  useEffect(() => { return () => { stopTuner(); }; }, []);
-
-  const cents = detected?.cents ?? 0;
-  const absCents = Math.abs(cents);
-  const tuneClass = absCents <= 5 ? "tuner-in-tune" : absCents <= 15 ? "tuner-close" : "tuner-off";
-  const tuneColor = absCents <= 5 ? "#33CC33" : absCents <= 15 ? "#FFAA00" : "#FF3333";
-  const needleLeft = detected ? 50 + (cents / 50) * 50 : 50;
-
-  return (
-    <div className="panel p-3 sm:p-5 mb-3">
-      <div className="font-heading text-lg font-bold text-[#D4A843] mb-3">Chromatic Tuner</div>
-      <div className="text-[11px] text-[#555] mb-4">Use your microphone for real-time pitch detection.</div>
-
-      <div className="flex justify-center mb-6">
-        <button onClick={listening ? stopTuner : startTuner} className={listening ? "btn-danger" : "btn-gold"}>
-          {listening ? "Stop" : "Start Tuner"}
-        </button>
-      </div>
-
-      {listening && (
-        <div className="flex flex-col items-center gap-4">
-          {/* Note display */}
-          <div className="text-center">
-            <div className="font-heading text-6xl font-bold" style={{ color: detected ? tuneColor : "#333" }}>
-              {detected ? detected.note : "--"}
-            </div>
-            <div className="font-readout text-lg text-[#888] mt-1">
-              {detected ? `${detected.octave} · ${detected.freq} Hz` : "Waiting..."}
-            </div>
-          </div>
-
-          {/* Cents display */}
-          <div className="font-readout text-2xl font-bold" style={{ color: detected ? tuneColor : "#333" }}>
-            {detected ? (cents > 0 ? "+" : "") + cents + " cents" : ""}
-          </div>
-
-          {/* Visual meter */}
-          <div className="tuner-meter">
-            <div className="tuner-meter-center" />
-            <div className={`tuner-needle ${detected ? tuneClass : ""}`} style={{ left: `calc(${needleLeft}% - 2px)` }} />
-          </div>
-          <div className="flex justify-between w-full max-w-[320px] font-readout text-[9px] text-[#444]">
-            <span>-50</span><span>0</span><span>+50</span>
-          </div>
-
-          {/* Standard tuning reference */}
-          <div className="w-full mt-4">
-            <div className="font-label text-[10px] text-[#555] mb-2">Standard Tuning Reference</div>
-            <div className="grid grid-cols-6 gap-2">
-              {STD_TUNING_REF.map((ref, i) => {
-                const isMatch = detected && detected.note === ref.note && detected.octave === ref.octave;
-                return (
-                  <div key={i} className="text-center panel p-2" style={isMatch ? { borderColor: tuneColor + "60" } : {}}>
-                    <div className="font-heading text-lg" style={{ color: isMatch ? tuneColor : "#888" }}>{ref.note}{ref.octave}</div>
-                    <div className="font-readout text-[9px] text-[#555]">{ref.freq} Hz</div>
-                    <div className="font-readout text-[8px] text-[#444] mt-0.5">String {6 - i}</div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+/* Chromatic tuner now shared — see ./ChromaticTuner.tsx */
 
 /* ═══════════════════════════════════════════════════════════
    MAIN COMPONENT
@@ -836,7 +650,19 @@ export default function LearningCenterPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [direction, setDirection] = useState<Direction>("ascending");
   const [enabledIntervals, setEnabledIntervals] = useState<Set<number>>(new Set([3,4,5,7,12]));
-  const [enabledChords, setEnabledChords] = useState<Set<string>>(new Set(["Major","Minor","Dim"]));
+  const [enabledChords, setEnabledChords] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set(["Major","Minor"]);
+    try {
+      const raw = localStorage.getItem("gf-chord-recog-qualities");
+      if (raw) {
+        const arr = JSON.parse(raw) as string[];
+        if (Array.isArray(arr) && arr.length > 0) return new Set(arr);
+      }
+    } catch {}
+    return new Set(["Major","Minor"]);
+  });
+  const [chordRecogOptions, setChordRecogOptions] = useState<string[]>([]);
+  const [chordRecogRootIdx, setChordRecogRootIdx] = useState<number>(0);
   const [enabledScales, setEnabledScales] = useState<Set<string>>(new Set(["Major","Nat. Minor","Pent. Minor"]));
   const [autoAdvance, setAutoAdvance] = useState(true);
   const [fbTarget, setFbTarget] = useState<string | null>(null);
@@ -874,17 +700,6 @@ export default function LearningCenterPage() {
   const [chConSelected, setChConSelected] = useState<Set<string>>(new Set());
   const [chConRevealed, setChConRevealed] = useState(false);
 
-  /* ── Keyboard exercise state ── */
-  const [kbHighlight, setKbHighlight] = useState<number[]>([]);
-  const [kbAnswer, setKbAnswer] = useState<string | null>(null);
-  const [kbPicked, setKbPicked] = useState<string | null>(null);
-  const [kbRevealed, setKbRevealed] = useState(false);
-  const [kbEarMidi, setKbEarMidi] = useState<number | null>(null);
-
-  /* ── Piano tool state ── */
-  const [pianoRoot, setPianoRoot] = useState("C");
-  const [pianoScale, setPianoScale] = useState<string | null>(null);
-
   /* ── Playback root for replay consistency ── */
   const [lastPlayRoot, setLastPlayRoot] = useState(60);
 
@@ -902,6 +717,16 @@ export default function LearningCenterPage() {
   const [newChord, setNewChord] = useState("");
   const [progPlaying, setProgPlaying] = useState(false);
   const [progLoop, setProgLoop] = useState(false);
+  const [progQuality, setProgQuality] = useState<ProgQuality>("minor");
+  const [progPresetIdx, setProgPresetIdx] = useState<number | null>(null);
+  // Re-transpose selected preset whenever root or quality changes
+  useEffect(() => {
+    if (progPresetIdx === null) return;
+    const preset = PROG_PRESETS[progPresetIdx];
+    if (!preset) return;
+    setProgChords(transposeProgression(preset.degrees, root, progQuality));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [root, progQuality, progPresetIdx]);
 
   /* ── Tempo Tapper state ── */
   const [tapTimes, setTapTimes] = useState<number[]>([]);
@@ -947,6 +772,11 @@ export default function LearningCenterPage() {
   }, []);
 
   function persist(st: LearnState) { setLs(st); try { localStorage.setItem("gf-learn", JSON.stringify(st)); } catch {} }
+
+  /* Persist chord recognition quality selections */
+  useEffect(() => {
+    try { localStorage.setItem("gf-chord-recog-qualities", JSON.stringify([...enabledChords])); } catch {}
+  }, [enabledChords]);
 
   /* ── Chord data fetch ── */
   useEffect(() => {
@@ -1025,9 +855,33 @@ export default function LearningCenterPage() {
     setFbExPicked(null); setFbExRevealed(false);
     setIvConPicked(null); setIvConRevealed(false);
     setChConRevealed(false); setChConSelected(new Set());
-    setKbPicked(null); setKbRevealed(false); setKbHighlight([]); setKbEarMidi(null);
+    /* kb-* reset no-op (setters removed in refactor) */
     if (exMode === "intervals") { const it = activeIv[Math.floor(Math.random() * activeIv.length)]; if (it) { setAnswer(it.name); playIv(it.st, direction); } }
-    else if (exMode === "chords") { const it = activeCh[Math.floor(Math.random() * activeCh.length)]; if (it) { setAnswer(it.name); playChordAudio(it.iv); } }
+    else if (exMode === "chords") {
+      const it = activeCh[Math.floor(Math.random() * activeCh.length)];
+      if (it) {
+        const rootIdx = Math.floor(Math.random() * 12);
+        const sep = /^\d/.test(it.short) ? "" : " ";
+        const label = NOTES[rootIdx] + sep + it.short;
+        setChordRecogRootIdx(rootIdx);
+        setAnswer(label);
+        // Build distractor options: correct + 5-7 random (root × enabled quality) combos
+        const desired = 6;
+        const opts = new Set<string>([label]);
+        const activeNames = activeCh;
+        let guard = 0;
+        while (opts.size < desired && guard < 200) {
+          const r = Math.floor(Math.random() * 12);
+          const q = activeNames[Math.floor(Math.random() * activeNames.length)];
+          const qsep = /^\d/.test(q.short) ? "" : " ";
+          opts.add(NOTES[r] + qsep + q.short);
+          guard++;
+        }
+        const shuffled = [...opts].sort(() => Math.random() - 0.5);
+        setChordRecogOptions(shuffled);
+        playChordAudio(it.iv, 55 + rootIdx);
+      }
+    }
     else if (exMode === "scales") { const it = activeSc[Math.floor(Math.random() * activeSc.length)]; if (it) { setAnswer(it.name); playScaleNotes(it.notes); } }
     else if (exMode === "fretboard") { const n = NOTES[Math.floor(Math.random() * 12)]; setFbTarget(n); setAnswer(n); tone(60 + NOTES.indexOf(n)); }
     else if (exMode === "progressions") { const p = PROG_QUESTIONS[Math.floor(Math.random() * PROG_QUESTIONS.length)]; setAnswer(p.name); playProg(p.chords); }
@@ -1037,11 +891,6 @@ export default function LearningCenterPage() {
     else if (exMode === "note-ear") { genNoteEarQ(); }
     else if (exMode === "iv-construction") { genIvConstructionQ(); }
     else if (exMode === "chord-construction") { genChordConstructionQ(); }
-    else if (exMode === "kb-notes") { genKbNotesQ(); }
-    else if (exMode === "kb-intervals") { genKbIntervalsQ(); }
-    else if (exMode === "kb-scales") { genKbScalesQ(); }
-    else if (exMode === "kb-chords") { genKbChordsQ(); }
-    else if (exMode === "kb-ear") { genKbEarQ(); }
   }
 
   /* ── Fretboard Intervals question ── */
@@ -1142,77 +991,15 @@ export default function LearningCenterPage() {
     ch.iv.forEach(s => tone(60 + rootIdx + s, 1.0));
   }
 
-  /* ── Keyboard Notes question ── */
-  function genKbNotesQ() {
-    const midi = PIANO_C3 + Math.floor(Math.random() * 24);
-    setKbHighlight([midi]);
-    const noteName = NOTES[midi % 12];
-    setKbAnswer(noteName);
-    setKbPicked(null); setKbRevealed(false);
-    setAnswer(noteName);
-  }
-
-  /* ── Keyboard Intervals question ── */
-  function genKbIntervalsQ() {
-    const midi1 = PIANO_C3 + Math.floor(Math.random() * 20);
-    const iv = ALL_INTERVALS[Math.floor(Math.random() * ALL_INTERVALS.length)];
-    const midi2 = midi1 + iv.st;
-    if (midi2 > PIANO_C3 + 23) { genKbIntervalsQ(); return; }
-    setKbHighlight([midi1, midi2]);
-    setKbAnswer(iv.name);
-    setKbPicked(null); setKbRevealed(false);
-    setAnswer(iv.name);
-    tone(midi1, 0.5, 0); tone(midi2, 0.5, 0.6);
-  }
-
-  /* ── Keyboard Scales question ── */
-  function genKbScalesQ() {
-    const rootIdx = Math.floor(Math.random() * 12);
-    const sc = ALL_SCALES[Math.floor(Math.random() * ALL_SCALES.length)];
-    const base = PIANO_C3 + rootIdx;
-    const midis: number[] = [];
-    for (let oct = 0; oct < 2; oct++) {
-      sc.notes.forEach(n => {
-        const m = base + oct * 12 + n;
-        if (m >= PIANO_C3 && m <= PIANO_C3 + 23) midis.push(m);
-      });
-    }
-    setKbHighlight(midis);
-    setKbAnswer(sc.name);
-    setKbPicked(null); setKbRevealed(false);
-    setAnswer(sc.name);
-    const sorted = [...midis].sort((a, b) => a - b).slice(0, 8);
-    sorted.forEach((m, i) => tone(m, 0.3, i * 0.15));
-  }
-
-  /* ── Keyboard Chords question ── */
-  function genKbChordsQ() {
-    const rootIdx = Math.floor(Math.random() * 12);
-    const ch = ALL_CHORDS[Math.floor(Math.random() * ALL_CHORDS.length)];
-    const base = PIANO_C3 + rootIdx;
-    const midis = ch.iv.map(s => base + s).filter(m => m <= PIANO_C3 + 23);
-    setKbHighlight(midis);
-    setKbAnswer(ch.name);
-    setKbPicked(null); setKbRevealed(false);
-    setAnswer(ch.name);
-    midis.forEach(m => tone(m, 1.0));
-  }
-
-  /* ── Keyboard Ear question (play note, user clicks key) ── */
-  function genKbEarQ() {
-    const midi = PIANO_C3 + Math.floor(Math.random() * 24);
-    setKbHighlight([]);
-    setKbEarMidi(midi);
-    setKbAnswer(String(midi));
-    setKbPicked(null); setKbRevealed(false);
-    setAnswer(String(midi));
-    tone(midi, 1.0);
-  }
-
   function replay() {
     if (!answer) return;
     if (exMode === "intervals") { const it = ALL_INTERVALS.find(i => i.name === answer); if (it) playIv(it.st, direction, lastPlayRoot); }
-    else if (exMode === "chords") { const it = ALL_CHORDS.find(c => c.name === answer); if (it) playChordAudio(it.iv, lastPlayRoot); }
+    else if (exMode === "chords") {
+      const parts = answer.split(" ");
+      const sh = parts.slice(1).join(" ");
+      const it = ALL_CHORDS.find(c => c.short === sh);
+      if (it) playChordAudio(it.iv, 55 + chordRecogRootIdx);
+    }
     else if (exMode === "scales") { const it = ALL_SCALES.find(s => s.name === answer); if (it) playScaleNotes(it.notes, lastPlayRoot); }
     else if (exMode === "fretboard") { const i = NOTES.indexOf(answer); if (i >= 0) tone(60 + i); }
     else if (exMode === "progressions") { const p = PROG_QUESTIONS.find(q => q.name === answer); if (p) playProg(p.chords); }
@@ -1227,64 +1014,6 @@ export default function LearningCenterPage() {
       const cri = NOTES.indexOf(chConRoot);
       iv.forEach(s => tone(60 + cri + s, 1.0));
     }
-    else if (exMode === "kb-notes" && kbHighlight.length > 0) { tone(kbHighlight[0], 0.6); }
-    else if (exMode === "kb-intervals" && kbHighlight.length >= 2) { tone(kbHighlight[0], 0.5, 0); tone(kbHighlight[1], 0.5, 0.6); }
-    else if (exMode === "kb-scales" && kbHighlight.length > 0) { const sorted = [...kbHighlight].sort((a, b) => a - b).slice(0, 8); sorted.forEach((m, i) => tone(m, 0.3, i * 0.15)); }
-    else if (exMode === "kb-chords" && kbHighlight.length > 0) { kbHighlight.forEach(m => tone(m, 1.0)); }
-    else if (exMode === "kb-ear" && kbEarMidi) { tone(kbEarMidi, 1.0); }
-  }
-
-  /* ── handleAnswer for keyboard exercises ── */
-  function handleKbAnswer(name: string) {
-    if (kbRevealed || !kbAnswer) return;
-    setKbPicked(name); setKbRevealed(true);
-    const correct = name === kbAnswer;
-    const ns = correct ? score.streak + 1 : 0;
-    const best = Math.max(score.bestStreak, ns, ls.bestStreak);
-    const earned = correct ? (10 + Math.min(ns, 20) * 2) : 0;
-    const nx = ls.xp + earned;
-    const nl = Math.floor(nx / 100) + 1;
-    const hKey = exMode + "-" + kbAnswer;
-    const prev = ls.history[hKey] || { c: 0, t: 0 };
-    const newH = { ...ls.history, [hKey]: { c: prev.c + (correct ? 1 : 0), t: prev.t + 1 } };
-    const unlocked = [...ls.unlocked];
-    const pct = (score.correct + (correct ? 1 : 0)) / (score.total + 1) * 100;
-    ACHIEVEMENTS.forEach(a => {
-      if (unlocked.includes(a.id)) return;
-      if (a.key === "total" && score.total + 1 >= a.need) unlocked.push(a.id);
-      if (a.key === "streak" && ns >= a.need) unlocked.push(a.id);
-      if (a.key === "accuracy" && score.total + 1 >= 20 && pct >= a.need) unlocked.push(a.id);
-      if (a.key === "level" && nl >= a.need) unlocked.push(a.id);
-    });
-    setScore({ correct: score.correct + (correct ? 1 : 0), total: score.total + 1, streak: ns, bestStreak: best });
-    persist({ ...ls, xp: nx, level: nl, bestStreak: best, unlocked, history: newH });
-    if (autoAdvance && correct) timeoutRef.current = setTimeout(newQ, 900);
-  }
-
-  /* ── handleAnswer for kb-ear (clicking piano key) ── */
-  function handleKbEarClick(midi: number) {
-    if (kbRevealed || !kbEarMidi) return;
-    const correct = midi === kbEarMidi;
-    setKbHighlight(correct ? [midi] : [midi, kbEarMidi]);
-    setKbPicked(String(midi)); setKbRevealed(true);
-    tone(midi, 0.5);
-    const ns = correct ? score.streak + 1 : 0;
-    const best = Math.max(score.bestStreak, ns, ls.bestStreak);
-    const earned = correct ? (10 + Math.min(ns, 20) * 2) : 0;
-    const nx = ls.xp + earned;
-    const nl = Math.floor(nx / 100) + 1;
-    const hKey = "kb-ear-" + kbEarMidi;
-    const prev = ls.history[hKey] || { c: 0, t: 0 };
-    const newH = { ...ls.history, [hKey]: { c: prev.c + (correct ? 1 : 0), t: prev.t + 1 } };
-    const unlocked = [...ls.unlocked];
-    ACHIEVEMENTS.forEach(a => {
-      if (unlocked.includes(a.id)) return;
-      if (a.key === "total" && score.total + 1 >= a.need) unlocked.push(a.id);
-      if (a.key === "streak" && ns >= a.need) unlocked.push(a.id);
-    });
-    setScore({ correct: score.correct + (correct ? 1 : 0), total: score.total + 1, streak: ns, bestStreak: best });
-    persist({ ...ls, xp: nx, level: nl, bestStreak: best, unlocked, history: newH });
-    if (autoAdvance && correct) timeoutRef.current = setTimeout(newQ, 900);
   }
 
   function handleAnswer(name: string) {
@@ -1436,8 +1165,7 @@ export default function LearningCenterPage() {
   const isIvConMode = exMode === "iv-construction";
   const isChConMode = exMode === "chord-construction";
   const isFretboardMode = exMode === "fretboard";
-  const isKbMode = ["kb-notes","kb-intervals","kb-scales","kb-chords","kb-ear"].includes(exMode);
-  const hasSubTabs = isStandardEarMode || isFretboardMode || isFbVisualMode || isNoteEarMode || isIvConMode || isKbMode;
+  const hasSubTabs = isStandardEarMode || isFretboardMode || isFbVisualMode || isNoteEarMode || isIvConMode;
 
   /* ── Interval buttons for fb-intervals ── */
   const FB_IV_BUTTONS = [
@@ -1662,7 +1390,6 @@ export default function LearningCenterPage() {
               const hlMidi = new Set(step.highlight || []);
               const rootMidi = step.highlight && step.highlight.length > 0 ? step.highlight[0] : 48;
               const rootNote = NOTES[rootMidi % 12];
-              const vis = activeLessonObj.visual || "fretboard";
               return (
                 <div className="panel p-3 sm:p-5 mb-3">
                   <div className="font-label text-[10px] text-[#D4A843] mb-3">Interactive learning — Step {currentStep + 1} / {steps.length}</div>
@@ -1672,11 +1399,7 @@ export default function LearningCenterPage() {
                     {step.label && (
                       <div className="text-center font-readout text-[13px] text-[#D4A843] mb-2">{step.label}</div>
                     )}
-                    {vis === "fretboard" ? (
-                      <LCFretboard highlightNotes={[]} rootNote={rootNote} maxFret={12} highlightMidi={hlMidi} />
-                    ) : (
-                      <PianoKeyboard highlighted={step.highlight || []} />
-                    )}
+                    <LCFretboard highlightNotes={[]} rootNote={rootNote} maxFret={12} highlightMidi={hlMidi} />
                   </div>
 
                   {/* Step text */}
@@ -1807,9 +1530,9 @@ export default function LearningCenterPage() {
           const selectMode = (m: ExMode) => { setExMode(m); setSubTab("exercise"); setRevealed(false); setAnswer(null); setFbTarget(null); setFbExAnswer(null); setFbExRevealed(false); };
           const GROUP_COLORS: Record<string, string> = { ear: "#8b5cf6", fretboard: "#22c55e", theory: "#3b82f6" };
           const EX_DIFFICULTY: Record<string, number> = {
-            intervals: 2, chords: 2, scales: 3, progressions: 3, "note-ear": 1, "kb-ear": 2,
-            fretboard: 1, "fb-intervals": 2, "fb-scales": 3, "fb-chords": 2, "kb-notes": 1,
-            construction: 3, "iv-construction": 2, "chord-construction": 2, "kb-intervals": 2, "kb-scales": 3, "kb-chords": 2,
+            intervals: 2, chords: 2, scales: 3, progressions: 3, "note-ear": 1,
+            fretboard: 1, "fb-intervals": 2, "fb-scales": 3, "fb-chords": 2,
+            construction: 3, "iv-construction": 2, "chord-construction": 2,
           };
           const EXERCISE_GROUPS: { id: string; title: string; desc: string; icon: string; items: [ExMode, string, string][] }[] = [
             { id: "ear", title: "Ear Training", desc: "Train your ear to recognize intervals, chords, scales and progressions by sound", icon: "\u266A",
@@ -1819,7 +1542,6 @@ export default function LearningCenterPage() {
                 ["scales", "Scale Recognition", "Name the scale you hear"],
                 ["progressions", "Progression Hearing", "Identify chord progressions"],
                 ["note-ear", "Note Identification", "Name the single note played"],
-                ["kb-ear", "Piano Ear Training", "Click the key you hear"],
               ]},
             { id: "fretboard", title: "Fretboard Knowledge", desc: "Master the fretboard through visual quizzes and note finding exercises", icon: "\u2302",
               items: [
@@ -1827,16 +1549,12 @@ export default function LearningCenterPage() {
                 ["fb-intervals", "Visual Intervals", "Identify intervals on the fretboard"],
                 ["fb-scales", "Visual Scales", "Identify scale patterns visually"],
                 ["fb-chords", "Visual Chords", "Identify chord shapes on the fretboard"],
-                ["kb-notes", "Piano Notes", "Identify highlighted piano keys"],
               ]},
             { id: "theory", title: "Theory Builders", desc: "Build scales, intervals and chords from scratch to reinforce music theory", icon: "\u2261",
               items: [
                 ["construction", "Scale / Interval / Chord Builder", "Construct scales, intervals and chords note by note"],
                 ["iv-construction", "Interval Builder", "Find the note at a given interval"],
                 ["chord-construction", "Chord Builder", "Select all notes of a chord"],
-                ["kb-intervals", "Piano Intervals", "Identify intervals on the keyboard"],
-                ["kb-scales", "Piano Scales", "Identify scale patterns on keys"],
-                ["kb-chords", "Piano Chords", "Identify chord shapes on keys"],
               ]},
           ];
           return (
@@ -2371,151 +2089,7 @@ export default function LearningCenterPage() {
                           </div>
                         )}
 
-                        {/* ── Keyboard Exercises ── */}
-                        {isKbMode && subTab === "exercise" && (<>
-                          {/* Stats */}
-                          <div className="panel p-3 mb-3">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-4">
-                                <div className="flex items-center gap-1.5">
-                                  <div className={`led ${scorePct >= 80 ? "led-on" : scorePct >= 50 ? "led-gold" : score.total > 0 ? "led-red" : "led-off"}`} />
-                                  <span className="font-readout text-sm text-[#D4A843]">{score.correct}/{score.total}</span>
-                                  {score.total > 0 && <span className="font-readout text-[10px] text-[#555]">({scorePct}%)</span>}
-                                </div>
-                                {score.streak > 0 && <span className="font-readout text-sm" style={{ color: score.streak >= 10 ? "#33CC33" : score.streak >= 5 ? "#D4A843" : "#888" }}>{score.streak}x</span>}
-                              </div>
-                              <button onClick={() => { setScore({ correct: 0, total: 0, streak: 0, bestStreak: ls.bestStreak }); setKbAnswer(null); setKbRevealed(false); setKbHighlight([]); setKbEarMidi(null); }} className="btn-ghost !text-[10px] !px-2">Reset</button>
-                            </div>
-                          </div>
-
-                          <div className="panel p-6 mb-3">
-                            <div className="text-center mb-2">
-                              <div className="font-label text-[10px] text-[#555]">
-                                {exMode === "kb-notes" ? "Identify the highlighted piano key" :
-                                 exMode === "kb-intervals" ? "Identify the interval on the keyboard" :
-                                 exMode === "kb-scales" ? "Identify the scale pattern on keys" :
-                                 exMode === "kb-chords" ? "Identify the chord shape on keys" :
-                                 "Click the key you hear"}
-                              </div>
-                            </div>
-                            {/* Play / Next */}
-                            <div className="flex justify-center gap-3 mb-4">
-                              <button onClick={newQ} className="w-16 h-16 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95 flex items-center justify-center"
-                                style={{ background: "linear-gradient(145deg, #D4A843, #B8922E)", border: "2px solid #DFBD69", boxShadow: "0 4px 16px rgba(212,168,67,0.25)" }}>
-                                <span className="text-[#121214] text-xl font-bold ml-0.5">&#9654;</span>
-                              </button>
-                              {(kbAnswer || kbEarMidi) && <button onClick={replay} className="w-10 h-10 rounded-full cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center mt-3"
-                                style={{ background: "#1a1a1a", border: "1px solid #333" }}><span className="text-[#888] text-sm">&#8635;</span></button>}
-                            </div>
-
-                            {!kbAnswer && !kbEarMidi && <div className="text-center font-label text-sm text-[#333] py-4">Press play to begin</div>}
-
-                            {/* Piano visual (shown for all kb modes except kb-ear before answer) */}
-                            {(kbAnswer || kbEarMidi) && (
-                              <div className="mb-4 overflow-x-auto">
-                                <PianoKeyboard
-                                  highlighted={exMode === "kb-ear" ? (kbRevealed ? kbHighlight : []) : kbHighlight}
-                                  onClick={exMode === "kb-ear" && !kbRevealed ? handleKbEarClick : undefined}
-                                  disabled={kbRevealed && exMode === "kb-ear"}
-                                />
-                              </div>
-                            )}
-
-                            {/* Answer buttons for kb-notes */}
-                            {exMode === "kb-notes" && kbAnswer && (
-                              <div className="flex gap-1.5 flex-wrap justify-center mt-4">
-                                {NOTES.map(n => {
-                                  const isCor = kbRevealed && n === kbAnswer;
-                                  const isWrong = kbRevealed && n === kbPicked && n !== kbAnswer;
-                                  return (
-                                    <button key={n} onClick={() => handleKbAnswer(n)}
-                                      className="w-11 h-11 rounded-sm flex items-center justify-center font-readout text-sm cursor-pointer transition-all border"
-                                      style={isCor ? { background: "#22c55e", borderColor: "#22c55e", color: "#121214" }
-                                        : isWrong ? { background: "#C41E3A", borderColor: "#C41E3A", color: "#fff" }
-                                        : kbRevealed ? { background: "#141414", borderColor: "#222", color: "#555" }
-                                        : { background: "#141414", borderColor: "#222", color: "#888" }}>{n}</button>
-                                  );
-                                })}
-                              </div>
-                            )}
-
-                            {/* Answer buttons for kb-intervals */}
-                            {exMode === "kb-intervals" && kbAnswer && (
-                              <div className="flex gap-1.5 flex-wrap justify-center mt-4">
-                                {ALL_INTERVALS.map(iv => {
-                                  const isCor = kbRevealed && iv.name === kbAnswer;
-                                  const isWrong = kbRevealed && iv.name === kbPicked && iv.name !== kbAnswer;
-                                  return (
-                                    <button key={iv.name} onClick={() => handleKbAnswer(iv.name)}
-                                      className="px-3 py-2 rounded-sm font-label text-[10px] cursor-pointer transition-all border"
-                                      style={isCor ? { background: "#22c55e", borderColor: "#22c55e", color: "#121214" }
-                                        : isWrong ? { background: "#C41E3A", borderColor: "#C41E3A", color: "#fff" }
-                                        : kbRevealed ? { background: "#141414", borderColor: "#222", color: "#555" }
-                                        : { background: "#141414", borderColor: "#222", color: "#888" }}>{iv.name}</button>
-                                  );
-                                })}
-                              </div>
-                            )}
-
-                            {/* Answer buttons for kb-scales */}
-                            {exMode === "kb-scales" && kbAnswer && (
-                              <div className="flex gap-1.5 flex-wrap justify-center mt-4">
-                                {ALL_SCALES.map(sc => {
-                                  const isCor = kbRevealed && sc.name === kbAnswer;
-                                  const isWrong = kbRevealed && sc.name === kbPicked && sc.name !== kbAnswer;
-                                  return (
-                                    <button key={sc.name} onClick={() => handleKbAnswer(sc.name)}
-                                      className="px-3 py-2 rounded-sm font-label text-[10px] cursor-pointer transition-all border"
-                                      style={isCor ? { background: "#22c55e", borderColor: "#22c55e", color: "#121214" }
-                                        : isWrong ? { background: "#C41E3A", borderColor: "#C41E3A", color: "#fff" }
-                                        : kbRevealed ? { background: "#141414", borderColor: "#222", color: "#555" }
-                                        : { background: "#141414", borderColor: "#222", color: "#888" }}>{sc.name}</button>
-                                  );
-                                })}
-                              </div>
-                            )}
-
-                            {/* Answer buttons for kb-chords */}
-                            {exMode === "kb-chords" && kbAnswer && (
-                              <div className="flex gap-1.5 flex-wrap justify-center mt-4">
-                                {ALL_CHORDS.map(ch => {
-                                  const isCor = kbRevealed && ch.name === kbAnswer;
-                                  const isWrong = kbRevealed && ch.name === kbPicked && ch.name !== kbAnswer;
-                                  return (
-                                    <button key={ch.name} onClick={() => handleKbAnswer(ch.name)}
-                                      className="px-3 py-2 rounded-sm font-label text-[10px] cursor-pointer transition-all border"
-                                      style={isCor ? { background: "#22c55e", borderColor: "#22c55e", color: "#121214" }
-                                        : isWrong ? { background: "#C41E3A", borderColor: "#C41E3A", color: "#fff" }
-                                        : kbRevealed ? { background: "#141414", borderColor: "#222", color: "#555" }
-                                        : { background: "#141414", borderColor: "#222", color: "#888" }}>{ch.name}</button>
-                                  );
-                                })}
-                              </div>
-                            )}
-
-                            {/* kb-ear: feedback after clicking */}
-                            {exMode === "kb-ear" && kbRevealed && kbEarMidi && (
-                              <div className="mt-4 text-center">
-                                {kbPicked === String(kbEarMidi)
-                                  ? <div className="font-heading text-lg text-[#22c55e]">Correct! {NOTES[kbEarMidi % 12]}{kbEarMidi < 60 ? "3" : "4"}</div>
-                                  : <div className="font-heading text-lg text-[#C41E3A]">Answer: {NOTES[kbEarMidi % 12]}{kbEarMidi < 60 ? "3" : "4"}</div>
-                                }
-                                {!autoAdvance && <button onClick={newQ} className="btn-gold mt-3">Next</button>}
-                              </div>
-                            )}
-
-                            {/* Generic revealed feedback for non-ear kb modes */}
-                            {kbRevealed && exMode !== "kb-ear" && (
-                              <div className="mt-4 text-center">
-                                {kbPicked === kbAnswer
-                                  ? <div className="font-heading text-lg text-[#22c55e]">Correct!</div>
-                                  : <div className="font-heading text-lg text-[#C41E3A]">Answer: {kbAnswer}</div>
-                                }
-                                {!autoAdvance && <button onClick={newQ} className="btn-gold mt-3">Next</button>}
-                              </div>
-                            )}
-                          </div>
-                        </>)}
+                        {/* Keyboard/piano exercises removed */}
 
                         {/* ── Standard Ear Training Exercise ── */}
                         {isStandardEarMode && subTab === "exercise" && (<>
@@ -2553,7 +2127,7 @@ export default function LearningCenterPage() {
                                     style={enabledIntervals.has(i.st) ? { borderColor: i.color, color: i.color, background: i.color + "12" } : { borderColor: "#222", color: "#444" }}>{i.name}</button>
                                 ))}</div>
                               </>)}
-                              {exMode === "chords" && (<><div className="font-label text-[9px] text-[#555] mb-1">Active Chords</div>
+                              {exMode === "chords" && (<><div className="font-label text-[9px] text-[#555] mb-1">Chord Qualities in Play (root is randomized)</div>
                                 <div className="flex flex-wrap gap-1">{ALL_CHORDS.map(c => (
                                   <button key={c.name} onClick={() => setEnabledChords(toggleSet(enabledChords, c.name))}
                                     className="font-label text-[10px] px-2 py-1 rounded-sm cursor-pointer border"
@@ -2579,7 +2153,7 @@ export default function LearningCenterPage() {
                             <div className="text-center mb-4">
                               <div className="font-label text-[10px] text-[#555] mb-2">
                                 {exMode === "intervals" ? "Identify the interval you hear" :
-                                 exMode === "chords" ? "Identify the chord type you hear" :
+                                 exMode === "chords" ? "Identify the chord you hear (root + quality)" :
                                  exMode === "scales" ? "Identify the scale you hear" :
                                  "Identify the chord progression you hear"}
                               </div>
@@ -2593,7 +2167,27 @@ export default function LearningCenterPage() {
                                 style={{ background: "#1a1a1a", border: "1px solid #333" }}><span className="text-[#888] text-sm">&#8635;</span></button>}
                             </div>
                             {!answer && <div className="text-center font-label text-sm text-[#333] py-4">Press play to begin</div>}
-                            {answer && (
+                            {answer && exMode === "chords" && (
+                              <div className="grid gap-1.5 grid-cols-2 sm:grid-cols-3">
+                                {chordRecogOptions.map(n => {
+                                  const ok = revealed && n === answer;
+                                  const wrong = revealed && n === picked && n !== answer;
+                                  const sh = n.split(" ").slice(1).join(" ");
+                                  const chDef = ALL_CHORDS.find(c => c.short === sh);
+                                  return (
+                                    <button key={n} onClick={() => handleAnswer(n)} disabled={revealed}
+                                      className="py-3 rounded-sm text-center transition-all cursor-pointer border relative overflow-hidden"
+                                      style={ok ? { background: "#22c55e", borderColor: "#22c55e", color: "#121214" }
+                                        : wrong ? { background: "#C41E3A", borderColor: "#C41E3A", color: "#fff" }
+                                        : { background: "#141414", borderColor: "#222", color: "#aaa" }}>
+                                      {!revealed && chDef && <div className="absolute bottom-0 left-0 h-[2px] w-full" style={{ background: chDef.color }} />}
+                                      <div className="font-label text-sm">{n}</div>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+                            {answer && exMode !== "chords" && (
                               <div className={`grid gap-1.5 ${pool.length <= 6 ? "grid-cols-3" : "grid-cols-3 sm:grid-cols-4"}`}>
                                 {pool.map(item => {
                                   const n = item.name, ok = revealed && n === answer, wrong = revealed && n === picked && n !== answer;
@@ -2796,7 +2390,6 @@ export default function LearningCenterPage() {
               items: [
                 { key: "tempo", label: "Tempo Tapper", desc: "Tap to measure BPM", icon: "\u2261" },
                 { key: "iv-calc", label: "Interval Calculator", desc: "Calculate intervals between notes", icon: "\u00D7" },
-                { key: "piano", label: "Piano Keyboard", desc: "Interactive piano with scale highlighting", icon: "\u2399" },
                 { key: "tuner", label: "Chromatic Tuner", desc: "Real-time pitch detection via microphone", icon: "\u266A" },
               ]},
           ];
@@ -2853,7 +2446,7 @@ export default function LearningCenterPage() {
         })()}
 
         {/* Root selector (not for tempo tapper) */}
-        {toolTab !== "tempo" && toolTab !== "piano" && toolTab !== "tuner" && (
+        {toolTab !== "tempo" && toolTab !== "tuner" && (
           <div className="panel p-3 mb-3">
             <div className="font-label text-[9px] text-[#555] mb-1.5">Root Note</div>
             <div className="flex gap-1 flex-wrap">
@@ -3000,14 +2593,21 @@ export default function LearningCenterPage() {
           </div>
           <div className="panel p-3 sm:p-5">
             <div className="font-label text-[11px] text-[#D4A843] mb-3">Presets — click to load</div>
-            {PROG_PRESETS.map(p => (
-              <div key={p.g} className="flex items-center gap-3 py-2.5 border-b border-[#111] last:border-0 cursor-pointer hover:bg-[#0d0d0d] rounded-sm px-2 -mx-2 transition-all"
-                onClick={() => setProgChords(p.ch)}>
-                <span className="font-label text-[11px] text-[#D4A843] w-24">{p.g}</span>
-                <span className="font-readout text-xs text-[#aaa] flex-1" dir="ltr">{p.n}</span>
-                <div className="flex gap-1">{p.ch.map((c, i) => <span key={i} className="font-readout text-[10px] text-[#888] px-1.5 py-0.5 border border-[#222] rounded-sm">{c}</span>)}</div>
-              </div>
-            ))}
+            {PROG_PRESETS.map((p, idx) => {
+              const chords = transposeProgression(p.degrees, root, p.quality);
+              const active = progPresetIdx === idx;
+              return (
+                <div key={p.g} className={`py-2.5 border-b border-[#111] last:border-0 cursor-pointer hover:bg-[#0d0d0d] rounded-sm px-2 -mx-2 transition-all ${active ? "bg-[#0d0d0d]" : ""}`}
+                  onClick={() => { setProgPresetIdx(idx); setProgQuality(p.quality); setProgChords(chords); }}>
+                  <div className="flex items-center gap-3">
+                    <span className="font-label text-[11px] text-[#D4A843] w-24">{p.g}</span>
+                    <span className="font-readout text-xs text-[#aaa] flex-1" dir="ltr">{p.n}</span>
+                    <div className="flex gap-1 flex-wrap justify-end">{chords.map((c, i) => <span key={i} className="font-readout text-[10px] text-white px-1.5 py-0.5 border border-[#333] rounded-sm">{c}</span>)}</div>
+                  </div>
+                  <div className="font-readout text-[10px] text-[#666] mt-1 pl-[6.5rem]" dir="ltr">{p.vibe}</div>
+                </div>
+              );
+            })}
           </div>
         </div>)}
 
@@ -3140,67 +2740,11 @@ export default function LearningCenterPage() {
           </div>
         </div>)}
 
-        {/* ── Piano Tool ── */}
+        {/* ── Chromatic Tuner ── */}
         {toolTab === "tuner" && (<div>
           <ChromaticTuner />
         </div>)}
 
-        {toolTab === "piano" && (<div>
-          <div className="panel p-3 sm:p-5 mb-3">
-            <div className="font-heading text-lg font-bold text-[#D4A843] mb-3">Piano</div>
-            <div className="text-[11px] text-[#555] mb-4">Click keys to play. Choose a root + scale to highlight.</div>
-
-            {/* Root + Scale selectors */}
-            <div className="mb-3">
-              <div className="font-label text-[9px] text-[#555] mb-1">Root</div>
-              <div className="flex gap-1 flex-wrap">
-                {NOTES.map(n => (
-                  <button key={n} onClick={() => { setPianoRoot(n); }}
-                    className={`font-readout text-[10px] w-8 h-7 rounded-sm cursor-pointer border flex items-center justify-center ${pianoRoot === n ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#222] text-[#888]"}`}>{n}</button>
-                ))}
-              </div>
-            </div>
-            <div className="mb-4">
-              <div className="font-label text-[9px] text-[#555] mb-1">Scale (highlight)</div>
-              <div className="flex gap-1 flex-wrap">
-                <button onClick={() => setPianoScale(null)}
-                  className={`font-label text-[10px] px-2 py-1 rounded-sm cursor-pointer border ${pianoScale === null ? "border-[#D4A843] text-[#D4A843] bg-[#D4A843]/8" : "border-[#222] text-[#555]"}`}>None</button>
-                {ALL_SCALES.map(s => (
-                  <button key={s.name} onClick={() => setPianoScale(s.name)}
-                    className={`font-label text-[10px] px-2 py-1 rounded-sm cursor-pointer border ${pianoScale === s.name ? "border-[#D4A843] text-[#D4A843] bg-[#D4A843]/8" : "border-[#222] text-[#555]"}`}>{s.name}</button>
-                ))}
-              </div>
-            </div>
-
-            {/* Piano keyboard */}
-            <div className="overflow-x-auto py-4">
-              <PianoKeyboard
-                highlighted={pianoScale ? (() => {
-                  const sc = ALL_SCALES.find(s => s.name === pianoScale);
-                  if (!sc) return [];
-                  const rIdx = NOTES.indexOf(pianoRoot);
-                  const midis: number[] = [];
-                  for (let oct = 0; oct < 2; oct++) {
-                    sc.notes.forEach(n => {
-                      const m = PIANO_C3 + oct * 12 + ((rIdx + n) % 12);
-                      if (m >= PIANO_C3 && m <= PIANO_C3 + 23) midis.push(m);
-                    });
-                  }
-                  return midis;
-                })() : []}
-                onClick={(midi) => tone(midi, 0.6)}
-              />
-            </div>
-
-            {pianoScale && (() => {
-              const sc = ALL_SCALES.find(s => s.name === pianoScale);
-              if (!sc) return null;
-              const rIdx = NOTES.indexOf(pianoRoot);
-              const scaleNotes = sc.notes.map(n => NOTES[(rIdx + n) % 12]);
-              return <div className="font-readout text-sm text-[#aaa] text-center mt-2">{pianoRoot} {pianoScale}: {scaleNotes.join(" — ")}</div>;
-            })()}
-          </div>
-        </div>)}
       </>)}
     </div>
   );

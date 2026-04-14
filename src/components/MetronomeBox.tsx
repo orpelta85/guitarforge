@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
+import { loadMetronomeVolume, saveMetronomeVolume, clickGain } from "@/lib/metronomeAudio";
 
 /* ───── types ───── */
 interface Props {
@@ -136,6 +137,10 @@ export default function MetronomeBox({ startBpm: propBpm, standalone }: Props) {
   const [countIn, setCountIn] = useState(false);
   const [beat, setBeat] = useState(-1); // -1 = off
   const [visualSub, setVisualSub] = useState(0);
+  const [volume, setVolume] = useState(1);
+  const volumeRef = useRef(1);
+  useEffect(() => { setVolume(loadMetronomeVolume()); }, []);
+  useEffect(() => { volumeRef.current = volume; }, [volume]);
 
   /* tap tempo */
   const tapTimesRef = useRef<number[]>([]);
@@ -166,15 +171,16 @@ export default function MetronomeBox({ startBpm: propBpm, standalone }: Props) {
       osc.connect(gain);
       gain.connect(ctx.destination);
 
+      const userVol = volumeRef.current;
       if (accent) {
         osc.frequency.value = 1200;
-        gain.gain.setValueAtTime(0.4, time);
+        gain.gain.setValueAtTime(clickGain("accent", userVol), time);
       } else if (subTick) {
         osc.frequency.value = 700;
-        gain.gain.setValueAtTime(0.1, time);
+        gain.gain.setValueAtTime(clickGain("sub", userVol), time);
       } else {
         osc.frequency.value = 900;
-        gain.gain.setValueAtTime(0.2, time);
+        gain.gain.setValueAtTime(clickGain("normal", userVol), time);
       }
       gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
       osc.start(time);
@@ -486,6 +492,25 @@ export default function MetronomeBox({ startBpm: propBpm, standalone }: Props) {
               Count In
             </span>
           </label>
+
+          <div className="flex items-center gap-2 ml-auto">
+            <span className="font-label text-[9px] text-[#555] uppercase tracking-wider">Vol</span>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.05}
+              value={volume}
+              onChange={(e) => {
+                const v = parseFloat(e.target.value);
+                setVolume(v);
+                saveMetronomeVolume(v);
+              }}
+              className="w-[70px] accent-[#D4A843]"
+              title={`Metronome volume ${Math.round(volume * 100)}%`}
+            />
+            <span className="font-mono text-[9px] text-[#666] w-[26px] text-right">{Math.round(volume * 100)}</span>
+          </div>
         </div>
 
         {/* BPM stepper inputs — all custom, no native number inputs */}

@@ -5,6 +5,7 @@ import { SONG_LIBRARY } from "@/lib/songs-data";
 import SongFilterBar, { useFilteredSongs } from "./SongFilterBar";
 import type { SongSort, DifficultyFilter } from "./SongFilterBar";
 import AddSongModal from "./AddSongModal";
+import CountInToggle from "./CountInToggle";
 
 interface SongsPageProps {
   customSongs: SongEntry[];
@@ -75,12 +76,13 @@ export default function SongsPage(props: SongsPageProps) {
         totalCount={allSongs.length}
       />
 
-      <div className="mb-4">
+      <div className="mb-4 flex items-center gap-2 flex-wrap">
         <button onClick={() => setAddSongModalOpen(true)}
-          className="font-label text-[11px] px-3 py-2 rounded-lg cursor-pointer border border-[#D4A843] bg-[#D4A843]/10 text-[#D4A843] hover:bg-[#D4A843]/20 transition-all flex-shrink-0 flex items-center gap-1.5 mb-2">
+          className="font-label text-[11px] px-3 py-2 rounded-lg cursor-pointer border border-[#D4A843] bg-[#D4A843]/10 text-[#D4A843] hover:bg-[#D4A843]/20 transition-all flex-shrink-0 flex items-center gap-1.5">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
           Add Song Manually
         </button>
+        <CountInToggle />
       </div>
 
       {addSongModalOpen && (

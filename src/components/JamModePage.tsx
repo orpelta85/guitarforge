@@ -506,7 +506,7 @@ const DEFAULT_SETTINGS: JamSettings = {
   barsPerChord: 2,
   loop: true,
   randomMode: false,
-  metronomeVol: 0.6,
+  metronomeVol: 0.9,
   bassVol: 0.4,
   drumVol: 0.3,
   bassEnabled: false,

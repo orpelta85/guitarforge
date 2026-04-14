@@ -14,6 +14,8 @@ import { getLibraryRecordings, deleteLibraryRecording } from "@/lib/recordingsLi
 import type { LibraryRecording } from "@/lib/recordingsLibrary";
 import { openRecorderDB } from "@/lib/recorderIdb";
 import AddSongModal from "./AddSongModal";
+import CountInToggle from "./CountInToggle";
+import { loadBackingCountIn, playCountIn } from "@/lib/metronomeAudio";
 
 interface LibraryPageProps {
   week: number;
@@ -930,14 +932,18 @@ export default function LibraryPage(props: LibraryPageProps) {
           getAllLibraryTracks().then(tracks => setLibBackingTracks(tracks)).catch(() => {});
           setYtBackingTracks(getYtBackingTracks());
         }
-        const playBacking = (track: LibraryTrack) => {
+        const playBacking = async (track: LibraryTrack) => {
           if (playingBackingId === track.id) { libAudioRef.current?.pause(); setPlayingBackingId(null); return; }
           if (libAudioRef.current) { libAudioRef.current.pause(); URL.revokeObjectURL(libAudioRef.current.src); }
           const audio = new Audio(track.audioUrl);
           audio.onended = () => setPlayingBackingId(null);
-          audio.play();
           libAudioRef.current = audio;
           setPlayingBackingId(track.id);
+          if (loadBackingCountIn()) {
+            await playCountIn({ bpm: track.params.bpm || 120, beats: 4 });
+            if (libAudioRef.current !== audio) return;
+          }
+          audio.play().catch(() => { /* ok */ });
         };
         const deleteBacking = async (id: string) => {
           try { await deleteFromLibrary(id); setLibBackingTracks(p => p.filter(t => t.id !== id)); } catch {}
@@ -961,7 +967,10 @@ export default function LibraryPage(props: LibraryPageProps) {
               </div>
             ) : (
               <>
-                <div className="font-readout text-[10px] text-[#555] mb-3">{totalCount} backing track{totalCount !== 1 ? "s" : ""}</div>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="font-readout text-[10px] text-[#555]">{totalCount} backing track{totalCount !== 1 ? "s" : ""}</div>
+                  <CountInToggle />
+                </div>
 
                 {libBackingTracks.length > 0 && (
                   <>

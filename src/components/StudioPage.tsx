@@ -5,6 +5,7 @@ import { buildStyle, saveToLibrary as saveSunoToLibrary, getAllLibraryTracks, de
 import type { LibraryTrack } from "@/lib/suno";
 import LooperBox from "./LooperBox";
 import { ensureYT, parseYouTubeId, type YTPlayerInstance } from "@/lib/youtubeApi";
+import { loadMetronomeVolume, saveMetronomeVolume, clickGain, DEFAULT_METRONOME_VOLUME } from "@/lib/metronomeAudio";
 
 // ── Types ──
 interface StudioTrack {
@@ -378,6 +379,17 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
   const [masterVol, setMasterVol] = useState(80);
   const [bpm, setBpm] = useState(120);
   const [metronomeOn, setMetronomeOn] = useState(false);
+  const [metronomeVolume, setMetronomeVolume] = useState<number>(() =>
+    typeof window !== "undefined" ? loadMetronomeVolume() : DEFAULT_METRONOME_VOLUME
+  );
+  const metronomeVolumeInitRef = useRef(true);
+  useEffect(() => {
+    if (metronomeRef.current) {
+      try { metronomeRef.current.gain.gain.value = clickGain("normal", metronomeVolume); } catch { /* ok */ }
+    }
+    if (metronomeVolumeInitRef.current) { metronomeVolumeInitRef.current = false; return; }
+    saveMetronomeVolume(metronomeVolume);
+  }, [metronomeVolume]);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [inputDevices, setInputDevices] = useState<MediaDeviceInfo[]>([]);
@@ -488,7 +500,8 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
       pitchDecay: 0.008, octaves: 2,
       envelope: { attack: 0.001, decay: 0.1, sustain: 0, release: 0.05 },
     });
-    const gain = new Tone.Gain(0.5).toDestination();
+    const initial = clickGain("normal", loadMetronomeVolume());
+    const gain = new Tone.Gain(initial).toDestination();
     synth.connect(gain);
     const loop = new Tone.Loop((time: number) => {
       synth.triggerAttackRelease("C2", "16n", time);
@@ -1409,6 +1422,12 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
             style={{ background: metronomeOn ? "#2a2418" : "#0e0e0e", border: metronomeOn ? "1px solid #D4A84355" : "1px solid #1e1e1e" }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L8 22h8L12 2z"/><path d="M12 8l6-3"/></svg>
           </button>
+          <div className="flex items-center gap-1" title={`Metronome volume ${Math.round(metronomeVolume * 100)}%`}>
+            <span className="text-[8px] text-[#555] font-medium tracking-wider">VOL</span>
+            <input type="range" min={0} max={1} step={0.05} value={metronomeVolume}
+              onChange={(e) => setMetronomeVolume(parseFloat(e.target.value))}
+              className="w-[60px] accent-[#D4A843]" />
+          </div>
 
           <div className="hidden sm:flex items-center gap-1.5">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2">

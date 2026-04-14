@@ -6,7 +6,6 @@ import { saveToLibrary } from "@/lib/recordingsLibrary";
 import { decodeBlobToBuffer, mixAudioBlobs } from "@/lib/audioMix";
 import { useAudioDevices, buildAudioConstraints } from "@/lib/useAudioDevices";
 import DarkAudioPlayer from "./DarkAudioPlayer";
-import AudioAnalyzer from "./AudioAnalyzer";
 
 type RecordingMode = "guitar-only" | "dual";
 
@@ -891,7 +890,6 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
       {audioUrl && savedList.length === 0 && !isMixing && (
         <div className="mb-2">
           <DarkAudioPlayer src={audioUrl} title="Recording" compact className="mb-1" />
-          <AudioAnalyzer audioUrl={audioUrl} exerciseName={exerciseName} expectedNotes={expectedNotes} />
         </div>
       )}
 
@@ -935,7 +933,6 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
                 )}
               </div>
               <DarkAudioPlayer src={item.d} title={item.name || item.dt} compact />
-              <AudioAnalyzer audioUrl={item.d} exerciseName={exerciseName} expectedNotes={expectedNotes} />
             </div>
           ))}
         </div>

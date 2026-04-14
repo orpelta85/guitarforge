@@ -157,13 +157,13 @@ export default function FretboardChallenge() {
           {/* Fretboard */}
           <div className="panel p-4 overflow-x-auto" dir="ltr">
             <div className="min-w-[500px]">
-              <div className="flex mb-1"><div className="w-6" />{Array.from({ length: maxFret + 1 }, (_, f) => <div key={f} className="flex-1 text-center font-readout text-[8px] text-[#333]">{f}</div>)}</div>
+              <div className="flex mb-1"><div className="w-6" />{Array.from({ length: maxFret + 1 }, (_, f) => <div key={f} className={`flex-1 text-center font-readout text-[8px] ${[3,5,7,9,12].includes(f) ? "text-[#D4A843]" : "text-[#888]"}`}>{f}</div>)}</div>
               {[...Array(6)].map((_, si) => {
                 const s = 5 - si;
                 const active = strings.has(s);
                 return (
                   <div key={s} className="flex items-center h-7" style={{ opacity: active ? 1 : 0.2 }}>
-                    <div className="w-6 font-readout text-[9px] text-[#444] text-center">{STR[s]}</div>
+                    <div className="w-6 font-readout text-[9px] text-[#bbb] font-semibold text-center">{STR[s]}</div>
                     {Array.from({ length: maxFret + 1 }, (_, f) => {
                       const hit = feedback && feedback.str === s && feedback.fret === f;
                       return (

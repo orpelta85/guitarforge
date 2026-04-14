@@ -2,6 +2,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { idbSaveRecording, idbLoadRecordings } from "@/lib/recorderIdb";
 import type { SavedRecording } from "@/lib/types";
+import { loadMetronomeVolume, saveMetronomeVolume, clickGain } from "@/lib/metronomeAudio";
 
 interface Props {
   bpm: number;
@@ -94,6 +95,9 @@ export default function JamLooper({ bpm, jamPlaying }: Props) {
   const [currentBeat, setCurrentBeat] = useState(-1);
   const [saving, setSaving] = useState(false);
   const [savedMsg, setSavedMsg] = useState("");
+  const [metVolume, setMetVolume] = useState(1);
+  useEffect(() => { setMetVolume(loadMetronomeVolume()); }, []);
+  useEffect(() => { metVolumeRef.current = metVolume; }, [metVolume]);
 
   // Refs - audio objects must live in refs to avoid stale closures
   const ctxRef = useRef<AudioContext | null>(null);
@@ -142,6 +146,7 @@ export default function JamLooper({ bpm, jamPlaying }: Props) {
     }
   }
 
+  const metVolumeRef = useRef(1);
   // Schedule a click sound for metronome
   const scheduleClick = useCallback((ctx: AudioContext, time: number, accent: boolean) => {
     const osc = ctx.createOscillator();
@@ -149,7 +154,7 @@ export default function JamLooper({ bpm, jamPlaying }: Props) {
     osc.connect(gain);
     gain.connect(ctx.destination);
     osc.frequency.value = accent ? 1200 : 900;
-    gain.gain.setValueAtTime(accent ? 0.25 : 0.12, time);
+    gain.gain.setValueAtTime(clickGain(accent ? "accent" : "normal", metVolumeRef.current), time);
     gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
     osc.start(time);
     osc.stop(time + 0.05);
@@ -592,6 +597,18 @@ export default function JamLooper({ bpm, jamPlaying }: Props) {
             <div className="ml-auto flex items-center gap-3">
               <span className="text-[10px] text-[#D4A843] font-mono font-bold">{bpm} BPM</span>
               <span className="text-[10px] text-[#555] font-mono">{loopDuration.toFixed(1)}s</span>
+              <div className="flex items-center gap-1" title={`Metronome volume ${Math.round(metVolume * 100)}%`}>
+                <span className="text-[9px] text-[#6b6560] font-label uppercase">Vol</span>
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.05}
+                  value={metVolume}
+                  onChange={(e) => { const v = parseFloat(e.target.value); setMetVolume(v); saveMetronomeVolume(v); }}
+                  className="w-[60px] accent-[#D4A843]"
+                />
+              </div>
             </div>
           </div>
 
