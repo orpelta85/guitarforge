@@ -218,6 +218,18 @@ export default function GuitarForgeApp() {
     }
   }, []);
 
+  // Immediate save of core settings (style/scale/mode/week) - no debounce so quick
+  // style changes survive fast navigation.
+  useEffect(() => {
+    if (!ready) return;
+    try {
+      const raw = localStorage.getItem("gf30");
+      const prev = raw ? JSON.parse(raw) : {};
+      const data = { ...prev, week, mode, scale, style, dayCats, dayHrs, _syncTs: Date.now() };
+      localStorage.setItem("gf30", JSON.stringify(data));
+    } catch { /* quota */ }
+  }, [ready, week, mode, scale, style, dayCats, dayHrs]);
+
   useEffect(() => {
     if (!ready) return;
     const timer = setTimeout(() => {
