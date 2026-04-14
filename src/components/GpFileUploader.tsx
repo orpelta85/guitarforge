@@ -876,6 +876,33 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
     if (!newVal) { api.playbackRange = null; setLoopStart(null); setLoopEnd(null); setSpeedTrainer(false); }
   }
 
+  // Keyboard shortcuts: Space = play/pause, L = loop toggle, M = mixer, Esc = close mixer / cancel selection
+  useEffect(() => {
+    if (!ready) return;
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName;
+      // Don't hijack keys when typing into inputs
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target?.isContentEditable) return;
+      if (e.key === " " || e.code === "Space") {
+        e.preventDefault();
+        if (playerReady) togglePlay();
+      } else if (e.key === "l" || e.key === "L") {
+        e.preventDefault();
+        toggleLoop();
+      } else if (e.key === "m" || e.key === "M") {
+        e.preventDefault();
+        setShowMixer(v => !v);
+      } else if (e.key === "Escape") {
+        if (showMixer) { setShowMixer(false); e.preventDefault(); }
+        else if (selectMode !== "none") { setSelectMode("none"); e.preventDefault(); }
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, playerReady, showMixer, selectMode, isLooping]);
+
   function setLoopFromCurrentBar(type: "start" | "end") {
     const bar = currentBar || (apiRef.current as any)?._lastClickedBar || 1;
     if (type === "start") applyLoopRange(bar, loopEnd ?? totalBars);
@@ -1169,14 +1196,32 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
               {/* Row 1: Play, position, speed */}
               <div className="flex items-center gap-2 flex-wrap">
                 <button onClick={togglePlay}
-                  title={playing ? "Pause" : "Play"}
+                  title={playing ? "Pause (Space)" : "Play (Space)"}
                   aria-label={playing ? "Pause" : "Play"}
-                  className="w-8 h-8 rounded-full cursor-pointer flex items-center justify-center shrink-0"
-                  style={{ background: playing ? "#3a3a3a" : playerReady ? "#33CC33" : "#555", border: "2px solid #555", opacity: playerReady ? 1 : 0.5 }}>
+                  className="w-11 h-11 rounded-full cursor-pointer flex items-center justify-center shrink-0 transition-all duration-150 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#D4A843]/60"
+                  style={{
+                    background: playing
+                      ? "radial-gradient(circle at 30% 30%, #44dd44, #22aa22)"
+                      : playerReady
+                        ? "radial-gradient(circle at 30% 30%, #fbbf24, #d4a843)"
+                        : "#555",
+                    border: "1px solid " + (playing ? "#55ee55" : "#fde68a"),
+                    boxShadow: playing
+                      ? "0 2px 8px rgba(51,204,51,0.45), inset 0 1px 0 rgba(255,255,255,0.25)"
+                      : playerReady
+                        ? "0 2px 10px rgba(212,168,67,0.5), inset 0 1px 0 rgba(255,255,255,0.3)"
+                        : "none",
+                    opacity: playerReady ? 1 : 0.5
+                  }}>
                   {playing ? (
-                    <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><rect width="10" height="10" fill="#e5e5e5" /></svg>
+                    <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+                      <rect x="2" y="1" width="3" height="10" rx="0.5" fill="#0a0a0a" />
+                      <rect x="7" y="1" width="3" height="10" rx="0.5" fill="#0a0a0a" />
+                    </svg>
                   ) : (
-                    <span className="text-[#121214] text-xs ml-0.5">&#9654;</span>
+                    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" style={{ marginLeft: 2 }}>
+                      <path d="M3 2 L11 7 L3 12 Z" fill="#0a0a0a" />
+                    </svg>
                   )}
                 </button>
                 {playing && (
@@ -1426,24 +1471,194 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
             </div>
           )}
 
-          {/* ── Mixer ── */}
-          {showMixer && ready && tracks.length > 0 && (
-            <div className="px-4 py-2 border-b border-[#1a1a1a] bg-[#080808]">
-              <div className="font-label text-[10px] text-[#D4A843] mb-2">Mixer</div>
-              <div className="space-y-1.5 max-h-[200px] overflow-auto">
-                {tracks.map(t => (
-                  <div key={t.index} className="flex items-center gap-2">
-                    <span className={`font-label text-[9px] w-28 truncate cursor-pointer ${activeTrack === t.index ? "text-[#D4A843]" : "text-[#888]"}`}
-                      onClick={() => changeTrk(t.index)}>{t.name}</span>
-                    <button onClick={() => toggleTrackMute(t.index)}
-                      className={`font-label text-[8px] px-1.5 py-0.5 rounded cursor-pointer border ${t.isMuted ? "border-[#C41E3A] text-[#C41E3A] bg-[#C41E3A]/10" : "border-[#222] text-[#555]"}`}>M</button>
-                    <button onClick={() => toggleTrackSolo(t.index)}
-                      className={`font-label text-[8px] px-1.5 py-0.5 rounded cursor-pointer border ${t.isSolo ? "border-[#D4A843] text-[#D4A843] bg-[#D4A843]/10" : "border-[#222] text-[#555]"}`}>S</button>
-                    <input type="range" min="0" max="1" step="0.05" value={t.volume}
-                      onChange={e => setTrackVolume(t.index, Number(e.target.value))} className="flex-1 h-1 accent-[#D4A843]" />
-                    <span className="font-readout text-[8px] text-[#555] w-7 text-right">{Math.round(t.volume * 100)}%</span>
-                  </div>
-                ))}
+          {/* ── Mixer Drawer (slides in from right) ── */}
+          {ready && tracks.length > 0 && (
+            <div
+              aria-hidden={!showMixer}
+              style={{
+                position: "fixed",
+                top: 0, right: 0, bottom: 0,
+                width: 320,
+                background: "linear-gradient(180deg, #0f0f0f 0%, #0a0a0a 100%)",
+                borderLeft: "1px solid rgba(245,158,11,0.18)",
+                boxShadow: showMixer ? "-12px 0 40px rgba(0,0,0,0.6)" : "none",
+                transform: showMixer ? "translateX(0)" : "translateX(100%)",
+                transition: "transform 260ms cubic-bezier(0.22, 1, 0.36, 1)",
+                zIndex: 50,
+                display: "flex",
+                flexDirection: "column",
+                pointerEvents: showMixer ? "auto" : "none",
+              }}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-[#1a1a1a]">
+                <div className="flex items-center gap-2">
+                  <div style={{ width: 6, height: 18, borderRadius: 2, background: "linear-gradient(180deg, #fbbf24, #d4a843)" }} />
+                  <span className="font-label text-[13px] tracking-[0.14em] uppercase" style={{ color: "#D4A843" }}>Mixer</span>
+                </div>
+                <button
+                  onClick={() => setShowMixer(false)}
+                  aria-label="Close mixer"
+                  title="Close (Esc)"
+                  className="w-7 h-7 rounded-full flex items-center justify-center cursor-pointer hover:bg-[#1a1a1a] transition-colors"
+                  style={{ border: "1px solid #2a2a2a", color: "#888" }}
+                >
+                  <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+                    <path d="M2 2 L8 8 M8 2 L2 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Master section */}
+              <div className="px-4 py-3 border-b border-[#1a1a1a]" style={{ background: "rgba(245,158,11,0.03)" }}>
+                <div className="font-label text-[9px] tracking-[0.14em] uppercase text-[#888] mb-2">Master</div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="font-label text-[9px] text-[#888] w-12">Volume</span>
+                  <input type="range" min="0" max="1" step="0.05" value={masterVolume}
+                    onChange={e => setMasterVol(Number(e.target.value))} className="flex-1 h-1 accent-[#D4A843]" />
+                  <span className="font-readout text-[9px] text-[#888] w-9 text-right">{Math.round(masterVolume * 100)}%</span>
+                </div>
+                <div className="flex items-center gap-2 mb-2">
+                  <button onClick={toggleMetronome}
+                    className={`font-label text-[9px] px-2 py-1 rounded cursor-pointer border transition-colors ${metronomeOn ? "border-[#33CC33] text-[#33CC33] bg-[#33CC33]/10" : "border-[#2a2a2a] text-[#666]"}`}
+                    style={{ minWidth: 50 }}
+                  >
+                    Met {metronomeOn ? "ON" : "OFF"}
+                  </button>
+                  <input type="range" min="0" max="1" step="0.05" value={metronomeVolume}
+                    onChange={e => setMetVol(Number(e.target.value))} className="flex-1 h-1 accent-[#33CC33]" />
+                  <span className="font-readout text-[9px] text-[#666] w-9 text-right">{Math.round(metronomeVolume * 100)}%</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setCountIn(countInVolume > 0 ? 0 : 1)}
+                    className={`font-label text-[9px] px-2 py-1 rounded cursor-pointer border transition-colors ${countInVolume > 0 ? "border-[#D4A843] text-[#D4A843] bg-[#D4A843]/10" : "border-[#2a2a2a] text-[#666]"}`}>
+                    Count-in {countInVolume > 0 ? "ON" : "OFF"}
+                  </button>
+                  <span className="font-readout text-[10px] text-[#D4A843] ml-auto">{songInfo ? `${Math.round(songInfo.tempo * speed)} BPM` : ""}</span>
+                </div>
+              </div>
+
+              {/* Tracks — vertical channel strips */}
+              <div className="flex-1 overflow-auto px-3 py-3">
+                <div className="font-label text-[9px] tracking-[0.14em] uppercase text-[#888] mb-2">Channels</div>
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {tracks.map(t => {
+                    const isActive = activeTrack === t.index;
+                    const trackColor = isActive ? "#D4A843" : "#444";
+                    // Determine instrument icon (simple heuristic)
+                    const name = t.name.toLowerCase();
+                    const isBass = name.includes("bass");
+                    const isDrum = name.includes("drum") || name.includes("perc");
+                    const isVocal = name.includes("voc") || name.includes("sing");
+                    return (
+                      <div
+                        key={t.index}
+                        onClick={() => changeTrk(t.index)}
+                        className="shrink-0 cursor-pointer transition-all"
+                        style={{
+                          width: 72,
+                          padding: "10px 6px",
+                          borderRadius: 6,
+                          background: isActive ? "rgba(245,158,11,0.06)" : "#0d0d0d",
+                          border: isActive ? "1px solid rgba(245,158,11,0.45)" : "1px solid #1a1a1a",
+                          boxShadow: isActive ? "0 0 14px rgba(245,158,11,0.15)" : "none",
+                        }}
+                      >
+                        {/* Color strip */}
+                        <div style={{ height: 3, borderRadius: 2, background: trackColor, marginBottom: 8, opacity: isActive ? 1 : 0.4 }} />
+                        {/* Instrument icon */}
+                        <div className="flex justify-center mb-1.5" style={{ color: trackColor }}>
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                            {isDrum ? (
+                              <>
+                                <ellipse cx="8" cy="5" rx="5.5" ry="1.8" stroke="currentColor" strokeWidth="1.2" />
+                                <path d="M2.5 5 L2.5 11 Q8 13 13.5 11 L13.5 5" stroke="currentColor" strokeWidth="1.2" fill="none" />
+                              </>
+                            ) : isVocal ? (
+                              <>
+                                <rect x="6" y="2" width="4" height="7" rx="2" stroke="currentColor" strokeWidth="1.2" />
+                                <path d="M4 8 Q4 12 8 12 Q12 12 12 8 M8 12 L8 14" stroke="currentColor" strokeWidth="1.2" fill="none" />
+                              </>
+                            ) : isBass ? (
+                              <>
+                                <path d="M5 2 L5 10 Q5 13 8 13 Q11 13 11 10 L11 2" stroke="currentColor" strokeWidth="1.2" fill="none" />
+                                <circle cx="8" cy="10" r="1.5" fill="currentColor" />
+                              </>
+                            ) : (
+                              <>
+                                <circle cx="11" cy="11" r="3.5" stroke="currentColor" strokeWidth="1.2" />
+                                <path d="M10 8 L14 2 L15 3 L11 9" stroke="currentColor" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+                              </>
+                            )}
+                          </svg>
+                        </div>
+                        {/* Name */}
+                        <div className="font-label text-[9px] truncate text-center mb-2" style={{ color: isActive ? "#D4A843" : "#aaa" }} title={t.name}>
+                          {t.name}
+                        </div>
+                        {/* S/M buttons */}
+                        <div className="flex gap-1 justify-center mb-2">
+                          <button onClick={(e) => { e.stopPropagation(); toggleTrackSolo(t.index); }}
+                            className={`font-label text-[8px] w-6 h-5 rounded cursor-pointer border transition-colors ${t.isSolo ? "border-[#D4A843] text-[#D4A843] bg-[#D4A843]/15" : "border-[#2a2a2a] text-[#555] hover:text-[#D4A843]"}`}
+                            title="Solo">S</button>
+                          <button onClick={(e) => { e.stopPropagation(); toggleTrackMute(t.index); }}
+                            className={`font-label text-[8px] w-6 h-5 rounded cursor-pointer border transition-colors ${t.isMuted ? "border-[#C41E3A] text-[#C41E3A] bg-[#C41E3A]/15" : "border-[#2a2a2a] text-[#555] hover:text-[#C41E3A]"}`}
+                            title="Mute">M</button>
+                        </div>
+                        {/* Vertical slider (rotated range) */}
+                        <div style={{ height: 100, position: "relative", display: "flex", justifyContent: "center", alignItems: "center" }}>
+                          {/* Track */}
+                          <div style={{
+                            position: "absolute",
+                            top: 4, bottom: 4,
+                            width: 4,
+                            background: "linear-gradient(180deg, #1a1a1a, #0a0a0a)",
+                            borderRadius: 2,
+                            border: "1px solid #222",
+                          }} />
+                          {/* Fill */}
+                          <div style={{
+                            position: "absolute",
+                            bottom: 4,
+                            height: `calc(${t.volume * 100}% - 8px)`,
+                            width: 4,
+                            background: `linear-gradient(180deg, ${trackColor}, ${isActive ? "#8a6b1d" : "#2a2a2a"})`,
+                            borderRadius: 2,
+                            minHeight: 0,
+                            opacity: t.isMuted ? 0.2 : 1,
+                            transition: "opacity 150ms ease",
+                          }} />
+                          {/* Range input rotated for vertical */}
+                          <input
+                            type="range" min="0" max="1" step="0.01" value={t.volume}
+                            onChange={e => setTrackVolume(t.index, Number(e.target.value))}
+                            onClick={(e) => e.stopPropagation()}
+                            aria-label={`${t.name} volume`}
+                            style={{
+                              appearance: "none",
+                              WebkitAppearance: "slider-vertical" as any,
+                              width: 20,
+                              height: 100,
+                              background: "transparent",
+                              cursor: "pointer",
+                              writingMode: "vertical-lr" as any,
+                              direction: "rtl" as any,
+                            }}
+                          />
+                        </div>
+                        {/* Volume readout */}
+                        <div className="font-readout text-[8px] text-center mt-1" style={{ color: isActive ? "#D4A843" : "#555" }}>
+                          {Math.round(t.volume * 100)}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Footer hint */}
+              <div className="px-4 py-2 border-t border-[#1a1a1a] font-label text-[8px] text-[#555] tracking-wider">
+                Press <span className="text-[#888]">Esc</span> to close &middot; <span className="text-[#888]">M</span> to toggle
               </div>
             </div>
           )}
@@ -1538,47 +1753,94 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
                     transition: "opacity 100ms ease-out",
                   }} />
                 ))}
-                {/* Selection fill + border (beat-level) */}
+                {/* Selection fill + border (beat-level) — premium gradient + shimmer */}
                 {selRects.map((r, i) => (
                   <div key={`s-${i}`} style={{
                     position: "absolute", left: r.x - 2, top: r.y, width: r.w + 4, height: r.h,
-                    background: "rgba(245,158,11,0.22)",
-                    border: "2px solid rgba(245,158,11,0.85)",
-                    borderRadius: 3,
-                    boxShadow: "0 0 10px rgba(245,158,11,0.22)",
-                    animation: "gfSelFadeIn 120ms ease-out",
+                    background: "linear-gradient(180deg, rgba(245,158,11,0.30) 0%, rgba(245,158,11,0.18) 100%)",
+                    border: "1.5px solid rgba(245,158,11,0.9)",
+                    outline: "1px solid rgba(120,75,0,0.55)",
+                    outlineOffset: "-3px",
+                    borderRadius: 4,
+                    boxShadow: "0 0 12px rgba(245,158,11,0.28), inset 0 0 12px rgba(245,158,11,0.08)",
+                    animation: "gfSelFadeIn 140ms ease-out, gfSelShimmer 5s ease-in-out infinite",
+                    overflow: "hidden",
                   }} />
                 ))}
+                {/* Floating Loop label (centered above selection) */}
+                {selRects.length > 0 && (() => {
+                  const first = selRects[0];
+                  const last = selRects[selRects.length - 1];
+                  const cx = (first.x + last.x + last.w) / 2;
+                  const barsCount = (loopEnd ?? 0) - (loopStart ?? 0) + 1;
+                  return (
+                    <div style={{
+                      position: "absolute",
+                      left: cx - 60, top: Math.max(2, first.y - 22),
+                      width: 120,
+                      textAlign: "center",
+                      pointerEvents: "none",
+                    }}>
+                      <span style={{
+                        display: "inline-block",
+                        padding: "2px 8px",
+                        background: "linear-gradient(180deg, #1a1a1a, #0a0a0a)",
+                        border: "1px solid rgba(245,158,11,0.5)",
+                        borderRadius: 10,
+                        color: "#D4A843",
+                        fontSize: 9,
+                        fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.5)",
+                      }}>
+                        Loop &bull; {barsCount > 0 ? barsCount : 1} bar{barsCount !== 1 ? "s" : ""}
+                      </span>
+                    </div>
+                  );
+                })()}
                 {/* Drag handles (left = first rect's left edge, right = last rect's right edge) */}
                 {selRects.length > 0 && (() => {
                   const first = selRects[0];
                   const last = selRects[selRects.length - 1];
                   const handleStyle = (left: number, top: number): React.CSSProperties => ({
                     position: "absolute",
-                    left: left - 10, top: top - 10,
-                    width: 20, height: 20,
-                    borderRadius: 10,
-                    background: "#f59e0b",
-                    border: "2px solid #0a0a0a",
-                    boxShadow: "0 2px 8px rgba(245,158,11,0.55), 0 0 0 2px rgba(245,158,11,0.25)",
+                    left: left - 11, top: top - 11,
+                    width: 22, height: 22,
+                    borderRadius: 11,
+                    background: "linear-gradient(135deg, rgba(245,158,11,0.95), rgba(212,168,67,0.9))",
+                    backdropFilter: "blur(6px)",
+                    WebkitBackdropFilter: "blur(6px)",
+                    border: "1.5px solid rgba(10,10,10,0.85)",
+                    boxShadow: "0 2px 10px rgba(245,158,11,0.55), 0 0 0 2px rgba(245,158,11,0.18), inset 0 1px 0 rgba(255,255,255,0.35)",
                     cursor: "ew-resize",
                     pointerEvents: "auto",
                     display: "flex", alignItems: "center", justifyContent: "center",
-                    color: "#0a0a0a", fontSize: 10, fontWeight: 700,
-                    transition: "transform 120ms ease-out, box-shadow 120ms ease-out",
+                    color: "#0a0a0a",
+                    transition: "transform 150ms cubic-bezier(0.34,1.56,0.64,1), box-shadow 150ms ease-out",
                   });
                   return (
                     <>
                       <div
+                        className="gf-handle"
                         style={handleStyle(first.x, first.y + first.h / 2)}
                         onMouseDown={(e) => onHandleMouseDown("left", e)}
                         title="Drag to resize loop start"
-                      >&#9664;</div>
+                      >
+                        <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+                          <path d="M6.5 2 L3 5 L6.5 8" stroke="#0a0a0a" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </div>
                       <div
+                        className="gf-handle"
                         style={handleStyle(last.x + last.w, last.y + last.h / 2)}
                         onMouseDown={(e) => onHandleMouseDown("right", e)}
                         title="Drag to resize loop end"
-                      >&#9654;</div>
+                      >
+                        <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+                          <path d="M3.5 2 L7 5 L3.5 8" stroke="#0a0a0a" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </div>
                     </>
                   );
                 })()}
@@ -1589,6 +1851,21 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
             @keyframes gfSelFadeIn {
               from { opacity: 0; transform: scale(0.98); }
               to { opacity: 1; transform: scale(1); }
+            }
+            @keyframes gfSelShimmer {
+              0%, 100% { box-shadow: 0 0 12px rgba(245,158,11,0.28), inset 0 0 12px rgba(245,158,11,0.08); }
+              50% { box-shadow: 0 0 18px rgba(245,158,11,0.38), inset 0 0 18px rgba(245,158,11,0.14); }
+            }
+            @keyframes gfDrawerIn {
+              from { transform: translateX(100%); opacity: 0.6; }
+              to { transform: translateX(0); opacity: 1; }
+            }
+            :global(.gf-handle:hover) {
+              transform: scale(1.12);
+              box-shadow: 0 3px 14px rgba(245,158,11,0.75), 0 0 0 3px rgba(245,158,11,0.22), inset 0 1px 0 rgba(255,255,255,0.45) !important;
+            }
+            :global(.gf-handle:active) {
+              transform: scale(1.2);
             }
           `}</style>
         </div>
