@@ -221,7 +221,7 @@ export default function GuitarForgeApp() {
   useEffect(() => {
     if (!ready) return;
     const timer = setTimeout(() => {
-      const data = { week, mode, scale, style, dayCats, dayHrs, dayExMap, doneMap, bpmLog, noteLog, songs, songProgress, exEdits, customSongs };
+      const data = { week, mode, scale, style, dayCats, dayHrs, dayExMap, doneMap, bpmLog, noteLog, songs, songProgress, exEdits, customSongs, _syncTs: Date.now() };
       try { localStorage.setItem("gf30", JSON.stringify(data)); } catch { /* quota */ }
       try { localStorage.setItem("gf-songlib-progress", JSON.stringify(songLibProgress)); } catch {}
       try { localStorage.setItem("gf-my-songs", JSON.stringify(mySongs)); } catch {}
@@ -235,7 +235,7 @@ export default function GuitarForgeApp() {
     syncedUserRef.current = user.id;
     setSyncing(true);
     setSyncError(null);
-    const localData = { week, mode, scale, style, dayCats, dayHrs, dayExMap, doneMap, bpmLog, noteLog, songs, songProgress, exEdits, customSongs, songLibProgress, mySongs, streak, calendarData };
+    const localData = { week, mode, scale, style, dayCats, dayHrs, dayExMap, doneMap, bpmLog, noteLog, songs, songProgress, exEdits, customSongs, songLibProgress, mySongs, streak, calendarData, _syncTs: Date.now() };
     syncData(user.id, localData)
       .then((merged) => {
         const d = merged as Record<string, any>;
