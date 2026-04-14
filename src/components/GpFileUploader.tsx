@@ -16,6 +16,8 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
   const [speed, setSpeed] = useState(1);
   const [ready, setReady] = useState(false);
   const [playerReady, setPlayerReady] = useState(false);
+  const [sfProgress, setSfProgress] = useState(0);
+  const [sfError, setSfError] = useState<string | null>(null);
   const [songInfo, setSongInfo] = useState<{ title: string; artist: string; tempo: number } | null>(null);
   const [tracks, setTracks] = useState<TrackInfo[]>([]);
   const [activeTrack, setActiveTrack] = useState(0);
@@ -61,11 +63,20 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
   const [reverbMix, setReverbMix] = useState(0.1);
 
   const mainRef = useRef<HTMLDivElement>(null);
+  const overlayWrapRef = useRef<HTMLDivElement>(null);
   const apiRef = useRef<any>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const loopCountRef = useRef(0);
   const readyCheckRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const workerBlobUrlRef = useRef<string | null>(null);
+
+  // Interactive bar selection overlay (UG-style drag-to-loop)
+  const [selStart, setSelStart] = useState<number | null>(null);
+  const [selEnd, setSelEnd] = useState<number | null>(null);
+  const [hoverBar, setHoverBar] = useState<number | null>(null);
+  const [overlayTick, setOverlayTick] = useState(0);
+  const dragStateRef = useRef<{ mode: "none" | "new" | "left" | "right"; anchorBar: number | null }>({ mode: "none", anchorBar: null });
+  const scrollTickRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const audioNodesRef = useRef<{
     ctx: AudioContext;
     highpass: BiquadFilterNode;
@@ -447,7 +458,9 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
         s.player.enableAnimatedBeatCursor = true;
         s.player.enableElementHighlighting = true;
         s.player.enableUserInteraction = true;
-        s.player.soundFont = base + "/alphatab/soundfont/GeneralUser-GS.sf2";
+        // sonivox.sf3 — 977KB compressed, fast to load, reliable playback.
+        // GeneralUser-GS.sf2 (32MB) caused long loads + silent Play regressions.
+        s.player.soundFont = base + "/alphatab/soundfont/sonivox.sf3";
         s.player.scrollElement = mainRef.current;
         s.player.scrollOffsetY = -10;
         s.display.layoutMode = 0;
@@ -498,6 +511,25 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
           }
         });
 
+        // Track soundfont download progress + errors so Play is never silent.
+        try {
+          (api as any).soundFontLoad?.on?.((e: any) => {
+            if (dead) return;
+            const total = e?.total || 0;
+            const loaded = e?.loaded || 0;
+            if (total > 0) setSfProgress(Math.round((loaded / total) * 100));
+          });
+          (api as any).soundFontLoaded?.on?.(() => {
+            if (!dead) { setSfProgress(100); setSfError(null); }
+          });
+          (api as any).soundFontLoadFailed?.on?.((err: any) => {
+            if (!dead) { setSfError(String(err?.message || err)); console.error("[alphaTab] soundFont load failed:", err); }
+          });
+          (api as any).error?.on?.((err: any) => {
+            console.error("[alphaTab] error:", err);
+          });
+        } catch (e) { console.warn("[alphaTab] could not attach soundfont listeners", e); }
+
         let pollCount = 0;
         if (readyCheckRef.current) clearInterval(readyCheckRef.current);
         const readyCheck = setInterval(() => {
@@ -533,13 +565,61 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
           setTotalTime(e.endTime ?? 0);
         });
 
-        // Click on beat in tab → dispatch to React via custom event
-        api.beatMouseUp?.on?.((beat: any) => {
+        // Drag-to-select (UG-style): mouseDown starts, mouseMove updates, mouseUp finalizes
+        api.beatMouseDown?.on?.((beat: any) => {
           if (dead || !beat?.voice?.bar) return;
           const barIdx = beat.voice.bar.index + 1;
           (api as any)._lastClickedBar = barIdx;
-          // Dispatch custom event so React state can handle selectMode
-          window.dispatchEvent(new CustomEvent("gf-bar-click", { detail: { bar: barIdx } }));
+          (api as any)._dragDidMove = false;
+          dragStateRef.current = { mode: "new", anchorBar: barIdx };
+        });
+        api.beatMouseMove?.on?.((beat: any) => {
+          if (dead || !beat?.voice?.bar) return;
+          const st = dragStateRef.current;
+          if (st.mode !== "new" || st.anchorBar == null) return;
+          const barIdx = beat.voice.bar.index + 1;
+          if (barIdx !== st.anchorBar) (api as any)._dragDidMove = true;
+          const a = Math.min(st.anchorBar, barIdx);
+          const b = Math.max(st.anchorBar, barIdx);
+          setSelStart(a); setSelEnd(b);
+        });
+        api.beatMouseUp?.on?.((beat: any) => {
+          if (dead) return;
+          const st = dragStateRef.current;
+          const didMove = !!(api as any)._dragDidMove;
+          dragStateRef.current = { mode: "none", anchorBar: null };
+
+          if (!beat?.voice?.bar) {
+            // click outside any beat = clear selection
+            if (!didMove) { setSelStart(null); setSelEnd(null); }
+            return;
+          }
+          const barIdx = beat.voice.bar.index + 1;
+          (api as any)._lastClickedBar = barIdx;
+
+          if (didMove && st.anchorBar != null) {
+            const a = Math.min(st.anchorBar, barIdx);
+            const b = Math.max(st.anchorBar, barIdx);
+            setSelStart(a); setSelEnd(b);
+            // Auto-activate loop on drag selection
+            window.dispatchEvent(new CustomEvent("gf-range-selected", { detail: { start: a, end: b } }));
+          } else {
+            // Pure click (no drag) — legacy behavior for A/B pick modes, else jump
+            window.dispatchEvent(new CustomEvent("gf-bar-click", { detail: { bar: barIdx } }));
+          }
+        });
+
+        // Hover indicator
+        api.beatMouseMove?.on?.((beat: any) => {
+          if (dead || !beat?.voice?.bar) return;
+          if (dragStateRef.current.mode !== "none") return;
+          setHoverBar(beat.voice.bar.index + 1);
+        });
+
+        // Recompute overlay positions when layout/rendering changes
+        api.postRenderFinished?.on?.(() => {
+          if (dead) return;
+          setOverlayTick(t => t + 1);
         });
 
         api.error.on((e: any) => {
@@ -613,6 +693,49 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
     return () => window.removeEventListener("gf-bar-click", onBarClick);
   }, [selectMode, loopStart, loopEnd, totalBars, applyLoopRange]);
 
+  // Auto-activate loop when a drag selection is made
+  useEffect(() => {
+    function onRangeSelected(e: Event) {
+      const d = (e as CustomEvent).detail;
+      if (!d) return;
+      const a = Number(d.start), b = Number(d.end);
+      if (!a || !b) return;
+      applyLoopRange(a, b);
+    }
+    window.addEventListener("gf-range-selected", onRangeSelected);
+    return () => window.removeEventListener("gf-range-selected", onRangeSelected);
+  }, [applyLoopRange]);
+
+  // ESC clears selection and disables loop; scroll / resize triggers overlay recompute
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setSelStart(null); setSelEnd(null);
+        const api = apiRef.current;
+        if (api) { api.isLooping = false; api.playbackRange = null; }
+        setIsLooping(false); setLoopStart(null); setLoopEnd(null);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  useEffect(() => {
+    const el = mainRef.current;
+    if (!el) return;
+    function bump() {
+      if (scrollTickRef.current) clearTimeout(scrollTickRef.current);
+      scrollTickRef.current = setTimeout(() => setOverlayTick(t => t + 1), 16);
+    }
+    el.addEventListener("scroll", bump, { passive: true });
+    window.addEventListener("resize", bump);
+    return () => {
+      el.removeEventListener("scroll", bump);
+      window.removeEventListener("resize", bump);
+      if (scrollTickRef.current) clearTimeout(scrollTickRef.current);
+    };
+  }, [ready]);
+
   // Speed trainer: increase speed each loop iteration.
   // Detect loop restart by watching position: when currentTime drops
   // significantly (big backwards jump), it means alphaTab looped back to A.
@@ -642,6 +765,10 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
   function togglePlay() {
     const api = apiRef.current;
     if (!api) return;
+    if (!api.isReadyForPlayback) {
+      console.warn("[alphaTab] Play requested but player not ready yet", { sfProgress, sfError });
+      return;
+    }
     if ((api as any).player?.output?.audioContext?.state === "suspended")
       (api as any).player.output.audioContext.resume();
     // Try to enhance audio on first play (audio context may only exist now)
@@ -772,6 +899,89 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
   const FRETS = 24;
   const stringNames = ["E", "B", "G", "D", "A", "E"];
 
+  // --- Overlay rect computation ---
+  // Returns array of {x,y,w,h} rectangles (one per staff-system line inside the selected bar range)
+  // in mainRef-relative coordinates (accounting for scroll).
+  function computeBarRects(startBar: number, endBar: number): Array<{ x: number; y: number; w: number; h: number }> {
+    const api = apiRef.current;
+    const main = mainRef.current;
+    if (!api?.renderer?.boundsLookup || !main) return [];
+    const lookup = api.renderer.boundsLookup;
+    const rects: Array<{ x: number; y: number; w: number; h: number }> = [];
+    // Group bars by staff-system (y value) — merge horizontally
+    let current: { y: number; h: number; xMin: number; xMax: number } | null = null;
+    for (let i = startBar - 1; i <= endBar - 1; i++) {
+      const mbb: any = lookup.findMasterBarByIndex?.(i);
+      if (!mbb?.realBounds) continue;
+      const b = mbb.realBounds;
+      if (current && Math.abs(current.y - b.y) < 2) {
+        current.xMin = Math.min(current.xMin, b.x);
+        current.xMax = Math.max(current.xMax, b.x + b.w);
+        current.h = Math.max(current.h, b.h);
+      } else {
+        if (current) rects.push({ x: current.xMin, y: current.y, w: current.xMax - current.xMin, h: current.h });
+        current = { y: b.y, h: b.h, xMin: b.x, xMax: b.x + b.w };
+      }
+    }
+    if (current) rects.push({ x: current.xMin, y: current.y, w: current.xMax - current.xMin, h: current.h });
+    // Convert to overlay-relative (subtract scroll of mainRef)
+    return rects.map(r => ({ x: r.x - main.scrollLeft, y: r.y - main.scrollTop, w: r.w, h: r.h }));
+  }
+
+  const selRects = (selStart && selEnd) ? computeBarRects(selStart, selEnd) : [];
+  const hoverRects = (hoverBar && (!selStart || !selEnd)) ? computeBarRects(hoverBar, hoverBar) : [];
+  const playingBarRects = (playing && currentBar > 0) ? computeBarRects(currentBar, currentBar) : [];
+  // overlayTick is consumed so React re-renders when layout changes
+  void overlayTick;
+
+  // --- Drag handle logic ---
+  function onHandleMouseDown(side: "left" | "right", ev: React.MouseEvent) {
+    ev.preventDefault();
+    ev.stopPropagation();
+    const main: HTMLDivElement | null = mainRef.current;
+    const api = apiRef.current;
+    if (!main || !api?.renderer?.boundsLookup) return;
+    const mainEl: HTMLDivElement = main;
+    dragStateRef.current = { mode: side, anchorBar: side === "left" ? selEnd : selStart };
+
+    function onMove(e: MouseEvent) {
+      const rect = mainEl.getBoundingClientRect();
+      const x = e.clientX - rect.left + mainEl.scrollLeft;
+      const y = e.clientY - rect.top + mainEl.scrollTop;
+      const beat = api.renderer.boundsLookup.getBeatAtPos?.(x, y);
+      if (!beat?.voice?.bar) return;
+      const barIdx = beat.voice.bar.index + 1;
+      const anchor = dragStateRef.current.anchorBar;
+      if (anchor == null) return;
+      const a = Math.min(anchor, barIdx);
+      const b = Math.max(anchor, barIdx);
+      setSelStart(a); setSelEnd(b);
+    }
+    function onUp() {
+      const s = selStart, e = selEnd;
+      dragStateRef.current = { mode: "none", anchorBar: null };
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      if (s && e) applyLoopRange(s, e);
+    }
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }
+
+  function onOverlayDoubleClick(ev: React.MouseEvent) {
+    const main = mainRef.current;
+    const api = apiRef.current;
+    if (!main || !api?.renderer?.boundsLookup) return;
+    const rect = main.getBoundingClientRect();
+    const x = ev.clientX - rect.left + main.scrollLeft;
+    const y = ev.clientY - rect.top + main.scrollTop;
+    const beat = api.renderer.boundsLookup.getBeatAtPos?.(x, y);
+    if (!beat?.voice?.bar) return;
+    const barIdx = beat.voice.bar.index + 1;
+    setSelStart(barIdx); setSelEnd(barIdx);
+    applyLoopRange(barIdx, barIdx);
+  }
+
   return (
     <div>
       <input ref={fileRef} type="file" accept=".gp,.gp3,.gp4,.gp5,.gpx" className="hidden"
@@ -816,7 +1026,11 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
                   {songInfo ? `${songInfo.artist}${songInfo.artist ? " — " : ""}${songInfo.title} (${songInfo.tempo} BPM)` : fileName}
                 </span>
                 {savedIndicator && <span className="font-label text-[9px] text-[#33CC33]">Saved</span>}
-                {ready && !playerReady && <span className="font-label text-[9px] text-[#555]">Loading player...</span>}
+                {ready && !playerReady && (
+                  <span className="font-label text-[9px] text-[#555]">
+                    {sfError ? `Sound error: ${sfError}` : sfProgress > 0 && sfProgress < 100 ? `Loading sounds ${sfProgress}%` : "Loading player..."}
+                  </span>
+                )}
               </div>
               <div className="flex gap-1">
                 <button onClick={() => setViewerCollapsed(v => !v)} className="btn-ghost !text-[9px] !px-2 !py-1" title={viewerCollapsed ? "Show tab" : "Hide tab"}>
@@ -1181,7 +1395,83 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
           {!viewerCollapsed && loading && <div className="p-6 text-center font-label text-sm text-[#444]">Loading tab...</div>}
           {!viewerCollapsed && error && <div className="p-4 text-center font-label text-[11px] text-[#C41E3A]">{error}</div>}
 
-          <div ref={mainRef} style={{ minHeight: ready && !viewerCollapsed ? 350 : 0, maxHeight: viewerCollapsed ? 0 : 550, overflow: "hidden", overscrollBehavior: "contain", background: viewerCollapsed ? "transparent" : "#fff" }} dir="ltr" />
+          <div ref={overlayWrapRef} style={{ position: "relative" }} onDoubleClick={onOverlayDoubleClick}
+            onMouseLeave={() => setHoverBar(null)}>
+            <div ref={mainRef} style={{ minHeight: ready && !viewerCollapsed ? 350 : 0, maxHeight: viewerCollapsed ? 0 : 550, overflow: "auto", overscrollBehavior: "contain", background: viewerCollapsed ? "transparent" : "#fff" }} dir="ltr" />
+
+            {/* Interactive overlay: hover + selection + drag handles + playing-bar highlight */}
+            {ready && !viewerCollapsed && (
+              <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+                {/* Playing-bar subtle highlight */}
+                {playingBarRects.map((r, i) => (
+                  <div key={`pb-${i}`} style={{
+                    position: "absolute", left: r.x, top: r.y, width: r.w, height: r.h,
+                    background: "rgba(245,158,11,0.08)",
+                    transition: "all 120ms ease-out",
+                  }} />
+                ))}
+                {/* Hover bar outline */}
+                {hoverRects.map((r, i) => (
+                  <div key={`h-${i}`} style={{
+                    position: "absolute", left: r.x, top: r.y, width: r.w, height: r.h,
+                    border: "1px solid rgba(245,158,11,0.3)",
+                    borderRadius: 2,
+                    transition: "opacity 100ms ease-out",
+                  }} />
+                ))}
+                {/* Selection fill + border */}
+                {selRects.map((r, i) => (
+                  <div key={`s-${i}`} style={{
+                    position: "absolute", left: r.x, top: r.y, width: r.w, height: r.h,
+                    background: "rgba(245,158,11,0.25)",
+                    border: "2px solid rgba(245,158,11,0.8)",
+                    borderRadius: 3,
+                    boxShadow: "0 0 12px rgba(245,158,11,0.25)",
+                    animation: "gfSelFadeIn 150ms ease-out",
+                  }} />
+                ))}
+                {/* Drag handles (left = first rect's left edge, right = last rect's right edge) */}
+                {selRects.length > 0 && (() => {
+                  const first = selRects[0];
+                  const last = selRects[selRects.length - 1];
+                  const handleStyle = (left: number, top: number): React.CSSProperties => ({
+                    position: "absolute",
+                    left: left - 10, top: top - 10,
+                    width: 20, height: 20,
+                    borderRadius: 10,
+                    background: "#f59e0b",
+                    border: "2px solid #0a0a0a",
+                    boxShadow: "0 2px 8px rgba(245,158,11,0.55), 0 0 0 2px rgba(245,158,11,0.25)",
+                    cursor: "ew-resize",
+                    pointerEvents: "auto",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    color: "#0a0a0a", fontSize: 10, fontWeight: 700,
+                    transition: "transform 120ms ease-out, box-shadow 120ms ease-out",
+                  });
+                  return (
+                    <>
+                      <div
+                        style={handleStyle(first.x, first.y + first.h / 2)}
+                        onMouseDown={(e) => onHandleMouseDown("left", e)}
+                        title="Drag to resize loop start"
+                      >&#9664;</div>
+                      <div
+                        style={handleStyle(last.x + last.w, last.y + last.h / 2)}
+                        onMouseDown={(e) => onHandleMouseDown("right", e)}
+                        title="Drag to resize loop end"
+                      >&#9654;</div>
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+          </div>
+          <style jsx>{`
+            @keyframes gfSelFadeIn {
+              from { opacity: 0; transform: scale(0.98); }
+              to { opacity: 1; transform: scale(1); }
+            }
+          `}</style>
         </div>
       )}
     </div>
