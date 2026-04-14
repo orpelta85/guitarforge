@@ -1,0 +1,672 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e6]:
+      - link "Home page" [ref=e7] [cursor=pointer]:
+        - /url: https://www.ultimate-guitar.com
+        - img [ref=e8]
+      - list "Main navigation" [ref=e10]:
+        - listitem [ref=e11]:
+          - link "Tabs" [ref=e12] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore
+        - listitem [ref=e13]:
+          - link "Courses" [ref=e14] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/courses
+        - listitem [ref=e15]:
+          - link "Songbooks" [ref=e16] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/books
+        - listitem [ref=e17]:
+          - link "Articles" [ref=e18] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/news/
+        - listitem [ref=e19]:
+          - link "Forums" [ref=e20] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/forum/
+        - listitem [ref=e21]:
+          - link "Publish tab" [ref=e22] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/contribution/submit/tabs?app_utm_campaign=top_menu&app_utm_content=button&app_utm_medium=internal&app_utm_source=ug&app_utm_term=publish
+        - listitem [ref=e23]:
+          - link "Pro+" [ref=e24] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/pro?app_utm_campaign=UG%20Tab%20Pro&app_utm_content=View%20Index&app_utm_medium=Header&app_utm_source=UltimateGuitar
+            - emphasis [ref=e25]: Pro+
+      - generic [ref=e27]:
+        - searchbox "Enter artist name or song title" [ref=e28]
+        - button "Search" [ref=e29] [cursor=pointer]
+      - button "Notifications" [ref=e31] [cursor=pointer]:
+        - img
+  - main [ref=e32]:
+    - generic [ref=e34]:
+      - generic [ref=e35]:
+        - generic [ref=e36]:
+          - generic [ref=e37]:
+            - generic [ref=e38]:
+              - generic [ref=e39]:
+                - heading "Nothing Else Matters Chords" [level=1] [ref=e40]
+                - text: by
+                - link "Metallica" [ref=e42] [cursor=pointer]:
+                  - /url: https://www.ultimate-guitar.com/artist/metallica_954
+              - generic [ref=e44]:
+                - generic [ref=e45]:
+                  - generic [ref=e46]: 5,943,854 views
+                  - generic [ref=e47]: ·65,082 saves
+                  - generic [ref=e48]:
+                    - text: ·
+                    - link "150 comments" [ref=e49] [cursor=pointer]:
+                      - /url: "#comments"
+                - generic [ref=e50]:
+                  - generic [ref=e51]:
+                    - generic [ref=e52]: "Author:"
+                    - text: Unregistered
+                  - generic [ref=e53]:
+                    - text: ·
+                    - button "7 contributors" [ref=e54] [cursor=pointer]
+                  - generic [ref=e55]:
+                    - text: ·
+                    - generic [ref=e56]: "Difficulty:"
+                    - text: Beginner
+            - generic [ref=e57]:
+              - button "Download PDF" [ref=e58] [cursor=pointer]:
+                - img
+                - generic [ref=e59]: Download PDF
+              - button "Save" [ref=e60] [cursor=pointer]:
+                - img
+                - generic [ref=e61]:
+                  - generic [ref=e62]: Save
+                  - img
+              - button "Edit" [ref=e63] [cursor=pointer]:
+                - img
+              - button "More" [ref=e64] [cursor=pointer]:
+                - img
+          - generic [ref=e65]:
+            - generic [ref=e66]:
+              - generic [ref=e67]:
+                - button "Autoscroll" [ref=e68] [cursor=pointer]:
+                  - img
+                  - generic [ref=e69]: Autoscroll
+                - generic [ref=e70]:
+                  - button "Change auto-scroll mode" [ref=e71] [cursor=pointer]:
+                    - img
+                  - generic [ref=e73]: Speed
+                  - textbox "Speed" [ref=e75]: "0.2"
+                  - generic [ref=e76]:
+                    - button "Decrease Speed" [ref=e77] [cursor=pointer]:
+                      - img
+                    - generic [ref=e78]: "0.2"
+                    - button "Increase Speed" [ref=e79] [cursor=pointer]:
+                      - img
+              - button "Simplify" [ref=e80] [cursor=pointer]:
+                - generic [ref=e81]: Simplify
+              - spinbutton [ref=e83]:
+                - generic [ref=e85]: Tr.
+                - generic [ref=e86]:
+                  - button "Transpose Down" [ref=e87] [cursor=pointer]:
+                    - img
+                  - generic [ref=e88]: "0"
+                  - button "Transpose Up" [ref=e89] [cursor=pointer]:
+                    - img
+              - button "Use Flats" [ref=e90] [cursor=pointer]:
+                - img
+              - button "Settings" [ref=e91] [cursor=pointer]:
+                - img
+            - generic [ref=e92]:
+              - button "Open Official" [ref=e93] [cursor=pointer]:
+                - img
+                - generic [ref=e94]: Open Official
+              - button "Video" [ref=e95] [cursor=pointer]:
+                - img
+                - generic [ref=e96]: Video
+              - button "Backing track" [ref=e97] [cursor=pointer]:
+                - img
+                - generic [ref=e98]: Backing track
+        - generic [ref=e99]:
+          - generic [ref=e100]:
+            - generic [ref=e101]:
+              - generic [ref=e103]:
+                - generic [ref=e104]:
+                  - generic [ref=e105]: "Tuning:"
+                  - link "E A D G B E" [ref=e106] [cursor=pointer]:
+                    - /url: https://www.ultimate-guitar.com/tools/tuner?tuning=E%20A%20D%20G%20B%20E
+                - generic [ref=e107]:
+                  - text: ·
+                  - generic [ref=e108]: "Key:"
+                  - text: Em
+                - generic [ref=e109]:
+                  - text: ·
+                  - generic [ref=e110]: "Capo:"
+                  - text: No capo
+              - code [ref=e114]:
+                - generic [ref=e115]:
+                  - text: "[Verse]"
+                  - generic [ref=e116]: Em
+                  - generic [ref=e117]: D
+                  - generic [ref=e118]: C
+                  - text: So close no matter how far
+                  - generic [ref=e119]: Em
+                  - generic [ref=e120]: D
+                  - generic [ref=e121]: C
+                  - text: couldn't be much more from the heart
+                  - generic [ref=e122]: Em
+                  - generic [ref=e123]: D
+                  - generic [ref=e124]: C
+                  - text: forever trusting who we are
+                  - generic [ref=e125]: G
+                  - generic [ref=e126]: B7
+                  - generic [ref=e127]: Em
+                  - text: and nothing else matters
+                  - generic [ref=e128]: Em
+                  - generic [ref=e129]: D
+                  - generic [ref=e130]: C
+                  - text: never opened myself this way
+                  - generic [ref=e131]: Em
+                  - generic [ref=e132]: D
+                  - generic [ref=e133]: C
+                  - text: life is ours, we live it our way
+                  - generic [ref=e134]: Em
+                  - generic [ref=e135]: D
+                  - generic [ref=e136]: C
+                  - text: all these words I don't just say
+                  - generic [ref=e137]: G
+                  - generic [ref=e138]: B7
+                  - generic [ref=e139]: Em
+                  - text: and nothing else matters
+                  - generic [ref=e140]: Em
+                  - generic [ref=e141]: D
+                  - generic [ref=e142]: C
+                  - text: trust I seek and I find in you
+                  - generic [ref=e143]: Em
+                  - generic [ref=e144]: D
+                  - generic [ref=e145]: C
+                  - text: every day for us something new
+                  - generic [ref=e146]: Em
+                  - generic [ref=e147]: D
+                  - generic [ref=e148]: C
+                  - text: open mind for a different view
+                  - generic [ref=e149]: G
+                  - generic [ref=e150]: B7
+                  - generic [ref=e151]: Em
+                  - generic [ref=e152]: C
+                  - generic [ref=e153]: A
+                  - text: and nothing else matters [Chorus]
+                  - generic [ref=e154]: D
+                  - generic [ref=e155]: C
+                  - generic [ref=e156]: A
+                  - text: never cared for what they do
+                  - generic [ref=e157]: D
+                  - generic [ref=e158]: C
+                  - generic [ref=e159]: A
+                  - text: never cared for what they know
+                  - generic [ref=e160]: D
+                  - generic [ref=e161]: Em
+                  - text: but I know [Verse] Em D C So close no matter how far Em D C couldn't be much more from the heart Em D C forever trusting who we are G B7 Em C A and nothing else matters [Chorus] D C A never cared for what they do D C A never cared for what they know D Em but I know [Verse] Em D C never opened myself this way Em D C life is ours, we live it our way Em D C all these words I don't just say G B7 Em and nothing else matters Em D C trust I seek and I find in you Em D C every day for us something new Em D C open mind for a different view G B7 Em C A and nothing else matter-ers [Chorus] D C A never cared for what they say D C A never cared for games they play D C A never cared for what they do D C A never cared for what they know D Em and I know [Solo] Em D C x2 Em D C G B Em [Verse] Em D C So close no matter how far Em D C couldn't be much more from the heart Em D C forever trusting who we are G B7 Em no, nothing else matters [Outro] Em
+                  - generic [ref=e162]: X
+            - generic [ref=e163]:
+              - generic [ref=e164]:
+                - button "Print" [ref=e165] [cursor=pointer]:
+                  - img
+                  - generic [ref=e166]: Print
+                - button "Create correction" [ref=e167] [cursor=pointer]:
+                  - img
+                  - generic [ref=e168]: Create correction
+                - button "Report bad tab" [ref=e169] [cursor=pointer]:
+                  - img
+                  - generic [ref=e170]: Report bad tab
+              - generic [ref=e171]: "Last update: Mar 12, 2026"
+            - separator [ref=e172]
+            - generic [ref=e174]:
+              - generic [ref=e176]: Rating
+              - generic [ref=e177]:
+                - generic [ref=e178]:
+                  - generic [ref=e179]: "4.8"
+                  - generic [ref=e180]: 4,120 rates
+                - generic [ref=e181]:
+                  - generic [ref=e182]:
+                    - button "rate 1" [ref=e183] [cursor=pointer]:
+                      - img
+                    - button "rate 2" [ref=e184] [cursor=pointer]:
+                      - img
+                    - button "rate 3" [ref=e185] [cursor=pointer]:
+                      - img
+                    - button "rate 4" [ref=e186] [cursor=pointer]:
+                      - img
+                    - button "rate 5" [ref=e187] [cursor=pointer]:
+                      - img
+                  - generic [ref=e188]: Please, rate this tab
+          - generic [ref=e192]:
+            - generic [ref=e194]:
+              - generic [ref=e196]:
+                - heading "Play next" [level=2] [ref=e198]
+                - button "Collapse" [ref=e200] [cursor=pointer]:
+                  - img
+              - generic [ref=e201]:
+                - progressbar:
+                  - img
+            - generic [ref=e202]:
+              - heading "Chords" [level=2] [ref=e205]
+              - generic [ref=e206]:
+                - tablist [ref=e207]:
+                  - tab "Guitar" [selected] [ref=e209]:
+                    - generic [ref=e210]: Guitar
+                  - tab "Ukulele" [ref=e212] [cursor=pointer]:
+                    - generic [ref=e213]: Ukulele
+                  - tab "Piano" [ref=e215] [cursor=pointer]:
+                    - generic [ref=e216]: Piano
+                - tabpanel "Guitar" [ref=e218]:
+                  - generic [ref=e220]:
+                    - generic [ref=e222]: Em
+                    - generic [ref=e230]: D
+                    - generic [ref=e238]: C
+                    - generic [ref=e246]: G
+                    - generic [ref=e254]: B7
+                    - generic [ref=e262]: A
+                    - generic [ref=e270]: B
+            - separator [ref=e277]
+            - generic [ref=e278]:
+              - generic [ref=e280]:
+                - heading "Strumming pattern" [level=2] [ref=e282]
+                - link "Edit" [ref=e284] [cursor=pointer]:
+                  - /url: https://www.ultimate-guitar.com/contribution/correct/create?app_utm_campaign=tab&app_utm_content=icon&app_utm_medium=internal&app_utm_source=ug&app_utm_term=strumming_edit&id=8802&strumming=1
+              - article [ref=e286]:
+                - generic [ref=e287]:
+                  - button "Play" [ref=e288] [cursor=pointer]:
+                    - img
+                  - generic [ref=e289]:
+                    - text: Verse
+                    - generic [ref=e290]: 142 bpm
+                - generic [ref=e291]:
+                  - paragraph [ref=e293]: "1"
+                  - paragraph [ref=e295]: "&"
+                  - paragraph [ref=e297]: "2"
+                  - paragraph [ref=e299]: "&"
+                  - paragraph [ref=e301]: "3"
+                  - paragraph [ref=e303]: "&"
+                  - paragraph [ref=e305]: "4"
+                  - paragraph [ref=e307]: "&"
+                  - paragraph [ref=e309]: "5"
+                  - paragraph [ref=e311]: "&"
+                  - paragraph [ref=e313]: "6"
+                  - paragraph [ref=e315]: "&"
+            - separator [ref=e316]
+            - generic [ref=e317]:
+              - heading "Get effects" [level=2] [ref=e321]
+              - generic [ref=e322]:
+                - generic [ref=e323]:
+                  - generic [ref=e324]: Play "Nothing Else Matters" with its authentic sound, plus 30K+ other iconic presets for your guitar tone
+                  - button "Get Tonebridge free" [ref=e325] [cursor=pointer]:
+                    - img
+                    - generic [ref=e326]: Get Tonebridge free
+                - generic [ref=e327]:
+                  - generic [ref=e328]: Craft your own guitar tone with custom amps, pedals, and effects in AmpKit
+                  - button "Get Ampkit" [ref=e329] [cursor=pointer]:
+                    - img
+                    - generic [ref=e330]: Get Ampkit
+        - generic [ref=e331]:
+          - generic [ref=e333]:
+            - heading "Seen recently" [level=2] [ref=e336]
+            - generic [ref=e337]:
+              - progressbar:
+                - img
+          - generic [ref=e338]:
+            - heading "Related tabs" [level=2] [ref=e341]
+            - generic [ref=e342]:
+              - progressbar:
+                - img
+          - generic [ref=e343]:
+            - heading "150 comments" [level=2] [ref=e346]
+            - generic [ref=e349]:
+              - img "orpelta85" [ref=e350]
+              - generic [ref=e352]:
+                - textbox "What do you think about this tab?" [ref=e353]
+                - generic [ref=e354]:
+                  - img
+              - button "Send" [disabled] [ref=e355]:
+                - img
+            - generic [ref=e356]:
+              - generic [ref=e357]:
+                - article [ref=e358]:
+                  - img "_SlipKnoT4Life_" [ref=e360]
+                  - generic [ref=e362]:
+                    - generic [ref=e364]:
+                      - link "_SlipKnoT4Life_" [ref=e365] [cursor=pointer]:
+                        - /url: https://www.ultimate-guitar.com/u/_SlipKnoT4Life_
+                      - text: "[a] 100"
+                    - link "Apr 13, 2002" [ref=e366] [cursor=pointer]:
+                      - /url: "#539968"
+                  - generic [ref=e367]: It's sounds pretty good i think... Good Work!
+                  - button "reply" [ref=e369] [cursor=pointer]
+                  - generic [ref=e370]:
+                    - button "Vote up" [ref=e371] [cursor=pointer]:
+                      - img
+                    - generic [ref=e372]: "20"
+                    - button "Vote down" [ref=e373] [cursor=pointer]:
+                      - img
+                - article [ref=e374]:
+                  - img "conormurphy1990" [ref=e376]
+                  - generic [ref=e378]:
+                    - generic [ref=e380]:
+                      - link "conormurphy1990" [ref=e381] [cursor=pointer]:
+                        - /url: https://www.ultimate-guitar.com/u/conormurphy1990
+                      - text: "10"
+                    - link "Dec 13, 2007" [ref=e382] [cursor=pointer]:
+                      - /url: "#2137203"
+                  - generic [ref=e383]: "i play it appedgied but chords are Verse: Em D C Em D C Em D C G B7 Em For the Never cared for what they do bit: C A D"
+                  - button "reply" [ref=e385] [cursor=pointer]
+                  - generic [ref=e386]:
+                    - button "Vote up" [ref=e387] [cursor=pointer]:
+                      - img
+                    - generic [ref=e388]: "8"
+                    - button "Vote down" [ref=e389] [cursor=pointer]:
+                      - img
+                - article [ref=e390]:
+                  - img "FenderFreak2728" [ref=e392]
+                  - generic [ref=e394]:
+                    - generic [ref=e396]:
+                      - link "FenderFreak2728" [ref=e397] [cursor=pointer]:
+                        - /url: https://www.ultimate-guitar.com/u/FenderFreak2728
+                      - text: "10"
+                    - link "Feb 5, 2003" [ref=e398] [cursor=pointer]:
+                      - /url: "#555854"
+                  - generic [ref=e399]: man, this is awsome, im gonna use this to audition for Advanced Studio Guitar so i dont have to take studio guitar I which will be boring, i think this will get me in, thanks, i will let u know when i make it in Gary
+                  - button "reply" [ref=e401] [cursor=pointer]
+                  - generic [ref=e402]:
+                    - button "Vote up" [ref=e403] [cursor=pointer]:
+                      - img
+                    - generic [ref=e404]: "5"
+                    - button "Vote down" [ref=e405] [cursor=pointer]:
+                      - img
+              - button "Show all (150)" [ref=e406] [cursor=pointer]:
+                - generic [ref=e407]: Show all (150)
+      - generic [ref=e408]: X
+  - generic [ref=e409]:
+    - generic [ref=e410]:
+      - generic [ref=e411]:
+        - link "orpelta85" [ref=e412] [cursor=pointer]:
+          - /url: https://www.ultimate-guitar.com/u/orpelta85
+          - img "orpelta85" [ref=e413]
+        - generic [ref=e414]:
+          - generic [ref=e416]:
+            - link "orpelta85" [ref=e417] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/u/orpelta85
+            - text: "[pro]"
+            - link "10" [ref=e418] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/user/activity/iq?user_id=32621864
+          - generic [ref=e419]: Joined 2019
+      - list "User navigation" [ref=e420]:
+        - listitem [ref=e421]:
+          - link "My tabs 11" [ref=e422] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/mytabs
+            - generic [ref=e423]:
+              - generic [ref=e424]: My tabs
+              - generic [ref=e425]: "11"
+        - listitem [ref=e426]:
+          - link "My courses 16" [ref=e427] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/courses
+            - generic [ref=e428]:
+              - generic [ref=e429]: My courses
+              - generic [ref=e430]: "16"
+        - listitem [ref=e431]:
+          - link "My books 0" [ref=e432] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/books
+            - generic [ref=e433]:
+              - generic [ref=e434]: My books
+              - generic [ref=e435]: "0"
+        - listitem [ref=e438]:
+          - link "Playlists 1" [ref=e439] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/playlist
+            - generic [ref=e440]:
+              - generic [ref=e441]: Playlists
+              - generic [ref=e442]: "1"
+        - listitem [ref=e443]:
+          - link "Messages" [ref=e444] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/profile/messages
+            - generic [ref=e446]: Messages
+        - listitem [ref=e447]:
+          - link "Settings" [ref=e448] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/forum/profile/update-profile
+            - generic [ref=e450]: Settings
+        - listitem [ref=e451]:
+          - link "Subscriptions" [ref=e452] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/subscriptions
+            - generic [ref=e454]: Subscriptions
+    - region "More Versions" [ref=e456]:
+      - heading "More Versions" [level=3] [ref=e457]
+      - navigation "More Versions" [ref=e458]:
+        - link "Official Rating 4.8" [ref=e460] [cursor=pointer]:
+          - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-official-1910953
+          - img
+          - generic [ref=e461]: Official
+          - meter "Rating" [ref=e462]:
+            - generic [ref=e463]:
+              - img
+              - generic [ref=e464]: "4.8"
+              - generic [ref=e465]: (13.6K)
+        - generic [ref=e466]:
+          - link "Ver 1 Rating 4.8":
+            - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-chords-8802
+            - generic: Ver 1
+            - meter "Rating":
+              - generic:
+                - img
+                - generic: "4.8"
+                - generic: (4.1K)
+        - link "Ver 2 Rating 4.6" [ref=e468] [cursor=pointer]:
+          - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-chords-698338
+          - generic [ref=e469]: Ver 2
+          - meter "Rating" [ref=e470]:
+            - generic [ref=e471]:
+              - img
+              - generic [ref=e472]: "4.6"
+              - generic [ref=e473]: (114)
+        - link "Ver 3 Rating 4.9" [ref=e475] [cursor=pointer]:
+          - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-chords-830604
+          - generic [ref=e476]: Ver 3
+          - meter "Rating" [ref=e477]:
+            - generic [ref=e478]:
+              - img
+              - generic [ref=e479]: "4.9"
+              - generic [ref=e480]: (5.4K)
+        - link "Ver 4 Rating 4.8" [ref=e482] [cursor=pointer]:
+          - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-chords-1749746
+          - generic [ref=e483]: Ver 4
+          - meter "Rating" [ref=e484]:
+            - generic [ref=e485]:
+              - img
+              - generic [ref=e486]: "4.8"
+              - generic [ref=e487]: (191)
+      - button "Show all" [ref=e488] [cursor=pointer]:
+        - img
+        - text: Show all
+  - button "Guitar karaoke" [ref=e492] [cursor=pointer]:
+    - img
+    - generic [ref=e493]: Guitar karaoke
+  - contentinfo [ref=e494]:
+    - generic [ref=e495]:
+      - generic [ref=e496]:
+        - generic [ref=e497]:
+          - generic [ref=e498]: All artists
+          - list "All artists" [ref=e499]:
+            - listitem [ref=e500]:
+              - link "#" [ref=e501] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/0-9.htm
+            - listitem [ref=e502]:
+              - link "a" [ref=e503] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/a.htm
+            - listitem [ref=e504]:
+              - link "b" [ref=e505] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/b.htm
+            - listitem [ref=e506]:
+              - link "c" [ref=e507] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/c.htm
+            - listitem [ref=e508]:
+              - link "d" [ref=e509] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/d.htm
+            - listitem [ref=e510]:
+              - link "e" [ref=e511] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/e.htm
+            - listitem [ref=e512]:
+              - link "f" [ref=e513] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/f.htm
+            - listitem [ref=e514]:
+              - link "g" [ref=e515] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/g.htm
+            - listitem [ref=e516]:
+              - link "h" [ref=e517] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/h.htm
+            - listitem [ref=e518]:
+              - link "i" [ref=e519] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/i.htm
+            - listitem [ref=e520]:
+              - link "j" [ref=e521] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/j.htm
+            - listitem [ref=e522]:
+              - link "k" [ref=e523] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/k.htm
+            - listitem [ref=e524]:
+              - link "l" [ref=e525] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/l.htm
+            - listitem [ref=e526]:
+              - link "m" [ref=e527] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/m.htm
+            - listitem [ref=e528]:
+              - link "n" [ref=e529] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/n.htm
+            - listitem [ref=e530]:
+              - link "o" [ref=e531] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/o.htm
+            - listitem [ref=e532]:
+              - link "p" [ref=e533] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/p.htm
+            - listitem [ref=e534]:
+              - link "q" [ref=e535] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/q.htm
+            - listitem [ref=e536]:
+              - link "r" [ref=e537] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/r.htm
+            - listitem [ref=e538]:
+              - link "s" [ref=e539] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/s.htm
+            - listitem [ref=e540]:
+              - link "t" [ref=e541] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/t.htm
+            - listitem [ref=e542]:
+              - link "u" [ref=e543] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/u.htm
+            - listitem [ref=e544]:
+              - link "v" [ref=e545] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/v.htm
+            - listitem [ref=e546]:
+              - link "w" [ref=e547] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/w.htm
+            - listitem [ref=e548]:
+              - link "x" [ref=e549] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/x.htm
+            - listitem [ref=e550]:
+              - link "y" [ref=e551] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/y.htm
+            - listitem [ref=e552]:
+              - link "z" [ref=e553] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/z.htm
+        - generic [ref=e554]:
+          - link "facebook" [ref=e555] [cursor=pointer]:
+            - /url: https://www.facebook.com/UltimateGuitar/
+            - img
+          - link "twitter" [ref=e556] [cursor=pointer]:
+            - /url: https://twitter.com/ultimateguitar
+            - img
+          - link "instagram" [ref=e557] [cursor=pointer]:
+            - /url: https://www.instagram.com/ultimateguitar/
+            - img
+          - link "youtube" [ref=e558] [cursor=pointer]:
+            - /url: https://www.youtube.com/channel/UCf6prPsXYNYKXH4hX-cuEwQ
+            - img
+          - link "tiktok" [ref=e559] [cursor=pointer]:
+            - /url: https://www.tiktok.com/@ultimateguitar
+            - img
+          - link "audio.com" [ref=e560] [cursor=pointer]:
+            - /url: https://audio.com/ultimateguitar
+            - img
+          - link "linkedin" [ref=e561] [cursor=pointer]:
+            - /url: https://www.linkedin.com/company/1567917
+            - img
+      - separator [ref=e562]
+      - generic [ref=e563]:
+        - region "Copyright" [ref=e564]:
+          - link [ref=e565] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com
+            - img [ref=e566]
+          - generic [ref=e568]: © 2026 Ultimate-Guitar.com All rights reserved
+        - region "Discover" [ref=e569]:
+          - heading "Discover" [level=4] [ref=e570]
+          - link "About UG" [ref=e571] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/
+          - link "Site Rules" [ref=e572] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/article/blog/site-rules/
+          - link "Advertise" [ref=e573] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/advertise.htm
+          - link "Support" [ref=e574] [cursor=pointer]:
+            - /url: https://help.ultimate-guitar.com/en/
+        - region "Legal" [ref=e575]:
+          - heading "Legal" [level=4] [ref=e576]
+          - link "Terms of Service" [ref=e577] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/tos.htm
+          - link "Privacy Policy" [ref=e578] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/privacy.htm
+          - link "DMCA" [ref=e579] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/dmca.htm
+          - link "Accessibility Statement" [ref=e580] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/accessibility-statement.htm
+        - region "Other" [ref=e581]:
+          - heading "Other" [level=4] [ref=e582]
+          - button "PRO+" [ref=e583] [cursor=pointer]
+          - link "Articles Staff" [ref=e584] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/news/editorial/
+          - link "Fresh Tabs" [ref=e585] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/fresh?order=date
+          - link "MuseHub" [ref=e586] [cursor=pointer]:
+            - /url: https://www.musehub.com/?utm_source=ug_web&utm_medium=footer&utm_campaign=musehub
+        - region "Language" [ref=e587]:
+          - heading "Language" [level=4] [ref=e588]
+          - link "English" [ref=e589] [cursor=pointer]:
+            - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-chords-8802
+          - link "Português (Brasil)" [ref=e590] [cursor=pointer]:
+            - /url: https://pt.ultimate-guitar.com/tab/metallica/nothing-else-matters-chords-8802
+          - link "Español" [ref=e591] [cursor=pointer]:
+            - /url: https://es.ultimate-guitar.com/tab/metallica/nothing-else-matters-chords-8802
+          - link "Italiano" [ref=e592] [cursor=pointer]:
+            - /url: https://it.ultimate-guitar.com/tab/metallica/nothing-else-matters-chords-8802
+          - link "Français" [ref=e593] [cursor=pointer]:
+            - /url: https://fr.ultimate-guitar.com/tab/metallica/nothing-else-matters-chords-8802
+          - link "日本語" [ref=e594] [cursor=pointer]:
+            - /url: https://ja.ultimate-guitar.com/tab/metallica/nothing-else-matters-chords-8802
+        - region "Hot Chords" [ref=e595]:
+          - heading "Hot Chords" [level=4] [ref=e596]
+          - link "Indonesia" [ref=e597] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?country_chart=7
+        - region "Download UG application" [ref=e598]:
+          - generic [ref=e599]:
+            - link "apple store" [ref=e600] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/components/apps/market/redirect?app_name=ug_tabs_chords_ios&source=get_app_footer
+              - img "apple store"
+            - link "google play" [ref=e601] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/components/apps/market/redirect?app_name=ug_tabs_chords_android&source=get_app_footer
+              - img "google play"
+            - link "huawei store" [ref=e602] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/components/apps/market/redirect?app_name=ug_tabs_chords_huawei&source=get_app_footer
+              - img "huawei store"
+  - generic [ref=e608]:
+    - generic [ref=e609]: Add 2,000+ songbooks to your PRO+ now!
+    - generic [ref=e610]:
+      - generic [ref=e611]:
+        - generic [ref=e612]: "0"
+        - generic [ref=e614]: days
+      - generic [ref=e615]: ":"
+      - generic [ref=e616]:
+        - generic [ref=e617]: "23"
+        - generic [ref=e619]: hrs
+      - generic [ref=e620]: ":"
+      - generic [ref=e621]:
+        - generic [ref=e622]: "53"
+        - generic [ref=e624]: min
+      - generic [ref=e625]: ":"
+      - generic [ref=e626]:
+        - generic [ref=e627]: "54"
+        - generic [ref=e629]: sec
+    - button "TRY FOR FREE" [ref=e630] [cursor=pointer]:
+      - generic [ref=e631]: TRY FOR FREE

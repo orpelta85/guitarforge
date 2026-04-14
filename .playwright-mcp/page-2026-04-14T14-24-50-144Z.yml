@@ -1,0 +1,661 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e6]:
+      - link "Home page" [ref=e7] [cursor=pointer]:
+        - /url: https://www.ultimate-guitar.com
+        - img [ref=e8]
+      - list "Main navigation" [ref=e10]:
+        - listitem [ref=e11]:
+          - link "Tabs" [ref=e12] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore
+        - listitem [ref=e13]:
+          - link "Courses" [ref=e14] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/courses
+        - listitem [ref=e15]:
+          - link "Songbooks" [ref=e16] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/books
+        - listitem [ref=e17]:
+          - link "Articles" [ref=e18] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/news/
+        - listitem [ref=e19]:
+          - link "Forums" [ref=e20] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/forum/
+        - listitem [ref=e21]:
+          - link "Publish tab" [ref=e22] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/contribution/submit/tabs?app_utm_campaign=top_menu&app_utm_content=button&app_utm_medium=internal&app_utm_source=ug&app_utm_term=publish
+        - listitem [ref=e23]:
+          - link "Pro+" [ref=e24] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/pro?app_utm_campaign=UG%20Tab%20Pro&app_utm_content=View%20Index&app_utm_medium=Header&app_utm_source=UltimateGuitar
+            - emphasis [ref=e25]: Pro+
+      - generic [ref=e27]:
+        - searchbox "Enter artist name or song title" [ref=e28]
+        - button "Search" [ref=e29] [cursor=pointer]
+      - button "Notifications" [ref=e519] [cursor=pointer]:
+        - img
+  - main [ref=e30]:
+    - generic [ref=e32]:
+      - iframe [ref=e37]:
+        - generic [active] [ref=f26e1]:
+          - generic [ref=f26e4]:
+            - generic [ref=f26e5]:
+              - generic "ZappySys" [ref=f26e6]:
+                - link "SSIS SFTP Integration" [ref=f26e7] [cursor=pointer]:
+                  - /url: https://googleads.g.doubleclick.net/aclk?sa=l&ai=CqbTqzE3eaaf4AszLwuIPgJGO-QSK_tmNhgHUrq_enhTy94zK4UYQASDRxashYPnS84OYEKABsrHZwgPIAQbgAgCoAwHIAwqqBOoCT9DyJxRGHtcnOTDx4ZltwQLo2eIXPaZRjI1K1oGR1vJObA4W9KVW8F93sSY4H5G2Mfla8v3Yi8tKl7Sk1al-gr0lsqoAXHFDomfkSvobU4HuAeoRbCExmIKhucKJr47RFx1XQxVLQ9Q7OygmNM_J-8lK1XZcnfBYODWMvg95SbgHos2-07qQlHq4jy3tuAi9_gCD3ckwa84D17CmQutEfi3xkn8zza7Hqw0fKE9ApznMTgUV-V9OD5S58ms8tQGR2E4rTxdEV6Xlb41OOSluZkeN-ERdIbu2FGCWb4i38DY5WeS-j5vDiSHa_OKTMHuPYpT5YjU64jkZMiD6YyjCWuY17SGj5IB-4s-b2AVCvLq6lCh6zzeELFeYHuba6L4mzKLJBwvdKMJmC_11t-IsMOJKrvTlc9TOpGxeyvPlfRYO_h64-ZpzTsdma2wyO3AaKr2sSl3drttzhGPQNBy8_ZvB2NQKLE3PXUbABJLzn_ydBeAEAYgF7faNqFOAB7bOpj2oB6fMsQKoB-LYsQKoB6a-G6gHzM6xAqgH89EbqAeW2BuoB6qbsQKoB47OG6gHk9gbqAfw4BuoB-6WsQKoB_6esQKoB6--sQKoB5rhsQKoB9XJG6gH2baxAqgHmgaoB_-esQKoB9-fsQKoB_jCsQKoB_vCsQLYBwHSCC8IgGEQARidATIIioKAgICAgAg6DYBAgMCAgICAqIACqANIvf3BOljVpKK0xe2TA7EJ3ZXMgunvrM-ACgOYCwHICwGiDAOQAQGqDQJJTMgNAeINEwjX-qK0xe2TAxXMpVAGHYCII0_qDRMI6LejtMXtkwMVzKVQBh2AiCNP8A0CiA7___________8B2BMM0BUBmBYByhYCCgD4FgGAFwGyFxAYASoKOTAzMTk4OTI0N1AGuhcCOAGqGBcJAAAAAChpDkESCjkwMzE5ODkyNDcYAbIYCRICsV8YASIBANAYAegYAcIZAggB&ae=1&gclid=EAIaIQobChMIp47btMXtkwMVzKVQBh2AiCNPEAEYASAAEgJVWPD_BwE&num=1&cid=CAQS0QEABaugfaH84KwrsqcMHsMT0XNIBiu9pAcy_aIKuN-FEhf83LJfEZJQwabcrZ-efIPq4UZaGjHh0_LSeBmkw7loOJWalSyaIfvFww1vd4MjdGfqRJYzKo0AyDH4L8xKxVy3Z3knvQPEQZxZX9AkKeRtn1J_c6NZ5iQtBiPyvlXsTInctmjE7Jb83yDXQEzWb1r0DpQtjr17zYzq3n2Da_bq2kNtGe1Af-ONfRf2lCEL0Vhigqm5hBMYgwmoyrKGcPx54iZI33-js6Lu4jPVjuDsNhgB&sig=AOD64_2R_vh1bLQsO-tBIo8a8H4bF7uHSA&client=ca-pub-1111561740470733&rf=4&nb=0&adurl=https://zappysys.com/products/ssis-powerpack/%3Futm_source%3Dgoogle%26utm_medium%3Dcpc%26utm_campaign%3Daimers_mofu_d_custom_intent_ssis_specific_features%26utm_content%3D740495899382%26utm_term%3D%26gad_source%3D5%26gad_campaignid%3D22364257133%26gclid%3DEAIaIQobChMIp47btMXtkwMVzKVQBh2AiCNPEAEYASAAEgJVWPD_BwE
+              - link "SSIS SFTP integration without coding. Drag & drop approach. Download a 30-day free trial ZappySys" [ref=f26e9] [cursor=pointer]:
+                - /url: https://googleads.g.doubleclick.net/aclk?sa=l&ai=CqbTqzE3eaaf4AszLwuIPgJGO-QSK_tmNhgHUrq_enhTy94zK4UYQASDRxashYPnS84OYEKABsrHZwgPIAQbgAgCoAwHIAwqqBOoCT9DyJxRGHtcnOTDx4ZltwQLo2eIXPaZRjI1K1oGR1vJObA4W9KVW8F93sSY4H5G2Mfla8v3Yi8tKl7Sk1al-gr0lsqoAXHFDomfkSvobU4HuAeoRbCExmIKhucKJr47RFx1XQxVLQ9Q7OygmNM_J-8lK1XZcnfBYODWMvg95SbgHos2-07qQlHq4jy3tuAi9_gCD3ckwa84D17CmQutEfi3xkn8zza7Hqw0fKE9ApznMTgUV-V9OD5S58ms8tQGR2E4rTxdEV6Xlb41OOSluZkeN-ERdIbu2FGCWb4i38DY5WeS-j5vDiSHa_OKTMHuPYpT5YjU64jkZMiD6YyjCWuY17SGj5IB-4s-b2AVCvLq6lCh6zzeELFeYHuba6L4mzKLJBwvdKMJmC_11t-IsMOJKrvTlc9TOpGxeyvPlfRYO_h64-ZpzTsdma2wyO3AaKr2sSl3drttzhGPQNBy8_ZvB2NQKLE3PXUbABJLzn_ydBeAEAYgF7faNqFOAB7bOpj2oB6fMsQKoB-LYsQKoB6a-G6gHzM6xAqgH89EbqAeW2BuoB6qbsQKoB47OG6gHk9gbqAfw4BuoB-6WsQKoB_6esQKoB6--sQKoB5rhsQKoB9XJG6gH2baxAqgHmgaoB_-esQKoB9-fsQKoB_jCsQKoB_vCsQLYBwHSCC8IgGEQARidATIIioKAgICAgAg6DYBAgMCAgICAqIACqANIvf3BOljVpKK0xe2TA7EJ3ZXMgunvrM-ACgOYCwHICwGiDAOQAQGqDQJJTMgNAeINEwjX-qK0xe2TAxXMpVAGHYCII0_qDRMI6LejtMXtkwMVzKVQBh2AiCNP8A0CiA7___________8B2BMM0BUBmBYByhYCCgD4FgGAFwGyFxAYASoKOTAzMTk4OTI0N1AGuhcCOAGqGBcJAAAAAChpDkESCjkwMzE5ODkyNDcYAbIYCRICsV8YASIBANAYAegYAcIZAggB&ae=1&gclid=EAIaIQobChMIp47btMXtkwMVzKVQBh2AiCNPEAEYASAAEgJVWPD_BwE&num=1&cid=CAQS0QEABaugfaH84KwrsqcMHsMT0XNIBiu9pAcy_aIKuN-FEhf83LJfEZJQwabcrZ-efIPq4UZaGjHh0_LSeBmkw7loOJWalSyaIfvFww1vd4MjdGfqRJYzKo0AyDH4L8xKxVy3Z3knvQPEQZxZX9AkKeRtn1J_c6NZ5iQtBiPyvlXsTInctmjE7Jb83yDXQEzWb1r0DpQtjr17zYzq3n2Da_bq2kNtGe1Af-ONfRf2lCEL0Vhigqm5hBMYgwmoyrKGcPx54iZI33-js6Lu4jPVjuDsNhgB&sig=AOD64_2R_vh1bLQsO-tBIo8a8H4bF7uHSA&client=ca-pub-1111561740470733&rf=4&nb=7&adurl=https://zappysys.com/products/ssis-powerpack/%3Futm_source%3Dgoogle%26utm_medium%3Dcpc%26utm_campaign%3Daimers_mofu_d_custom_intent_ssis_specific_features%26utm_content%3D740495899382%26utm_term%3D%26gad_source%3D5%26gad_campaignid%3D22364257133%26gclid%3DEAIaIQobChMIp47btMXtkwMVzKVQBh2AiCNPEAEYASAAEgJVWPD_BwE
+            - link "Download" [ref=f26e12] [cursor=pointer]:
+              - /url: https://googleads.g.doubleclick.net/aclk?sa=l&ai=CqbTqzE3eaaf4AszLwuIPgJGO-QSK_tmNhgHUrq_enhTy94zK4UYQASDRxashYPnS84OYEKABsrHZwgPIAQbgAgCoAwHIAwqqBOoCT9DyJxRGHtcnOTDx4ZltwQLo2eIXPaZRjI1K1oGR1vJObA4W9KVW8F93sSY4H5G2Mfla8v3Yi8tKl7Sk1al-gr0lsqoAXHFDomfkSvobU4HuAeoRbCExmIKhucKJr47RFx1XQxVLQ9Q7OygmNM_J-8lK1XZcnfBYODWMvg95SbgHos2-07qQlHq4jy3tuAi9_gCD3ckwa84D17CmQutEfi3xkn8zza7Hqw0fKE9ApznMTgUV-V9OD5S58ms8tQGR2E4rTxdEV6Xlb41OOSluZkeN-ERdIbu2FGCWb4i38DY5WeS-j5vDiSHa_OKTMHuPYpT5YjU64jkZMiD6YyjCWuY17SGj5IB-4s-b2AVCvLq6lCh6zzeELFeYHuba6L4mzKLJBwvdKMJmC_11t-IsMOJKrvTlc9TOpGxeyvPlfRYO_h64-ZpzTsdma2wyO3AaKr2sSl3drttzhGPQNBy8_ZvB2NQKLE3PXUbABJLzn_ydBeAEAYgF7faNqFOAB7bOpj2oB6fMsQKoB-LYsQKoB6a-G6gHzM6xAqgH89EbqAeW2BuoB6qbsQKoB47OG6gHk9gbqAfw4BuoB-6WsQKoB_6esQKoB6--sQKoB5rhsQKoB9XJG6gH2baxAqgHmgaoB_-esQKoB9-fsQKoB_jCsQKoB_vCsQLYBwHSCC8IgGEQARidATIIioKAgICAgAg6DYBAgMCAgICAqIACqANIvf3BOljVpKK0xe2TA7EJ3ZXMgunvrM-ACgOYCwHICwGiDAOQAQGqDQJJTMgNAeINEwjX-qK0xe2TAxXMpVAGHYCII0_qDRMI6LejtMXtkwMVzKVQBh2AiCNP8A0CiA7___________8B2BMM0BUBmBYByhYCCgD4FgGAFwGyFxAYASoKOTAzMTk4OTI0N1AGuhcCOAGqGBcJAAAAAChpDkESCjkwMzE5ODkyNDcYAbIYCRICsV8YASIBANAYAegYAcIZAggB&ae=1&gclid=EAIaIQobChMIp47btMXtkwMVzKVQBh2AiCNPEAEYASAAEgJVWPD_BwE&num=1&cid=CAQS0QEABaugfaH84KwrsqcMHsMT0XNIBiu9pAcy_aIKuN-FEhf83LJfEZJQwabcrZ-efIPq4UZaGjHh0_LSeBmkw7loOJWalSyaIfvFww1vd4MjdGfqRJYzKo0AyDH4L8xKxVy3Z3knvQPEQZxZX9AkKeRtn1J_c6NZ5iQtBiPyvlXsTInctmjE7Jb83yDXQEzWb1r0DpQtjr17zYzq3n2Da_bq2kNtGe1Af-ONfRf2lCEL0Vhigqm5hBMYgwmoyrKGcPx54iZI33-js6Lu4jPVjuDsNhgB&sig=AOD64_2R_vh1bLQsO-tBIo8a8H4bF7uHSA&client=ca-pub-1111561740470733&rf=4&nb=8&adurl=https://zappysys.com/products/ssis-powerpack/%3Futm_source%3Dgoogle%26utm_medium%3Dcpc%26utm_campaign%3Daimers_mofu_d_custom_intent_ssis_specific_features%26utm_content%3D740495899382%26utm_term%3D%26gad_source%3D5%26gad_campaignid%3D22364257133%26gclid%3DEAIaIQobChMIp47btMXtkwMVzKVQBh2AiCNPEAEYASAAEgJVWPD_BwE
+              - generic [ref=f26e13]: Download
+              - img [ref=f26e14]
+          - generic [ref=f26e16]:
+            - link [ref=f26e18] [cursor=pointer]:
+              - /url: https://adssettings.google.com/whythisad?source=display&reasons=AXhJPLKKIV-A25QJzYF8oPJn14Lz2Pw6Ib16sCD1gVTwphgBaYouTrF3V90YZp07SShP67neQ8B6taQIgZOEtTCr8l8W33e6ciMUvEJZP-XWWwY4-LKi1bn3XG9fvNprcnhLHOgRQ8M_Kbf0SKycYUSYRTKSnTHO5-YapJNhO1YLb8bVjEDuiE7FYd6gnLY1AaX7uHWpZxOxf2MIW2wwq7LfrjJEQ95MAC8l5TB_LQRPSv_2id9MZQtE_AUQKixwxhRR34l9U6vhKLsn8-VuMZlnVTuxqq3Av85JNM_900MLWpJQ6h43lsQfLESqIlEXM-yScBzl8ZiitiAVzRm80Jxjymbk7OypJgG9_y2NlqPbPaxrytlI7csgrCLwF3FLW_7ibRJUICLNVeJR97CPV4wR8k7_25uWer1ZusNnuEwjphby0_yPlgb-rSy0_SjyRvCz1c5eKd1AQVLYWkeCR1X_1j9CqSof9H8uGIZkoIxh_2eZHEvqzAjiTc6IVYAWFfij85yWp2csvsZsdE0IhEYxSzoI_SiDM-Iv0Fuvj_8yPq96zlyBj7npiOiMTAni5nMH8U1n_dUk4ugrtdsD8eYq4yrRTRs10R__4ZUM21L5EvIk0mKggsObH05e5BOr1dzpDckOks9PgfuxZh7uHTbAhz_OZRY1qD3k90G-V0hXjUlfuSiaagJDyv8nNjsuyp7prQlgBgN0BurpMv4OWIltnF9atEdadFojpRfZabNDi92HoKZl9FrJT2G3e19e7hrNv6dXj84xOjwGGmzfp0lIPvQeB-PxH8uso4RLy74hgbQdqorkhxfv9gEuZZCeY2ukmgns9mgB4HA61nv1aquKiqR0X5PVWHnAKSJhXG0NtGNH9Px5UxJxb3yKO1Uai3odiDXpiPQh5myfUUMzazxN5mEmOKUvukN8RrYGm8BUKnVqzO8-Z_yudiZ7aASE3a_B9zRAIMMMFRjom1xpZIsbLkHO6CVMvgS7TW2C6HetfCenhTuKOkbI4UEHgKn4KRjMzrBUtTyBpJBAsM7LtOgFLwne0obiQy7K58CJlQY7VNohkSkT7WCM-jnG8s51YbivKCDVRJdAVsOPe6EweqQz5txK-g793wJgE5WV61GXQSOb6FpFLanYf58cJ3E30ft1CB9t5ziUC5ulR-Ipb0BxnxVRVUdJ75Ou3l_PN-kWlSE4JQGA9RR_Rbfi8toG9WOTKV4RiZmMDlv1gza-2ZhpX-sUOv4hzTEbzX0LLVH90abNmC229ev5PCzyCyKIgR0Vv6ParlE8AmAWysGNtmX6chpX2omTRO9DJ_jmIIgj9ObXk1YmW_9FSsL0QLCQpdE1UdnQvtcL-bgTEQb4VbA7lI_3pwOivBlLZrOfroxK2pscXqenxNH7pd7qnydI1HHxO9I06HTO3Q18bivtZPcJ5OJWi7VlzgjERAER4Im8L40fbjWkKoAoA7Dp5uTUzR36xlmiNX2h_o-BsmX72P4fmoU2S-9WelE3l5D30lNKbuWQZiQvDA9_RWfpTWKHmgIt7l_1Mko5EZzp1edU2YGu9deaFXhtLd4HSGTSRTfcA7EEachtWifUp0jHP0Sww8JwERBOuudwqHLRT692cw4WX_J4M8rBJv5kjRF16TXmHLT7FzL-CvxLU0kM8qdFKqPU7UHvbzZ8da3nj55YAy5w2izUogLDRtpOjDM7e7bSZS6dvyeBRd9biGx9mDtxaAoRT8C8B5oLdHlTuZsFVPKbw58_KajXcTK-BpGpt0mYyF3z6HMGzwZVSpgxXV-uvvnJUyoSmxWfbTxhzLaG6UpOs82ZUbFg-LCS-uO8EyEQfM6HCKBjj9ak4SRBntN98IBgM_H9YnM14G8-zpP6z8X3NQiB_IL5K7LPh2ySr8a_er1JZ_ub8ch6o_vFwpUoYsTPSVLCJhTZdqb1oKDkMX0Cx1IBGQLaCO9mClRuPuRM-vGh8NT4baM80whZpT7xrVYgVlTFEN5GP7PpmKB7bJd3insUxaMZs40hhVKqQ_P3zkS4MCEvojX5DdIflnhis72Y-RLSP_2-gw-pU9QLMQCOKnnEbxH7wqcs4hlDcJ092TjHFa0gt6loqncBrBn4WJHisLHnGHoYg7elpZiErhIrb8Hw0EVWLeBKrRkkCdfYRgMj2kFBgBb1-aGA9zN9op2tsi3j-2quWiZuY3ArACxANNwbdsuGWniUVNupj_nzCqBfkTtJUuycSaoErqTHK0kNInT-CW2i_lGersBlpPsnrnDs5fi0CGLeuU34TdqLwbBkxxA63xgkyP29jnhhRaOqOYei-D-BIC311hUNP-MxNqAe3n34ERIcfUUTL4iV4741DOIXH1XMWTdQS7SGH1y1-xCeL6efV1p53SKZUlAkwhNfvj1VC8d1E2tKXz4bF72RZuyfLGA-h8RcANz8xVRtLYkqbU-VdW2dCAyzwCDHHKCKCkjz1eCgSiZlrL2PfShaWDIn16-hG4yTkUGm5p_zvBOabY4Ol6eIJXzHof8uWRMtQfv15zy9zLBWhUihB5NbszqRBsSMZJeDOwMNamy1mKgHXTDSrjSpAScMeawuNgnc4svW_cliRpmZN9tmsjvrHpS-Y_JBrehdakszpLX75KfRTPjkDhC113YpJhnu4etyrIzENon64hsqnEy399WzCY4ji1ltH15v9Q&opi=122715837
+              - img [ref=f26e20]
+            - link [ref=f26e22] [cursor=pointer]:
+              - /url: https://adssettings.google.com/whythisad?source=display&reasons=AXhJPLKKIV-A25QJzYF8oPJn14Lz2Pw6Ib16sCD1gVTwphgBaYouTrF3V90YZp07SShP67neQ8B6taQIgZOEtTCr8l8W33e6ciMUvEJZP-XWWwY4-LKi1bn3XG9fvNprcnhLHOgRQ8M_Kbf0SKycYUSYRTKSnTHO5-YapJNhO1YLb8bVjEDuiE7FYd6gnLY1AaX7uHWpZxOxf2MIW2wwq7LfrjJEQ95MAC8l5TB_LQRPSv_2id9MZQtE_AUQKixwxhRR34l9U6vhKLsn8-VuMZlnVTuxqq3Av85JNM_900MLWpJQ6h43lsQfLESqIlEXM-yScBzl8ZiitiAVzRm80Jxjymbk7OypJgG9_y2NlqPbPaxrytlI7csgrCLwF3FLW_7ibRJUICLNVeJR97CPV4wR8k7_25uWer1ZusNnuEwjphby0_yPlgb-rSy0_SjyRvCz1c5eKd1AQVLYWkeCR1X_1j9CqSof9H8uGIZkoIxh_2eZHEvqzAjiTc6IVYAWFfij85yWp2csvsZsdE0IhEYxSzoI_SiDM-Iv0Fuvj_8yPq96zlyBj7npiOiMTAni5nMH8U1n_dUk4ugrtdsD8eYq4yrRTRs10R__4ZUM21L5EvIk0mKggsObH05e5BOr1dzpDckOks9PgfuxZh7uHTbAhz_OZRY1qD3k90G-V0hXjUlfuSiaagJDyv8nNjsuyp7prQlgBgN0BurpMv4OWIltnF9atEdadFojpRfZabNDi92HoKZl9FrJT2G3e19e7hrNv6dXj84xOjwGGmzfp0lIPvQeB-PxH8uso4RLy74hgbQdqorkhxfv9gEuZZCeY2ukmgns9mgB4HA61nv1aquKiqR0X5PVWHnAKSJhXG0NtGNH9Px5UxJxb3yKO1Uai3odiDXpiPQh5myfUUMzazxN5mEmOKUvukN8RrYGm8BUKnVqzO8-Z_yudiZ7aASE3a_B9zRAIMMMFRjom1xpZIsbLkHO6CVMvgS7TW2C6HetfCenhTuKOkbI4UEHgKn4KRjMzrBUtTyBpJBAsM7LtOgFLwne0obiQy7K58CJlQY7VNohkSkT7WCM-jnG8s51YbivKCDVRJdAVsOPe6EweqQz5txK-g793wJgE5WV61GXQSOb6FpFLanYf58cJ3E30ft1CB9t5ziUC5ulR-Ipb0BxnxVRVUdJ75Ou3l_PN-kWlSE4JQGA9RR_Rbfi8toG9WOTKV4RiZmMDlv1gza-2ZhpX-sUOv4hzTEbzX0LLVH90abNmC229ev5PCzyCyKIgR0Vv6ParlE8AmAWysGNtmX6chpX2omTRO9DJ_jmIIgj9ObXk1YmW_9FSsL0QLCQpdE1UdnQvtcL-bgTEQb4VbA7lI_3pwOivBlLZrOfroxK2pscXqenxNH7pd7qnydI1HHxO9I06HTO3Q18bivtZPcJ5OJWi7VlzgjERAER4Im8L40fbjWkKoAoA7Dp5uTUzR36xlmiNX2h_o-BsmX72P4fmoU2S-9WelE3l5D30lNKbuWQZiQvDA9_RWfpTWKHmgIt7l_1Mko5EZzp1edU2YGu9deaFXhtLd4HSGTSRTfcA7EEachtWifUp0jHP0Sww8JwERBOuudwqHLRT692cw4WX_J4M8rBJv5kjRF16TXmHLT7FzL-CvxLU0kM8qdFKqPU7UHvbzZ8da3nj55YAy5w2izUogLDRtpOjDM7e7bSZS6dvyeBRd9biGx9mDtxaAoRT8C8B5oLdHlTuZsFVPKbw58_KajXcTK-BpGpt0mYyF3z6HMGzwZVSpgxXV-uvvnJUyoSmxWfbTxhzLaG6UpOs82ZUbFg-LCS-uO8EyEQfM6HCKBjj9ak4SRBntN98IBgM_H9YnM14G8-zpP6z8X3NQiB_IL5K7LPh2ySr8a_er1JZ_ub8ch6o_vFwpUoYsTPSVLCJhTZdqb1oKDkMX0Cx1IBGQLaCO9mClRuPuRM-vGh8NT4baM80whZpT7xrVYgVlTFEN5GP7PpmKB7bJd3insUxaMZs40hhVKqQ_P3zkS4MCEvojX5DdIflnhis72Y-RLSP_2-gw-pU9QLMQCOKnnEbxH7wqcs4hlDcJ092TjHFa0gt6loqncBrBn4WJHisLHnGHoYg7elpZiErhIrb8Hw0EVWLeBKrRkkCdfYRgMj2kFBgBb1-aGA9zN9op2tsi3j-2quWiZuY3ArACxANNwbdsuGWniUVNupj_nzCqBfkTtJUuycSaoErqTHK0kNInT-CW2i_lGersBlpPsnrnDs5fi0CGLeuU34TdqLwbBkxxA63xgkyP29jnhhRaOqOYei-D-BIC311hUNP-MxNqAe3n34ERIcfUUTL4iV4741DOIXH1XMWTdQS7SGH1y1-xCeL6efV1p53SKZUlAkwhNfvj1VC8d1E2tKXz4bF72RZuyfLGA-h8RcANz8xVRtLYkqbU-VdW2dCAyzwCDHHKCKCkjz1eCgSiZlrL2PfShaWDIn16-hG4yTkUGm5p_zvBOabY4Ol6eIJXzHof8uWRMtQfv15zy9zLBWhUihB5NbszqRBsSMZJeDOwMNamy1mKgHXTDSrjSpAScMeawuNgnc4svW_cliRpmZN9tmsjvrHpS-Y_JBrehdakszpLX75KfRTPjkDhC113YpJhnu4etyrIzENon64hsqnEy399WzCY4ji1ltH15v9Q&opi=122715837
+              - img [ref=f26e24]
+          - img [ref=f26e27] [cursor=pointer]
+          - generic [ref=f26e38]:
+            - img [ref=f26e41]
+            - generic [ref=f26e44]:
+              - text: Ads by
+              - img [ref=f26e45]
+            - generic [ref=f26e48]:
+              - generic [ref=f26e51] [cursor=pointer]: Send feedback
+              - link [ref=f26e53] [cursor=pointer]:
+                - /url: https://adssettings.google.com/whythisad?source=display&reasons=AXhJPLKKIV-A25QJzYF8oPJn14Lz2Pw6Ib16sCD1gVTwphgBaYouTrF3V90YZp07SShP67neQ8B6taQIgZOEtTCr8l8W33e6ciMUvEJZP-XWWwY4-LKi1bn3XG9fvNprcnhLHOgRQ8M_Kbf0SKycYUSYRTKSnTHO5-YapJNhO1YLb8bVjEDuiE7FYd6gnLY1AaX7uHWpZxOxf2MIW2wwq7LfrjJEQ95MAC8l5TB_LQRPSv_2id9MZQtE_AUQKixwxhRR34l9U6vhKLsn8-VuMZlnVTuxqq3Av85JNM_900MLWpJQ6h43lsQfLESqIlEXM-yScBzl8ZiitiAVzRm80Jxjymbk7OypJgG9_y2NlqPbPaxrytlI7csgrCLwF3FLW_7ibRJUICLNVeJR97CPV4wR8k7_25uWer1ZusNnuEwjphby0_yPlgb-rSy0_SjyRvCz1c5eKd1AQVLYWkeCR1X_1j9CqSof9H8uGIZkoIxh_2eZHEvqzAjiTc6IVYAWFfij85yWp2csvsZsdE0IhEYxSzoI_SiDM-Iv0Fuvj_8yPq96zlyBj7npiOiMTAni5nMH8U1n_dUk4ugrtdsD8eYq4yrRTRs10R__4ZUM21L5EvIk0mKggsObH05e5BOr1dzpDckOks9PgfuxZh7uHTbAhz_OZRY1qD3k90G-V0hXjUlfuSiaagJDyv8nNjsuyp7prQlgBgN0BurpMv4OWIltnF9atEdadFojpRfZabNDi92HoKZl9FrJT2G3e19e7hrNv6dXj84xOjwGGmzfp0lIPvQeB-PxH8uso4RLy74hgbQdqorkhxfv9gEuZZCeY2ukmgns9mgB4HA61nv1aquKiqR0X5PVWHnAKSJhXG0NtGNH9Px5UxJxb3yKO1Uai3odiDXpiPQh5myfUUMzazxN5mEmOKUvukN8RrYGm8BUKnVqzO8-Z_yudiZ7aASE3a_B9zRAIMMMFRjom1xpZIsbLkHO6CVMvgS7TW2C6HetfCenhTuKOkbI4UEHgKn4KRjMzrBUtTyBpJBAsM7LtOgFLwne0obiQy7K58CJlQY7VNohkSkT7WCM-jnG8s51YbivKCDVRJdAVsOPe6EweqQz5txK-g793wJgE5WV61GXQSOb6FpFLanYf58cJ3E30ft1CB9t5ziUC5ulR-Ipb0BxnxVRVUdJ75Ou3l_PN-kWlSE4JQGA9RR_Rbfi8toG9WOTKV4RiZmMDlv1gza-2ZhpX-sUOv4hzTEbzX0LLVH90abNmC229ev5PCzyCyKIgR0Vv6ParlE8AmAWysGNtmX6chpX2omTRO9DJ_jmIIgj9ObXk1YmW_9FSsL0QLCQpdE1UdnQvtcL-bgTEQb4VbA7lI_3pwOivBlLZrOfroxK2pscXqenxNH7pd7qnydI1HHxO9I06HTO3Q18bivtZPcJ5OJWi7VlzgjERAER4Im8L40fbjWkKoAoA7Dp5uTUzR36xlmiNX2h_o-BsmX72P4fmoU2S-9WelE3l5D30lNKbuWQZiQvDA9_RWfpTWKHmgIt7l_1Mko5EZzp1edU2YGu9deaFXhtLd4HSGTSRTfcA7EEachtWifUp0jHP0Sww8JwERBOuudwqHLRT692cw4WX_J4M8rBJv5kjRF16TXmHLT7FzL-CvxLU0kM8qdFKqPU7UHvbzZ8da3nj55YAy5w2izUogLDRtpOjDM7e7bSZS6dvyeBRd9biGx9mDtxaAoRT8C8B5oLdHlTuZsFVPKbw58_KajXcTK-BpGpt0mYyF3z6HMGzwZVSpgxXV-uvvnJUyoSmxWfbTxhzLaG6UpOs82ZUbFg-LCS-uO8EyEQfM6HCKBjj9ak4SRBntN98IBgM_H9YnM14G8-zpP6z8X3NQiB_IL5K7LPh2ySr8a_er1JZ_ub8ch6o_vFwpUoYsTPSVLCJhTZdqb1oKDkMX0Cx1IBGQLaCO9mClRuPuRM-vGh8NT4baM80whZpT7xrVYgVlTFEN5GP7PpmKB7bJd3insUxaMZs40hhVKqQ_P3zkS4MCEvojX5DdIflnhis72Y-RLSP_2-gw-pU9QLMQCOKnnEbxH7wqcs4hlDcJ092TjHFa0gt6loqncBrBn4WJHisLHnGHoYg7elpZiErhIrb8Hw0EVWLeBKrRkkCdfYRgMj2kFBgBb1-aGA9zN9op2tsi3j-2quWiZuY3ArACxANNwbdsuGWniUVNupj_nzCqBfkTtJUuycSaoErqTHK0kNInT-CW2i_lGersBlpPsnrnDs5fi0CGLeuU34TdqLwbBkxxA63xgkyP29jnhhRaOqOYei-D-BIC311hUNP-MxNqAe3n34ERIcfUUTL4iV4741DOIXH1XMWTdQS7SGH1y1-xCeL6efV1p53SKZUlAkwhNfvj1VC8d1E2tKXz4bF72RZuyfLGA-h8RcANz8xVRtLYkqbU-VdW2dCAyzwCDHHKCKCkjz1eCgSiZlrL2PfShaWDIn16-hG4yTkUGm5p_zvBOabY4Ol6eIJXzHof8uWRMtQfv15zy9zLBWhUihB5NbszqRBsSMZJeDOwMNamy1mKgHXTDSrjSpAScMeawuNgnc4svW_cliRpmZN9tmsjvrHpS-Y_JBrehdakszpLX75KfRTPjkDhC113YpJhnu4etyrIzENon64hsqnEy399WzCY4ji1ltH15v9Q&opi=122715837
+                - generic [ref=f26e54]:
+                  - text: Why this ad?
+                  - img [ref=f26e55]
+          - generic [ref=f26e57]:
+            - generic [ref=f26e60] [cursor=pointer]: Seen this ad multiple times
+            - generic [ref=f26e63] [cursor=pointer]: Not interested in this ad
+            - generic [ref=f26e66] [cursor=pointer]: Ad was inappropriate
+            - generic [ref=f26e69] [cursor=pointer]: Ad covered content
+          - generic [ref=f26e75]: Thanks. Feedback improves Google ads
+          - generic [ref=f26e81]:
+            - text: Ad closed by
+            - img [ref=f26e82]
+      - generic [ref=e38]:
+        - generic [ref=e39]:
+          - generic [ref=e40]:
+            - generic [ref=e41]:
+              - heading "Stairway To Heaven Guitar Pro" [level=1] [ref=e42]
+              - text: by
+              - link "Led Zeppelin" [ref=e44] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/artist/led_zeppelin_1036
+            - generic [ref=e46]:
+              - generic [ref=e47]:
+                - generic [ref=e48]: 1,284,876 views
+                - generic [ref=e49]: ·47,505 saves
+                - generic [ref=e50]:
+                  - text: ·
+                  - link "125 comments" [ref=e51] [cursor=pointer]:
+                    - /url: "#comments"
+              - generic [ref=e52]:
+                - generic [ref=e520]:
+                  - generic [ref=e521]: "Author:"
+                  - text: Unregistered
+                - generic [ref=e55]:
+                  - text: ·
+                  - button "3 contributors" [ref=e56] [cursor=pointer]
+          - generic [ref=e57]:
+            - button "Print" [ref=e58] [cursor=pointer]:
+              - img
+              - generic [ref=e59]: Print
+            - button "Save" [ref=e60] [cursor=pointer]:
+              - img
+              - generic [ref=e61]:
+                - generic [ref=e62]: Save
+                - img
+        - generic [ref=e64]:
+          - generic [ref=e66]:
+            - generic [ref=e67]:
+              - button [ref=e68] [cursor=pointer]:
+                - img
+              - button [ref=e69] [cursor=pointer]:
+                - img
+              - button [ref=e70] [cursor=pointer]:
+                - img
+              - spinbutton [ref=e523]:
+                - generic [ref=e524]:
+                  - button [ref=e525] [cursor=pointer]:
+                    - img
+                  - button [ref=e526] [cursor=pointer]:
+                    - generic [ref=e527]: 100%
+                  - button [ref=e528] [cursor=pointer]:
+                    - img
+              - spinbutton [ref=e530]:
+                - generic [ref=e531]:
+                  - button "Transpose Down" [ref=e532] [cursor=pointer]:
+                    - img
+                  - generic [ref=e533]: Tr. 0
+                  - button "Transpose Up" [ref=e534] [cursor=pointer]:
+                    - img
+              - button [ref=e75] [cursor=pointer]:
+                - img
+              - button "Settings" [ref=e76] [cursor=pointer]:
+                - img
+              - button "Collapse" [ref=e77] [cursor=pointer]:
+                - img
+            - generic [ref=e78]:
+              - button "Open Official" [ref=e79] [cursor=pointer]:
+                - img
+                - generic [ref=e80]: Open Official
+              - generic [ref=e81]:
+                - button [ref=e82] [cursor=pointer]:
+                  - img
+                - button [ref=e83] [cursor=pointer]:
+                  - img
+          - generic [ref=e84]:
+            - generic [ref=e87]:
+              - generic [ref=e88]:
+                - generic [ref=e89]: "Tuning:"
+                - link "E A D G B E" [ref=e90] [cursor=pointer]:
+                  - /url: https://www.ultimate-guitar.com/tools/tuner?tuning=E%20A%20D%20G%20B%20E
+              - generic [ref=e91]:
+                - text: ·
+                - generic [ref=e92]: "Key:"
+                - text: Am
+              - generic [ref=e93]:
+                - text: ·
+                - generic [ref=e94]: "Capo:"
+                - text: No capo
+            - generic [ref=e100]:
+              - generic [ref=e101]:
+                - img
+              - generic [ref=e102]:
+                - button [ref=e104] [cursor=pointer]:
+                  - img
+                - generic [ref=e105]:
+                  - button [disabled] [ref=e106]
+                  - generic [ref=e107]:
+                    - generic:
+                      - img
+                - generic [ref=e108]:
+                  - button [ref=e109] [cursor=pointer]
+                  - generic [ref=e110]:
+                    - generic:
+                      - img
+                - generic [ref=e111]:
+                  - button [ref=e112] [cursor=pointer]
+                  - generic [ref=e113]:
+                    - generic:
+                      - img
+                - generic [ref=e114]:
+                  - button [ref=e115] [cursor=pointer]
+                  - generic [ref=e116]:
+                    - generic:
+                      - img
+                - generic [ref=e117]:
+                  - button [ref=e118] [cursor=pointer]
+                  - generic [ref=e119]:
+                    - generic:
+                      - img
+                - generic [ref=e120]:
+                  - button [ref=e121] [cursor=pointer]
+                  - generic [ref=e122]:
+                    - generic:
+                      - img
+                - generic [ref=e123]:
+                  - button [ref=e124] [cursor=pointer]
+                  - generic [ref=e125]:
+                    - generic:
+                      - img
+                - generic [ref=e126]:
+                  - button [ref=e127] [cursor=pointer]
+                  - generic [ref=e128]:
+                    - generic:
+                      - img
+          - generic [ref=e140]:
+            - generic [ref=e141]:
+              - generic [ref=e142]: Parts
+              - generic [ref=e143]: 0:00
+            - button [ref=e144] [cursor=pointer]
+            - generic [ref=e148]: 7:58
+        - generic [ref=e149]:
+          - generic [ref=e150]:
+            - generic [ref=e151]:
+              - button "Download (gp)" [ref=e153] [cursor=pointer]:
+                - img
+                - generic [ref=e154]: Download (gp)
+              - button "Create correction" [ref=e155] [cursor=pointer]:
+                - img
+                - generic [ref=e156]: Create correction
+            - generic [ref=e157]: "Last update: Feb 13, 2026"
+          - separator [ref=e158]
+          - generic [ref=e159]:
+            - generic [ref=e161]: Rating
+            - generic [ref=e162]:
+              - generic [ref=e163]:
+                - generic [ref=e164]: "4.8"
+                - generic [ref=e165]: 2,694 rates
+              - generic [ref=e166]:
+                - generic [ref=e167]:
+                  - button "rate 1" [ref=e168] [cursor=pointer]:
+                    - img
+                  - button "rate 2" [ref=e169] [cursor=pointer]:
+                    - img
+                  - button "rate 3" [ref=e170] [cursor=pointer]:
+                    - img
+                  - button "rate 4" [ref=e171] [cursor=pointer]:
+                    - img
+                  - button "rate 5" [ref=e172] [cursor=pointer]:
+                    - img
+                - generic [ref=e173]: Please, rate this tab
+          - separator [ref=e174]
+          - generic [ref=e175]:
+            - heading "Related tabs" [level=2] [ref=e178]
+            - list [ref=e179]:
+              - listitem [ref=e180]:
+                - link "Led Zeppelin Bron-Yr-Aur" [ref=e181] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/led-zeppelin/bron-yr-aur-guitar-pro-582036
+                - img "Led Zeppelin Album Cover" [ref=e182]
+                - generic [ref=e183]: Bron-Yr-Aur
+                - link "Led Zeppelin" [ref=e185] [cursor=pointer]:
+                  - /url: https://www.ultimate-guitar.com/artist/led_zeppelin_1036
+                - meter "Rating" [ref=e186]:
+                  - generic [ref=e187]:
+                    - img
+                    - generic [ref=e188]: "5.0"
+                    - generic [ref=e189]: (38)
+              - listitem [ref=e190]:
+                - link "Led Zeppelin Since Ive Been Loving You" [ref=e191] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/led-zeppelin/since-ive-been-loving-you-guitar-pro-223794
+                - img "Led Zeppelin Album Cover" [ref=e192]
+                - generic [ref=e193]: Since Ive Been Loving You
+                - link "Led Zeppelin" [ref=e195] [cursor=pointer]:
+                  - /url: https://www.ultimate-guitar.com/artist/led_zeppelin_1036
+                - meter "Rating" [ref=e196]:
+                  - generic [ref=e197]:
+                    - img
+                    - generic [ref=e198]: "4.9"
+                    - generic [ref=e199]: (475)
+              - listitem [ref=e200]:
+                - link "Led Zeppelin Over The Hills And Far Away" [ref=e201] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/led-zeppelin/over-the-hills-and-far-away-guitar-pro-1208014
+                - img "Led Zeppelin Album Cover" [ref=e202]
+                - generic [ref=e203]: Over The Hills And Far Away
+                - link "Led Zeppelin" [ref=e205] [cursor=pointer]:
+                  - /url: https://www.ultimate-guitar.com/artist/led_zeppelin_1036
+                - meter "Rating" [ref=e206]:
+                  - generic [ref=e207]:
+                    - img
+                    - generic [ref=e208]: "4.9"
+                    - generic [ref=e209]: (282)
+          - generic [ref=e211]:
+            - heading "Get effects" [level=2] [ref=e215]
+            - generic [ref=e216]:
+              - generic [ref=e217]:
+                - generic [ref=e218]: Play "Stairway To Heaven" with its authentic sound, plus 30K+ other iconic presets for your guitar tone
+                - button "Get Tonebridge free" [ref=e219] [cursor=pointer]:
+                  - img
+                  - generic [ref=e220]: Get Tonebridge free
+              - separator [ref=e221]
+              - generic [ref=e222]:
+                - generic [ref=e223]: Craft your own guitar tone with custom amps, pedals, and effects in AmpKit
+                - button "Get Ampkit" [ref=e224] [cursor=pointer]:
+                  - img
+                  - generic [ref=e225]: Get Ampkit
+        - generic [ref=e227]:
+          - heading "125 comments" [level=2] [ref=e230]
+          - generic [ref=e233]:
+            - img "orpelta85" [ref=e535]
+            - generic [ref=e236]:
+              - textbox "What do you think about this tab?" [ref=e237]
+              - generic [ref=e238]:
+                - img
+            - button "Send" [disabled] [ref=e239]:
+              - img
+          - generic [ref=e240]:
+            - generic [ref=e241]:
+              - article [ref=e242]:
+                - img "sword shredder" [ref=e244]
+                - generic [ref=e246]:
+                  - generic [ref=e248]:
+                    - link "sword shredder" [ref=e249] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/u/sword%20shredder
+                    - text: "[a] 246"
+                  - link "Oct 13, 2005" [ref=e250] [cursor=pointer]:
+                    - /url: "#946580"
+                - generic [ref=e251]: awesome.
+                - button "reply" [ref=e253] [cursor=pointer]
+                - generic [ref=e254]:
+                  - button "Vote up" [ref=e255] [cursor=pointer]:
+                    - img
+                  - generic [ref=e256]: "26"
+                  - button "Vote down" [ref=e257] [cursor=pointer]:
+                    - img
+              - article [ref=e258]:
+                - img "guitar98765432" [ref=e260]
+                - generic [ref=e262]:
+                  - generic [ref=e264]:
+                    - link "guitar98765432" [ref=e265] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/u/guitar98765432
+                    - text: "[a] 80"
+                  - link "Apr 20, 2006" [ref=e266] [cursor=pointer]:
+                    - /url: "#1185120"
+                - generic [ref=e267]: gud job musta took you a long time
+                - button "reply" [ref=e269] [cursor=pointer]
+                - generic [ref=e270]:
+                  - button "Vote up" [ref=e271] [cursor=pointer]:
+                    - img
+                  - generic [ref=e272]: "21"
+                  - button "Vote down" [ref=e273] [cursor=pointer]:
+                    - img
+              - article [ref=e274]:
+                - img "chrisb92" [ref=e276]
+                - generic [ref=e278]:
+                  - generic [ref=e280]:
+                    - link "chrisb92" [ref=e281] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/u/chrisb92
+                    - text: "20"
+                  - link "Jul 26, 2006" [ref=e282] [cursor=pointer]:
+                    - /url: "#1330149"
+                - generic [ref=e283]: diahrea
+                - button "reply" [ref=e285] [cursor=pointer]
+                - generic [ref=e286]:
+                  - button "Vote up" [ref=e287] [cursor=pointer]:
+                    - img
+                  - generic [ref=e288]: "12"
+                  - button "Vote down" [ref=e289] [cursor=pointer]:
+                    - img
+            - button "Show all (125)" [ref=e290] [cursor=pointer]:
+              - generic [ref=e291]: Show all (125)
+      - generic [ref=e292]: X
+  - generic [ref=e293]:
+    - generic [ref=e294]:
+      - generic [ref=e536]:
+        - link "orpelta85" [ref=e537] [cursor=pointer]:
+          - /url: https://www.ultimate-guitar.com/u/orpelta85
+          - img "orpelta85" [ref=e538]
+        - generic [ref=e539]:
+          - generic [ref=e541]:
+            - link "orpelta85" [ref=e542] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/u/orpelta85
+            - text: "[pro]"
+            - link "10" [ref=e543] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/user/activity/iq?user_id=32621864
+          - generic [ref=e544]: Joined 2019
+      - list "User navigation" [ref=e545]:
+        - listitem [ref=e546]:
+          - link "My tabs 11" [ref=e547] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/mytabs
+            - generic [ref=e548]:
+              - generic [ref=e549]: My tabs
+              - generic [ref=e550]: "11"
+        - listitem [ref=e551]:
+          - link "My courses 16" [ref=e552] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/courses
+            - generic [ref=e553]:
+              - generic [ref=e554]: My courses
+              - generic [ref=e555]: "16"
+        - listitem [ref=e556]:
+          - link "My books 0" [ref=e557] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/books
+            - generic [ref=e558]:
+              - generic [ref=e559]: My books
+              - generic [ref=e560]: "0"
+        - listitem [ref=e563]:
+          - link "Playlists 1" [ref=e564] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/playlist
+            - generic [ref=e565]:
+              - generic [ref=e566]: Playlists
+              - generic [ref=e567]: "1"
+        - listitem [ref=e568]:
+          - link "Messages" [ref=e569] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/profile/messages
+            - generic [ref=e571]: Messages
+        - listitem [ref=e572]:
+          - link "Settings" [ref=e573] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/forum/profile/update-profile
+            - generic [ref=e575]: Settings
+        - listitem [ref=e576]:
+          - link "Subscriptions" [ref=e577] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/subscriptions
+            - generic [ref=e579]: Subscriptions
+    - region "More Versions" [ref=e301]:
+      - heading "More Versions" [level=3] [ref=e302]
+      - navigation "More Versions" [ref=e303]:
+        - link "Official Rating 4.8" [ref=e305] [cursor=pointer]:
+          - /url: https://www.ultimate-guitar.com/pro?app_utm_campaign=UG%20Tab%20Versions%20Official&app_utm_medium=Tabs&app_utm_source=UltimateGuitar&artist=Led%20Zeppelin&song=Stairway%20To%20Heaven&tab_id=1911433
+          - img
+          - generic [ref=e306]: Official
+          - meter "Rating" [ref=e307]:
+            - generic [ref=e308]:
+              - img
+              - generic [ref=e309]: "4.8"
+              - generic [ref=e310]: (11.1K)
+        - generic [ref=e311]:
+          - link "Ver 1 Rating 4.8":
+            - /url: https://tabs.ultimate-guitar.com/tab/led-zeppelin/stairway-to-heaven-guitar-pro-223796
+            - generic: Ver 1
+            - meter "Rating":
+              - generic:
+                - img
+                - generic: "4.8"
+                - generic: (2.7K)
+        - link "Ver 2 Rating 4.4" [ref=e313] [cursor=pointer]:
+          - /url: https://tabs.ultimate-guitar.com/tab/led-zeppelin/stairway-to-heaven-guitar-pro-223797
+          - generic [ref=e314]: Ver 2
+          - meter "Rating" [ref=e315]:
+            - generic [ref=e316]:
+              - img
+              - generic [ref=e317]: "4.4"
+              - generic [ref=e318]: (80)
+        - link "Ver 3 Rating 4.4" [ref=e320] [cursor=pointer]:
+          - /url: https://tabs.ultimate-guitar.com/tab/led-zeppelin/stairway-to-heaven-guitar-pro-223798
+          - generic [ref=e321]: Ver 3
+          - meter "Rating" [ref=e322]:
+            - generic [ref=e323]:
+              - img
+              - generic [ref=e324]: "4.4"
+              - generic [ref=e325]: (24)
+        - link "Ver 4 Rating 3.4" [ref=e327] [cursor=pointer]:
+          - /url: https://tabs.ultimate-guitar.com/tab/led-zeppelin/stairway-to-heaven-guitar-pro-223799
+          - generic [ref=e328]: Ver 4
+          - meter "Rating" [ref=e329]:
+            - generic [ref=e330]:
+              - img
+              - generic [ref=e331]: "3.4"
+              - generic [ref=e332]: (9)
+      - button "Show all" [ref=e333] [cursor=pointer]:
+        - img
+        - text: Show all
+  - button "Guitar karaoke" [ref=e582] [cursor=pointer]:
+    - img
+    - generic [ref=e583]: Guitar karaoke
+  - contentinfo [ref=e347]:
+    - generic [ref=e348]:
+      - generic [ref=e349]:
+        - generic [ref=e350]:
+          - generic [ref=e351]: All artists
+          - list "All artists" [ref=e352]:
+            - listitem [ref=e353]:
+              - link "#" [ref=e354] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/0-9.htm
+            - listitem [ref=e355]:
+              - link "a" [ref=e356] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/a.htm
+            - listitem [ref=e357]:
+              - link "b" [ref=e358] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/b.htm
+            - listitem [ref=e359]:
+              - link "c" [ref=e360] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/c.htm
+            - listitem [ref=e361]:
+              - link "d" [ref=e362] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/d.htm
+            - listitem [ref=e363]:
+              - link "e" [ref=e364] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/e.htm
+            - listitem [ref=e365]:
+              - link "f" [ref=e366] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/f.htm
+            - listitem [ref=e367]:
+              - link "g" [ref=e368] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/g.htm
+            - listitem [ref=e369]:
+              - link "h" [ref=e370] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/h.htm
+            - listitem [ref=e371]:
+              - link "i" [ref=e372] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/i.htm
+            - listitem [ref=e373]:
+              - link "j" [ref=e374] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/j.htm
+            - listitem [ref=e375]:
+              - link "k" [ref=e376] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/k.htm
+            - listitem [ref=e377]:
+              - link "l" [ref=e378] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/l.htm
+            - listitem [ref=e379]:
+              - link "m" [ref=e380] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/m.htm
+            - listitem [ref=e381]:
+              - link "n" [ref=e382] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/n.htm
+            - listitem [ref=e383]:
+              - link "o" [ref=e384] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/o.htm
+            - listitem [ref=e385]:
+              - link "p" [ref=e386] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/p.htm
+            - listitem [ref=e387]:
+              - link "q" [ref=e388] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/q.htm
+            - listitem [ref=e389]:
+              - link "r" [ref=e390] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/r.htm
+            - listitem [ref=e391]:
+              - link "s" [ref=e392] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/s.htm
+            - listitem [ref=e393]:
+              - link "t" [ref=e394] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/t.htm
+            - listitem [ref=e395]:
+              - link "u" [ref=e396] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/u.htm
+            - listitem [ref=e397]:
+              - link "v" [ref=e398] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/v.htm
+            - listitem [ref=e399]:
+              - link "w" [ref=e400] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/w.htm
+            - listitem [ref=e401]:
+              - link "x" [ref=e402] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/x.htm
+            - listitem [ref=e403]:
+              - link "y" [ref=e404] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/y.htm
+            - listitem [ref=e405]:
+              - link "z" [ref=e406] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/z.htm
+        - generic [ref=e407]:
+          - link "facebook" [ref=e408] [cursor=pointer]:
+            - /url: https://www.facebook.com/UltimateGuitar/
+            - img
+          - link "twitter" [ref=e409] [cursor=pointer]:
+            - /url: https://twitter.com/ultimateguitar
+            - img
+          - link "instagram" [ref=e410] [cursor=pointer]:
+            - /url: https://www.instagram.com/ultimateguitar/
+            - img
+          - link "youtube" [ref=e411] [cursor=pointer]:
+            - /url: https://www.youtube.com/channel/UCf6prPsXYNYKXH4hX-cuEwQ
+            - img
+          - link "tiktok" [ref=e412] [cursor=pointer]:
+            - /url: https://www.tiktok.com/@ultimateguitar
+            - img
+          - link "audio.com" [ref=e413] [cursor=pointer]:
+            - /url: https://audio.com/ultimateguitar
+            - img
+          - link "linkedin" [ref=e414] [cursor=pointer]:
+            - /url: https://www.linkedin.com/company/1567917
+            - img
+      - separator [ref=e415]
+      - generic [ref=e416]:
+        - region "Copyright" [ref=e417]:
+          - link [ref=e418] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com
+            - img [ref=e419]
+          - generic [ref=e421]: © 2026 Ultimate-Guitar.com All rights reserved
+        - region "Discover" [ref=e422]:
+          - heading "Discover" [level=4] [ref=e423]
+          - link "About UG" [ref=e424] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/
+          - link "Site Rules" [ref=e425] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/article/blog/site-rules/
+          - link "Advertise" [ref=e426] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/advertise.htm
+          - link "Support" [ref=e427] [cursor=pointer]:
+            - /url: https://help.ultimate-guitar.com/en/
+        - region "Legal" [ref=e428]:
+          - heading "Legal" [level=4] [ref=e429]
+          - link "Terms of Service" [ref=e430] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/tos.htm
+          - link "Privacy Policy" [ref=e431] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/privacy.htm
+          - link "DMCA" [ref=e432] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/dmca.htm
+          - link "Accessibility Statement" [ref=e433] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/accessibility-statement.htm
+        - region "Other" [ref=e434]:
+          - heading "Other" [level=4] [ref=e435]
+          - button "PRO+" [ref=e584] [cursor=pointer]
+          - link "Articles Staff" [ref=e437] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/news/editorial/
+          - link "Fresh Tabs" [ref=e438] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/fresh?order=date
+          - link "MuseHub" [ref=e439] [cursor=pointer]:
+            - /url: https://www.musehub.com/?utm_source=ug_web&utm_medium=footer&utm_campaign=musehub
+        - region "Language" [ref=e440]:
+          - heading "Language" [level=4] [ref=e441]
+          - link "English" [ref=e442] [cursor=pointer]:
+            - /url: https://tabs.ultimate-guitar.com/tab/led-zeppelin/stairway-to-heaven-guitar-pro-223796
+          - link "Português (Brasil)" [ref=e443] [cursor=pointer]:
+            - /url: https://pt.ultimate-guitar.com/tab/led-zeppelin/stairway-to-heaven-guitar-pro-223796
+          - link "Español" [ref=e444] [cursor=pointer]:
+            - /url: https://es.ultimate-guitar.com/tab/led-zeppelin/stairway-to-heaven-guitar-pro-223796
+          - link "Italiano" [ref=e445] [cursor=pointer]:
+            - /url: https://it.ultimate-guitar.com/tab/led-zeppelin/stairway-to-heaven-guitar-pro-223796
+          - link "Français" [ref=e446] [cursor=pointer]:
+            - /url: https://fr.ultimate-guitar.com/tab/led-zeppelin/stairway-to-heaven-guitar-pro-223796
+          - link "日本語" [ref=e447] [cursor=pointer]:
+            - /url: https://ja.ultimate-guitar.com/tab/led-zeppelin/stairway-to-heaven-guitar-pro-223796
+        - region "Hot Chords" [ref=e448]:
+          - heading "Hot Chords" [level=4] [ref=e449]
+          - link "Indonesia" [ref=e450] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?country_chart=7
+        - region "Download UG application" [ref=e451]:
+          - generic [ref=e452]:
+            - link "apple store" [ref=e453] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/components/apps/market/redirect?app_name=ug_tabs_chords_ios&source=get_app_footer
+              - img "apple store" [ref=e454]
+            - link "google play" [ref=e455] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/components/apps/market/redirect?app_name=ug_tabs_chords_android&source=get_app_footer
+              - img "google play" [ref=e456]
+            - link "huawei store" [ref=e457] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/components/apps/market/redirect?app_name=ug_tabs_chords_huawei&source=get_app_footer
+              - img "huawei store" [ref=e458]
+  - generic [ref=e590]:
+    - generic [ref=e591]: Add 2,000+ songbooks to your PRO+ now!
+    - generic [ref=e592]:
+      - generic [ref=e593]:
+        - generic [ref=e594]: "0"
+        - generic [ref=e596]: days
+      - generic [ref=e597]: ":"
+      - generic [ref=e598]:
+        - generic [ref=e599]: "23"
+        - generic [ref=e601]: hrs
+      - generic [ref=e602]: ":"
+      - generic [ref=e603]:
+        - generic [ref=e604]: "58"
+        - generic [ref=e606]: min
+      - generic [ref=e607]: ":"
+      - generic [ref=e608]:
+        - generic [ref=e609]: "54"
+        - generic [ref=e611]: sec
+    - button "TRY FOR FREE" [ref=e612] [cursor=pointer]:
+      - generic [ref=e613]: TRY FOR FREE

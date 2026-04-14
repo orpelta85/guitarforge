@@ -1,0 +1,198 @@
+- generic [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - button "Open Next.js Dev Tools" [ref=e11] [cursor=pointer]:
+    - img [ref=e12]
+  - alert [ref=e15]
+  - generic [ref=e16]:
+    - complementary [ref=e17]:
+      - img "Guitar Practice" [ref=e20]
+      - navigation [ref=e22]:
+        - generic [ref=e23]: Main
+        - button "Home" [ref=e24] [cursor=pointer]:
+          - img [ref=e26]
+          - generic [ref=e28]: Home
+        - button "Practice" [ref=e29] [cursor=pointer]:
+          - img [ref=e31]
+          - generic [ref=e35]: Practice
+        - button "Learn" [ref=e36] [cursor=pointer]:
+          - img [ref=e38]
+          - generic [ref=e41]: Learn
+        - button "Studio" [ref=e42] [cursor=pointer]:
+          - img [ref=e44]
+          - generic [ref=e47]: Studio
+        - button "Jam Mode" [ref=e48] [cursor=pointer]:
+          - img [ref=e50]
+          - generic [ref=e53]: Jam Mode
+        - button "Library" [ref=e54] [cursor=pointer]:
+          - img [ref=e56]
+          - generic [ref=e59]: Library
+        - generic [ref=e60]: Tools
+        - button "AI Coach" [ref=e61] [cursor=pointer]:
+          - img [ref=e63]
+          - generic [ref=e65]: AI Coach
+        - button "Suno AI" [ref=e66] [cursor=pointer]:
+          - img [ref=e68]
+          - generic [ref=e71]: Suno AI
+        - button "Skills" [ref=e72] [cursor=pointer]:
+          - img [ref=e74]
+          - generic [ref=e80]: Skills
+        - button "Tuner" [ref=e81] [cursor=pointer]:
+          - img [ref=e83]
+          - generic [ref=e85]: Tuner
+      - button "Guest Sign in to sync" [ref=e88]:
+        - img [ref=e90]
+        - generic [ref=e93]:
+          - generic [ref=e94]: Guest
+          - generic [ref=e95]: Sign in to sync
+      - button "Sign in to sync" [ref=e97]
+    - generic [ref=e100]:
+      - generic [ref=e101]:
+        - generic [ref=e102]:
+          - img [ref=e103]
+          - generic [ref=e106]: Sign in to sync your progress across devices
+        - generic [ref=e107]:
+          - button "Sign In" [ref=e108]
+          - button "Dismiss" [ref=e109]:
+            - img [ref=e110]
+      - generic [ref=e113]:
+        - generic [ref=e114]:
+          - generic [ref=e115]:
+            - generic [ref=e116]: Monday, Apr 13, 2026
+            - heading "Today's Focus" [level=1] [ref=e117]
+            - generic [ref=e118]: 5 exercises · 45 min · Warm-Up, Ear Training, Modes, Improv
+          - generic [ref=e119]:
+            - img [ref=e121]
+            - generic [ref=e123]:
+              - generic [ref=e124]: "0"
+              - generic [ref=e125]: day streak
+        - generic [ref=e126]:
+          - button "Dirt Songs · 10 min 90 BPM" [ref=e127]:
+            - generic [ref=e129]:
+              - generic [ref=e130]: Dirt
+              - generic [ref=e131]: Songs · 10 min
+            - generic [ref=e132]: 90 BPM
+          - button "Legato Warm-Up Am Pentatonic No Pick Warm-Up · 5 min BPM" [ref=e133]:
+            - generic [ref=e135]:
+              - generic [ref=e136]: Legato Warm-Up Am Pentatonic No Pick
+              - generic [ref=e137]: Warm-Up · 5 min
+            - generic [ref=e138]: BPM
+          - button "Metallica - Enter Sandman Songs · 20 min BPM" [ref=e139]:
+            - generic [ref=e141]:
+              - generic [ref=e142]: Metallica - Enter Sandman
+              - generic [ref=e143]: Songs · 20 min
+            - generic [ref=e144]: BPM
+          - generic [ref=e145]: + 2 more exercises
+        - generic [ref=e146]:
+          - button "Start Practice" [ref=e147]:
+            - img [ref=e148]
+            - text: Start Practice
+          - generic [ref=e151]:
+            - generic [ref=e152]: 0% complete
+            - generic [ref=e153]: 0/5
+      - button "Quick Jam Am Am · Blues" [active] [ref=e319] [cursor=pointer]:
+        - img [ref=e157]
+        - generic [ref=e161]: Quick Jam
+        - generic [ref=e320]: Am Am · Blues
+        - img [ref=e162]
+      - generic [ref=e193]:
+        - generic [ref=e194]:
+          - generic [ref=e195]: Songs of the Week
+          - generic [ref=e196]:
+            - generic [ref=e197]:
+              - button "Dirt Alice In Chains Intermediate" [ref=e198]:
+                - generic [ref=e199]:
+                  - img [ref=e201]
+                  - generic [ref=e205]:
+                    - generic [ref=e206]: Dirt
+                    - generic [ref=e207]: Alice In Chains
+                    - generic [ref=e208]: Intermediate
+              - button "Dismiss Dirt" [ref=e209]:
+                - img [ref=e210]
+            - generic [ref=e212]:
+              - button "Enter Sandman Metallica Intermediate" [ref=e213]:
+                - generic [ref=e214]:
+                  - img [ref=e216]
+                  - generic [ref=e220]:
+                    - generic [ref=e221]: Enter Sandman
+                    - generic [ref=e222]: Metallica
+                    - generic [ref=e223]: Intermediate
+              - button "Dismiss Enter Sandman" [ref=e224]:
+                - img [ref=e225]
+        - generic [ref=e227]:
+          - generic [ref=e228]:
+            - generic [ref=e229]: This Week
+            - button "Reset" [ref=e230] [cursor=pointer]:
+              - img [ref=e231]
+              - text: Reset
+          - generic [ref=e234]:
+            - generic [ref=e235]:
+              - generic [ref=e236]: 0%
+              - generic [ref=e237]: Progress
+            - generic [ref=e238]:
+              - generic [ref=e239]: "45"
+              - generic [ref=e240]: Minutes
+            - generic [ref=e241]:
+              - generic [ref=e242]: 0/5
+              - generic [ref=e243]: Exercises
+            - generic [ref=e244]:
+              - generic [ref=e245]: 0/7
+              - generic [ref=e246]: Days Active
+        - generic [ref=e247]:
+          - generic [ref=e248]:
+            - img [ref=e249]
+            - text: Coach Tip
+          - paragraph [ref=e251]: You haven't practiced Warm-Up yet — consider adding it to your routine.
+          - button "Ask the Coach →" [ref=e252]
+      - generic [ref=e253]:
+        - button "Weekly Focus W1 · Aeolian · Am · Blues" [ref=e254] [cursor=pointer]:
+          - generic [ref=e256]: Weekly Focus
+          - generic [ref=e257]: W1 · Aeolian · Am · Blues
+          - img [ref=e258]
+        - generic [ref=e260]:
+          - generic [ref=e261]:
+            - generic [ref=e262]:
+              - img [ref=e263]
+              - text: Week 1 Schedule
+            - button "Edit" [ref=e266] [cursor=pointer]:
+              - img [ref=e267]
+              - text: Edit
+          - generic [ref=e270]:
+            - generic [ref=e271] [cursor=pointer]:
+              - generic [ref=e272]: Sunday
+              - generic [ref=e273]: 2h
+            - generic [ref=e274] [cursor=pointer]:
+              - generic [ref=e275]: Monday
+              - generic [ref=e276]: 2h
+              - generic [ref=e278]: 0/5
+            - generic [ref=e279] [cursor=pointer]:
+              - generic [ref=e280]: Tuesday
+              - generic [ref=e281]: 2h
+            - generic [ref=e282] [cursor=pointer]:
+              - generic [ref=e283]: Wednesday
+              - generic [ref=e284]: 2h
+            - generic [ref=e285] [cursor=pointer]:
+              - generic [ref=e286]: Thursday
+              - generic [ref=e287]: 2h
+            - generic [ref=e288] [cursor=pointer]:
+              - generic [ref=e289]: Friday
+              - generic [ref=e290]: 1.5h
+            - generic [ref=e291] [cursor=pointer]:
+              - generic [ref=e292]: Saturday
+              - generic [ref=e293]: 0h
+      - generic [ref=e295]:
+        - generic [ref=e296]:
+          - img [ref=e297]
+          - text: Songs for This Week
+          - generic [ref=e301]: (0 songs)
+        - generic [ref=e302]: No songs added yet. Search your library below.
+        - generic [ref=e304]:
+          - img [ref=e305]
+          - textbox "Search songs from library..." [ref=e308]
+        - group [ref=e309]:
+          - generic "Add manually..." [ref=e310] [cursor=pointer]
+      - button "Week Analytics 0/5 done · 0%" [ref=e312] [cursor=pointer]:
+        - img [ref=e313]
+        - generic [ref=e315]: Week Analytics
+        - generic [ref=e316]: 0/5 done · 0%
+        - img [ref=e317]

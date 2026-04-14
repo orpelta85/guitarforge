@@ -1,0 +1,77 @@
+[      83ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[     107ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[     210ms] [WARNING] Image with src "/logo.png" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   12044ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   12247ms] [LOG] [Fast Refresh] done in 309ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   21434ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   21651ms] [LOG] [Fast Refresh] done in 323ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   31089ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   31306ms] [LOG] [Fast Refresh] done in 332ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   54370ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   54554ms] [LOG] [Fast Refresh] done in 294ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   65489ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   65669ms] [LOG] [Fast Refresh] done in 293ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   73437ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   73671ms] [LOG] [Fast Refresh] done in 343ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   84490ms] [LOG] [GF Recorder] Mic track settings: {"autoGainControl":false,"channelCount":2,"deviceId":"default","echoCancellation":false,"groupId":"254b3fe56cfacf762e0d949ef1c04a185607a80bd10c2d61ce61f95c01afebb1","latency":0.01,"noiseSuppression":false,"sampleRate":48000,"sampleSize":16,"voiceIsolation":false} @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   84491ms] [LOG] [GF Recorder] channelCount: 2 sampleSize: 16 sampleRate: 48000 @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   84491ms] [WARNING] [GF Recorder] 16-bit capture — browser ignored 24-bit request. Recording still uses PCM codec for lossless capture. @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   91300ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   91562ms] [LOG] [Fast Refresh] done in 362ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  109582ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  109866ms] [LOG] [Fast Refresh] done in 384ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  113790ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  113791ms] [LOG] [Fast Refresh] done in 104ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  114035ms] [ERROR] Failed to load resource: net::ERR_NAME_NOT_RESOLVED @ https://rmwaezujumikbukbirpt.supabase.co/storage/v1/object/public/gp-tabs/personal/exercises/asymetric%20spinning%20alternate%20phrase%20-%20Mobius.gp5:0
+[  114053ms] [ERROR] Failed to load resource: net::ERR_NAME_NOT_RESOLVED @ https://rmwaezujumikbukbirpt.supabase.co/storage/v1/object/public/gp-tabs/personal/exercises/asymetric%20spinning%20alternate%20phrase%20-%20Mobius.gp5:0
+[  122276ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  122638ms] [LOG] [Fast Refresh] done in 463ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  136269ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  136595ms] [LOG] [Fast Refresh] done in 433ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  139060ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  139561ms] [LOG] [Fast Refresh] done in 606ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  152069ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  152407ms] [LOG] [Fast Refresh] done in 445ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  154118ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  154517ms] [LOG] [Fast Refresh] done in 505ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  164042ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  164425ms] [LOG] [Fast Refresh] done in 490ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  173080ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  173447ms] [LOG] [Fast Refresh] done in 474ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  183234ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  183603ms] [LOG] [Fast Refresh] done in 475ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  185002ms] [ERROR] Failed to load resource: net::ERR_NAME_NOT_RESOLVED @ https://rmwaezujumikbukbirpt.supabase.co/storage/v1/object/public/gp-tabs/songs/soundgarden/Black%20Hole%20Sun.gp3:0
+[  185028ms] [ERROR] Failed to load resource: net::ERR_NAME_NOT_RESOLVED @ https://rmwaezujumikbukbirpt.supabase.co/storage/v1/object/public/gp-tabs/songs/soundgarden/Black%20Hole%20Sun.gp3:0
+[  194129ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  194501ms] [LOG] [Fast Refresh] done in 474ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  199265ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  199633ms] [LOG] [Fast Refresh] done in 473ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  222678ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  223000ms] [LOG] [Fast Refresh] done in 425ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  224506ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  224878ms] [LOG] [Fast Refresh] done in 484ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  239634ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  240022ms] [LOG] [Fast Refresh] done in 488ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  244440ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  244829ms] [LOG] [Fast Refresh] done in 490ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  256058ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  256382ms] [LOG] [Fast Refresh] done in 424ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  267070ms] [LOG] %c * Tone.js v15.1.22 *  background: #000; color: #fff @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  272348ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  272684ms] [LOG] [Fast Refresh] done in 444ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  281243ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  281715ms] [LOG] [Fast Refresh] done in 561ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  298393ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  298954ms] [LOG] [Fast Refresh] done in 628ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  307285ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  307310ms] [LOG] [Fast Refresh] done in 110ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  315492ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  315523ms] [LOG] [Fast Refresh] done in 112ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  316780ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  316800ms] [LOG] [Fast Refresh] done in 111ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  329055ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  329079ms] [LOG] [Fast Refresh] done in 97ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  341842ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  341906ms] [LOG] [Fast Refresh] done in 150ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  355334ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  355367ms] [LOG] [Fast Refresh] done in 121ms @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297

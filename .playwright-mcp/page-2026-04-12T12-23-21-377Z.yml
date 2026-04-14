@@ -1,0 +1,82 @@
+- generic [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - button "Open Next.js Dev Tools" [ref=e11] [cursor=pointer]:
+    - img [ref=e12]
+  - alert [ref=e15]
+  - generic [ref=e16]:
+    - complementary [ref=e17]:
+      - img "Guitar Practice" [ref=e20]
+      - navigation [ref=e22]:
+        - generic [ref=e23]: Main
+        - button "Home" [ref=e24] [cursor=pointer]:
+          - img [ref=e26]
+          - generic [ref=e28]: Home
+        - button "Practice" [ref=e29] [cursor=pointer]:
+          - img [ref=e31]
+          - generic [ref=e35]: Practice
+        - button "Learn" [ref=e36] [cursor=pointer]:
+          - img [ref=e38]
+          - generic [ref=e41]: Learn
+        - button "Studio" [ref=e42] [cursor=pointer]:
+          - img [ref=e44]
+          - generic [ref=e47]: Studio
+        - button "Jam Mode" [ref=e48] [cursor=pointer]:
+          - img [ref=e50]
+          - generic [ref=e53]: Jam Mode
+        - button "Library" [ref=e54] [cursor=pointer]:
+          - img [ref=e56]
+          - generic [ref=e59]: Library
+        - generic [ref=e60]: Tools
+        - button "AI Coach" [ref=e61] [cursor=pointer]:
+          - img [ref=e63]
+          - generic [ref=e65]: AI Coach
+        - button "Suno AI" [ref=e66] [cursor=pointer]:
+          - img [ref=e68]
+          - generic [ref=e71]: Suno AI
+        - button "Skills" [ref=e72] [cursor=pointer]:
+          - img [ref=e74]
+          - generic [ref=e80]: Skills
+        - button "Tuner" [ref=e81] [cursor=pointer]:
+          - img [ref=e83]
+          - generic [ref=e85]: Tuner
+      - button "Guest Sign in to sync" [ref=e88]:
+        - img [ref=e90]
+        - generic [ref=e93]:
+          - generic [ref=e94]: Guest
+          - generic [ref=e95]: Sign in to sync
+      - button "Sign in to sync" [ref=e97]
+    - generic [ref=e862]:
+      - generic [ref=e863]:
+        - button "Exercises" [ref=e864] [cursor=pointer]:
+          - img [ref=e865]
+          - text: Exercises
+        - button "Styles" [ref=e867] [cursor=pointer]:
+          - img [ref=e868]
+          - text: Styles
+        - button "My Songs" [active] [ref=e870] [cursor=pointer]:
+          - img [ref=e871]
+          - text: My Songs
+        - button "Recordings" [ref=e873] [cursor=pointer]:
+          - img [ref=e874]
+          - text: Recordings
+        - button "Backing Tracks" [ref=e876] [cursor=pointer]:
+          - img [ref=e877]
+          - text: Backing Tracks
+        - button "Song Library" [ref=e879] [cursor=pointer]:
+          - img [ref=e880]
+          - text: Song Library
+      - generic [ref=e1454]:
+        - generic [ref=e1455]: 1 saved songs
+        - generic [ref=e1457] [cursor=pointer]:
+          - generic [ref=e1458]:
+            - generic [ref=e1459]:
+              - generic [ref=e1460]: Black Hole Sun
+              - generic [ref=e1461]: Intermediate
+            - generic [ref=e1462]: Soundgarden
+            - generic [ref=e1463]:
+              - generic [ref=e1464]: Grunge
+              - generic [ref=e1465]: "Key: G"
+              - generic [ref=e1466]: 86 BPM
+          - button "Remove from My Songs" [ref=e1467]:
+            - img [ref=e1468]

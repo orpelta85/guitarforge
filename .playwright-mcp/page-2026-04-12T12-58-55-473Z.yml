@@ -1,0 +1,35 @@
+- generic [active]:
+  - link "Skip to content" [ref=e1] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e5]
+      - img "Guitar Practice" [ref=e8]
+    - generic [ref=e13]:
+      - generic [ref=e14]:
+        - heading "Welcome to Guitar Practice" [level=2] [ref=e15]
+        - paragraph [ref=e16]: Let's set up your practice routine
+        - generic [ref=e17]:
+          - button "Beginner 0–2 years. Basic chords, strumming, steady beat." [ref=e18]:
+            - img [ref=e19]
+            - generic [ref=e21]:
+              - generic [ref=e22]: Beginner
+              - generic [ref=e23]: 0–2 years. Basic chords, strumming, steady beat.
+          - button "Intermediate 2–5 years. Barre chords, pentatonic, play by ear." [ref=e24]:
+            - img [ref=e25]
+            - generic [ref=e27]:
+              - generic [ref=e28]: Intermediate
+              - generic [ref=e29]: 2–5 years. Barre chords, pentatonic, play by ear.
+          - button "Advanced 5+ years. Sweep picking, legato, complex rhythms." [ref=e30]:
+            - img [ref=e31]
+            - generic [ref=e33]:
+              - generic [ref=e34]: Advanced
+              - generic [ref=e35]: 5+ years. Sweep picking, legato, complex rhythms.
+          - button "Expert Professional. Full fretboard mastery, improvise across genres." [ref=e36]:
+            - img [ref=e37]
+            - generic [ref=e39]:
+              - generic [ref=e40]: Expert
+              - generic [ref=e41]: Professional. Full fretboard mastery, improvise across genres.
+      - button "Next" [disabled] [ref=e43] [cursor=pointer]
+    - button "Skip setup" [ref=e45] [cursor=pointer]
+  - alert [ref=e46]

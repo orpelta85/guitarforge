@@ -1,0 +1,324 @@
+- generic [active] [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - button "Open Next.js Dev Tools" [ref=e8] [cursor=pointer]:
+    - img [ref=e9]
+  - alert [ref=e12]
+  - generic [ref=e13]:
+    - complementary [ref=e14]:
+      - img "Guitar Practice" [ref=e17]
+      - navigation [ref=e19]:
+        - generic [ref=e20]: Main
+        - button "Home" [ref=e21] [cursor=pointer]:
+          - img [ref=e23]
+          - generic [ref=e25]: Home
+        - button "Practice" [ref=e26] [cursor=pointer]:
+          - img [ref=e28]
+          - generic [ref=e32]: Practice
+        - button "Learn" [ref=e33] [cursor=pointer]:
+          - img [ref=e35]
+          - generic [ref=e38]: Learn
+        - button "Studio" [ref=e39] [cursor=pointer]:
+          - img [ref=e41]
+          - generic [ref=e44]: Studio
+        - button "Jam Mode" [ref=e45] [cursor=pointer]:
+          - img [ref=e47]
+          - generic [ref=e50]: Jam Mode
+        - button "Library" [ref=e51] [cursor=pointer]:
+          - img [ref=e53]
+          - generic [ref=e56]: Library
+        - generic [ref=e57]: Tools
+        - button "AI Coach" [ref=e58] [cursor=pointer]:
+          - img [ref=e60]
+          - generic [ref=e62]: AI Coach
+        - button "Suno AI" [ref=e63] [cursor=pointer]:
+          - img [ref=e65]
+          - generic [ref=e68]: Suno AI
+        - button "Skills" [ref=e69] [cursor=pointer]:
+          - img [ref=e71]
+          - generic [ref=e77]: Skills
+        - button "Tuner" [ref=e78] [cursor=pointer]:
+          - img [ref=e80]
+          - generic [ref=e82]: Tuner
+      - button "Guest Sign in to sync" [ref=e85]:
+        - img [ref=e87]
+        - generic [ref=e90]:
+          - generic [ref=e91]: Guest
+          - generic [ref=e92]: Sign in to sync
+      - button "Sign in to sync" [ref=e94]
+    - generic [ref=e275]:
+      - generic [ref=e277]:
+        - generic [ref=e278]:
+          - generic [ref=e279]: Learning Center
+          - generic [ref=e280]: 0/39 lessons completed
+        - generic [ref=e281]:
+          - generic [ref=e282]:
+            - generic [ref=e283]: LV.1
+            - generic [ref=e284]: 0 XP
+          - generic [ref=e286]: 0/100 XP to next level
+      - generic [ref=e288] [cursor=pointer]:
+        - generic [ref=e290]: "N"
+        - generic [ref=e291]:
+          - generic [ref=e292]: Start Your Journey
+          - generic [ref=e293]: What Is a Note?
+          - generic [ref=e294]: Fundamentals · 5 min · Beginner
+        - generic [ref=e296]: Start
+      - generic [ref=e297]:
+        - button "Lessons39" [ref=e298] [cursor=pointer]
+        - button "Exercises17" [ref=e299] [cursor=pointer]
+        - button "Tools10" [ref=e300] [cursor=pointer]
+      - generic [ref=e692]:
+        - generic [ref=e693]:
+          - generic [ref=e694] [cursor=pointer]:
+            - generic [ref=e695]: R
+            - generic [ref=e696]:
+              - generic [ref=e697]:
+                - generic [ref=e698]: Reference & Exploration
+                - generic [ref=e699]: "6"
+              - generic [ref=e700]: Interactive reference tools for scales, chords, intervals and more
+            - generic [ref=e701]: ▶
+          - generic [ref=e703]:
+            - generic [ref=e705] [cursor=pointer]:
+              - generic [ref=e706]: ─
+              - generic [ref=e707]:
+                - generic [ref=e708]: Scale Explorer
+                - generic [ref=e709]: All scales with fretboard visualization
+            - generic [ref=e711] [cursor=pointer]:
+              - generic [ref=e712]: ⌂
+              - generic [ref=e713]:
+                - generic [ref=e714]: Chord Library
+                - generic [ref=e715]: Chord voicings and diagrams
+            - generic [ref=e717] [cursor=pointer]:
+              - generic [ref=e718]: ▦
+              - generic [ref=e719]:
+                - generic [ref=e720]: Fretboard Visualizer
+                - generic [ref=e721]: See notes, scales and chords on the neck
+            - generic [ref=e723] [cursor=pointer]:
+              - generic [ref=e724]: ○
+              - generic [ref=e725]:
+                - generic [ref=e726]: Circle of Fifths
+                - generic [ref=e727]: Interactive circle of fifths diagram
+            - generic [ref=e729] [cursor=pointer]:
+              - generic [ref=e730]: ↕
+              - generic [ref=e731]:
+                - generic [ref=e732]: Interval Reference
+                - generic [ref=e733]: All 12 intervals with audio playback
+            - generic [ref=e735] [cursor=pointer]:
+              - generic [ref=e736]: ♬
+              - generic [ref=e737]:
+                - generic [ref=e738]: Progression Builder
+                - generic [ref=e739]: Build and play chord progressions
+        - generic [ref=e740]:
+          - generic [ref=e741] [cursor=pointer]:
+            - generic [ref=e742]: U
+            - generic [ref=e743]:
+              - generic [ref=e744]:
+                - generic [ref=e745]: Practice Utilities
+                - generic [ref=e746]: "3"
+              - generic [ref=e747]: Handy tools for daily practice sessions
+            - generic [ref=e748]: ▶
+          - generic [ref=e750]:
+            - generic [ref=e752] [cursor=pointer]:
+              - generic [ref=e753]: ≡
+              - generic [ref=e754]:
+                - generic [ref=e755]: Tempo Tapper
+                - generic [ref=e756]: Tap to measure BPM
+            - generic [ref=e758] [cursor=pointer]:
+              - generic [ref=e759]: ×
+              - generic [ref=e760]:
+                - generic [ref=e761]: Interval Calculator
+                - generic [ref=e762]: Calculate intervals between notes
+            - generic [ref=e764] [cursor=pointer]:
+              - generic [ref=e765]: ♪
+              - generic [ref=e766]:
+                - generic [ref=e767]: Chromatic Tuner
+                - generic [ref=e768]: Real-time pitch detection via microphone
+      - generic [ref=e769]:
+        - generic [ref=e770]: Root Note
+        - generic [ref=e771]:
+          - button "C" [ref=e772] [cursor=pointer]
+          - button "C#" [ref=e773] [cursor=pointer]
+          - button "D" [ref=e774] [cursor=pointer]
+          - button "D#" [ref=e775] [cursor=pointer]
+          - button "E" [ref=e776] [cursor=pointer]
+          - button "F" [ref=e777] [cursor=pointer]
+          - button "F#" [ref=e778] [cursor=pointer]
+          - button "G" [ref=e779] [cursor=pointer]
+          - button "G#" [ref=e780] [cursor=pointer]
+          - button "A" [ref=e781] [cursor=pointer]
+          - button "A#" [ref=e782] [cursor=pointer]
+          - button "B" [ref=e783] [cursor=pointer]
+      - generic [ref=e1025]:
+        - generic [ref=e1026]:
+          - generic [ref=e1027]: Chord Progression Builder
+          - generic [ref=e1028]:
+            - generic [ref=e1029] [cursor=pointer]:
+              - text: D
+              - button "x" [ref=e1030]
+            - generic [ref=e1031] [cursor=pointer]:
+              - text: A
+              - button "x" [ref=e1032]
+            - generic [ref=e1033] [cursor=pointer]:
+              - text: Bm
+              - button "x" [ref=e1034]
+            - generic [ref=e1035] [cursor=pointer]:
+              - text: G
+              - button "x" [ref=e1036]
+          - generic [ref=e1037]:
+            - textbox "e.g. Am, F, G7" [ref=e1038]
+            - button "Add" [ref=e1039] [cursor=pointer]
+          - generic [ref=e1040]:
+            - button "Play Progression" [ref=e1041] [cursor=pointer]
+            - generic [ref=e1044] [cursor=pointer]: Loop
+        - generic [ref=e1045]:
+          - generic [ref=e1046]: Presets — click to load
+          - generic [ref=e1047] [cursor=pointer]:
+            - generic [ref=e1048]:
+              - generic [ref=e1049]: Pop Axis
+              - generic [ref=e1050]: I-V-vi-IV
+              - generic [ref=e1051]:
+                - generic [ref=e1052]: D
+                - generic [ref=e1053]: A
+                - generic [ref=e1054]: Bm
+                - generic [ref=e1055]: G
+            - generic [ref=e1056]: Uplifting, anthemic, the classic pop ballad feel
+          - generic [ref=e1057] [cursor=pointer]:
+            - generic [ref=e1058]:
+              - generic [ref=e1059]: "'50s Doo-Wop"
+              - generic [ref=e1060]: I-vi-IV-V
+              - generic [ref=e1061]:
+                - generic [ref=e1062]: D
+                - generic [ref=e1063]: Bm
+                - generic [ref=e1064]: G
+                - generic [ref=e1065]: A
+            - generic [ref=e1066]: Nostalgic, romantic, vintage rock 'n' roll
+          - generic [ref=e1067] [cursor=pointer]:
+            - generic [ref=e1068]:
+              - generic [ref=e1069]: Jazz ii-V-I
+              - generic [ref=e1070]: ii-V-I
+              - generic [ref=e1071]:
+                - generic [ref=e1072]: Em7
+                - generic [ref=e1073]: A7
+                - generic [ref=e1074]: Dmaj7
+            - generic [ref=e1075]: Sophisticated, resolving, the jazz essential
+          - generic [ref=e1076] [cursor=pointer]:
+            - generic [ref=e1077]:
+              - generic [ref=e1078]: Sad Pop
+              - generic [ref=e1079]: vi-IV-I-V
+              - generic [ref=e1080]:
+                - generic [ref=e1081]: Bm
+                - generic [ref=e1082]: G
+                - generic [ref=e1083]: D
+                - generic [ref=e1084]: A
+            - generic [ref=e1085]: Bittersweet, emotional, melancholic pop
+          - generic [ref=e1086] [cursor=pointer]:
+            - generic [ref=e1087]:
+              - generic [ref=e1088]: Blues
+              - generic [ref=e1089]: I-IV-V
+              - generic [ref=e1090]:
+                - generic [ref=e1091]: D
+                - generic [ref=e1092]: G
+                - generic [ref=e1093]: A
+            - generic [ref=e1094]: Straightforward, bluesy, foundational rock
+          - generic [ref=e1095] [cursor=pointer]:
+            - generic [ref=e1096]:
+              - generic [ref=e1097]: Blues 12-Bar
+              - generic [ref=e1098]: I7-IV7-V7
+              - generic [ref=e1099]:
+                - generic [ref=e1100]: D7
+                - generic [ref=e1101]: G7
+                - generic [ref=e1102]: A7
+                - generic [ref=e1103]: D7
+            - generic [ref=e1104]: Shuffle groove, the bedrock of rock and roll
+          - generic [ref=e1105] [cursor=pointer]:
+            - generic [ref=e1106]:
+              - generic [ref=e1107]: Minor Rock
+              - generic [ref=e1108]: i-VI-III-VII
+              - generic [ref=e1109]:
+                - generic [ref=e1110]: Dm
+                - generic [ref=e1111]: A#
+                - generic [ref=e1112]: F
+                - generic [ref=e1113]: C
+            - generic [ref=e1114]: Epic, dramatic, cinematic minor feel
+          - generic [ref=e1115] [cursor=pointer]:
+            - generic [ref=e1116]:
+              - generic [ref=e1117]: Minor Blues
+              - generic [ref=e1118]: i-iv-v
+              - generic [ref=e1119]:
+                - generic [ref=e1120]: Dm
+                - generic [ref=e1121]: Gm
+                - generic [ref=e1122]: Am
+            - generic [ref=e1123]: Dark, brooding, classic minor blues
+          - generic [ref=e1124] [cursor=pointer]:
+            - generic [ref=e1125]:
+              - generic [ref=e1126]: Canon
+              - generic [ref=e1127]: I-V-vi-iii-IV-I-IV-V
+              - generic [ref=e1128]:
+                - generic [ref=e1129]: D
+                - generic [ref=e1130]: A
+                - generic [ref=e1131]: Bm
+                - generic [ref=e1132]: F#m
+                - generic [ref=e1133]: G
+                - generic [ref=e1134]: D
+                - generic [ref=e1135]: G
+                - generic [ref=e1136]: A
+            - generic [ref=e1137]: Hopeful, classical, Pachelbel vibes
+          - generic [ref=e1138] [cursor=pointer]:
+            - generic [ref=e1139]:
+              - generic [ref=e1140]: Metal
+              - generic [ref=e1141]: i-VI-VII-i
+              - generic [ref=e1142]:
+                - generic [ref=e1143]: Dm
+                - generic [ref=e1144]: A#
+                - generic [ref=e1145]: C
+                - generic [ref=e1146]: Dm
+            - generic [ref=e1147]: Heavy, driving, the metal staple
+          - generic [ref=e1148] [cursor=pointer]:
+            - generic [ref=e1149]:
+              - generic [ref=e1150]: Doom
+              - generic [ref=e1151]: i-bII-i
+              - generic [ref=e1152]:
+                - generic [ref=e1153]: Dm
+                - generic [ref=e1154]: D#dim
+                - generic [ref=e1155]: Dm
+            - generic [ref=e1156]: Menacing, oppressive, slow and crushing
+          - generic [ref=e1157] [cursor=pointer]:
+            - generic [ref=e1158]:
+              - generic [ref=e1159]: Pop-Punk
+              - generic [ref=e1160]: I-V-vi-IV
+              - generic [ref=e1161]:
+                - generic [ref=e1162]: D
+                - generic [ref=e1163]: A
+                - generic [ref=e1164]: Bm
+                - generic [ref=e1165]: G
+            - generic [ref=e1166]: Energetic, youthful, chorus-ready
+          - generic [ref=e1167] [cursor=pointer]:
+            - generic [ref=e1168]:
+              - generic [ref=e1169]: Grunge
+              - generic [ref=e1170]: i-iv-i-v
+              - generic [ref=e1171]:
+                - generic [ref=e1172]: Dm
+                - generic [ref=e1173]: Gm
+                - generic [ref=e1174]: Dm
+                - generic [ref=e1175]: Am
+            - generic [ref=e1176]: Moody, raw, 90s alt-rock angst
+          - generic [ref=e1177] [cursor=pointer]:
+            - generic [ref=e1178]:
+              - generic [ref=e1179]: Neo-Classical
+              - generic [ref=e1180]: i-bII-V-i
+              - generic [ref=e1181]:
+                - generic [ref=e1182]: Dm
+                - generic [ref=e1183]: D#dim
+                - generic [ref=e1184]: A
+                - generic [ref=e1185]: Dm
+            - generic [ref=e1186]: Exotic, theatrical, Phrygian drama
+          - generic [ref=e1187] [cursor=pointer]:
+            - generic [ref=e1188]:
+              - generic [ref=e1189]: Andalusian
+              - generic [ref=e1190]: i-VII-VI-V
+              - generic [ref=e1191]:
+                - generic [ref=e1192]: Dm
+                - generic [ref=e1193]: C
+                - generic [ref=e1194]: A#
+                - generic [ref=e1195]: A
+            - generic [ref=e1196]: Flamenco fire, descending Spanish staircase

@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GuitarForge — Proposed Layout Mockup</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #121214; color: #e8e4dc; font-family: 'Source Sans 3', sans-serif; height: 100vh; overflow: hidden; }
+
+  /* ── Layout Grid ── */
+  .app { display: grid; grid-template-columns: 220px 1fr; grid-template-rows: 1fr 56px; height: 100vh; }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    background: #0e0e10;
+    border-right: 1px solid #1a1a1e;
+    padding: 16px 0;
+    display: flex;
+    flex-direction: column;
+    grid-row: 1 / 3;
+  }
+  .sidebar-logo {
+    font-family: 'Oswald', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #D4A843;
+    padding: 0 20px 20px;
+    letter-spacing: 2px;
+  }
+  .sidebar-logo small { font-size: 10px; color: #555; font-weight: 400; display: block; letter-spacing: 0; font-family: 'Source Sans 3'; }
+  .nav-section { margin-bottom: 24px; }
+  .nav-label { font-size: 10px; color: #555; padding: 0 20px 8px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 20px; cursor: pointer; transition: all 0.15s;
+    font-size: 14px; color: #888; border-left: 3px solid transparent;
+  }
+  .nav-item:hover { background: #1a1a1e; color: #ccc; }
+  .nav-item.active { color: #D4A843; background: #D4A84310; border-left-color: #D4A843; }
+  .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+  .sidebar-bottom { margin-top: auto; padding: 16px 20px; border-top: 1px solid #1a1a1e; }
+  .avatar-row { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  .avatar { width: 32px; height: 32px; border-radius: 50%; background: #D4A843; display: flex; align-items: center; justify-content: center; font-family: 'Oswald'; font-size: 14px; color: #0e0e10; font-weight: 600; }
+  .avatar-info { flex: 1; }
+  .avatar-name { font-size: 12px; color: #ccc; }
+  .avatar-sub { font-size: 10px; color: #555; }
+
+  /* ── Main Content ── */
+  .main {
+    background: #121214;
+    overflow-y: auto;
+    padding: 24px 32px;
+    scrollbar-width: thin;
+    scrollbar-color: #333 transparent;
+  }
+
+  /* ── Mini Player ── */
+  .mini-player {
+    background: #0e0e10;
+    border-top: 1px solid #1a1a1e;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    grid-column: 2;
+  }
+  .mp-art { width: 40px; height: 40px; border-radius: 6px; background: linear-gradient(135deg, #D4A843, #8a6d20); }
+  .mp-info { flex: 1; }
+  .mp-title { font-size: 12px; color: #ccc; }
+  .mp-artist { font-size: 10px; color: #555; }
+  .mp-controls { display: flex; align-items: center; gap: 12px; }
+  .mp-btn { width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .mp-btn.play { background: #D4A843; color: #0e0e10; }
+  .mp-btn.ghost { background: transparent; color: #888; }
+  .mp-progress { flex: 1; max-width: 300px; }
+  .mp-bar { height: 3px; background: #222; border-radius: 2px; overflow: hidden; }
+  .mp-fill { height: 100%; width: 35%; background: #D4A843; border-radius: 2px; }
+  .mp-time { font-family: 'JetBrains Mono'; font-size: 10px; color: #555; }
+
+  /* ── Content Components ── */
+  .page-title { font-family: 'Oswald'; font-size: 24px; font-weight: 600; color: #D4A843; margin-bottom: 4px; }
+  .page-subtitle { font-size: 13px; color: #555; margin-bottom: 24px; }
+
+  .hero-card {
+    background: linear-gradient(135deg, #1a1708, #121214);
+    border: 1px solid #D4A84330;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .hero-left {}
+  .hero-day { font-family: 'Oswald'; font-size: 14px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+  .hero-title { font-family: 'Oswald'; font-size: 28px; color: #e8e4dc; font-weight: 600; margin: 4px 0; }
+  .hero-meta { font-size: 13px; color: #666; }
+  .hero-meta span { color: #D4A843; font-weight: 600; }
+  .hero-btn {
+    background: linear-gradient(180deg, #D4A843, #b8922e);
+    color: #0e0e10;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-family: 'Oswald';
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    cursor: pointer;
+    text-transform: uppercase;
+  }
+
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .stat-card {
+    background: #1a1a1e;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+  .stat-num { font-family: 'Oswald'; font-size: 28px; color: #D4A843; font-weight: 600; }
+  .stat-label { font-size: 11px; color: #555; margin-top: 2px; }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .section-title { font-family: 'Oswald'; font-size: 16px; color: #ccc; font-weight: 500; }
+  .section-link { font-size: 12px; color: #D4A843; cursor: pointer; }
+
+  .schedule-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 20px; }
+  .day-card {
+    background: #1a1a1e;
+    border-radius: 8px;
+    padding: 12px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid transparent;
+  }
+  .day-card:hover { border-color: #333; }
+  .day-card.active { border-color: #D4A843; background: #1a1708; }
+  .day-name { font-family: 'Oswald'; font-size: 11px; color: #888; text-transform: uppercase; }
+  .day-count { font-family: 'JetBrains Mono'; font-size: 10px; color: #555; margin-top: 4px; }
+  .day-bar { height: 3px; background: #222; border-radius: 2px; margin-top: 6px; overflow: hidden; }
+  .day-fill { height: 100%; background: #D4A843; border-radius: 2px; }
+
+  .exercise-list { display: flex; flex-direction: column; gap: 6px; }
+  .exercise-card {
+    background: #1a1a1e;
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .exercise-card:hover { background: #222226; }
+  .ex-led { width: 8px; height: 8px; border-radius: 50%; background: #333; flex-shrink: 0; }
+  .ex-led.done { background: #22c55e; box-shadow: 0 0 6px #22c55e50; }
+  .ex-tag {
+    font-family: 'Oswald'; font-size: 9px; text-transform: uppercase;
+    padding: 2px 8px; border-radius: 4px; flex-shrink: 0;
+    letter-spacing: 0.5px;
+  }
+  .ex-name { font-size: 13px; color: #ccc; flex: 1; }
+  .ex-meta { font-family: 'JetBrains Mono'; font-size: 10px; color: #555; }
+
+  /* ── Annotation Overlay ── */
+  .annotation {
+    position: fixed;
+    background: #D4A84320;
+    border: 2px dashed #D4A843;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 11px;
+    color: #D4A843;
+    font-weight: 600;
+    pointer-events: none;
+    z-index: 100;
+  }
+  .ann-sidebar { top: 10px; left: 10px; width: 200px; }
+  .ann-hero { top: 80px; right: 40px; }
+  .ann-player { bottom: 65px; right: 40px; }
+  .ann-nav { top: 50%; left: 10px; transform: translateY(-50%); }
+
+  /* ── Mobile Preview (inset) ── */
+  .mobile-preview {
+    position: fixed;
+    bottom: 80px;
+    right: 32px;
+    width: 200px;
+    height: 380px;
+    background: #121214;
+    border: 2px solid #333;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .mobile-content { padding: 12px; height: calc(100% - 52px); overflow-y: auto; }
+  .mobile-nav {
+    display: flex;
+    height: 52px;
+    background: #0e0e10;
+    border-top: 1px solid #1a1a1e;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 8px;
+  }
+  .mobile-tab { text-align: center; cursor: pointer; }
+  .mobile-tab.active .mt-icon { color: #D4A843; }
+  .mobile-tab .mt-icon { font-size: 16px; color: #555; }
+  .mobile-tab .mt-label { font-size: 8px; color: #555; }
+  .mobile-tab.active .mt-label { color: #D4A843; }
+
+  .m-hero { background: #1a1708; border-radius: 8px; padding: 10px; margin-bottom: 8px; border: 1px solid #D4A84320; }
+  .m-hero-title { font-family: 'Oswald'; font-size: 13px; color: #e8e4dc; }
+  .m-hero-meta { font-size: 9px; color: #666; }
+  .m-hero-btn { background: #D4A843; color: #0e0e10; border: none; border-radius: 6px; padding: 6px 14px; font-family: 'Oswald'; font-size: 10px; font-weight: 600; margin-top: 6px; cursor: pointer; }
+  .m-stat-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 8px; }
+  .m-stat { background: #1a1a1e; border-radius: 6px; padding: 8px; text-align: center; }
+  .m-stat-num { font-family: 'Oswald'; font-size: 18px; color: #D4A843; }
+  .m-stat-label { font-size: 8px; color: #555; }
+  .mobile-label { position: absolute; top: -24px; right: 0; font-size: 10px; color: #D4A843; font-family: 'Oswald'; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- ═══ SIDEBAR ═══ -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      GuitarForge
+      <small>Practice Management</small>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Main</div>
+      <div class="nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+        Home
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z"/></svg>
+        Practice
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2zM22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+        Learn
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+        Studio
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+        Library
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Tools</div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L9 9l-7 2 5 5-1 7 6-3 6 3-1-7 5-5-7-2z"/></svg>
+        AI Coach
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 19V5l12-4v14m0 0c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z"/></svg>
+        Suno AI
+      </div>
+    </div>
+
+    <!-- Bottom: Avatar -->
+    <div class="sidebar-bottom">
+      <div class="avatar-row">
+        <div class="avatar">O</div>
+        <div class="avatar-info">
+          <div class="avatar-name">orpelta85</div>
+          <div class="avatar-sub">Profile &amp; Settings</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ MAIN CONTENT ═══ -->
+  <div class="main">
+    <div class="page-title">Home</div>
+    <div class="page-subtitle">Sunday, March 20 — Week 1</div>
+
+    <!-- Hero Card -->
+    <div class="hero-card">
+      <div class="hero-left">
+        <div class="hero-day">Today's Practice</div>
+        <div class="hero-title">14 Exercises · 124 min</div>
+        <div class="hero-meta">🔥 <span>3 day streak</span> · Style: Metal · Key: Am Aeolian</div>
+      </div>
+      <button class="hero-btn">▶ Start Practice</button>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-num">3</div>
+        <div class="stat-label">Day Streak</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">42%</div>
+        <div class="stat-label">Week Progress</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">671</div>
+        <div class="stat-label">Total Minutes</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">4/7</div>
+        <div class="stat-label">Days Active</div>
+      </div>
+    </div>
+
+    <!-- Schedule -->
+    <div class="section-header">
+      <div class="section-title">Weekly Schedule</div>
+      <div class="section-link">Edit ⚙</div>
+    </div>
+    <div class="schedule-row">
+      <div class="day-card active">
+        <div class="day-name">Sun</div>
+        <div class="day-count">8/14</div>
+        <div class="day-bar"><div class="day-fill" style="width:57%"></div></div>
+      </div>
+      <div class="day-card">
+        <div class="day-name">Mon</div>
+        <div class="day-count">0/12</div>
+        <div class="day-bar"><div class="day-fill" style="width:0%"></div></div>
+      </div>
+      <div class="day-card">
+        <div class="day-name">Tue</div>
+        <div class="day-count">12/12</div>
+        <div class="day-bar"><div class="day-fill" style="width:100%"></div></div>
+      </div>
+      <div class="day-card">
+        <div class="day-name">Wed</div>
+        <div class="day-count">0/10</div>
+        <div class="day-bar"><div class="day-fill" style="width:0%"></div></div>
+      </div>
+      <div class="day-card">
+        <div class="day-name">Thu</div>
+        <div class="day-count">8/8</div>
+        <div class="day-bar"><div class="day-fill" style="width:100%"></div></div>
+      </div>
+      <div class="day-card">
+        <div class="day-name">Fri</div>
+        <div class="day-count">6/14</div>
+        <div class="day-bar"><div class="day-fill" style="width:43%"></div></div>
+      </div>
+      <div class="day-card">
+        <div class="day-name">Sat</div>
+        <div class="day-count">—</div>
+        <div class="day-bar"><div class="day-fill" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <!-- Today's Exercises -->
+    <div class="section-header">
+      <div class="section-title">Today's Exercises</div>
+      <div class="section-link">+ Add Exercise</div>
+    </div>
+    <div class="exercise-list">
+      <div class="exercise-card">
+        <div class="ex-led done"></div>
+        <span class="ex-tag" style="background:#f59e0b20;color:#f59e0b;border:1px solid #f59e0b30">Warm-Up</span>
+        <div class="ex-name">Chromatic 1-2-3-4 Hand Sync</div>
+        <div class="ex-meta">5min · 80-120 BPM</div>
+      </div>
+      <div class="exercise-card">
+        <div class="ex-led done"></div>
+        <span class="ex-tag" style="background:#f59e0b20;color:#f59e0b;border:1px solid #f59e0b30">Warm-Up</span>
+        <div class="ex-name">Spider Exercise Finger Independence</div>
+        <div class="ex-meta">5min · 75-95 BPM</div>
+      </div>
+      <div class="exercise-card">
+        <div class="ex-led"></div>
+        <span class="ex-tag" style="background:#ef444420;color:#ef4444;border:1px solid #ef444430">Shred</span>
+        <div class="ex-name">Alternate Picking Full Pentatonic Speed Build</div>
+        <div class="ex-meta">10min · 80-165 BPM</div>
+      </div>
+      <div class="exercise-card">
+        <div class="ex-led"></div>
+        <span class="ex-tag" style="background:#a78bfa20;color:#a78bfa;border:1px solid #a78bfa30">Legato</span>
+        <div class="ex-name">Basic Legato 2H + 2P Pentatonic</div>
+        <div class="ex-meta">20min · 80-115 BPM</div>
+      </div>
+      <div class="exercise-card">
+        <div class="ex-led"></div>
+        <span class="ex-tag" style="background:#e11d4820;color:#e11d48;border:1px solid #e11d4830">Riffs</span>
+        <div class="ex-name">Riff Composition ABAC Structure</div>
+        <div class="ex-meta">25min · 80-140 BPM</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ MINI PLAYER ═══ -->
+  <div class="mini-player">
+    <div class="mp-art"></div>
+    <div class="mp-info">
+      <div class="mp-title">Am Aeolian Metal Backing Track</div>
+      <div class="mp-artist">Suno AI · 120 BPM</div>
+    </div>
+    <div class="mp-controls">
+      <button class="mp-btn ghost">⏮</button>
+      <button class="mp-btn play">▶</button>
+      <button class="mp-btn ghost">⏭</button>
+    </div>
+    <div class="mp-progress">
+      <div class="mp-bar"><div class="mp-fill"></div></div>
+    </div>
+    <div class="mp-time">1:24 / 4:02</div>
+  </div>
+</div>
+
+<!-- Mobile Preview -->
+<div class="mobile-preview" style="position:fixed">
+  <div style="position:relative">
+    <div class="mobile-label">📱 Mobile</div>
+  </div>
+  <div class="mobile-content">
+    <div class="m-hero">
+      <div class="m-hero-title">14 Exercises · 124 min</div>
+      <div class="m-hero-meta">🔥 3 day streak · Metal · Am</div>
+      <button class="m-hero-btn">▶ Start Practice</button>
+    </div>
+    <div class="m-stat-row">
+      <div class="m-stat"><div class="m-stat-num">3</div><div class="m-stat-label">Streak</div></div>
+      <div class="m-stat"><div class="m-stat-num">42%</div><div class="m-stat-label">Progress</div></div>
+    </div>
+    <div style="font-family:Oswald;font-size:12px;color:#ccc;margin:8px 0 6px">Schedule</div>
+    <div style="display:flex;gap:4px;margin-bottom:8px">
+      <div style="flex:1;background:#1a1708;border:1px solid #D4A84330;border-radius:4px;padding:4px;text-align:center">
+        <div style="font-family:Oswald;font-size:9px;color:#D4A843">Sun</div>
+        <div style="font-family:'JetBrains Mono';font-size:8px;color:#555">8/14</div>
+      </div>
+      <div style="flex:1;background:#1a1a1e;border-radius:4px;padding:4px;text-align:center">
+        <div style="font-family:Oswald;font-size:9px;color:#888">Mon</div>
+        <div style="font-family:'JetBrains Mono';font-size:8px;color:#555">0/12</div>
+      </div>
+      <div style="flex:1;background:#1a1a1e;border-radius:4px;padding:4px;text-align:center">
+        <div style="font-family:Oswald;font-size:9px;color:#22c55e">Tue</div>
+        <div style="font-family:'JetBrains Mono';font-size:8px;color:#555">✓</div>
+      </div>
+      <div style="flex:1;background:#1a1a1e;border-radius:4px;padding:4px;text-align:center">
+        <div style="font-family:Oswald;font-size:9px;color:#888">Wed</div>
+        <div style="font-family:'JetBrains Mono';font-size:8px;color:#555">0/10</div>
+      </div>
+    </div>
+  </div>
+  <div class="mobile-nav">
+    <div class="mobile-tab active">
+      <div class="mt-icon">🏠</div>
+      <div class="mt-label">Home</div>
+    </div>
+    <div class="mobile-tab">
+      <div class="mt-icon">🎸</div>
+      <div class="mt-label">Practice</div>
+    </div>
+    <div class="mobile-tab">
+      <div class="mt-icon">📚</div>
+      <div class="mt-label">Learn</div>
+    </div>
+    <div class="mobile-tab">
+      <div class="mt-icon">🎙️</div>
+      <div class="mt-label">Studio</div>
+    </div>
+    <div class="mobile-tab">
+      <div class="mt-icon">📖</div>
+      <div class="mt-label">Library</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

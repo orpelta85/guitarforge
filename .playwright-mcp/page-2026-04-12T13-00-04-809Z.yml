@@ -1,0 +1,364 @@
+- generic [ref=e47]:
+  - link "Skip to content" [ref=e1] [cursor=pointer]:
+    - /url: "#main-content"
+  - alert [ref=e46]
+  - generic [ref=e48]:
+    - complementary [ref=e49]:
+      - img "Guitar Practice" [ref=e52]
+      - navigation [ref=e54]:
+        - generic [ref=e55]: Main
+        - button "Home" [ref=e56] [cursor=pointer]:
+          - img [ref=e58]
+          - generic [ref=e60]: Home
+        - button "Practice" [ref=e61] [cursor=pointer]:
+          - img [ref=e63]
+          - generic [ref=e67]: Practice
+        - button "Learn" [ref=e68] [cursor=pointer]:
+          - img [ref=e70]
+          - generic [ref=e73]: Learn
+        - button "Studio" [ref=e74] [cursor=pointer]:
+          - img [ref=e76]
+          - generic [ref=e79]: Studio
+        - button "Jam Mode" [ref=e80] [cursor=pointer]:
+          - img [ref=e82]
+          - generic [ref=e85]: Jam Mode
+        - button "Library" [ref=e86] [cursor=pointer]:
+          - img [ref=e88]
+          - generic [ref=e91]: Library
+        - generic [ref=e92]: Tools
+        - button "AI Coach" [ref=e93] [cursor=pointer]:
+          - img [ref=e95]
+          - generic [ref=e97]: AI Coach
+        - button "Suno AI" [ref=e98] [cursor=pointer]:
+          - img [ref=e100]
+          - generic [ref=e103]: Suno AI
+        - button "Skills" [ref=e104] [cursor=pointer]:
+          - img [ref=e106]
+          - generic [ref=e112]: Skills
+        - button "Tuner" [ref=e113] [cursor=pointer]:
+          - img [ref=e115]
+          - generic [ref=e117]: Tuner
+      - button "Guest Sign in to sync" [ref=e120]:
+        - img [ref=e122]
+        - generic [ref=e125]:
+          - generic [ref=e126]: Guest
+          - generic [ref=e127]: Sign in to sync
+      - button "Sign in to sync" [ref=e129]
+    - generic [ref=e130]:
+      - generic [ref=e302]:
+        - generic [ref=e303]:
+          - button "Sunday" [ref=e304] [cursor=pointer]
+          - button "Monday" [ref=e305] [cursor=pointer]
+          - button "Tuesday" [ref=e306] [cursor=pointer]
+          - button "Wednesday" [ref=e307] [cursor=pointer]
+          - button "Thursday" [ref=e308] [cursor=pointer]
+          - button "Friday" [ref=e309] [cursor=pointer]
+          - button "Saturday" [ref=e310] [cursor=pointer]
+        - generic [ref=e312]:
+          - generic [ref=e313]:
+            - generic [ref=e314]:
+              - generic [ref=e315]: Sunday
+              - button "Edit" [ref=e316] [cursor=pointer]:
+                - img [ref=e317]
+                - text: Edit
+            - generic [ref=e320]:
+              - generic [ref=e321]: 11 exercises
+              - text: ·
+              - generic [ref=e322]: 120 min
+              - text: ·
+              - generic [ref=e323]: 0 done
+            - generic [ref=e324]:
+              - generic [ref=e325]: Warm-Up
+              - generic [ref=e326]: Shred
+              - generic [ref=e327]: Riffs
+          - generic [ref=e328]:
+            - button "Auto Fill" [ref=e329] [cursor=pointer]
+            - button "+ Exercise" [ref=e330] [cursor=pointer]
+            - button "Copy" [ref=e331] [cursor=pointer]:
+              - img [ref=e332]
+              - generic [ref=e335]: Copy
+            - button "Paste" [ref=e336] [cursor=pointer]:
+              - img [ref=e337]
+              - generic [ref=e340]: Paste
+        - generic [ref=e341]:
+          - generic [ref=e342]:
+            - generic [ref=e343]:
+              - generic [ref=e344]: 00:00
+              - generic [ref=e345]: Session
+            - generic [ref=e346]:
+              - button "Log" [ref=e347] [cursor=pointer]:
+                - img [ref=e348]
+                - text: Log
+              - button "Start" [ref=e350]
+              - button "Reset" [ref=e351] [cursor=pointer]
+          - generic [ref=e353]:
+            - generic [ref=e354]: 0/11 exercises
+            - generic [ref=e355]: 0%
+          - generic [ref=e357]:
+            - button "Metronome" [ref=e358]:
+              - img [ref=e359]
+              - text: Metronome
+            - button "Tuner" [ref=e362]:
+              - img [ref=e363]
+              - text: Tuner
+            - button "Record" [ref=e368]:
+              - img [ref=e369]
+              - text: Record
+        - generic [ref=e373]:
+          - generic "Drag to reorder" [ref=e374]:
+            - img [ref=e375]
+          - button "Mark done" [ref=e382] [cursor=pointer]
+          - button "EXAMPLE EX — Am Pentatonic 1st Position Warm-Up · 5min · 120 BPM" [ref=e385] [cursor=pointer]:
+            - generic [ref=e386]: EXAMPLE EX — Am Pentatonic 1st Position
+            - generic [ref=e387]:
+              - generic [ref=e388]: Warm-Up ·
+              - button "5min" [ref=e389]
+              - generic [ref=e390]: · 120 BPM
+          - generic [ref=e391]:
+            - button "UP" [ref=e392] [cursor=pointer]
+            - button "DN" [ref=e393] [cursor=pointer]
+            - button "Swap" [ref=e394] [cursor=pointer]
+            - button "Del" [ref=e395] [cursor=pointer]
+        - generic [ref=e397]:
+          - generic "Drag to reorder" [ref=e398]:
+            - img [ref=e399]
+          - button "Mark done" [ref=e406] [cursor=pointer]
+          - button "Chromatic Scale Warm-Up · 10min · 60-100 BPM" [ref=e409] [cursor=pointer]:
+            - generic [ref=e410]: Chromatic Scale
+            - generic [ref=e411]:
+              - generic [ref=e412]: Warm-Up ·
+              - button "10min" [ref=e413]
+              - generic [ref=e414]: · 60-100 BPM
+          - generic [ref=e415]:
+            - button "UP" [ref=e416] [cursor=pointer]
+            - button "DN" [ref=e417] [cursor=pointer]
+            - button "Swap" [ref=e418] [cursor=pointer]
+            - button "Del" [ref=e419] [cursor=pointer]
+        - generic [ref=e421]:
+          - generic "Drag to reorder" [ref=e422]:
+            - img [ref=e423]
+          - button "Mark done" [ref=e430] [cursor=pointer]
+          - button "Two-Octave Scale Am Pentatonic + Natural Minor Warm-Up · 5min · 60-90 BPM" [ref=e433] [cursor=pointer]:
+            - generic [ref=e434]: Two-Octave Scale Am Pentatonic + Natural Minor
+            - generic [ref=e435]:
+              - generic [ref=e436]: Warm-Up ·
+              - button "5min" [ref=e437]
+              - generic [ref=e438]: · 60-90 BPM
+          - generic [ref=e439]:
+            - button "UP" [ref=e440] [cursor=pointer]
+            - button "DN" [ref=e441] [cursor=pointer]
+            - button "Swap" [ref=e442] [cursor=pointer]
+            - button "Del" [ref=e443] [cursor=pointer]
+        - generic [ref=e445]:
+          - generic "Drag to reorder" [ref=e446]:
+            - img [ref=e447]
+          - button "Mark done" [ref=e454] [cursor=pointer]
+          - button "Phrase with Stretch Warm-Up · 10min · 60-100 BPM" [ref=e457] [cursor=pointer]:
+            - generic [ref=e458]: Phrase with Stretch
+            - generic [ref=e459]:
+              - generic [ref=e460]: Warm-Up ·
+              - button "10min" [ref=e461]
+              - generic [ref=e462]: · 60-100 BPM
+          - generic [ref=e463]:
+            - button "UP" [ref=e464] [cursor=pointer]
+            - button "DN" [ref=e465] [cursor=pointer]
+            - button "Swap" [ref=e466] [cursor=pointer]
+            - button "Del" [ref=e467] [cursor=pointer]
+        - generic [ref=e469]:
+          - generic "Drag to reorder" [ref=e470]:
+            - img [ref=e471]
+          - button "Mark done" [ref=e478] [cursor=pointer]
+          - button "Extended Pentatonic - First Position Warm-Up · 10min · 60-100 BPM" [ref=e481] [cursor=pointer]:
+            - generic [ref=e482]: Extended Pentatonic - First Position
+            - generic [ref=e483]:
+              - generic [ref=e484]: Warm-Up ·
+              - button "10min" [ref=e485]
+              - generic [ref=e486]: · 60-100 BPM
+          - generic [ref=e487]:
+            - button "UP" [ref=e488] [cursor=pointer]
+            - button "DN" [ref=e489] [cursor=pointer]
+            - button "Swap" [ref=e490] [cursor=pointer]
+            - button "Del" [ref=e491] [cursor=pointer]
+        - generic [ref=e493]:
+          - generic "Drag to reorder" [ref=e494]:
+            - img [ref=e495]
+          - button "Mark done" [ref=e502] [cursor=pointer]
+          - button "Alternate Picking Full Pentatonic Speed Build Shred · 10min · 80-165 BPM" [ref=e505] [cursor=pointer]:
+            - generic [ref=e506]: Alternate Picking Full Pentatonic Speed Build
+            - generic [ref=e507]:
+              - generic [ref=e508]: Shred ·
+              - button "10min" [ref=e509]
+              - generic [ref=e510]: · 80-165 BPM
+          - generic [ref=e511]:
+            - button "UP" [ref=e512] [cursor=pointer]
+            - button "DN" [ref=e513] [cursor=pointer]
+            - button "Swap" [ref=e514] [cursor=pointer]
+            - button "Del" [ref=e515] [cursor=pointer]
+        - generic [ref=e517]:
+          - generic "Drag to reorder" [ref=e518]:
+            - img [ref=e519]
+          - button "Mark done" [ref=e526] [cursor=pointer]
+          - button "Pedal Point Shred Vinnie Moore Shred · 10min · 80-160 BPM" [ref=e529] [cursor=pointer]:
+            - generic [ref=e530]: Pedal Point Shred Vinnie Moore
+            - generic [ref=e531]:
+              - generic [ref=e532]: Shred ·
+              - button "10min" [ref=e533]
+              - generic [ref=e534]: · 80-160 BPM
+          - generic [ref=e535]:
+            - button "UP" [ref=e536] [cursor=pointer]
+            - button "DN" [ref=e537] [cursor=pointer]
+            - button "Swap" [ref=e538] [cursor=pointer]
+            - button "Del" [ref=e539] [cursor=pointer]
+        - generic [ref=e541]:
+          - generic "Drag to reorder" [ref=e542]:
+            - img [ref=e543]
+          - button "Mark done" [ref=e550] [cursor=pointer]
+          - button "Sextuplet Pentatonic 3NPS Descending Shred · 10min · 55t-140 BPM" [ref=e553] [cursor=pointer]:
+            - generic [ref=e554]: Sextuplet Pentatonic 3NPS Descending
+            - generic [ref=e555]:
+              - generic [ref=e556]: Shred ·
+              - button "10min" [ref=e557]
+              - generic [ref=e558]: · 55t-140 BPM
+          - generic [ref=e559]:
+            - button "UP" [ref=e560] [cursor=pointer]
+            - button "DN" [ref=e561] [cursor=pointer]
+            - button "Swap" [ref=e562] [cursor=pointer]
+            - button "Del" [ref=e563] [cursor=pointer]
+        - generic [ref=e565]:
+          - generic "Drag to reorder" [ref=e566]:
+            - img [ref=e567]
+          - button "Mark done" [ref=e574] [cursor=pointer]
+          - button "Sextuplet Natural Minor 3NPS Hammett Shred · 10min · 50t-120 BPM" [ref=e577] [cursor=pointer]:
+            - generic [ref=e578]: Sextuplet Natural Minor 3NPS Hammett
+            - generic [ref=e579]:
+              - generic [ref=e580]: Shred ·
+              - button "10min" [ref=e581]
+              - generic [ref=e582]: · 50t-120 BPM
+          - generic [ref=e583]:
+            - button "UP" [ref=e584] [cursor=pointer]
+            - button "DN" [ref=e585] [cursor=pointer]
+            - button "Swap" [ref=e586] [cursor=pointer]
+            - button "Del" [ref=e587] [cursor=pointer]
+        - generic [ref=e589]:
+          - generic "Drag to reorder" [ref=e590]:
+            - img [ref=e591]
+          - button "Mark done" [ref=e598] [cursor=pointer]
+          - button "Riff Composition ABAC Structure Riffs · 25min · 80-140 BPM" [ref=e601] [cursor=pointer]:
+            - generic [ref=e602]: Riff Composition ABAC Structure
+            - generic [ref=e603]:
+              - generic [ref=e604]: Riffs ·
+              - button "25min" [ref=e605]
+              - generic [ref=e606]: · 80-140 BPM
+          - generic [ref=e607]:
+            - button "UP" [ref=e608] [cursor=pointer]
+            - button "DN" [ref=e609] [cursor=pointer]
+            - button "Swap" [ref=e610] [cursor=pointer]
+            - button "Del" [ref=e611] [cursor=pointer]
+        - generic [ref=e613]:
+          - generic "Drag to reorder" [ref=e614]:
+            - img [ref=e615]
+          - button "Mark done" [ref=e622] [cursor=pointer]
+          - button "Chromatic Riff Heavy Dissonance Riffs · 15min · 80-140 BPM" [ref=e625] [cursor=pointer]:
+            - generic [ref=e626]: Chromatic Riff Heavy Dissonance
+            - generic [ref=e627]:
+              - generic [ref=e628]: Riffs ·
+              - button "15min" [ref=e629]
+              - generic [ref=e630]: · 80-140 BPM
+          - generic [ref=e631]:
+            - button "UP" [ref=e632] [cursor=pointer]
+            - button "DN" [ref=e633] [cursor=pointer]
+            - button "Swap" [ref=e634] [cursor=pointer]
+            - button "Del" [ref=e635] [cursor=pointer]
+      - 'dialog "Exercise: EXAMPLE EX — Am Pentatonic 1st Position" [ref=e636]':
+        - generic [ref=e638]:
+          - generic [ref=e639]:
+            - generic [ref=e640]:
+              - generic [ref=e642]: EXAMPLE EX — Am Pentatonic 1st Position
+              - generic [ref=e643]: 120 BPM
+              - button "5m" [active] [ref=e644] [cursor=pointer]:
+                - text: 5m
+                - img [ref=e645]
+            - generic [ref=e648]:
+              - generic [ref=e649]:
+                - button "Start timer" [ref=e650] [cursor=pointer]:
+                  - img [ref=e651]
+                - generic [ref=e653]: 05:00
+              - button "Record" [ref=e654] [cursor=pointer]:
+                - img [ref=e655]
+                - text: Record
+              - button "Records" [ref=e658] [cursor=pointer]:
+                - img [ref=e659]
+                - text: Records
+              - button "Notes" [ref=e661] [cursor=pointer]:
+                - img [ref=e662]
+                - text: Notes
+              - button "Done" [ref=e665] [cursor=pointer]
+              - button "Close" [ref=e666] [cursor=pointer]: ×
+          - generic [ref=e667]:
+            - tablist [ref=e669]:
+              - tab "Practice" [selected] [ref=e670] [cursor=pointer]
+              - tab "Tabs" [ref=e671] [cursor=pointer]
+              - tab "Backing Track" [ref=e672] [cursor=pointer]
+              - tab "Tutorial" [ref=e673] [cursor=pointer]
+            - generic [ref=e675]:
+              - generic [ref=e676]: Am Pentatonic scale in 1st position (frets 5-8). Ascending all 6 strings then descending. Two notes per string. Repeat 99x for muscle memory.
+              - generic [ref=e679]: Keep all fingers close to the fretboard. Use strict alternate picking. Start slow and build speed gradually.
+              - generic [ref=e680]:
+                - generic [ref=e681]: FOCUS AREAS
+                - generic [ref=e683]: Pentatonic Scale, 1st Position
+              - generic [ref=e684]:
+                - generic [ref=e685]: METRONOME
+                - generic [ref=e687]:
+                  - generic [ref=e688]: Metronome · Progressive
+                  - generic [ref=e690]:
+                    - generic [ref=e691]: "60"
+                    - generic [ref=e692]: BPM
+                  - generic [ref=e693]:
+                    - generic [ref=e694]:
+                      - generic [ref=e695]:
+                        - generic [ref=e696]: Time Sig
+                        - generic [ref=e697]:
+                          - button "4/4" [ref=e698]
+                          - button "3/4" [ref=e699]
+                          - button "6/8" [ref=e700]
+                          - button "7/8" [ref=e701]
+                          - button "5/4" [ref=e702]
+                      - generic [ref=e703]:
+                        - generic [ref=e704]: Subdivision
+                        - generic [ref=e705]:
+                          - button "♩" [ref=e706]
+                          - button "♪♪" [ref=e707]
+                          - button "𝅘𝅥𝅮³" [ref=e708]
+                          - button "♬" [ref=e709]
+                    - generic [ref=e710]:
+                      - generic [ref=e711] [cursor=pointer]:
+                        - generic [ref=e712]: ✓
+                        - generic [ref=e713]: Progressive
+                      - generic [ref=e716] [cursor=pointer]: Count In
+                    - generic [ref=e717]:
+                      - generic [ref=e718]:
+                        - generic [ref=e719]: Start
+                        - generic [ref=e720]:
+                          - button "-" [ref=e721]
+                          - textbox [ref=e722]: "60"
+                          - button "+" [ref=e723]
+                      - generic [ref=e724]:
+                        - generic [ref=e725]: Target
+                        - generic [ref=e726]:
+                          - button "-" [ref=e727]
+                          - textbox [ref=e728]: "120"
+                          - button "+" [ref=e729]
+                      - generic [ref=e730]:
+                        - generic [ref=e731]: +BPM
+                        - generic [ref=e732]:
+                          - button "-" [ref=e733]
+                          - textbox [ref=e734]: "5"
+                          - button "+" [ref=e735]
+                      - generic [ref=e736]:
+                        - generic [ref=e737]: Every (s)
+                        - generic [ref=e738]:
+                          - button "-" [ref=e739]
+                          - textbox [ref=e740]: "30"
+                          - button "+" [ref=e741]
+                    - button "Tap Tempo" [ref=e742] [cursor=pointer]
+                  - button "60 → 120 BPM" [ref=e743] [cursor=pointer]

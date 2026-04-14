@@ -1,0 +1,33 @@
+[   28748ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:3001/api/suno:0
+[   28749ms] [ERROR] Song backing generation failed: Error: Error: Suno error: The current credits are insufficient. Please top up.
+    at generateSongBacking (http://localhost:3001/_next/static/chunks/guitarforge_src_components_GuitarForgeApp_tsx_f7ab2893._.js:858:23) @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:3127
+[   38132ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   38399ms] [LOG] [Fast Refresh] done in 375ms @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  179927ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  179978ms] [LOG] [Fast Refresh] done in 73ms @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  190391ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  190452ms] [WARNING] [AlphaTab][Rendering] AlphaTab container was invisible while autosizing, waiting for element to become visible null @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  190745ms] [LOG] [Fast Refresh] done in 104ms @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  190794ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  190817ms] [LOG] [HMR] connected @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  203761ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  203811ms] [LOG] [Fast Refresh] done in 105ms @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  203821ms] [WARNING] [AlphaTab][Rendering] AlphaTab container was invisible while autosizing, waiting for element to become visible null @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  203922ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  204100ms] [LOG] [Fast Refresh] done in 288ms @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  204145ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  204158ms] [LOG] [HMR] connected @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  211244ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  211289ms] [LOG] [Fast Refresh] done in 73ms @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  211298ms] [WARNING] [AlphaTab][Rendering] AlphaTab container was invisible while autosizing, waiting for element to become visible null @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  223587ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  223635ms] [LOG] [Fast Refresh] done in 71ms @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  223659ms] [WARNING] [AlphaTab][Rendering] AlphaTab container was invisible while autosizing, waiting for element to become visible null @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  229173ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  229196ms] [WARNING] [AlphaTab][Rendering] AlphaTab container was invisible while autosizing, waiting for element to become visible null @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  229197ms] [LOG] [Fast Refresh] done in 69ms @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  236744ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  236770ms] [LOG] [Fast Refresh] done in 86ms @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  249452ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  249478ms] [LOG] [Fast Refresh] done in 70ms @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[  249478ms] [WARNING] [AlphaTab][Rendering] AlphaTab container was invisible while autosizing, waiting for element to become visible null @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297

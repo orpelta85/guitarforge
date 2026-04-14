@@ -1,0 +1,5 @@
+[     134ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[     135ms] [LOG] [Fast Refresh] done in 106ms @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[     257ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[     258ms] [LOG] [Fast Refresh] done in 107ms @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   13389ms] [ERROR] Permissions policy violation: compute-pressure is not allowed in this document. @ https://www.youtube.com/s/player/8a6e7bc4/player_embed_es6.vflset/iw_IL/base.js:5050

@@ -1,0 +1,151 @@
+- generic [active] [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - button "Open Next.js Dev Tools" [ref=e11] [cursor=pointer]:
+    - img [ref=e12]
+  - alert [ref=e15]
+  - generic [ref=e16]:
+    - complementary [ref=e17]:
+      - img "Guitar Practice" [ref=e20]
+      - navigation [ref=e22]:
+        - generic [ref=e23]: Main
+        - button "Home" [ref=e24] [cursor=pointer]:
+          - img [ref=e26]
+          - generic [ref=e28]: Home
+        - button "Practice" [ref=e29] [cursor=pointer]:
+          - img [ref=e31]
+          - generic [ref=e35]: Practice
+        - button "Learn" [ref=e36] [cursor=pointer]:
+          - img [ref=e38]
+          - generic [ref=e41]: Learn
+        - button "Studio" [ref=e42] [cursor=pointer]:
+          - img [ref=e44]
+          - generic [ref=e47]: Studio
+        - button "Jam Mode" [ref=e48] [cursor=pointer]:
+          - img [ref=e50]
+          - generic [ref=e53]: Jam Mode
+        - button "Library" [ref=e54] [cursor=pointer]:
+          - img [ref=e56]
+          - generic [ref=e59]: Library
+        - generic [ref=e60]: Tools
+        - button "AI Coach" [ref=e61] [cursor=pointer]:
+          - img [ref=e63]
+          - generic [ref=e65]: AI Coach
+        - button "Suno AI" [ref=e66] [cursor=pointer]:
+          - img [ref=e68]
+          - generic [ref=e71]: Suno AI
+        - button "Skills" [ref=e72] [cursor=pointer]:
+          - img [ref=e74]
+          - generic [ref=e80]: Skills
+        - button "Tuner" [ref=e81] [cursor=pointer]:
+          - img [ref=e83]
+          - generic [ref=e85]: Tuner
+      - button "Guest Sign in to sync" [ref=e88]:
+        - img [ref=e90]
+        - generic [ref=e93]:
+          - generic [ref=e94]: Guest
+          - generic [ref=e95]: Sign in to sync
+      - button "Sign in to sync" [ref=e97]
+    - generic [ref=e267]:
+      - generic [ref=e269]:
+        - generic [ref=e270]:
+          - generic [ref=e271]: Learning Center
+          - generic [ref=e272]: 0/39 lessons completed
+        - generic [ref=e273]:
+          - generic [ref=e274]:
+            - generic [ref=e275]: LV.1
+            - generic [ref=e276]: 0 XP
+          - generic [ref=e278]: 0/100 XP to next level
+      - generic [ref=e280] [cursor=pointer]:
+        - generic [ref=e282]: "N"
+        - generic [ref=e283]:
+          - generic [ref=e284]: Start Your Journey
+          - generic [ref=e285]: What Is a Note?
+          - generic [ref=e286]: Fundamentals · 5 min · Beginner
+        - generic [ref=e288]: Start
+      - generic [ref=e289]:
+        - button "Lessons39" [ref=e290] [cursor=pointer]
+        - button "Exercises17" [ref=e291] [cursor=pointer]
+        - button "Tools10" [ref=e292] [cursor=pointer]
+      - generic [ref=e455]:
+        - generic [ref=e456]:
+          - generic [ref=e457] [cursor=pointer]:
+            - generic [ref=e458]: ♪
+            - generic [ref=e459]:
+              - generic [ref=e460]:
+                - generic [ref=e461]: Ear Training
+                - generic [ref=e462]: 5 exercises
+              - generic [ref=e463]: Train your ear to recognize intervals, chords, scales and progressions by sound
+            - generic [ref=e465]: ▶
+          - generic [ref=e466]:
+            - generic [ref=e467]:
+              - generic [ref=e471] [cursor=pointer]:
+                - generic [ref=e472]: Interval Recognition
+                - generic [ref=e473]: Identify intervals by ear
+              - generic [ref=e482] [cursor=pointer]:
+                - generic [ref=e483]: Chord Identification
+                - generic [ref=e484]: Major, minor, dim, aug and more
+              - generic [ref=e493] [cursor=pointer]:
+                - generic [ref=e494]: Scale Recognition
+                - generic [ref=e495]: Name the scale you hear
+              - generic [ref=e504] [cursor=pointer]:
+                - generic [ref=e505]: Progression Hearing
+                - generic [ref=e506]: Identify chord progressions
+              - generic [ref=e515] [cursor=pointer]:
+                - generic [ref=e516]: Note Identification
+                - generic [ref=e517]: Name the single note played
+            - generic [ref=e523]:
+              - generic [ref=e524]:
+                - button "Exercise" [ref=e525] [cursor=pointer]
+                - button "Achievements" [ref=e526] [cursor=pointer]
+                - button "Reference" [ref=e527] [cursor=pointer]
+              - generic [ref=e645]:
+                - generic [ref=e647]:
+                  - generic [ref=e651]: 0/0
+                  - button "Reset" [ref=e652] [cursor=pointer]
+                - generic [ref=e653]:
+                  - generic [ref=e655]: Identify the note you hear
+                  - button "▶" [ref=e657] [cursor=pointer]:
+                    - generic [ref=e658]: ▶
+                  - generic [ref=e659]: Press play to begin
+        - generic [ref=e544]:
+          - generic [ref=e545] [cursor=pointer]:
+            - generic [ref=e546]: ⌂
+            - generic [ref=e547]:
+              - generic [ref=e548]:
+                - generic [ref=e549]: Fretboard Knowledge
+                - generic [ref=e550]: 4 exercises
+              - generic [ref=e551]: Master the fretboard through visual quizzes and note finding exercises
+            - generic [ref=e553]: ▶
+          - generic [ref=e555]:
+            - generic [ref=e559] [cursor=pointer]:
+              - generic [ref=e560]: Note Finder
+              - generic [ref=e561]: Find notes on the fretboard
+            - generic [ref=e570] [cursor=pointer]:
+              - generic [ref=e571]: Visual Intervals
+              - generic [ref=e572]: Identify intervals on the fretboard
+            - generic [ref=e581] [cursor=pointer]:
+              - generic [ref=e582]: Visual Scales
+              - generic [ref=e583]: Identify scale patterns visually
+            - generic [ref=e592] [cursor=pointer]:
+              - generic [ref=e593]: Visual Chords
+              - generic [ref=e594]: Identify chord shapes on the fretboard
+        - generic [ref=e600]:
+          - generic [ref=e601] [cursor=pointer]:
+            - generic [ref=e602]: ≡
+            - generic [ref=e603]:
+              - generic [ref=e604]:
+                - generic [ref=e605]: Theory Builders
+                - generic [ref=e606]: 3 exercises
+              - generic [ref=e607]: Build scales, intervals and chords from scratch to reinforce music theory
+            - generic [ref=e609]: ▶
+          - generic [ref=e611]:
+            - generic [ref=e615] [cursor=pointer]:
+              - generic [ref=e616]: Scale / Interval / Chord Builder
+              - generic [ref=e617]: Construct scales, intervals and chords note by note
+            - generic [ref=e626] [cursor=pointer]:
+              - generic [ref=e627]: Interval Builder
+              - generic [ref=e628]: Find the note at a given interval
+            - generic [ref=e637] [cursor=pointer]:
+              - generic [ref=e638]: Chord Builder
+              - generic [ref=e639]: Select all notes of a chord

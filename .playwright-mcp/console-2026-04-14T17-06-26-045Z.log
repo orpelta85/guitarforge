@@ -1,0 +1,4 @@
+[     111ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[     166ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   22252ms] SyntaxError: Failed to execute 'importScripts' on 'WorkerGlobalScope': Cannot use import statement outside a module
+    at blob:http://localhost:3000/aa3c882d-e142-47ab-96ec-5b4b58274614:1:1

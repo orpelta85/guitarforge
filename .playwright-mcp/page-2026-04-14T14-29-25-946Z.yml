@@ -1,0 +1,304 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e6]:
+      - link "Home page" [ref=e7] [cursor=pointer]:
+        - /url: https://www.ultimate-guitar.com
+        - img [ref=e8]
+      - list "Main navigation" [ref=e10]:
+        - listitem [ref=e11]:
+          - link "Tabs" [ref=e12] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore
+        - listitem [ref=e13]:
+          - link "Courses" [ref=e14] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/courses
+        - listitem [ref=e15]:
+          - link "Songbooks" [ref=e16] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/books
+        - listitem [ref=e17]:
+          - link "Articles" [ref=e18] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/news/
+        - listitem [ref=e19]:
+          - link "Forums" [ref=e20] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/forum/
+        - listitem [ref=e21]:
+          - link "Publish tab" [ref=e22] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/contribution/submit/tabs?app_utm_campaign=top_menu&app_utm_content=button&app_utm_medium=internal&app_utm_source=ug&app_utm_term=publish
+        - listitem [ref=e23]:
+          - link "Pro+" [ref=e24] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/pro?app_utm_campaign=UG%20Tab%20Pro&app_utm_content=Playlist%20Index&app_utm_medium=Header&app_utm_source=UltimateGuitar
+            - emphasis [ref=e25]: Pro+
+      - generic [ref=e27]:
+        - searchbox "Enter artist name or song title" [ref=e28]
+        - button "Search" [ref=e29] [cursor=pointer]
+      - button "Notifications" [ref=e31] [cursor=pointer]:
+        - img
+  - main [ref=e32]:
+    - generic [ref=e35]:
+      - generic [ref=e36]:
+        - heading "Playlists" [level=1] [ref=e38]
+        - button "Create playlist" [ref=e45] [cursor=pointer]:
+          - img [ref=e46]
+          - text: Create playlist
+      - article [ref=e48]:
+        - generic [ref=e49]:
+          - generic [ref=e50]:
+            - generic [ref=e51]: Title
+            - generic [ref=e52]: Description
+            - generic [ref=e54] [cursor=pointer]:
+              - text: Date
+              - img [ref=e55]
+            - generic [ref=e57]: Tabs
+          - generic [ref=e59]:
+            - link "easy" [ref=e64] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/user/playlist/view?id=11805926
+            - generic [ref=e66]: Dec 31, 2020
+            - generic [ref=e67]: "5"
+            - generic [ref=e69]:
+              - button [ref=e71] [cursor=pointer]:
+                - img [ref=e72]
+              - button [ref=e75] [cursor=pointer]:
+                - img [ref=e76]
+  - generic [ref=e79]:
+    - generic [ref=e80]:
+      - link "orpelta85" [ref=e81] [cursor=pointer]:
+        - /url: https://www.ultimate-guitar.com/u/orpelta85
+        - img "orpelta85" [ref=e82]
+      - generic [ref=e83]:
+        - generic [ref=e85]:
+          - link "orpelta85" [ref=e86] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/u/orpelta85
+          - text: "[pro]"
+          - link "10" [ref=e87] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/activity/iq?user_id=32621864
+        - generic [ref=e88]: Joined 2019
+    - list "User navigation" [ref=e89]:
+      - listitem [ref=e90]:
+        - link "My tabs 11" [ref=e91] [cursor=pointer]:
+          - /url: https://www.ultimate-guitar.com/user/mytabs
+          - generic [ref=e92]:
+            - generic [ref=e93]: My tabs
+            - generic [ref=e94]: "11"
+      - listitem [ref=e95]:
+        - link "My courses 16" [ref=e96] [cursor=pointer]:
+          - /url: https://www.ultimate-guitar.com/user/courses
+          - generic [ref=e97]:
+            - generic [ref=e98]: My courses
+            - generic [ref=e99]: "16"
+      - listitem [ref=e100]:
+        - link "My books 0" [ref=e101] [cursor=pointer]:
+          - /url: https://www.ultimate-guitar.com/books
+          - generic [ref=e102]:
+            - generic [ref=e103]: My books
+            - generic [ref=e104]: "0"
+      - listitem [ref=e107]:
+        - link "Playlists 1" [ref=e108] [cursor=pointer]:
+          - /url: https://www.ultimate-guitar.com/user/playlist
+          - generic [ref=e109]:
+            - generic [ref=e110]: Playlists
+            - generic [ref=e111]: "1"
+      - listitem [ref=e112]:
+        - link "Messages" [ref=e113] [cursor=pointer]:
+          - /url: https://www.ultimate-guitar.com/profile/messages
+          - generic [ref=e115]: Messages
+      - listitem [ref=e116]:
+        - link "Settings" [ref=e117] [cursor=pointer]:
+          - /url: https://www.ultimate-guitar.com/forum/profile/update-profile
+          - generic [ref=e119]: Settings
+      - listitem [ref=e120]:
+        - link "Subscriptions" [ref=e121] [cursor=pointer]:
+          - /url: https://www.ultimate-guitar.com/user/subscriptions
+          - generic [ref=e123]: Subscriptions
+  - contentinfo [ref=e127]:
+    - generic [ref=e128]:
+      - generic [ref=e129]:
+        - generic [ref=e130]:
+          - generic [ref=e131]: All artists
+          - list "All artists" [ref=e132]:
+            - listitem [ref=e133]:
+              - link "#" [ref=e134] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/0-9.htm
+            - listitem [ref=e135]:
+              - link "a" [ref=e136] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/a.htm
+            - listitem [ref=e137]:
+              - link "b" [ref=e138] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/b.htm
+            - listitem [ref=e139]:
+              - link "c" [ref=e140] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/c.htm
+            - listitem [ref=e141]:
+              - link "d" [ref=e142] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/d.htm
+            - listitem [ref=e143]:
+              - link "e" [ref=e144] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/e.htm
+            - listitem [ref=e145]:
+              - link "f" [ref=e146] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/f.htm
+            - listitem [ref=e147]:
+              - link "g" [ref=e148] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/g.htm
+            - listitem [ref=e149]:
+              - link "h" [ref=e150] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/h.htm
+            - listitem [ref=e151]:
+              - link "i" [ref=e152] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/i.htm
+            - listitem [ref=e153]:
+              - link "j" [ref=e154] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/j.htm
+            - listitem [ref=e155]:
+              - link "k" [ref=e156] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/k.htm
+            - listitem [ref=e157]:
+              - link "l" [ref=e158] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/l.htm
+            - listitem [ref=e159]:
+              - link "m" [ref=e160] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/m.htm
+            - listitem [ref=e161]:
+              - link "n" [ref=e162] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/n.htm
+            - listitem [ref=e163]:
+              - link "o" [ref=e164] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/o.htm
+            - listitem [ref=e165]:
+              - link "p" [ref=e166] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/p.htm
+            - listitem [ref=e167]:
+              - link "q" [ref=e168] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/q.htm
+            - listitem [ref=e169]:
+              - link "r" [ref=e170] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/r.htm
+            - listitem [ref=e171]:
+              - link "s" [ref=e172] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/s.htm
+            - listitem [ref=e173]:
+              - link "t" [ref=e174] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/t.htm
+            - listitem [ref=e175]:
+              - link "u" [ref=e176] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/u.htm
+            - listitem [ref=e177]:
+              - link "v" [ref=e178] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/v.htm
+            - listitem [ref=e179]:
+              - link "w" [ref=e180] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/w.htm
+            - listitem [ref=e181]:
+              - link "x" [ref=e182] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/x.htm
+            - listitem [ref=e183]:
+              - link "y" [ref=e184] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/y.htm
+            - listitem [ref=e185]:
+              - link "z" [ref=e186] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/z.htm
+        - generic [ref=e187]:
+          - link "facebook" [ref=e188] [cursor=pointer]:
+            - /url: https://www.facebook.com/UltimateGuitar/
+            - img
+          - link "twitter" [ref=e189] [cursor=pointer]:
+            - /url: https://twitter.com/ultimateguitar
+            - img
+          - link "instagram" [ref=e190] [cursor=pointer]:
+            - /url: https://www.instagram.com/ultimateguitar/
+            - img
+          - link "youtube" [ref=e191] [cursor=pointer]:
+            - /url: https://www.youtube.com/channel/UCf6prPsXYNYKXH4hX-cuEwQ
+            - img
+          - link "tiktok" [ref=e192] [cursor=pointer]:
+            - /url: https://www.tiktok.com/@ultimateguitar
+            - img
+          - link "audio.com" [ref=e193] [cursor=pointer]:
+            - /url: https://audio.com/ultimateguitar
+            - img
+          - link "linkedin" [ref=e194] [cursor=pointer]:
+            - /url: https://www.linkedin.com/company/1567917
+            - img
+      - separator [ref=e195]
+      - generic [ref=e196]:
+        - region "Copyright" [ref=e197]:
+          - link [ref=e198] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com
+            - img [ref=e199]
+          - generic [ref=e201]: © 2026 Ultimate-Guitar.com All rights reserved
+        - region "Discover" [ref=e202]:
+          - heading "Discover" [level=4] [ref=e203]
+          - link "About UG" [ref=e204] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/
+          - link "Site Rules" [ref=e205] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/article/blog/site-rules/
+          - link "Advertise" [ref=e206] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/advertise.htm
+          - link "Support" [ref=e207] [cursor=pointer]:
+            - /url: https://help.ultimate-guitar.com/en/
+        - region "Legal" [ref=e208]:
+          - heading "Legal" [level=4] [ref=e209]
+          - link "Terms of Service" [ref=e210] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/tos.htm
+          - link "Privacy Policy" [ref=e211] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/privacy.htm
+          - link "DMCA" [ref=e212] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/dmca.htm
+          - link "Accessibility Statement" [ref=e213] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/accessibility-statement.htm
+        - region "Other" [ref=e214]:
+          - heading "Other" [level=4] [ref=e215]
+          - button "PRO+" [ref=e216] [cursor=pointer]
+          - link "Articles Staff" [ref=e217] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/news/editorial/
+          - link "Fresh Tabs" [ref=e218] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/fresh?order=date
+          - link "MuseHub" [ref=e219] [cursor=pointer]:
+            - /url: https://www.musehub.com/?utm_source=ug_web&utm_medium=footer&utm_campaign=musehub
+        - region "Language" [ref=e220]:
+          - heading "Language" [level=4] [ref=e221]
+          - link "English" [ref=e222] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/playlist
+          - link "Português (Brasil)" [ref=e223] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/playlist
+          - link "Español" [ref=e224] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/playlist
+          - link "Italiano" [ref=e225] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/playlist
+          - link "Français" [ref=e226] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/playlist
+          - link "日本語" [ref=e227] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/playlist
+        - region "Hot Chords" [ref=e228]:
+          - heading "Hot Chords" [level=4] [ref=e229]
+          - link "Indonesia" [ref=e230] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?country_chart=7
+        - region "Download UG application" [ref=e231]:
+          - generic [ref=e232]:
+            - link "apple store" [ref=e233] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/components/apps/market/redirect?app_name=ug_tabs_chords_ios&source=get_app_footer
+              - img "apple store" [ref=e234]
+            - link "google play" [ref=e235] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/components/apps/market/redirect?app_name=ug_tabs_chords_android&source=get_app_footer
+              - img "google play" [ref=e236]
+            - link "huawei store" [ref=e237] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/components/apps/market/redirect?app_name=ug_tabs_chords_huawei&source=get_app_footer
+              - img "huawei store" [ref=e238]
+  - generic [ref=e244]:
+    - generic [ref=e245]: Add 2,000+ songbooks to your PRO+ now!
+    - generic [ref=e246]:
+      - generic [ref=e247]:
+        - generic [ref=e248]: "0"
+        - generic [ref=e250]: days
+      - generic [ref=e251]: ":"
+      - generic [ref=e252]:
+        - generic [ref=e253]: "23"
+        - generic [ref=e255]: hrs
+      - generic [ref=e256]: ":"
+      - generic [ref=e257]:
+        - generic [ref=e258]: "54"
+        - generic [ref=e260]: min
+      - generic [ref=e261]: ":"
+      - generic [ref=e262]:
+        - generic [ref=e263]: "17"
+        - generic [ref=e265]: sec
+    - button "TRY FOR FREE" [ref=e266] [cursor=pointer]:
+      - generic [ref=e267]: TRY FOR FREE

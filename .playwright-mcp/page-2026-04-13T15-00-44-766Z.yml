@@ -1,0 +1,118 @@
+- generic [active] [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - button "Open Next.js Dev Tools" [ref=e11] [cursor=pointer]:
+    - img [ref=e12]
+  - alert [ref=e15]
+  - generic [ref=e16]:
+    - complementary [ref=e17]:
+      - img "Guitar Practice" [ref=e20]
+      - navigation [ref=e22]:
+        - generic [ref=e23]: Main
+        - button "Home" [ref=e24] [cursor=pointer]:
+          - img [ref=e26]
+          - generic [ref=e28]: Home
+        - button "Practice" [ref=e29] [cursor=pointer]:
+          - img [ref=e31]
+          - generic [ref=e35]: Practice
+        - button "Learn" [ref=e36] [cursor=pointer]:
+          - img [ref=e38]
+          - generic [ref=e41]: Learn
+        - button "Studio" [ref=e42] [cursor=pointer]:
+          - img [ref=e44]
+          - generic [ref=e47]: Studio
+        - button "Jam Mode" [ref=e48] [cursor=pointer]:
+          - img [ref=e50]
+          - generic [ref=e53]: Jam Mode
+        - button "Library" [ref=e54] [cursor=pointer]:
+          - img [ref=e56]
+          - generic [ref=e59]: Library
+        - generic [ref=e60]: Tools
+        - button "AI Coach" [ref=e61] [cursor=pointer]:
+          - img [ref=e63]
+          - generic [ref=e65]: AI Coach
+        - button "Suno AI" [ref=e66] [cursor=pointer]:
+          - img [ref=e68]
+          - generic [ref=e71]: Suno AI
+        - button "Skills" [ref=e72] [cursor=pointer]:
+          - img [ref=e74]
+          - generic [ref=e80]: Skills
+        - button "Tuner" [ref=e81] [cursor=pointer]:
+          - img [ref=e83]
+          - generic [ref=e85]: Tuner
+      - button "Guest Sign in to sync" [ref=e88]:
+        - img [ref=e90]
+        - generic [ref=e93]:
+          - generic [ref=e94]: Guest
+          - generic [ref=e95]: Sign in to sync
+      - button "Sign in to sync" [ref=e97]
+    - generic [ref=e1443]:
+      - generic [ref=e1444]:
+        - button "Exercises" [ref=e1445] [cursor=pointer]:
+          - img [ref=e1446]
+          - text: Exercises
+        - button "Styles" [ref=e1448] [cursor=pointer]:
+          - img [ref=e1449]
+          - text: Styles
+        - button "My Songs" [ref=e1451] [cursor=pointer]:
+          - img [ref=e1452]
+          - text: My Songs
+        - button "Recordings" [ref=e1454] [cursor=pointer]:
+          - img [ref=e1455]
+          - text: Recordings
+        - button "Backing Tracks" [ref=e1457] [cursor=pointer]:
+          - img [ref=e1458]
+          - text: Backing Tracks
+        - button "Song Library" [ref=e1460] [cursor=pointer]:
+          - img [ref=e1461]
+          - text: Song Library
+      - generic [ref=e1463]:
+        - textbox "Search exercise..." [ref=e1464]
+        - button "Add Exercise" [ref=e1465] [cursor=pointer]:
+          - img [ref=e1466]
+          - text: Add Exercise
+      - generic [ref=e1468]:
+        - button "All (199)" [ref=e1469] [cursor=pointer]
+        - button "Warm-Up (17)" [ref=e1470] [cursor=pointer]
+        - button "Shred (10)" [ref=e1471] [cursor=pointer]
+        - button "Legato (9)" [ref=e1472] [cursor=pointer]
+        - button "Bends (6)" [ref=e1473] [cursor=pointer]
+        - button "Tapping (7)" [ref=e1474] [cursor=pointer]
+        - button "Sweep (5)" [ref=e1475] [cursor=pointer]
+        - button "Rhythm (12)" [ref=e1476] [cursor=pointer]
+        - button "Fretboard (4)" [ref=e1477] [cursor=pointer]
+        - button "Ear Training (6)" [ref=e1478] [cursor=pointer]
+        - button "Improv (6)" [ref=e1479] [cursor=pointer]
+        - button "Riffs (5)" [ref=e1480] [cursor=pointer]
+        - button "Phrasing (4)" [ref=e1481] [cursor=pointer]
+        - button "Modes (6)" [ref=e1482] [cursor=pointer]
+        - button "Composition (6)" [ref=e1483] [cursor=pointer]
+        - button "Dynamics (6)" [ref=e1484] [cursor=pointer]
+        - button "Chords (18)" [ref=e1485] [cursor=pointer]
+        - button "Harmonics (5)" [ref=e1486] [cursor=pointer]
+        - button "Picking (6)" [ref=e1487] [cursor=pointer]
+        - button "Arpeggios (6)" [ref=e1488] [cursor=pointer]
+        - button "Slide (4)" [ref=e1489] [cursor=pointer]
+        - button "Tunings (4)" [ref=e1490] [cursor=pointer]
+        - button "Keys (5)" [ref=e1491] [cursor=pointer]
+      - button "Show Flat List" [ref=e1493] [cursor=pointer]
+      - generic [ref=e1495] [cursor=pointer]:
+        - img [ref=e1496]
+        - generic [ref=e1498]: Technique
+        - generic [ref=e1499]: "69"
+      - generic [ref=e1501] [cursor=pointer]:
+        - img [ref=e1502]
+        - generic [ref=e1504]: Rhythm & Dynamics
+        - generic [ref=e1505]: "40"
+      - generic [ref=e1507] [cursor=pointer]:
+        - img [ref=e1508]
+        - generic [ref=e1510]: Theory
+        - generic [ref=e1511]: "15"
+      - generic [ref=e1513] [cursor=pointer]:
+        - img [ref=e1514]
+        - generic [ref=e1516]: Musicality
+        - generic [ref=e1517]: "22"
+      - generic [ref=e1519] [cursor=pointer]:
+        - img [ref=e1520]
+        - generic [ref=e1522]: Creation
+        - generic [ref=e1523]: "12"

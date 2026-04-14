@@ -1,0 +1,207 @@
+- generic [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - button "Open Next.js Dev Tools" [ref=e11] [cursor=pointer]:
+    - img [ref=e12]
+  - alert [ref=e15]
+  - generic [ref=e16]:
+    - complementary [ref=e17]:
+      - img "Guitar Practice" [ref=e20]
+      - navigation [ref=e22]:
+        - generic [ref=e23]: Main
+        - button "Home" [ref=e24] [cursor=pointer]:
+          - img [ref=e26]
+          - generic [ref=e28]: Home
+        - button "Practice" [ref=e29] [cursor=pointer]:
+          - img [ref=e31]
+          - generic [ref=e35]: Practice
+        - button "Learn" [ref=e36] [cursor=pointer]:
+          - img [ref=e38]
+          - generic [ref=e41]: Learn
+        - button "Studio" [ref=e42] [cursor=pointer]:
+          - img [ref=e44]
+          - generic [ref=e47]: Studio
+        - button "Jam Mode" [ref=e48] [cursor=pointer]:
+          - img [ref=e50]
+          - generic [ref=e53]: Jam Mode
+        - button "Library" [ref=e54] [cursor=pointer]:
+          - img [ref=e56]
+          - generic [ref=e59]: Library
+        - generic [ref=e60]: Tools
+        - button "AI Coach" [ref=e61] [cursor=pointer]:
+          - img [ref=e63]
+          - generic [ref=e65]: AI Coach
+        - button "Suno AI" [ref=e66] [cursor=pointer]:
+          - img [ref=e68]
+          - generic [ref=e71]: Suno AI
+        - button "Skills" [ref=e72] [cursor=pointer]:
+          - img [ref=e74]
+          - generic [ref=e80]: Skills
+        - button "Tuner" [ref=e81] [cursor=pointer]:
+          - img [ref=e83]
+          - generic [ref=e85]: Tuner
+      - button "Guest Sign in to sync" [ref=e88]:
+        - img [ref=e90]
+        - generic [ref=e93]:
+          - generic [ref=e94]: Guest
+          - generic [ref=e95]: Sign in to sync
+      - button "Sign in to sync" [ref=e97]
+    - generic [ref=e1513]:
+      - generic [ref=e1514]:
+        - generic [ref=e1515]:
+          - generic [ref=e1516]:
+            - spinbutton [ref=e1517]: "120"
+            - generic [ref=e1518]: BPM
+          - button "Metronome (M)" [ref=e1519] [cursor=pointer]:
+            - img [ref=e1520]
+          - generic [ref=e1523]:
+            - img [ref=e1524]
+            - combobox [ref=e1527] [cursor=pointer]:
+              - option "Mic" [selected]
+        - generic [ref=e1528]:
+          - button "Rewind (Enter)" [ref=e1529] [cursor=pointer]:
+            - img [ref=e1530]
+          - button "Play (Space)" [disabled] [ref=e1532] [cursor=pointer]:
+            - img [ref=e1533]
+          - button "Stop" [ref=e1535] [cursor=pointer]
+          - button "Record (R)" [ref=e1537] [cursor=pointer]
+          - button "Loop (C)" [ref=e1539] [cursor=pointer]:
+            - img [ref=e1540]
+          - generic [ref=e1546]:
+            - generic [ref=e1547]: 88:88.8
+            - generic [ref=e1548]: 00:00.0
+          - generic [ref=e1549]: /
+          - generic [ref=e1550]: 00:00.0
+        - generic [ref=e1551]:
+          - generic [ref=e1552]: 0 trk
+          - generic [ref=e1553]:
+            - img [ref=e1554]
+            - slider [ref=e1557] [cursor=pointer]: "80"
+            - generic [ref=e1558]: 80%
+          - button "Save" [disabled] [ref=e1559]
+      - generic [ref=e1561]:
+        - generic [ref=e1563]:
+          - generic [ref=e1564]: 🎸
+          - generic [ref=e1565]: Start Creating
+          - generic [ref=e1566]: Drop an audio file here or pick an option below
+          - generic [ref=e1567]:
+            - button "Record" [ref=e1568] [cursor=pointer]:
+              - img [ref=e1569]
+              - text: Record
+            - button "🥁 Drum Machine" [ref=e1572] [cursor=pointer]
+            - button "🎵 AI Backing" [ref=e1573] [cursor=pointer]
+            - button "📁 Import File" [ref=e1574] [cursor=pointer]
+        - generic [ref=e1575]:
+          - button "Add Track" [ref=e1576] [cursor=pointer]:
+            - img [ref=e1577]
+            - text: Add Track
+          - button "🎙 Record" [ref=e1579] [cursor=pointer]
+          - button "🥁 Drums" [ref=e1580] [cursor=pointer]
+          - button "🎵 AI Backing" [ref=e1581] [cursor=pointer]
+          - button "📁 Import" [ref=e1582] [cursor=pointer]
+      - generic [ref=e1583]:
+        - generic [ref=e1584]:
+          - button "🥁 Drum Machine" [ref=e1585] [cursor=pointer]:
+            - generic [ref=e1586]: 🥁
+            - generic [ref=e1587]: Drum Machine
+          - button "🔁 Looper" [ref=e1588] [cursor=pointer]:
+            - generic [ref=e1589]: 🔁
+            - generic [ref=e1590]: Looper
+          - button "🎵 AI Backing" [active] [ref=e1591] [cursor=pointer]:
+            - generic [ref=e1592]: 🎵
+            - generic [ref=e1593]: AI Backing
+          - button "🎨 Mixer" [ref=e1594] [cursor=pointer]:
+            - generic [ref=e1595]: 🎨
+            - generic [ref=e1596]: Mixer
+          - button "💾 Recordings" [ref=e1597] [cursor=pointer]:
+            - generic [ref=e1598]: 💾
+            - generic [ref=e1599]: Recordings
+        - generic [ref=e1606]:
+          - generic [ref=e1607]:
+            - generic [ref=e1608]:
+              - img [ref=e1609]
+              - generic [ref=e1611]: Suno AI Backing Track
+            - generic [ref=e1612]: 2 credits
+          - generic [ref=e1613]:
+            - button "Generate" [ref=e1614] [cursor=pointer]
+            - button "Library" [ref=e1615] [cursor=pointer]
+            - button "Credits" [ref=e1616] [cursor=pointer]
+          - generic [ref=e1617]:
+            - generic [ref=e1618]:
+              - generic [ref=e1619]: Prompt mode
+              - button "Builder" [ref=e1620] [cursor=pointer]
+            - generic [ref=e1621]:
+              - generic [ref=e1622]:
+                - generic [ref=e1623]: Key
+                - combobox "Key" [ref=e1624] [cursor=pointer]:
+                  - option "C"
+                  - option "Cm"
+                  - option "C#/Db"
+                  - option "C#/Dbm"
+                  - option "D"
+                  - option "Dm"
+                  - option "D#/Eb"
+                  - option "D#/Ebm"
+                  - option "E"
+                  - option "Em"
+                  - option "F"
+                  - option "Fm"
+                  - option "F#/Gb"
+                  - option "F#/Gbm"
+                  - option "G"
+                  - option "Gm"
+                  - option "G#/Ab"
+                  - option "G#/Abm"
+                  - option "A"
+                  - option "Am" [selected]
+                  - option "A#/Bb"
+                  - option "A#/Bbm"
+                  - option "B"
+                  - option "Bm"
+              - generic [ref=e1625]:
+                - generic [ref=e1626]: Mode
+                - combobox "Mode" [ref=e1627] [cursor=pointer]:
+                  - option "Aeolian" [selected]
+                  - option "Dorian"
+                  - option "Phrygian"
+                  - option "Lydian"
+                  - option "Mixolydian"
+                  - option "Ionian"
+                  - option "Locrian"
+                  - option "Harmonic Minor"
+                  - option "Phrygian Dominant"
+                  - option "Minor Pentatonic"
+                  - option "Minor Blues"
+                  - option "Whole Tone"
+                  - option "Melodic Minor"
+                  - option "Major Pentatonic"
+                  - option "Lydian Dominant"
+                  - option "Hungarian Minor"
+            - generic [ref=e1628]:
+              - generic [ref=e1629]:
+                - generic [ref=e1630]: Style
+                - combobox "Style" [ref=e1631] [cursor=pointer]:
+                  - option "Metal" [selected]
+                  - option "Hard Rock"
+                  - option "Classic Rock"
+                  - option "Blues"
+                  - option "Jazz"
+                  - option "Grunge"
+                  - option "Stoner Rock"
+                  - option "Punk Rock"
+                  - option "Neo-Classical"
+                  - option "Funk"
+                  - option "Country"
+                  - option "Flamenco"
+                  - option "Acoustic"
+                  - option "Progressive Metal"
+                  - option "Djent"
+                  - option "Death Metal"
+                  - option "Fusion"
+              - generic [ref=e1632]:
+                - generic [ref=e1633]: BPM
+                - spinbutton "BPM" [ref=e1634]: "120"
+            - generic [ref=e1635]:
+              - generic [ref=e1636]: Preview
+              - generic [ref=e1637]: A Aeolian, heavy metal, distorted rhythm guitar, double bass drums, aggressive, instrumental backing track, no vocals, no lead guitar, 120 BPM
+            - button "Generate Backing Track" [ref=e1638] [cursor=pointer]

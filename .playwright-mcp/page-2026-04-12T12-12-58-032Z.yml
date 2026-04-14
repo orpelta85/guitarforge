@@ -1,0 +1,117 @@
+- generic [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - button "Open Next.js Dev Tools" [ref=e11] [cursor=pointer]:
+    - img [ref=e12]
+  - alert [ref=e15]
+  - generic [ref=e16]:
+    - complementary [ref=e17]:
+      - img "Guitar Practice" [ref=e20]
+      - navigation [ref=e22]:
+        - generic [ref=e23]: Main
+        - button "Home" [ref=e24] [cursor=pointer]:
+          - img [ref=e26]
+          - generic [ref=e28]: Home
+        - button "Practice" [ref=e29] [cursor=pointer]:
+          - img [ref=e31]
+          - generic [ref=e35]: Practice
+        - button "Learn" [ref=e36] [cursor=pointer]:
+          - img [ref=e38]
+          - generic [ref=e41]: Learn
+        - button "Studio" [ref=e42] [cursor=pointer]:
+          - img [ref=e44]
+          - generic [ref=e47]: Studio
+        - button "Jam Mode" [active] [ref=e48] [cursor=pointer]:
+          - img [ref=e50]
+          - generic [ref=e53]: Jam Mode
+        - button "Library" [ref=e54] [cursor=pointer]:
+          - img [ref=e56]
+          - generic [ref=e59]: Library
+        - generic [ref=e60]: Tools
+        - button "AI Coach" [ref=e61] [cursor=pointer]:
+          - img [ref=e63]
+          - generic [ref=e65]: AI Coach
+        - button "Suno AI" [ref=e66] [cursor=pointer]:
+          - img [ref=e68]
+          - generic [ref=e71]: Suno AI
+        - button "Skills" [ref=e72] [cursor=pointer]:
+          - img [ref=e74]
+          - generic [ref=e80]: Skills
+        - button "Tuner" [ref=e81] [cursor=pointer]:
+          - img [ref=e83]
+          - generic [ref=e85]: Tuner
+      - button "Guest Sign in to sync" [ref=e88]:
+        - img [ref=e90]
+        - generic [ref=e93]:
+          - generic [ref=e94]: Guest
+          - generic [ref=e95]: Sign in to sync
+      - button "Sign in to sync" [ref=e97]
+    - generic [ref=e2748]:
+      - generic [ref=e2749]:
+        - generic [ref=e2750]:
+          - generic [ref=e2751]:
+            - spinbutton [ref=e2752]: "120"
+            - generic [ref=e2753]: BPM
+          - button "Metronome (M)" [ref=e2754] [cursor=pointer]:
+            - img [ref=e2755]
+          - generic [ref=e2758]:
+            - img [ref=e2759]
+            - combobox [ref=e2762] [cursor=pointer]:
+              - option "No devices" [selected]
+        - generic [ref=e2763]:
+          - button "Rewind (Enter)" [ref=e2764] [cursor=pointer]:
+            - img [ref=e2765]
+          - button "Play (Space)" [disabled] [ref=e2767] [cursor=pointer]:
+            - img [ref=e2768]
+          - button "Stop" [ref=e2770] [cursor=pointer]
+          - button "Record (R)" [ref=e2772] [cursor=pointer]
+          - button "Loop (C)" [ref=e2774] [cursor=pointer]:
+            - img [ref=e2775]
+          - generic [ref=e2781]:
+            - generic [ref=e2782]: 88:88.8
+            - generic [ref=e2783]: 00:00.0
+          - generic [ref=e2784]: /
+          - generic [ref=e2785]: 00:00.0
+        - generic [ref=e2786]:
+          - generic [ref=e2787]: 0 trk
+          - generic [ref=e2788]:
+            - img [ref=e2789]
+            - slider [ref=e2792] [cursor=pointer]: "80"
+            - generic [ref=e2793]: 80%
+          - button "Save" [disabled] [ref=e2794]
+      - generic [ref=e2796]:
+        - generic [ref=e2798]:
+          - generic [ref=e2799]: 🎸
+          - generic [ref=e2800]: Start Creating
+          - generic [ref=e2801]: Drop an audio file here or pick an option below
+          - generic [ref=e2802]:
+            - button "Record" [ref=e2803] [cursor=pointer]:
+              - img [ref=e2804]
+              - text: Record
+            - button "🥁 Drum Machine" [ref=e2807] [cursor=pointer]
+            - button "🎵 AI Backing" [ref=e2808] [cursor=pointer]
+            - button "📁 Import File" [ref=e2809] [cursor=pointer]
+        - generic [ref=e2810]:
+          - button "Add Track" [ref=e2811] [cursor=pointer]:
+            - img [ref=e2812]
+            - text: Add Track
+          - button "🎙 Record" [ref=e2814] [cursor=pointer]
+          - button "🥁 Drums" [ref=e2815] [cursor=pointer]
+          - button "🎵 AI Backing" [ref=e2816] [cursor=pointer]
+          - button "📁 Import" [ref=e2817] [cursor=pointer]
+      - generic [ref=e2819]:
+        - button "🥁 Drum Machine" [ref=e2820] [cursor=pointer]:
+          - generic [ref=e2821]: 🥁
+          - generic [ref=e2822]: Drum Machine
+        - button "🔁 Looper" [ref=e2823] [cursor=pointer]:
+          - generic [ref=e2824]: 🔁
+          - generic [ref=e2825]: Looper
+        - button "🎵 AI Backing" [ref=e2826] [cursor=pointer]:
+          - generic [ref=e2827]: 🎵
+          - generic [ref=e2828]: AI Backing
+        - button "🎨 Mixer" [ref=e2829] [cursor=pointer]:
+          - generic [ref=e2830]: 🎨
+          - generic [ref=e2831]: Mixer
+        - button "💾 Recordings" [ref=e2832] [cursor=pointer]:
+          - generic [ref=e2833]: 💾
+          - generic [ref=e2834]: Recordings

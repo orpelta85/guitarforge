@@ -1,0 +1,111 @@
+- generic [active] [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - button "Open Next.js Dev Tools" [ref=e8] [cursor=pointer]:
+    - img [ref=e9]
+  - alert [ref=e12]
+  - generic [ref=e13]:
+    - complementary [ref=e14]:
+      - img "Guitar Practice" [ref=e17]
+      - navigation [ref=e19]:
+        - generic [ref=e20]: Main
+        - button "Home" [ref=e21] [cursor=pointer]:
+          - img [ref=e23]
+          - generic [ref=e25]: Home
+        - button "Practice" [ref=e26] [cursor=pointer]:
+          - img [ref=e28]
+          - generic [ref=e32]: Practice
+        - button "Learn" [ref=e33] [cursor=pointer]:
+          - img [ref=e35]
+          - generic [ref=e38]: Learn
+        - button "Studio" [ref=e39] [cursor=pointer]:
+          - img [ref=e41]
+          - generic [ref=e44]: Studio
+        - button "Jam Mode" [ref=e45] [cursor=pointer]:
+          - img [ref=e47]
+          - generic [ref=e50]: Jam Mode
+        - button "Library" [ref=e51] [cursor=pointer]:
+          - img [ref=e53]
+          - generic [ref=e56]: Library
+        - generic [ref=e57]: Tools
+        - button "AI Coach" [ref=e58] [cursor=pointer]:
+          - img [ref=e60]
+          - generic [ref=e62]: AI Coach
+        - button "Suno AI" [ref=e63] [cursor=pointer]:
+          - img [ref=e65]
+          - generic [ref=e68]: Suno AI
+        - button "Skills" [ref=e69] [cursor=pointer]:
+          - img [ref=e71]
+          - generic [ref=e77]: Skills
+        - button "Tuner" [ref=e78] [cursor=pointer]:
+          - img [ref=e80]
+          - generic [ref=e82]: Tuner
+      - button "Guest Sign in to sync" [ref=e85]:
+        - img [ref=e87]
+        - generic [ref=e90]:
+          - generic [ref=e91]: Guest
+          - generic [ref=e92]: Sign in to sync
+      - button "Sign in to sync" [ref=e94]
+    - generic [ref=e1719]:
+      - generic [ref=e1720]:
+        - button "Exercises" [ref=e1721] [cursor=pointer]:
+          - img [ref=e1722]
+          - text: Exercises
+        - button "Styles" [ref=e1724] [cursor=pointer]:
+          - img [ref=e1725]
+          - text: Styles
+        - button "My Songs" [ref=e1727] [cursor=pointer]:
+          - img [ref=e1728]
+          - text: My Songs
+        - button "Recordings" [ref=e1730] [cursor=pointer]:
+          - img [ref=e1731]
+          - text: Recordings
+        - button "Backing Tracks" [ref=e1733] [cursor=pointer]:
+          - img [ref=e1734]
+          - text: Backing Tracks
+        - button "Song Library" [ref=e1736] [cursor=pointer]:
+          - img [ref=e1737]
+          - text: Song Library
+      - generic [ref=e1739]:
+        - textbox "Search exercise..." [ref=e1740]: EXAMPLE EX
+        - button "Add Exercise" [ref=e1741] [cursor=pointer]:
+          - img [ref=e1742]
+          - text: Add Exercise
+      - generic [ref=e1744]:
+        - button "All (199)" [ref=e1745] [cursor=pointer]
+        - button "Warm-Up (17)" [ref=e1746] [cursor=pointer]
+        - button "Shred (10)" [ref=e1747] [cursor=pointer]
+        - button "Legato (9)" [ref=e1748] [cursor=pointer]
+        - button "Bends (6)" [ref=e1749] [cursor=pointer]
+        - button "Tapping (7)" [ref=e1750] [cursor=pointer]
+        - button "Sweep (5)" [ref=e1751] [cursor=pointer]
+        - button "Rhythm (12)" [ref=e1752] [cursor=pointer]
+        - button "Fretboard (4)" [ref=e1753] [cursor=pointer]
+        - button "Ear Training (6)" [ref=e1754] [cursor=pointer]
+        - button "Improv (6)" [ref=e1755] [cursor=pointer]
+        - button "Riffs (5)" [ref=e1756] [cursor=pointer]
+        - button "Phrasing (4)" [ref=e1757] [cursor=pointer]
+        - button "Modes (6)" [ref=e1758] [cursor=pointer]
+        - button "Composition (6)" [ref=e1759] [cursor=pointer]
+        - button "Dynamics (6)" [ref=e1760] [cursor=pointer]
+        - button "Chords (18)" [ref=e1761] [cursor=pointer]
+        - button "Harmonics (5)" [ref=e1762] [cursor=pointer]
+        - button "Picking (6)" [ref=e1763] [cursor=pointer]
+        - button "Arpeggios (6)" [ref=e1764] [cursor=pointer]
+        - button "Slide (4)" [ref=e1765] [cursor=pointer]
+        - button "Tunings (4)" [ref=e1766] [cursor=pointer]
+        - button "Keys (5)" [ref=e1767] [cursor=pointer]
+      - button "Show Flat List" [ref=e1769] [cursor=pointer]
+      - generic [ref=e1770]:
+        - generic [ref=e1771] [cursor=pointer]:
+          - img [ref=e1772]
+          - generic [ref=e1774]: Technique
+          - generic [ref=e1775]: "1"
+        - generic [ref=e1802] [cursor=pointer]:
+          - generic [ref=e1803]: Warm-Up
+          - generic [ref=e1804]:
+            - generic [ref=e1805]: EXAMPLE EX — Am Pentatonic 1st Position
+            - generic [ref=e1806]: Pentatonic Scale, 1st Position · 5min · 120
+          - button "Delete exercise" [ref=e1807]:
+            - img [ref=e1808]
+          - generic [ref=e1810]: +

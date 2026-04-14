@@ -1,0 +1,17 @@
+- main [ref=e3]:
+  - generic [ref=e4]:
+    - heading "Oops! We couldn't find that page." [level=1] [ref=e5]
+    - paragraph [ref=e6]:
+      - text: Back to the
+      - link "homepage" [ref=e7] [cursor=pointer]:
+        - /url: /
+      - text: .
+      - text: If you think something is broken,
+      - link "report a problem" [ref=e8] [cursor=pointer]:
+        - /url: https://help.ultimate-guitar.com
+      - text: .
+    - generic [ref=e9]:
+      - link "GO TO HOMEPAGE" [ref=e10] [cursor=pointer]:
+        - /url: /
+      - link "REPORT A PROBLEM" [ref=e11] [cursor=pointer]:
+        - /url: https://help.ultimate-guitar.com

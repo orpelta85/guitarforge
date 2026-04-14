@@ -1,0 +1,290 @@
+- generic [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - button "Open Next.js Dev Tools" [ref=e8] [cursor=pointer]:
+    - img [ref=e9]
+  - alert [ref=e12]
+  - generic [ref=e13]:
+    - complementary [ref=e14]:
+      - img "Guitar Practice" [ref=e17]
+      - navigation [ref=e19]:
+        - generic [ref=e20]: Main
+        - button "Home" [ref=e21] [cursor=pointer]:
+          - img [ref=e23]
+          - generic [ref=e25]: Home
+        - button "Practice" [active] [ref=e26] [cursor=pointer]:
+          - img [ref=e28]
+          - generic [ref=e32]: Practice
+        - button "Learn" [ref=e33] [cursor=pointer]:
+          - img [ref=e35]
+          - generic [ref=e38]: Learn
+        - button "Studio" [ref=e39] [cursor=pointer]:
+          - img [ref=e41]
+          - generic [ref=e44]: Studio
+        - button "Jam Mode" [ref=e45] [cursor=pointer]:
+          - img [ref=e47]
+          - generic [ref=e50]: Jam Mode
+        - button "Library" [ref=e51] [cursor=pointer]:
+          - img [ref=e53]
+          - generic [ref=e56]: Library
+        - generic [ref=e57]: Tools
+        - button "AI Coach" [ref=e58] [cursor=pointer]:
+          - img [ref=e60]
+          - generic [ref=e62]: AI Coach
+        - button "Suno AI" [ref=e63] [cursor=pointer]:
+          - img [ref=e65]
+          - generic [ref=e68]: Suno AI
+        - button "Skills" [ref=e69] [cursor=pointer]:
+          - img [ref=e71]
+          - generic [ref=e77]: Skills
+        - button "Tuner" [ref=e78] [cursor=pointer]:
+          - img [ref=e80]
+          - generic [ref=e82]: Tuner
+      - button "Guest Sign in to sync" [ref=e85]:
+        - img [ref=e87]
+        - generic [ref=e90]:
+          - generic [ref=e91]: Guest
+          - generic [ref=e92]: Sign in to sync
+      - button "Sign in to sync" [ref=e94]
+    - generic [ref=e1239]:
+      - generic [ref=e1240]:
+        - button "Sunday" [ref=e1241] [cursor=pointer]
+        - button "Monday" [ref=e1242] [cursor=pointer]
+        - button "Tuesday" [ref=e1243] [cursor=pointer]
+        - button "Wednesday" [ref=e1244] [cursor=pointer]
+        - button "Thursday" [ref=e1245] [cursor=pointer]
+        - button "Friday" [ref=e1246] [cursor=pointer]
+        - button "Saturday" [ref=e1247] [cursor=pointer]
+      - generic [ref=e1249]:
+        - generic [ref=e1250]:
+          - generic [ref=e1251]:
+            - generic [ref=e1252]: Tuesday
+            - button "Edit" [ref=e1253] [cursor=pointer]:
+              - img [ref=e1254]
+              - text: Edit
+          - generic [ref=e1257]:
+            - generic [ref=e1258]: 12 exercises
+            - text: ·
+            - generic [ref=e1259]: 118 min
+            - text: ·
+            - generic [ref=e1260]: 0 done
+          - generic [ref=e1261]:
+            - generic [ref=e1262]: Warm-Up
+            - generic [ref=e1263]: Legato
+            - generic [ref=e1264]: Bends
+            - generic [ref=e1265]: Phrasing
+        - generic [ref=e1266]:
+          - button "Auto Fill" [ref=e1267] [cursor=pointer]
+          - button "+ Exercise" [ref=e1268] [cursor=pointer]
+          - button "+ Song" [ref=e1269] [cursor=pointer]
+          - button "Copy" [ref=e1270] [cursor=pointer]:
+            - img [ref=e1271]
+            - generic [ref=e1274]: Copy
+          - button "Paste" [ref=e1275] [cursor=pointer]:
+            - img [ref=e1276]
+            - generic [ref=e1279]: Paste
+      - generic [ref=e1280]:
+        - generic [ref=e1281]:
+          - generic [ref=e1282]:
+            - generic [ref=e1283]: 00:00
+            - generic [ref=e1284]: Session
+            - generic [ref=e1285]: Day 1
+          - generic [ref=e1286]:
+            - button "Log" [ref=e1287] [cursor=pointer]:
+              - img [ref=e1288]
+              - text: Log
+            - button "Start" [ref=e1290]
+            - button "Reset" [ref=e1291] [cursor=pointer]
+        - generic [ref=e1293]:
+          - generic [ref=e1294]: 0/12 exercises
+          - generic [ref=e1295]: 0%
+        - generic [ref=e1297]:
+          - button "Metronome" [ref=e1298]:
+            - img [ref=e1299]
+            - text: Metronome
+          - button "Tuner" [ref=e1302]:
+            - img [ref=e1303]
+            - text: Tuner
+          - button "Record" [ref=e1308]:
+            - img [ref=e1309]
+            - text: Record
+      - generic [ref=e1313]:
+        - generic "Drag to reorder" [ref=e1314]:
+          - img [ref=e1315]
+        - button "Mark done" [ref=e1322] [cursor=pointer]
+        - button "EXAMPLE EX — Am Pentatonic 1st Position Warm-Up · 5min · 120 BPM" [ref=e1325] [cursor=pointer]:
+          - generic [ref=e1326]: EXAMPLE EX — Am Pentatonic 1st Position
+          - generic [ref=e1327]:
+            - generic [ref=e1328]: Warm-Up ·
+            - button "5min" [ref=e1329]
+            - generic [ref=e1330]: · 120 BPM
+        - generic [ref=e1331]:
+          - button "UP" [ref=e1332] [cursor=pointer]
+          - button "DN" [ref=e1333] [cursor=pointer]
+          - button "Swap" [ref=e1334] [cursor=pointer]
+          - button "Del" [ref=e1335] [cursor=pointer]
+      - generic [ref=e1337]:
+        - generic "Drag to reorder" [ref=e1338]:
+          - img [ref=e1339]
+        - button "Mark done" [ref=e1346] [cursor=pointer]
+        - button "Guitar Pro - MRM - Module 1 Warm-Up · 10min · 60-100 BPM" [ref=e1349] [cursor=pointer]:
+          - generic [ref=e1350]: Guitar Pro - MRM - Module 1
+          - generic [ref=e1351]:
+            - generic [ref=e1352]: Warm-Up ·
+            - button "10min" [ref=e1353]
+            - generic [ref=e1354]: · 60-100 BPM
+        - generic [ref=e1355]:
+          - button "UP" [ref=e1356] [cursor=pointer]
+          - button "DN" [ref=e1357] [cursor=pointer]
+          - button "Swap" [ref=e1358] [cursor=pointer]
+          - button "Del" [ref=e1359] [cursor=pointer]
+      - generic [ref=e1361]:
+        - generic "Drag to reorder" [ref=e1362]:
+          - img [ref=e1363]
+        - button "Mark done" [ref=e1370] [cursor=pointer]
+        - button "Symetrical excercises for left hand Warm-Up · 10min · 60-100 BPM" [ref=e1373] [cursor=pointer]:
+          - generic [ref=e1374]: Symetrical excercises for left hand
+          - generic [ref=e1375]:
+            - generic [ref=e1376]: Warm-Up ·
+            - button "10min" [ref=e1377]
+            - generic [ref=e1378]: · 60-100 BPM
+        - generic [ref=e1379]:
+          - button "UP" [ref=e1380] [cursor=pointer]
+          - button "DN" [ref=e1381] [cursor=pointer]
+          - button "Swap" [ref=e1382] [cursor=pointer]
+          - button "Del" [ref=e1383] [cursor=pointer]
+      - generic [ref=e1385]:
+        - generic "Drag to reorder" [ref=e1386]:
+          - img [ref=e1387]
+        - button "Mark done" [ref=e1394] [cursor=pointer]
+        - button "Spider Exercise Finger Independence Warm-Up · 5min · 75-95 BPM" [ref=e1397] [cursor=pointer]:
+          - generic [ref=e1398]: Spider Exercise Finger Independence
+          - generic [ref=e1399]:
+            - generic [ref=e1400]: Warm-Up ·
+            - button "5min" [ref=e1401]
+            - generic [ref=e1402]: · 75-95 BPM
+        - generic [ref=e1403]:
+          - button "UP" [ref=e1404] [cursor=pointer]
+          - button "DN" [ref=e1405] [cursor=pointer]
+          - button "Swap" [ref=e1406] [cursor=pointer]
+          - button "Del" [ref=e1407] [cursor=pointer]
+      - generic [ref=e1409]:
+        - generic "Drag to reorder" [ref=e1410]:
+          - img [ref=e1411]
+        - button "Mark done" [ref=e1418] [cursor=pointer]
+        - button "Cross-String Legato + Slide Holdsworth Legato · 15min · 65-95 BPM" [ref=e1421] [cursor=pointer]:
+          - generic [ref=e1422]: Cross-String Legato + Slide Holdsworth
+          - generic [ref=e1423]:
+            - generic [ref=e1424]: Legato ·
+            - button "15min" [ref=e1425]
+            - generic [ref=e1426]: · 65-95 BPM
+        - generic [ref=e1427]:
+          - button "UP" [ref=e1428] [cursor=pointer]
+          - button "DN" [ref=e1429] [cursor=pointer]
+          - button "Swap" [ref=e1430] [cursor=pointer]
+          - button "Del" [ref=e1431] [cursor=pointer]
+      - generic [ref=e1433]:
+        - generic "Drag to reorder" [ref=e1434]:
+          - img [ref=e1435]
+        - button "Mark done" [ref=e1442] [cursor=pointer]
+        - button "Legato + Pick Hybrid 3 Slurred + 1 Picked Legato · 12min · 80-110 BPM" [ref=e1445] [cursor=pointer]:
+          - generic [ref=e1446]: Legato + Pick Hybrid 3 Slurred + 1 Picked
+          - generic [ref=e1447]:
+            - generic [ref=e1448]: Legato ·
+            - button "12min" [ref=e1449]
+            - generic [ref=e1450]: · 80-110 BPM
+        - generic [ref=e1451]:
+          - button "UP" [ref=e1452] [cursor=pointer]
+          - button "DN" [ref=e1453] [cursor=pointer]
+          - button "Swap" [ref=e1454] [cursor=pointer]
+          - button "Del" [ref=e1455] [cursor=pointer]
+      - generic [ref=e1457]:
+        - generic "Drag to reorder" [ref=e1458]:
+          - img [ref=e1459]
+        - button "Mark done" [ref=e1466] [cursor=pointer]
+        - button "Pre-Bend + Release Reverse Drama Bends · 8min · 60-100 BPM" [ref=e1469] [cursor=pointer]:
+          - generic [ref=e1470]: Pre-Bend + Release Reverse Drama
+          - generic [ref=e1471]:
+            - generic [ref=e1472]: Bends ·
+            - button "8min" [ref=e1473]
+            - generic [ref=e1474]: · 60-100 BPM
+        - generic [ref=e1475]:
+          - button "UP" [ref=e1476] [cursor=pointer]
+          - button "DN" [ref=e1477] [cursor=pointer]
+          - button "Swap" [ref=e1478] [cursor=pointer]
+          - button "Del" [ref=e1479] [cursor=pointer]
+      - generic [ref=e1481]:
+        - generic "Drag to reorder" [ref=e1482]:
+          - img [ref=e1483]
+        - button "Mark done" [ref=e1490] [cursor=pointer]
+        - button "Multi-Step Bends 1.5+2 Tone Bends · 8min · 60-90 BPM" [ref=e1493] [cursor=pointer]:
+          - generic [ref=e1494]: Multi-Step Bends 1.5+2 Tone
+          - generic [ref=e1495]:
+            - generic [ref=e1496]: Bends ·
+            - button "8min" [ref=e1497]
+            - generic [ref=e1498]: · 60-90 BPM
+        - generic [ref=e1499]:
+          - button "UP" [ref=e1500] [cursor=pointer]
+          - button "DN" [ref=e1501] [cursor=pointer]
+          - button "Swap" [ref=e1502] [cursor=pointer]
+          - button "Del" [ref=e1503] [cursor=pointer]
+      - generic [ref=e1505]:
+        - generic "Drag to reorder" [ref=e1506]:
+          - img [ref=e1507]
+        - button "Mark done" [ref=e1514] [cursor=pointer]
+        - button "Unison Bend Hendrix Double-Stop Bends · 10min · 60-100 BPM" [ref=e1517] [cursor=pointer]:
+          - generic [ref=e1518]: Unison Bend Hendrix Double-Stop
+          - generic [ref=e1519]:
+            - generic [ref=e1520]: Bends ·
+            - button "10min" [ref=e1521]
+            - generic [ref=e1522]: · 60-100 BPM
+        - generic [ref=e1523]:
+          - button "UP" [ref=e1524] [cursor=pointer]
+          - button "DN" [ref=e1525] [cursor=pointer]
+          - button "Swap" [ref=e1526] [cursor=pointer]
+          - button "Del" [ref=e1527] [cursor=pointer]
+      - generic [ref=e1529]:
+        - generic "Drag to reorder" [ref=e1530]:
+          - img [ref=e1531]
+        - button "Mark done" [ref=e1538] [cursor=pointer]
+        - button "Phrygian Lick b2 Dark Descent Phrasing · 15min · 60-120 BPM" [ref=e1541] [cursor=pointer]:
+          - generic [ref=e1542]: Phrygian Lick b2 Dark Descent
+          - generic [ref=e1543]:
+            - generic [ref=e1544]: Phrasing ·
+            - button "15min" [ref=e1545]
+            - generic [ref=e1546]: · 60-120 BPM
+        - generic [ref=e1547]:
+          - button "UP" [ref=e1548] [cursor=pointer]
+          - button "DN" [ref=e1549] [cursor=pointer]
+          - button "Swap" [ref=e1550] [cursor=pointer]
+          - button "Del" [ref=e1551] [cursor=pointer]
+      - generic [ref=e1553]:
+        - generic "Drag to reorder" [ref=e1554]:
+          - img [ref=e1555]
+        - button "Mark done" [ref=e1562] [cursor=pointer]
+        - button "Zakk Wylde Pentatonic Box Sextuplet Phrasing · 15min · 60-120 BPM" [ref=e1565] [cursor=pointer]:
+          - generic [ref=e1566]: Zakk Wylde Pentatonic Box Sextuplet
+          - generic [ref=e1567]:
+            - generic [ref=e1568]: Phrasing ·
+            - button "15min" [ref=e1569]
+            - generic [ref=e1570]: · 60-120 BPM
+        - generic [ref=e1571]:
+          - button "UP" [ref=e1572] [cursor=pointer]
+          - button "DN" [ref=e1573] [cursor=pointer]
+          - button "Swap" [ref=e1574] [cursor=pointer]
+          - button "Del" [ref=e1575] [cursor=pointer]
+      - generic [ref=e1577]:
+        - generic "Drag to reorder" [ref=e1578]:
+          - img [ref=e1579]
+        - button "Mark done" [ref=e1586] [cursor=pointer]
+        - button "Chromatic 1-2-3-4 Hand Sync Warm-Up · 5min · 80-120 BPM" [ref=e1589] [cursor=pointer]:
+          - generic [ref=e1590]: Chromatic 1-2-3-4 Hand Sync
+          - generic [ref=e1591]:
+            - generic [ref=e1592]: Warm-Up ·
+            - button "5min" [ref=e1593]
+            - generic [ref=e1594]: · 80-120 BPM
+        - generic [ref=e1595]:
+          - button "UP" [ref=e1596] [cursor=pointer]
+          - button "DN" [ref=e1597] [cursor=pointer]
+          - button "Swap" [ref=e1598] [cursor=pointer]
+          - button "Del" [ref=e1599] [cursor=pointer]

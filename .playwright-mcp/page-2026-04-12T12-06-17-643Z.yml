@@ -1,0 +1,246 @@
+- generic [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - button "Open Next.js Dev Tools" [ref=e11] [cursor=pointer]:
+    - img [ref=e12]
+  - alert [ref=e15]
+  - generic [ref=e16]:
+    - complementary [ref=e17]:
+      - img "Guitar Practice" [ref=e20]
+      - navigation [ref=e22]:
+        - generic [ref=e23]: Main
+        - button "Home" [ref=e24] [cursor=pointer]:
+          - img [ref=e26]
+          - generic [ref=e28]: Home
+        - button "Practice" [ref=e29] [cursor=pointer]:
+          - img [ref=e31]
+          - generic [ref=e35]: Practice
+        - button "Learn" [ref=e36] [cursor=pointer]:
+          - img [ref=e38]
+          - generic [ref=e41]: Learn
+        - button "Studio" [ref=e42] [cursor=pointer]:
+          - img [ref=e44]
+          - generic [ref=e47]: Studio
+        - button "Jam Mode" [active] [ref=e48] [cursor=pointer]:
+          - img [ref=e50]
+          - generic [ref=e53]: Jam Mode
+        - button "Library" [ref=e54] [cursor=pointer]:
+          - img [ref=e56]
+          - generic [ref=e59]: Library
+        - generic [ref=e60]: Tools
+        - button "AI Coach" [ref=e61] [cursor=pointer]:
+          - img [ref=e63]
+          - generic [ref=e65]: AI Coach
+        - button "Suno AI" [ref=e66] [cursor=pointer]:
+          - img [ref=e68]
+          - generic [ref=e71]: Suno AI
+        - button "Skills" [ref=e72] [cursor=pointer]:
+          - img [ref=e74]
+          - generic [ref=e80]: Skills
+        - button "Tuner" [ref=e81] [cursor=pointer]:
+          - img [ref=e83]
+          - generic [ref=e85]: Tuner
+      - button "Guest Sign in to sync" [ref=e88]:
+        - img [ref=e90]
+        - generic [ref=e93]:
+          - generic [ref=e94]: Guest
+          - generic [ref=e95]: Sign in to sync
+      - button "Sign in to sync" [ref=e97]
+    - generic [ref=e1639]:
+      - generic [ref=e1640]:
+        - generic [ref=e1641]:
+          - heading "Jam Mode" [level=1] [ref=e1642]
+          - paragraph [ref=e1643]: Play along to chord progressions with real-time cues
+        - button "Hide Settings" [ref=e1644]
+      - generic [ref=e1645]:
+        - generic [ref=e1646]:
+          - generic [ref=e1647]:
+            - generic [ref=e1648]: Key
+            - combobox [ref=e1649] [cursor=pointer]:
+              - option "C Major"
+              - option "Cm"
+              - option "C# Major"
+              - option "C#m"
+              - option "D Major"
+              - option "Dm"
+              - option "Eb Major"
+              - option "Ebm"
+              - option "E Major"
+              - option "Em"
+              - option "F Major"
+              - option "Fm"
+              - option "F# Major"
+              - option "F#m"
+              - option "G Major"
+              - option "Gm"
+              - option "Ab Major"
+              - option "Abm"
+              - option "A Major"
+              - option "Am" [selected]
+              - option "Bb Major"
+              - option "Bbm"
+              - option "B Major"
+              - option "Bm"
+          - generic [ref=e1650]:
+            - generic [ref=e1651]: Genre
+            - combobox [ref=e1652] [cursor=pointer]:
+              - option "Blues" [selected]
+              - option "Rock"
+              - option "Jazz"
+              - option "Metal"
+              - option "Funk"
+              - option "Punk"
+              - option "Ballad"
+              - option "R&B"
+          - generic [ref=e1653]:
+            - generic [ref=e1654]: Progression
+            - combobox [ref=e1655] [cursor=pointer]:
+              - option "12-Bar Blues" [selected]
+              - option "Blues Shuffle"
+          - generic [ref=e1656]:
+            - generic [ref=e1657]: Bars / Chord
+            - generic [ref=e1658]:
+              - button "1" [ref=e1659]
+              - button "2" [ref=e1660]
+              - button "4" [ref=e1661]
+        - generic [ref=e1662]:
+          - generic [ref=e1663]:
+            - generic [ref=e1664]: Tempo
+            - generic [ref=e1665]: 100 BPM
+          - slider [ref=e1666]: "100"
+          - generic [ref=e1667]:
+            - generic [ref=e1668]: "40"
+            - generic [ref=e1669]: "220"
+        - generic [ref=e1670]:
+          - generic [ref=e1671]:
+            - generic [ref=e1672]:
+              - generic [ref=e1673]: Click
+              - generic [ref=e1674]: 60%
+            - slider [ref=e1675]: "60"
+          - generic [ref=e1676]:
+            - generic [ref=e1677]:
+              - generic [ref=e1678]:
+                - generic [ref=e1679]: Bass
+                - button "OFF" [ref=e1680]
+              - generic [ref=e1681]: 40%
+            - slider [disabled] [ref=e1682]: "40"
+          - generic [ref=e1683]:
+            - generic [ref=e1684]:
+              - generic [ref=e1685]:
+                - generic [ref=e1686]: Drums
+                - button "OFF" [ref=e1687]
+              - generic [ref=e1688]: 30%
+            - slider [disabled] [ref=e1689]: "30"
+        - generic [ref=e1690]:
+          - generic [ref=e1691]: Groove Style
+          - generic [ref=e1692]:
+            - button "Rock" [disabled] [ref=e1693]
+            - button "Metal" [disabled] [ref=e1694]
+            - button "Blues" [disabled] [ref=e1695]
+            - button "Jazz" [disabled] [ref=e1696]
+            - button "Funk" [disabled] [ref=e1697]
+            - button "Punk" [disabled] [ref=e1698]
+            - button "Ballad" [disabled] [ref=e1699]
+            - button "Latin" [disabled] [ref=e1700]
+            - button "Reggae" [disabled] [ref=e1701]
+            - button "Country" [disabled] [ref=e1702]
+        - generic [ref=e1703]:
+          - button "Loop ON" [ref=e1704]
+          - button "Random OFF" [ref=e1705]
+      - generic [ref=e1706]:
+        - generic [ref=e1708]:
+          - generic [ref=e1709]:
+            - generic [ref=e1710]: I7
+            - text: A7
+          - generic [ref=e1711]:
+            - generic [ref=e1712]: I7
+            - text: A7
+          - generic [ref=e1713]:
+            - generic [ref=e1714]: IV7
+            - text: D7
+          - generic [ref=e1715]:
+            - generic [ref=e1716]: I7
+            - text: A7
+          - generic [ref=e1717]:
+            - generic [ref=e1718]: IV7
+            - text: D7
+          - generic [ref=e1719]:
+            - generic [ref=e1720]: IV7
+            - text: D7
+          - generic [ref=e1721]:
+            - generic [ref=e1722]: I7
+            - text: A7
+          - generic [ref=e1723]:
+            - generic [ref=e1724]: I7
+            - text: A7
+          - generic [ref=e1725]:
+            - generic [ref=e1726]: V7
+            - text: E7
+          - generic [ref=e1727]:
+            - generic [ref=e1728]: IV7
+            - text: D7
+          - generic [ref=e1729]:
+            - generic [ref=e1730]: I7
+            - text: A7
+          - generic [ref=e1731]:
+            - generic [ref=e1732]: V7
+            - text: E7
+        - generic [ref=e1733]:
+          - generic [ref=e1734]: I7
+          - generic [ref=e1735]: A7
+          - generic [ref=e1736]:
+            - generic [ref=e1737]: Next
+            - generic [ref=e1738]: A7
+          - generic [ref=e1744]: Bar 1 of 2 | Chord 1 of 12
+        - generic [ref=e1745]:
+          - button [disabled] [ref=e1746]:
+            - img [ref=e1747]
+          - button [ref=e1749]:
+            - img [ref=e1750]
+      - generic [ref=e1752]:
+        - generic [ref=e1753]:
+          - heading "Scale Guide" [level=2] [ref=e1754]
+          - generic [ref=e1755]:
+            - button "natural" [ref=e1756]
+            - button "pentatonic" [ref=e1757]
+            - button "blues" [ref=e1758]
+        - generic [ref=e1759]: A Minor Pentatonic
+        - generic [ref=e1760]:
+          - generic [ref=e1761]: A
+          - generic [ref=e1762]: C
+          - generic [ref=e1763]: D
+          - generic [ref=e1764]: E
+          - generic [ref=e1765]: G
+        - generic [ref=e1766]: "Root note: A|Quality: 7"
+      - generic [ref=e1767]:
+        - heading "Progression Details" [level=2] [ref=e1768]
+        - generic [ref=e1769]:
+          - generic [ref=e1770]: "Name: 12-Bar Blues"
+          - generic [ref=e1771]: "Genre: Blues"
+          - generic [ref=e1772]: "Chords: A7 - A7 - D7 - A7 - D7 - D7 - A7 - A7 - E7 - D7 - A7 - E7"
+          - generic [ref=e1773]: "Numerals: I7 - I7 - IV7 - I7 - IV7 - IV7 - I7 - I7 - V7 - IV7 - I7 - V7"
+      - generic [ref=e1774]:
+        - button "LOOPER" [ref=e1775]:
+          - generic [ref=e1778]: LOOPER
+          - img [ref=e1779]
+        - generic [ref=e1781]:
+          - generic [ref=e1782]:
+            - generic [ref=e1783]: Loop
+            - generic [ref=e1784]:
+              - button "1 bar" [ref=e1785]
+              - button "2 bars" [ref=e1786]
+              - button "4 bars" [ref=e1787]
+              - button "8 bars" [ref=e1788]
+            - generic [ref=e1789]:
+              - generic [ref=e1790]: 100 BPM
+              - generic [ref=e1791]: 4.8s
+          - generic [ref=e1793]:
+            - generic [ref=e1794]: No layers yet
+            - generic [ref=e1795]: Press Record to start your first loop
+          - generic [ref=e1796]:
+            - button "Record" [ref=e1797]:
+              - img [ref=e1798]
+              - text: Record
+            - button "Play" [disabled] [ref=e1800]:
+              - img [ref=e1801]
+              - text: Play

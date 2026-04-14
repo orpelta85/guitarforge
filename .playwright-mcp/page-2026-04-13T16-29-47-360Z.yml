@@ -1,0 +1,97 @@
+- generic [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - button "Open Next.js Dev Tools" [ref=e8] [cursor=pointer]:
+    - img [ref=e9]
+  - alert [ref=e12]
+  - generic [ref=e13]:
+    - complementary [ref=e14]:
+      - img "Guitar Practice" [ref=e17]
+      - navigation [ref=e19]:
+        - generic [ref=e20]: Main
+        - button "Home" [ref=e21] [cursor=pointer]:
+          - img [ref=e23]
+          - generic [ref=e25]: Home
+        - button "Practice" [ref=e26] [cursor=pointer]:
+          - img [ref=e28]
+          - generic [ref=e32]: Practice
+        - button "Learn" [ref=e33] [cursor=pointer]:
+          - img [ref=e35]
+          - generic [ref=e38]: Learn
+        - button "Studio" [ref=e39] [cursor=pointer]:
+          - img [ref=e41]
+          - generic [ref=e44]: Studio
+        - button "Jam Mode" [ref=e45] [cursor=pointer]:
+          - img [ref=e47]
+          - generic [ref=e50]: Jam Mode
+        - button "Library" [active] [ref=e51] [cursor=pointer]:
+          - img [ref=e53]
+          - generic [ref=e56]: Library
+        - generic [ref=e57]: Tools
+        - button "AI Coach" [ref=e58] [cursor=pointer]:
+          - img [ref=e60]
+          - generic [ref=e62]: AI Coach
+        - button "Suno AI" [ref=e63] [cursor=pointer]:
+          - img [ref=e65]
+          - generic [ref=e68]: Suno AI
+        - button "Skills" [ref=e69] [cursor=pointer]:
+          - img [ref=e71]
+          - generic [ref=e77]: Skills
+        - button "Tuner" [ref=e78] [cursor=pointer]:
+          - img [ref=e80]
+          - generic [ref=e82]: Tuner
+      - button "Guest Sign in to sync" [ref=e85]:
+        - img [ref=e87]
+        - generic [ref=e90]:
+          - generic [ref=e91]: Guest
+          - generic [ref=e92]: Sign in to sync
+      - button "Sign in to sync" [ref=e94]
+    - generic [ref=e2863]:
+      - generic [ref=e2864]:
+        - generic [ref=e2865]: Week 1
+        - generic [ref=e2866]: Aeolian · Am · Blues
+        - generic [ref=e2868]: 0/5 (0%)
+      - generic [ref=e2869]:
+        - generic [ref=e2870]: 🔥 Practice Streak
+        - generic [ref=e2871]:
+          - generic [ref=e2872]:
+            - generic [ref=e2873]: "0"
+            - generic [ref=e2874]: Current Streak
+          - generic [ref=e2875]:
+            - generic [ref=e2876]: "0"
+            - generic [ref=e2877]: Longest Streak
+          - generic [ref=e2878]:
+            - generic [ref=e2879]: "0"
+            - generic [ref=e2880]: Total Days
+          - generic [ref=e2881]:
+            - generic [ref=e2882]: —
+            - generic [ref=e2883]: Last Practice
+      - generic [ref=e2884]:
+        - generic [ref=e2886]:
+          - generic [ref=e2887]:
+            - generic [ref=e2888]: "0"
+            - generic [ref=e2889]: Minutes Done
+          - generic [ref=e2890]:
+            - generic [ref=e2891]: "0"
+            - generic [ref=e2892]: Days Active
+          - generic [ref=e2893]:
+            - generic [ref=e2894]: 0%
+            - generic [ref=e2895]: Completion
+        - generic [ref=e2897]: Daily Practice (minutes)
+        - generic [ref=e2899]:
+          - generic [ref=e2900]: Category Breakdown
+          - generic [ref=e2901]:
+            - generic [ref=e2903]: Songs
+            - generic [ref=e2904]: 0/2
+            - generic [ref=e2907]: 0%
+          - generic [ref=e2908]:
+            - generic [ref=e2910]: Warm-Up
+            - generic [ref=e2911]: 0/3
+            - generic [ref=e2914]: 0%
+      - generic [ref=e2915]:
+        - generic [ref=e2916]: Monday
+        - generic [ref=e2919]: Dirt
+        - generic [ref=e2922]: Legato Warm-Up Am Pentatonic No Pick
+        - generic [ref=e2925]: Metallica - Enter Sandman
+        - generic [ref=e2928]: Chromatic 1-2-3-4 Hand Sync
+        - generic [ref=e2931]: EXAMPLE EX — Am Pentatonic 1st Position

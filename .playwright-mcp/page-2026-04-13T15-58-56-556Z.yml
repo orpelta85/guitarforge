@@ -1,0 +1,258 @@
+- generic [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - button "Open Next.js Dev Tools" [ref=e8] [cursor=pointer]:
+    - img [ref=e9]
+  - alert [ref=e12]
+  - generic [ref=e13]:
+    - complementary [ref=e14]:
+      - img "Guitar Practice" [ref=e17]
+      - navigation [ref=e19]:
+        - generic [ref=e20]: Main
+        - button "Home" [ref=e21] [cursor=pointer]:
+          - img [ref=e23]
+          - generic [ref=e25]: Home
+        - button "Practice" [ref=e26] [cursor=pointer]:
+          - img [ref=e28]
+          - generic [ref=e32]: Practice
+        - button "Learn" [ref=e33] [cursor=pointer]:
+          - img [ref=e35]
+          - generic [ref=e38]: Learn
+        - button "Studio" [ref=e39] [cursor=pointer]:
+          - img [ref=e41]
+          - generic [ref=e44]: Studio
+        - button "Jam Mode" [ref=e45] [cursor=pointer]:
+          - img [ref=e47]
+          - generic [ref=e50]: Jam Mode
+        - button "Library" [ref=e51] [cursor=pointer]:
+          - img [ref=e53]
+          - generic [ref=e56]: Library
+        - generic [ref=e57]: Tools
+        - button "AI Coach" [ref=e58] [cursor=pointer]:
+          - img [ref=e60]
+          - generic [ref=e62]: AI Coach
+        - button "Suno AI" [ref=e63] [cursor=pointer]:
+          - img [ref=e65]
+          - generic [ref=e68]: Suno AI
+        - button "Skills" [ref=e69] [cursor=pointer]:
+          - img [ref=e71]
+          - generic [ref=e77]: Skills
+        - button "Tuner" [ref=e78] [cursor=pointer]:
+          - img [ref=e80]
+          - generic [ref=e82]: Tuner
+      - button "Guest Sign in to sync" [ref=e85]:
+        - img [ref=e87]
+        - generic [ref=e90]:
+          - generic [ref=e91]: Guest
+          - generic [ref=e92]: Sign in to sync
+      - button "Sign in to sync" [ref=e94]
+    - generic [ref=e275]:
+      - generic [ref=e277]:
+        - generic [ref=e278]:
+          - generic [ref=e279]: Learning Center
+          - generic [ref=e280]: 0/39 lessons completed
+        - generic [ref=e281]:
+          - generic [ref=e282]:
+            - generic [ref=e283]: LV.1
+            - generic [ref=e284]: 0 XP
+          - generic [ref=e286]: 0/100 XP to next level
+      - generic [ref=e288] [cursor=pointer]:
+        - generic [ref=e290]: "N"
+        - generic [ref=e291]:
+          - generic [ref=e292]: Start Your Journey
+          - generic [ref=e293]: What Is a Note?
+          - generic [ref=e294]: Fundamentals · 5 min · Beginner
+        - generic [ref=e296]: Start
+      - generic [ref=e297]:
+        - button "Lessons39" [ref=e298] [cursor=pointer]
+        - button "Exercises17" [ref=e299] [cursor=pointer]
+        - button "Tools10" [active] [ref=e300] [cursor=pointer]
+      - generic [ref=e692]:
+        - generic [ref=e693]:
+          - generic [ref=e694] [cursor=pointer]:
+            - generic [ref=e695]: R
+            - generic [ref=e696]:
+              - generic [ref=e697]:
+                - generic [ref=e698]: Reference & Exploration
+                - generic [ref=e699]: "6"
+              - generic [ref=e700]: Interactive reference tools for scales, chords, intervals and more
+            - generic [ref=e701]: ▶
+          - generic [ref=e703]:
+            - generic [ref=e705] [cursor=pointer]:
+              - generic [ref=e706]: ─
+              - generic [ref=e707]:
+                - generic [ref=e708]: Scale Explorer
+                - generic [ref=e709]: All scales with fretboard visualization
+            - generic [ref=e711] [cursor=pointer]:
+              - generic [ref=e712]: ⌂
+              - generic [ref=e713]:
+                - generic [ref=e714]: Chord Library
+                - generic [ref=e715]: Chord voicings and diagrams
+            - generic [ref=e717] [cursor=pointer]:
+              - generic [ref=e718]: ▦
+              - generic [ref=e719]:
+                - generic [ref=e720]: Fretboard Visualizer
+                - generic [ref=e721]: See notes, scales and chords on the neck
+            - generic [ref=e723] [cursor=pointer]:
+              - generic [ref=e724]: ○
+              - generic [ref=e725]:
+                - generic [ref=e726]: Circle of Fifths
+                - generic [ref=e727]: Interactive circle of fifths diagram
+            - generic [ref=e729] [cursor=pointer]:
+              - generic [ref=e730]: ↕
+              - generic [ref=e731]:
+                - generic [ref=e732]: Interval Reference
+                - generic [ref=e733]: All 12 intervals with audio playback
+            - generic [ref=e735] [cursor=pointer]:
+              - generic [ref=e736]: ♬
+              - generic [ref=e737]:
+                - generic [ref=e738]: Progression Builder
+                - generic [ref=e739]: Build and play chord progressions
+        - generic [ref=e740]:
+          - generic [ref=e741] [cursor=pointer]:
+            - generic [ref=e742]: U
+            - generic [ref=e743]:
+              - generic [ref=e744]:
+                - generic [ref=e745]: Practice Utilities
+                - generic [ref=e746]: "3"
+              - generic [ref=e747]: Handy tools for daily practice sessions
+            - generic [ref=e748]: ▶
+          - generic [ref=e750]:
+            - generic [ref=e752] [cursor=pointer]:
+              - generic [ref=e753]: ≡
+              - generic [ref=e754]:
+                - generic [ref=e755]: Tempo Tapper
+                - generic [ref=e756]: Tap to measure BPM
+            - generic [ref=e758] [cursor=pointer]:
+              - generic [ref=e759]: ×
+              - generic [ref=e760]:
+                - generic [ref=e761]: Interval Calculator
+                - generic [ref=e762]: Calculate intervals between notes
+            - generic [ref=e764] [cursor=pointer]:
+              - generic [ref=e765]: ♪
+              - generic [ref=e766]:
+                - generic [ref=e767]: Chromatic Tuner
+                - generic [ref=e768]: Real-time pitch detection via microphone
+      - generic [ref=e769]:
+        - generic [ref=e770]: Root Note
+        - generic [ref=e771]:
+          - button "C" [ref=e772] [cursor=pointer]
+          - button "C#" [ref=e773] [cursor=pointer]
+          - button "D" [ref=e774] [cursor=pointer]
+          - button "D#" [ref=e775] [cursor=pointer]
+          - button "E" [ref=e776] [cursor=pointer]
+          - button "F" [ref=e777] [cursor=pointer]
+          - button "F#" [ref=e778] [cursor=pointer]
+          - button "G" [ref=e779] [cursor=pointer]
+          - button "G#" [ref=e780] [cursor=pointer]
+          - button "A" [ref=e781] [cursor=pointer]
+          - button "A#" [ref=e782] [cursor=pointer]
+          - button "B" [ref=e783] [cursor=pointer]
+      - generic [ref=e784]:
+        - generic [ref=e786]:
+          - button "Major (Ionian)" [ref=e787] [cursor=pointer]
+          - button "Natural Minor (Aeolian)" [ref=e788] [cursor=pointer]
+          - button "Dorian" [ref=e789] [cursor=pointer]
+          - button "Phrygian" [ref=e790] [cursor=pointer]
+          - button "Lydian" [ref=e791] [cursor=pointer]
+          - button "Mixolydian" [ref=e792] [cursor=pointer]
+          - button "Harmonic Minor" [ref=e793] [cursor=pointer]
+          - button "Minor Pentatonic" [ref=e794] [cursor=pointer]
+          - button "Major Pentatonic" [ref=e795] [cursor=pointer]
+          - button "Blues" [ref=e796] [cursor=pointer]
+        - generic [ref=e797]:
+          - generic [ref=e798]:
+            - generic [ref=e799]:
+              - generic [ref=e800]: A Minor Pentatonic
+              - generic [ref=e801]: The guitar scale
+              - generic [ref=e802]: A — C — D — E — G
+            - button "Play" [ref=e803] [cursor=pointer]
+          - generic [ref=e806] [cursor=pointer]: Show intervals
+          - generic [ref=e807]:
+            - generic [ref=e808] [cursor=pointer]:
+              - generic [ref=e809]: A
+              - generic [ref=e810]: R
+            - generic [ref=e811] [cursor=pointer]:
+              - generic [ref=e812]: C
+              - generic [ref=e813]: b3
+            - generic [ref=e814] [cursor=pointer]:
+              - generic [ref=e815]: D
+              - generic [ref=e816]: "4"
+            - generic [ref=e817] [cursor=pointer]:
+              - generic [ref=e818]: E
+              - generic [ref=e819]: "5"
+            - generic [ref=e820] [cursor=pointer]:
+              - generic [ref=e821]: G
+              - generic [ref=e822]: b7
+        - generic [ref=e825]:
+          - generic [ref=e826]:
+            - generic [ref=e828]: "0"
+            - generic [ref=e829]: "1"
+            - generic [ref=e830]: "2"
+            - generic [ref=e831]: "3"
+            - generic [ref=e832]: "4"
+            - generic [ref=e833]: "5"
+            - generic [ref=e834]: "6"
+            - generic [ref=e835]: "7"
+            - generic [ref=e836]: "8"
+            - generic [ref=e837]: "9"
+            - generic [ref=e838]: "10"
+            - generic [ref=e839]: "11"
+            - generic [ref=e840]: "12"
+            - generic [ref=e841]: "13"
+            - generic [ref=e842]: "14"
+            - generic [ref=e843]: "15"
+          - generic [ref=e844]:
+            - generic [ref=e845]: e
+            - generic [ref=e847] [cursor=pointer]: E
+            - generic [ref=e851] [cursor=pointer]: G
+            - generic [ref=e854] [cursor=pointer]: A
+            - generic [ref=e858] [cursor=pointer]: C
+            - generic [ref=e861] [cursor=pointer]: D
+            - generic [ref=e864] [cursor=pointer]: E
+            - generic [ref=e868] [cursor=pointer]: G
+          - generic [ref=e869]:
+            - generic [ref=e870]: B
+            - generic [ref=e873] [cursor=pointer]: C
+            - generic [ref=e876] [cursor=pointer]: D
+            - generic [ref=e879] [cursor=pointer]: E
+            - generic [ref=e883] [cursor=pointer]: G
+            - generic [ref=e886] [cursor=pointer]: A
+            - generic [ref=e890] [cursor=pointer]: C
+            - generic [ref=e893] [cursor=pointer]: D
+          - generic [ref=e894]:
+            - generic [ref=e895]: G
+            - generic [ref=e897] [cursor=pointer]: G
+            - generic [ref=e900] [cursor=pointer]: A
+            - generic [ref=e904] [cursor=pointer]: C
+            - generic [ref=e907] [cursor=pointer]: D
+            - generic [ref=e910] [cursor=pointer]: E
+            - generic [ref=e914] [cursor=pointer]: G
+            - generic [ref=e917] [cursor=pointer]: A
+          - generic [ref=e919]:
+            - generic [ref=e920]: D
+            - generic [ref=e922] [cursor=pointer]: D
+            - generic [ref=e925] [cursor=pointer]: E
+            - generic [ref=e929] [cursor=pointer]: G
+            - generic [ref=e932] [cursor=pointer]: A
+            - generic [ref=e936] [cursor=pointer]: C
+            - generic [ref=e939] [cursor=pointer]: D
+            - generic [ref=e942] [cursor=pointer]: E
+          - generic [ref=e944]:
+            - generic [ref=e945]: A
+            - generic [ref=e947] [cursor=pointer]: A
+            - generic [ref=e951] [cursor=pointer]: C
+            - generic [ref=e954] [cursor=pointer]: D
+            - generic [ref=e957] [cursor=pointer]: E
+            - generic [ref=e961] [cursor=pointer]: G
+            - generic [ref=e964] [cursor=pointer]: A
+            - generic [ref=e968] [cursor=pointer]: C
+          - generic [ref=e969]:
+            - generic [ref=e970]: E
+            - generic [ref=e972] [cursor=pointer]: E
+            - generic [ref=e976] [cursor=pointer]: G
+            - generic [ref=e979] [cursor=pointer]: A
+            - generic [ref=e983] [cursor=pointer]: C
+            - generic [ref=e986] [cursor=pointer]: D
+            - generic [ref=e989] [cursor=pointer]: E
+            - generic [ref=e993] [cursor=pointer]: G

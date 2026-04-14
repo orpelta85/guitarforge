@@ -1,0 +1,687 @@
+- generic [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - button "Open Next.js Dev Tools" [ref=e8] [cursor=pointer]:
+    - img [ref=e9]
+  - alert [ref=e12]
+  - generic [ref=e13]:
+    - complementary [ref=e14]:
+      - img "Guitar Practice" [ref=e17]
+      - navigation [ref=e19]:
+        - generic [ref=e20]: Main
+        - button "Home" [active] [ref=e21] [cursor=pointer]:
+          - img [ref=e23]
+          - generic [ref=e25]: Home
+        - button "Practice" [ref=e26] [cursor=pointer]:
+          - img [ref=e28]
+          - generic [ref=e32]: Practice
+        - button "Learn" [ref=e33] [cursor=pointer]:
+          - img [ref=e35]
+          - generic [ref=e38]: Learn
+        - button "Studio" [ref=e39] [cursor=pointer]:
+          - img [ref=e41]
+          - generic [ref=e44]: Studio
+        - button "Jam Mode" [ref=e45] [cursor=pointer]:
+          - img [ref=e47]
+          - generic [ref=e50]: Jam Mode
+        - button "Library" [ref=e51] [cursor=pointer]:
+          - img [ref=e53]
+          - generic [ref=e56]: Library
+        - generic [ref=e57]: Tools
+        - button "AI Coach" [ref=e58] [cursor=pointer]:
+          - img [ref=e60]
+          - generic [ref=e62]: AI Coach
+        - button "Suno AI" [ref=e63] [cursor=pointer]:
+          - img [ref=e65]
+          - generic [ref=e68]: Suno AI
+        - button "Skills" [ref=e69] [cursor=pointer]:
+          - img [ref=e71]
+          - generic [ref=e77]: Skills
+        - button "Tuner" [ref=e78] [cursor=pointer]:
+          - img [ref=e80]
+          - generic [ref=e82]: Tuner
+      - button "Guest Sign in to sync" [ref=e85]:
+        - img [ref=e87]
+        - generic [ref=e90]:
+          - generic [ref=e91]: Guest
+          - generic [ref=e92]: Sign in to sync
+      - button "Sign in to sync" [ref=e94]
+    - generic [ref=e729]:
+      - generic [ref=e730]:
+        - generic [ref=e731]:
+          - img [ref=e732]
+          - generic [ref=e735]: Sign in to sync your progress across devices
+        - generic [ref=e736]:
+          - button "Sign In" [ref=e737]
+          - button "Dismiss" [ref=e738]:
+            - img [ref=e739]
+      - generic [ref=e742]:
+        - generic [ref=e743]:
+          - generic [ref=e744]:
+            - generic [ref=e745]: Monday, Apr 13, 2026
+            - heading "Today's Focus" [level=1] [ref=e746]
+            - generic [ref=e747]: 4 exercises · 40 min · Warm-Up, Ear Training, Modes, Improv
+          - generic [ref=e748]:
+            - img [ref=e750]
+            - generic [ref=e752]:
+              - generic [ref=e753]: "0"
+              - generic [ref=e754]: day streak
+        - generic [ref=e755]:
+          - button "Dirt Songs · 10 min 90 BPM" [ref=e756]:
+            - generic [ref=e758]:
+              - generic [ref=e759]: Dirt
+              - generic [ref=e760]: Songs · 10 min
+            - generic [ref=e761]: 90 BPM
+          - button "Legato Warm-Up Am Pentatonic No Pick Warm-Up · 5 min BPM" [ref=e762]:
+            - generic [ref=e764]:
+              - generic [ref=e765]: Legato Warm-Up Am Pentatonic No Pick
+              - generic [ref=e766]: Warm-Up · 5 min
+            - generic [ref=e767]: BPM
+          - button "Metallica - Enter Sandman Songs · 20 min BPM" [ref=e768]:
+            - generic [ref=e770]:
+              - generic [ref=e771]: Metallica - Enter Sandman
+              - generic [ref=e772]: Songs · 20 min
+            - generic [ref=e773]: BPM
+          - generic [ref=e774]: + 1 more exercises
+        - generic [ref=e775]:
+          - button "Start Practice" [ref=e776]:
+            - img [ref=e777]
+            - text: Start Practice
+          - generic [ref=e780]:
+            - generic [ref=e781]: 0% complete
+            - generic [ref=e782]: 0/4
+      - generic [ref=e784]:
+        - button "Quick Jam" [ref=e785] [cursor=pointer]:
+          - img [ref=e786]
+          - generic [ref=e790]: Quick Jam
+          - img [ref=e791]
+        - generic [ref=e793]:
+          - generic [ref=e794]: Find a backing track to jam over
+          - generic [ref=e795]:
+            - generic [ref=e796]:
+              - text: Style
+              - textbox "Type or select..." [ref=e797]: Metal
+            - generic [ref=e798]:
+              - text: Scale
+              - combobox "Scale" [ref=e799] [cursor=pointer]:
+                - option "Aeolian" [selected]
+                - option "Dorian"
+                - option "Phrygian"
+                - option "Lydian"
+                - option "Mixolydian"
+                - option "Ionian"
+                - option "Locrian"
+                - option "Harmonic Minor"
+                - option "Phrygian Dominant"
+                - option "Minor Pentatonic"
+                - option "Minor Blues"
+                - option "Whole Tone"
+                - option "Melodic Minor"
+                - option "Major Pentatonic"
+                - option "Lydian Dominant"
+                - option "Hungarian Minor"
+            - generic [ref=e800]:
+              - text: Key
+              - combobox "Key" [ref=e801] [cursor=pointer]:
+                - option "C"
+                - option "Cm"
+                - option "C#"
+                - option "C#m"
+                - option "D"
+                - option "Dm"
+                - option "Eb"
+                - option "Ebm"
+                - option "E"
+                - option "Em"
+                - option "F"
+                - option "Fm"
+                - option "F#"
+                - option "F#m"
+                - option "G"
+                - option "Gm"
+                - option "Ab"
+                - option "Abm"
+                - option "A"
+                - option "Am" [selected]
+                - option "Bb"
+                - option "Bbm"
+                - option "B"
+                - option "Bm"
+          - generic [ref=e802]:
+            - button "Search YouTube" [ref=e803] [cursor=pointer]:
+              - img [ref=e804]
+              - text: Search YouTube
+            - button "Next Video" [ref=e807] [cursor=pointer]:
+              - text: Next Video
+              - img [ref=e808]
+            - button "Generate with Suno AI" [ref=e810] [cursor=pointer]:
+              - img [ref=e811]
+              - text: Generate with Suno AI
+            - button "Open Full Jam Mode" [ref=e814] [cursor=pointer]:
+              - text: Open Full Jam Mode
+              - img [ref=e815]
+          - generic [ref=e817]:
+            - iframe [ref=e819]:
+              - generic "נגן הסרטונים של YouTube" [ref=f66e3]
+            - generic [ref=e820]: Video 1 of 20 · Am Am · Metal
+          - link "Search more on YouTube →" [ref=e821] [cursor=pointer]:
+            - /url: https://www.youtube.com/results?search_query=Metal%20Am%20Am%20backing%20track%20guitar
+      - generic [ref=e822]:
+        - generic [ref=e823]:
+          - generic [ref=e824]: Songs of the Week
+          - generic [ref=e825]:
+            - generic [ref=e826]:
+              - button "Dirt Alice In Chains Intermediate" [ref=e827]:
+                - generic [ref=e828]:
+                  - img [ref=e830]
+                  - generic [ref=e834]:
+                    - generic [ref=e835]: Dirt
+                    - generic [ref=e836]: Alice In Chains
+                    - generic [ref=e837]: Intermediate
+              - button "Dismiss Dirt" [ref=e838]:
+                - img [ref=e839]
+            - generic [ref=e841]:
+              - button "Enter Sandman Metallica Intermediate" [ref=e842]:
+                - generic [ref=e843]:
+                  - img [ref=e845]
+                  - generic [ref=e849]:
+                    - generic [ref=e850]: Enter Sandman
+                    - generic [ref=e851]: Metallica
+                    - generic [ref=e852]: Intermediate
+              - button "Dismiss Enter Sandman" [ref=e853]:
+                - img [ref=e854]
+        - generic [ref=e856]:
+          - generic [ref=e857]:
+            - generic [ref=e858]: This Week
+            - button "Reset" [ref=e859] [cursor=pointer]:
+              - img [ref=e860]
+              - text: Reset
+          - generic [ref=e863]:
+            - generic [ref=e864]:
+              - generic [ref=e865]: 0%
+              - generic [ref=e866]: Progress
+            - generic [ref=e867]:
+              - generic [ref=e868]: "40"
+              - generic [ref=e869]: Minutes
+            - generic [ref=e870]:
+              - generic [ref=e871]: 0/4
+              - generic [ref=e872]: Exercises
+            - generic [ref=e873]:
+              - generic [ref=e874]: 0/7
+              - generic [ref=e875]: Days Active
+        - generic [ref=e876]:
+          - generic [ref=e877]:
+            - img [ref=e878]
+            - text: Coach Tip
+          - paragraph [ref=e880]: You haven't practiced Warm-Up yet — consider adding it to your routine.
+          - button "Ask the Coach →" [ref=e881]
+      - generic [ref=e882]:
+        - button "Weekly Focus W1 · Aeolian · Am · Metal" [ref=e883] [cursor=pointer]:
+          - generic [ref=e885]: Weekly Focus
+          - generic [ref=e886]: W1 · Aeolian · Am · Metal
+          - img [ref=e887]
+        - generic [ref=e889]:
+          - generic [ref=e890]:
+            - generic [ref=e891]:
+              - img [ref=e892]
+              - text: Week 1 Schedule
+            - button "Close" [ref=e895] [cursor=pointer]:
+              - img [ref=e896]
+              - text: Close
+          - generic [ref=e899]:
+            - generic [ref=e900]:
+              - generic [ref=e901]:
+                - generic [ref=e902]: Sunday
+                - spinbutton [ref=e903]: "2"
+                - generic [ref=e904]: hrs
+                - generic [ref=e905]:
+                  - button "Copy day" [ref=e906] [cursor=pointer]:
+                    - img [ref=e907]
+                  - button "Paste day" [ref=e910] [cursor=pointer]:
+                    - img [ref=e911]
+              - generic [ref=e914]:
+                - generic [ref=e915]:
+                  - button "▼ Technique" [ref=e916] [cursor=pointer]:
+                    - generic [ref=e917]: ▼
+                    - text: Technique
+                  - generic [ref=e918]:
+                    - generic [ref=e919] [cursor=pointer]: Warm-Up
+                    - generic [ref=e920] [cursor=pointer]: Shred
+                    - generic [ref=e921] [cursor=pointer]: Legato
+                    - generic [ref=e922] [cursor=pointer]: Tapping
+                    - generic [ref=e923] [cursor=pointer]: Sweep
+                    - generic [ref=e924] [cursor=pointer]: Picking
+                    - generic [ref=e925] [cursor=pointer]: Arpeggios
+                    - generic [ref=e926] [cursor=pointer]: Slide
+                    - generic [ref=e927] [cursor=pointer]: Harmonics
+                - generic [ref=e928]:
+                  - button "▼ Rhythm & Dynamics" [ref=e929] [cursor=pointer]:
+                    - generic [ref=e930]: ▼
+                    - text: Rhythm & Dynamics
+                  - generic [ref=e931]:
+                    - generic [ref=e932] [cursor=pointer]: Rhythm
+                    - generic [ref=e933] [cursor=pointer]: Dynamics
+                    - generic [ref=e934] [cursor=pointer]: Chords
+                    - generic [ref=e935] [cursor=pointer]: Tunings
+                - generic [ref=e936]:
+                  - button "▼ Theory" [ref=e937] [cursor=pointer]:
+                    - generic [ref=e938]: ▼
+                    - text: Theory
+                  - generic [ref=e939]:
+                    - generic [ref=e940] [cursor=pointer]: Fretboard
+                    - generic [ref=e941] [cursor=pointer]: Modes
+                    - generic [ref=e942] [cursor=pointer]: Keys
+                - generic [ref=e943]:
+                  - button "▼ Musicality" [ref=e944] [cursor=pointer]:
+                    - generic [ref=e945]: ▼
+                    - text: Musicality
+                  - generic [ref=e946]:
+                    - generic [ref=e947] [cursor=pointer]: Ear Training
+                    - generic [ref=e948] [cursor=pointer]: Improv
+                    - generic [ref=e949] [cursor=pointer]: Phrasing
+                    - generic [ref=e950] [cursor=pointer]: Bends
+                - generic [ref=e951]:
+                  - button "▼ Creation" [ref=e952] [cursor=pointer]:
+                    - generic [ref=e953]: ▼
+                    - text: Creation
+                  - generic [ref=e954]:
+                    - generic [ref=e955] [cursor=pointer]: Riffs
+                    - generic [ref=e956] [cursor=pointer]: Composition
+                    - generic [ref=e957] [cursor=pointer]: Songs
+            - generic [ref=e958]:
+              - generic [ref=e959]:
+                - generic [ref=e960]: Monday
+                - spinbutton [ref=e961]: "2"
+                - generic [ref=e962]: hrs
+                - generic [ref=e963]:
+                  - button "Copy day" [ref=e964] [cursor=pointer]:
+                    - img [ref=e965]
+                  - button "Paste day" [ref=e968] [cursor=pointer]:
+                    - img [ref=e969]
+              - generic [ref=e972]:
+                - generic [ref=e973]:
+                  - button "▼ Technique" [ref=e974] [cursor=pointer]:
+                    - generic [ref=e975]: ▼
+                    - text: Technique
+                  - generic [ref=e976]:
+                    - generic [ref=e977] [cursor=pointer]: Warm-Up
+                    - generic [ref=e978] [cursor=pointer]: Shred
+                    - generic [ref=e979] [cursor=pointer]: Legato
+                    - generic [ref=e980] [cursor=pointer]: Tapping
+                    - generic [ref=e981] [cursor=pointer]: Sweep
+                    - generic [ref=e982] [cursor=pointer]: Picking
+                    - generic [ref=e983] [cursor=pointer]: Arpeggios
+                    - generic [ref=e984] [cursor=pointer]: Slide
+                    - generic [ref=e985] [cursor=pointer]: Harmonics
+                - generic [ref=e986]:
+                  - button "▼ Rhythm & Dynamics" [ref=e987] [cursor=pointer]:
+                    - generic [ref=e988]: ▼
+                    - text: Rhythm & Dynamics
+                  - generic [ref=e989]:
+                    - generic [ref=e990] [cursor=pointer]: Rhythm
+                    - generic [ref=e991] [cursor=pointer]: Dynamics
+                    - generic [ref=e992] [cursor=pointer]: Chords
+                    - generic [ref=e993] [cursor=pointer]: Tunings
+                - generic [ref=e994]:
+                  - button "▼ Theory" [ref=e995] [cursor=pointer]:
+                    - generic [ref=e996]: ▼
+                    - text: Theory
+                  - generic [ref=e997]:
+                    - generic [ref=e998] [cursor=pointer]: Fretboard
+                    - generic [ref=e999] [cursor=pointer]: Modes
+                    - generic [ref=e1000] [cursor=pointer]: Keys
+                - generic [ref=e1001]:
+                  - button "▼ Musicality" [ref=e1002] [cursor=pointer]:
+                    - generic [ref=e1003]: ▼
+                    - text: Musicality
+                  - generic [ref=e1004]:
+                    - generic [ref=e1005] [cursor=pointer]: Ear Training
+                    - generic [ref=e1006] [cursor=pointer]: Improv
+                    - generic [ref=e1007] [cursor=pointer]: Phrasing
+                    - generic [ref=e1008] [cursor=pointer]: Bends
+                - generic [ref=e1009]:
+                  - button "▼ Creation" [ref=e1010] [cursor=pointer]:
+                    - generic [ref=e1011]: ▼
+                    - text: Creation
+                  - generic [ref=e1012]:
+                    - generic [ref=e1013] [cursor=pointer]: Riffs
+                    - generic [ref=e1014] [cursor=pointer]: Composition
+                    - generic [ref=e1015] [cursor=pointer]: Songs
+            - generic [ref=e1016]:
+              - generic [ref=e1017]:
+                - generic [ref=e1018]: Tuesday
+                - spinbutton [ref=e1019]: "2"
+                - generic [ref=e1020]: hrs
+                - generic [ref=e1021]:
+                  - button "Copy day" [ref=e1022] [cursor=pointer]:
+                    - img [ref=e1023]
+                  - button "Paste day" [ref=e1026] [cursor=pointer]:
+                    - img [ref=e1027]
+              - generic [ref=e1030]:
+                - generic [ref=e1031]:
+                  - button "▼ Technique" [ref=e1032] [cursor=pointer]:
+                    - generic [ref=e1033]: ▼
+                    - text: Technique
+                  - generic [ref=e1034]:
+                    - generic [ref=e1035] [cursor=pointer]: Warm-Up
+                    - generic [ref=e1036] [cursor=pointer]: Shred
+                    - generic [ref=e1037] [cursor=pointer]: Legato
+                    - generic [ref=e1038] [cursor=pointer]: Tapping
+                    - generic [ref=e1039] [cursor=pointer]: Sweep
+                    - generic [ref=e1040] [cursor=pointer]: Picking
+                    - generic [ref=e1041] [cursor=pointer]: Arpeggios
+                    - generic [ref=e1042] [cursor=pointer]: Slide
+                    - generic [ref=e1043] [cursor=pointer]: Harmonics
+                - generic [ref=e1044]:
+                  - button "▼ Rhythm & Dynamics" [ref=e1045] [cursor=pointer]:
+                    - generic [ref=e1046]: ▼
+                    - text: Rhythm & Dynamics
+                  - generic [ref=e1047]:
+                    - generic [ref=e1048] [cursor=pointer]: Rhythm
+                    - generic [ref=e1049] [cursor=pointer]: Dynamics
+                    - generic [ref=e1050] [cursor=pointer]: Chords
+                    - generic [ref=e1051] [cursor=pointer]: Tunings
+                - generic [ref=e1052]:
+                  - button "▼ Theory" [ref=e1053] [cursor=pointer]:
+                    - generic [ref=e1054]: ▼
+                    - text: Theory
+                  - generic [ref=e1055]:
+                    - generic [ref=e1056] [cursor=pointer]: Fretboard
+                    - generic [ref=e1057] [cursor=pointer]: Modes
+                    - generic [ref=e1058] [cursor=pointer]: Keys
+                - generic [ref=e1059]:
+                  - button "▼ Musicality" [ref=e1060] [cursor=pointer]:
+                    - generic [ref=e1061]: ▼
+                    - text: Musicality
+                  - generic [ref=e1062]:
+                    - generic [ref=e1063] [cursor=pointer]: Ear Training
+                    - generic [ref=e1064] [cursor=pointer]: Improv
+                    - generic [ref=e1065] [cursor=pointer]: Phrasing
+                    - generic [ref=e1066] [cursor=pointer]: Bends
+                - generic [ref=e1067]:
+                  - button "▼ Creation" [ref=e1068] [cursor=pointer]:
+                    - generic [ref=e1069]: ▼
+                    - text: Creation
+                  - generic [ref=e1070]:
+                    - generic [ref=e1071] [cursor=pointer]: Riffs
+                    - generic [ref=e1072] [cursor=pointer]: Composition
+                    - generic [ref=e1073] [cursor=pointer]: Songs
+            - generic [ref=e1074]:
+              - generic [ref=e1075]:
+                - generic [ref=e1076]: Wednesday
+                - spinbutton [ref=e1077]: "2"
+                - generic [ref=e1078]: hrs
+                - generic [ref=e1079]:
+                  - button "Copy day" [ref=e1080] [cursor=pointer]:
+                    - img [ref=e1081]
+                  - button "Paste day" [ref=e1084] [cursor=pointer]:
+                    - img [ref=e1085]
+              - generic [ref=e1088]:
+                - generic [ref=e1089]:
+                  - button "▼ Technique" [ref=e1090] [cursor=pointer]:
+                    - generic [ref=e1091]: ▼
+                    - text: Technique
+                  - generic [ref=e1092]:
+                    - generic [ref=e1093] [cursor=pointer]: Warm-Up
+                    - generic [ref=e1094] [cursor=pointer]: Shred
+                    - generic [ref=e1095] [cursor=pointer]: Legato
+                    - generic [ref=e1096] [cursor=pointer]: Tapping
+                    - generic [ref=e1097] [cursor=pointer]: Sweep
+                    - generic [ref=e1098] [cursor=pointer]: Picking
+                    - generic [ref=e1099] [cursor=pointer]: Arpeggios
+                    - generic [ref=e1100] [cursor=pointer]: Slide
+                    - generic [ref=e1101] [cursor=pointer]: Harmonics
+                - generic [ref=e1102]:
+                  - button "▼ Rhythm & Dynamics" [ref=e1103] [cursor=pointer]:
+                    - generic [ref=e1104]: ▼
+                    - text: Rhythm & Dynamics
+                  - generic [ref=e1105]:
+                    - generic [ref=e1106] [cursor=pointer]: Rhythm
+                    - generic [ref=e1107] [cursor=pointer]: Dynamics
+                    - generic [ref=e1108] [cursor=pointer]: Chords
+                    - generic [ref=e1109] [cursor=pointer]: Tunings
+                - generic [ref=e1110]:
+                  - button "▼ Theory" [ref=e1111] [cursor=pointer]:
+                    - generic [ref=e1112]: ▼
+                    - text: Theory
+                  - generic [ref=e1113]:
+                    - generic [ref=e1114] [cursor=pointer]: Fretboard
+                    - generic [ref=e1115] [cursor=pointer]: Modes
+                    - generic [ref=e1116] [cursor=pointer]: Keys
+                - generic [ref=e1117]:
+                  - button "▼ Musicality" [ref=e1118] [cursor=pointer]:
+                    - generic [ref=e1119]: ▼
+                    - text: Musicality
+                  - generic [ref=e1120]:
+                    - generic [ref=e1121] [cursor=pointer]: Ear Training
+                    - generic [ref=e1122] [cursor=pointer]: Improv
+                    - generic [ref=e1123] [cursor=pointer]: Phrasing
+                    - generic [ref=e1124] [cursor=pointer]: Bends
+                - generic [ref=e1125]:
+                  - button "▼ Creation" [ref=e1126] [cursor=pointer]:
+                    - generic [ref=e1127]: ▼
+                    - text: Creation
+                  - generic [ref=e1128]:
+                    - generic [ref=e1129] [cursor=pointer]: Riffs
+                    - generic [ref=e1130] [cursor=pointer]: Composition
+                    - generic [ref=e1131] [cursor=pointer]: Songs
+            - generic [ref=e1132]:
+              - generic [ref=e1133]:
+                - generic [ref=e1134]: Thursday
+                - spinbutton [ref=e1135]: "2"
+                - generic [ref=e1136]: hrs
+                - generic [ref=e1137]:
+                  - button "Copy day" [ref=e1138] [cursor=pointer]:
+                    - img [ref=e1139]
+                  - button "Paste day" [ref=e1142] [cursor=pointer]:
+                    - img [ref=e1143]
+              - generic [ref=e1146]:
+                - generic [ref=e1147]:
+                  - button "▼ Technique" [ref=e1148] [cursor=pointer]:
+                    - generic [ref=e1149]: ▼
+                    - text: Technique
+                  - generic [ref=e1150]:
+                    - generic [ref=e1151] [cursor=pointer]: Warm-Up
+                    - generic [ref=e1152] [cursor=pointer]: Shred
+                    - generic [ref=e1153] [cursor=pointer]: Legato
+                    - generic [ref=e1154] [cursor=pointer]: Tapping
+                    - generic [ref=e1155] [cursor=pointer]: Sweep
+                    - generic [ref=e1156] [cursor=pointer]: Picking
+                    - generic [ref=e1157] [cursor=pointer]: Arpeggios
+                    - generic [ref=e1158] [cursor=pointer]: Slide
+                    - generic [ref=e1159] [cursor=pointer]: Harmonics
+                - generic [ref=e1160]:
+                  - button "▼ Rhythm & Dynamics" [ref=e1161] [cursor=pointer]:
+                    - generic [ref=e1162]: ▼
+                    - text: Rhythm & Dynamics
+                  - generic [ref=e1163]:
+                    - generic [ref=e1164] [cursor=pointer]: Rhythm
+                    - generic [ref=e1165] [cursor=pointer]: Dynamics
+                    - generic [ref=e1166] [cursor=pointer]: Chords
+                    - generic [ref=e1167] [cursor=pointer]: Tunings
+                - generic [ref=e1168]:
+                  - button "▼ Theory" [ref=e1169] [cursor=pointer]:
+                    - generic [ref=e1170]: ▼
+                    - text: Theory
+                  - generic [ref=e1171]:
+                    - generic [ref=e1172] [cursor=pointer]: Fretboard
+                    - generic [ref=e1173] [cursor=pointer]: Modes
+                    - generic [ref=e1174] [cursor=pointer]: Keys
+                - generic [ref=e1175]:
+                  - button "▼ Musicality" [ref=e1176] [cursor=pointer]:
+                    - generic [ref=e1177]: ▼
+                    - text: Musicality
+                  - generic [ref=e1178]:
+                    - generic [ref=e1179] [cursor=pointer]: Ear Training
+                    - generic [ref=e1180] [cursor=pointer]: Improv
+                    - generic [ref=e1181] [cursor=pointer]: Phrasing
+                    - generic [ref=e1182] [cursor=pointer]: Bends
+                - generic [ref=e1183]:
+                  - button "▼ Creation" [ref=e1184] [cursor=pointer]:
+                    - generic [ref=e1185]: ▼
+                    - text: Creation
+                  - generic [ref=e1186]:
+                    - generic [ref=e1187] [cursor=pointer]: Riffs
+                    - generic [ref=e1188] [cursor=pointer]: Composition
+                    - generic [ref=e1189] [cursor=pointer]: Songs
+            - generic [ref=e1190]:
+              - generic [ref=e1191]:
+                - generic [ref=e1192]: Friday
+                - spinbutton [ref=e1193]: "1.5"
+                - generic [ref=e1194]: hrs
+                - generic [ref=e1195]:
+                  - button "Copy day" [ref=e1196] [cursor=pointer]:
+                    - img [ref=e1197]
+                  - button "Paste day" [ref=e1200] [cursor=pointer]:
+                    - img [ref=e1201]
+              - generic [ref=e1204]:
+                - generic [ref=e1205]:
+                  - button "▼ Technique" [ref=e1206] [cursor=pointer]:
+                    - generic [ref=e1207]: ▼
+                    - text: Technique
+                  - generic [ref=e1208]:
+                    - generic [ref=e1209] [cursor=pointer]: Warm-Up
+                    - generic [ref=e1210] [cursor=pointer]: Shred
+                    - generic [ref=e1211] [cursor=pointer]: Legato
+                    - generic [ref=e1212] [cursor=pointer]: Tapping
+                    - generic [ref=e1213] [cursor=pointer]: Sweep
+                    - generic [ref=e1214] [cursor=pointer]: Picking
+                    - generic [ref=e1215] [cursor=pointer]: Arpeggios
+                    - generic [ref=e1216] [cursor=pointer]: Slide
+                    - generic [ref=e1217] [cursor=pointer]: Harmonics
+                - generic [ref=e1218]:
+                  - button "▼ Rhythm & Dynamics" [ref=e1219] [cursor=pointer]:
+                    - generic [ref=e1220]: ▼
+                    - text: Rhythm & Dynamics
+                  - generic [ref=e1221]:
+                    - generic [ref=e1222] [cursor=pointer]: Rhythm
+                    - generic [ref=e1223] [cursor=pointer]: Dynamics
+                    - generic [ref=e1224] [cursor=pointer]: Chords
+                    - generic [ref=e1225] [cursor=pointer]: Tunings
+                - generic [ref=e1226]:
+                  - button "▼ Theory" [ref=e1227] [cursor=pointer]:
+                    - generic [ref=e1228]: ▼
+                    - text: Theory
+                  - generic [ref=e1229]:
+                    - generic [ref=e1230] [cursor=pointer]: Fretboard
+                    - generic [ref=e1231] [cursor=pointer]: Modes
+                    - generic [ref=e1232] [cursor=pointer]: Keys
+                - generic [ref=e1233]:
+                  - button "▼ Musicality" [ref=e1234] [cursor=pointer]:
+                    - generic [ref=e1235]: ▼
+                    - text: Musicality
+                  - generic [ref=e1236]:
+                    - generic [ref=e1237] [cursor=pointer]: Ear Training
+                    - generic [ref=e1238] [cursor=pointer]: Improv
+                    - generic [ref=e1239] [cursor=pointer]: Phrasing
+                    - generic [ref=e1240] [cursor=pointer]: Bends
+                - generic [ref=e1241]:
+                  - button "▼ Creation" [ref=e1242] [cursor=pointer]:
+                    - generic [ref=e1243]: ▼
+                    - text: Creation
+                  - generic [ref=e1244]:
+                    - generic [ref=e1245] [cursor=pointer]: Riffs
+                    - generic [ref=e1246] [cursor=pointer]: Composition
+                    - generic [ref=e1247] [cursor=pointer]: Songs
+            - generic [ref=e1248]:
+              - generic [ref=e1249]:
+                - generic [ref=e1250]: Saturday
+                - spinbutton [ref=e1251]: "0"
+                - generic [ref=e1252]: hrs
+                - generic [ref=e1253]:
+                  - button "Copy day" [ref=e1254] [cursor=pointer]:
+                    - img [ref=e1255]
+                  - button "Paste day" [ref=e1258] [cursor=pointer]:
+                    - img [ref=e1259]
+              - generic [ref=e1262]:
+                - generic [ref=e1263]:
+                  - button "▼ Technique" [ref=e1264] [cursor=pointer]:
+                    - generic [ref=e1265]: ▼
+                    - text: Technique
+                  - generic [ref=e1266]:
+                    - generic [ref=e1267] [cursor=pointer]: Warm-Up
+                    - generic [ref=e1268] [cursor=pointer]: Shred
+                    - generic [ref=e1269] [cursor=pointer]: Legato
+                    - generic [ref=e1270] [cursor=pointer]: Tapping
+                    - generic [ref=e1271] [cursor=pointer]: Sweep
+                    - generic [ref=e1272] [cursor=pointer]: Picking
+                    - generic [ref=e1273] [cursor=pointer]: Arpeggios
+                    - generic [ref=e1274] [cursor=pointer]: Slide
+                    - generic [ref=e1275] [cursor=pointer]: Harmonics
+                - generic [ref=e1276]:
+                  - button "▼ Rhythm & Dynamics" [ref=e1277] [cursor=pointer]:
+                    - generic [ref=e1278]: ▼
+                    - text: Rhythm & Dynamics
+                  - generic [ref=e1279]:
+                    - generic [ref=e1280] [cursor=pointer]: Rhythm
+                    - generic [ref=e1281] [cursor=pointer]: Dynamics
+                    - generic [ref=e1282] [cursor=pointer]: Chords
+                    - generic [ref=e1283] [cursor=pointer]: Tunings
+                - generic [ref=e1284]:
+                  - button "▼ Theory" [ref=e1285] [cursor=pointer]:
+                    - generic [ref=e1286]: ▼
+                    - text: Theory
+                  - generic [ref=e1287]:
+                    - generic [ref=e1288] [cursor=pointer]: Fretboard
+                    - generic [ref=e1289] [cursor=pointer]: Modes
+                    - generic [ref=e1290] [cursor=pointer]: Keys
+                - generic [ref=e1291]:
+                  - button "▼ Musicality" [ref=e1292] [cursor=pointer]:
+                    - generic [ref=e1293]: ▼
+                    - text: Musicality
+                  - generic [ref=e1294]:
+                    - generic [ref=e1295] [cursor=pointer]: Ear Training
+                    - generic [ref=e1296] [cursor=pointer]: Improv
+                    - generic [ref=e1297] [cursor=pointer]: Phrasing
+                    - generic [ref=e1298] [cursor=pointer]: Bends
+                - generic [ref=e1299]:
+                  - button "▼ Creation" [ref=e1300] [cursor=pointer]:
+                    - generic [ref=e1301]: ▼
+                    - text: Creation
+                  - generic [ref=e1302]:
+                    - generic [ref=e1303] [cursor=pointer]: Riffs
+                    - generic [ref=e1304] [cursor=pointer]: Composition
+                    - generic [ref=e1305] [cursor=pointer]: Songs
+            - generic [ref=e1306]:
+              - button "Build Routine" [ref=e1307] [cursor=pointer]
+              - button "Finish Week & Archive" [ref=e1308] [cursor=pointer]
+              - button "Reset All" [ref=e1309] [cursor=pointer]
+          - generic [ref=e1310]:
+            - generic [ref=e1311] [cursor=pointer]:
+              - generic [ref=e1312]: Sunday
+              - generic [ref=e1313]: 2h
+            - generic [ref=e1314] [cursor=pointer]:
+              - generic [ref=e1315]: Monday
+              - generic [ref=e1316]: 2h
+              - generic [ref=e1318]: 0/4
+            - generic [ref=e1319] [cursor=pointer]:
+              - generic [ref=e1320]: Tuesday
+              - generic [ref=e1321]: 2h
+            - generic [ref=e1322] [cursor=pointer]:
+              - generic [ref=e1323]: Wednesday
+              - generic [ref=e1324]: 2h
+            - generic [ref=e1325] [cursor=pointer]:
+              - generic [ref=e1326]: Thursday
+              - generic [ref=e1327]: 2h
+            - generic [ref=e1328] [cursor=pointer]:
+              - generic [ref=e1329]: Friday
+              - generic [ref=e1330]: 1.5h
+            - generic [ref=e1331] [cursor=pointer]:
+              - generic [ref=e1332]: Saturday
+              - generic [ref=e1333]: 0h
+      - generic [ref=e1335]:
+        - generic [ref=e1336]:
+          - img [ref=e1337]
+          - text: Songs for This Week
+          - generic [ref=e1341]: (0 songs)
+        - generic [ref=e1342]: No songs added yet. Search your library below.
+        - generic [ref=e1344]:
+          - img [ref=e1345]
+          - textbox "Search songs from library..." [ref=e1348]
+        - group [ref=e1349]:
+          - generic "Add manually..." [ref=e1350] [cursor=pointer]
+      - button "Week Analytics 0/4 done · 0%" [ref=e1352] [cursor=pointer]:
+        - img [ref=e1353]
+        - generic [ref=e1355]: Week Analytics
+        - generic [ref=e1356]: 0/4 done · 0%
+        - img [ref=e1357]

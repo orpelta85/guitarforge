@@ -1,0 +1,298 @@
+- generic [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - button "Open Next.js Dev Tools" [ref=e8] [cursor=pointer]:
+    - img [ref=e9]
+  - alert [ref=e12]
+  - generic [ref=e13]:
+    - complementary [ref=e14]:
+      - img "Guitar Practice" [ref=e17]
+      - navigation [ref=e19]:
+        - generic [ref=e20]: Main
+        - button "Home" [ref=e21] [cursor=pointer]:
+          - img [ref=e23]
+          - generic [ref=e25]: Home
+        - button "Practice" [ref=e26] [cursor=pointer]:
+          - img [ref=e28]
+          - generic [ref=e32]: Practice
+        - button "Learn" [ref=e33] [cursor=pointer]:
+          - img [ref=e35]
+          - generic [ref=e38]: Learn
+        - button "Studio" [ref=e39] [cursor=pointer]:
+          - img [ref=e41]
+          - generic [ref=e44]: Studio
+        - button "Jam Mode" [ref=e45] [cursor=pointer]:
+          - img [ref=e47]
+          - generic [ref=e50]: Jam Mode
+        - button "Library" [active] [ref=e51] [cursor=pointer]:
+          - img [ref=e53]
+          - generic [ref=e56]: Library
+        - generic [ref=e57]: Tools
+        - button "AI Coach" [ref=e58] [cursor=pointer]:
+          - img [ref=e60]
+          - generic [ref=e62]: AI Coach
+        - button "Suno AI" [ref=e63] [cursor=pointer]:
+          - img [ref=e65]
+          - generic [ref=e68]: Suno AI
+        - button "Skills" [ref=e69] [cursor=pointer]:
+          - img [ref=e71]
+          - generic [ref=e77]: Skills
+        - button "Tuner" [ref=e78] [cursor=pointer]:
+          - img [ref=e80]
+          - generic [ref=e82]: Tuner
+      - button "Guest Sign in to sync" [ref=e85]:
+        - img [ref=e87]
+        - generic [ref=e90]:
+          - generic [ref=e91]: Guest
+          - generic [ref=e92]: Sign in to sync
+      - button "Sign in to sync" [ref=e94]
+    - generic [ref=e2477]:
+      - generic [ref=e2478]: Song Library
+      - generic [ref=e2479]:
+        - generic [ref=e2480]:
+          - img
+          - textbox "Search songs, artists, genres, keys..." [ref=e2481]: Dirt
+          - button [ref=e2482] [cursor=pointer]:
+            - img [ref=e2483]
+        - generic [ref=e2486]:
+          - button "Genre" [ref=e2488] [cursor=pointer]:
+            - text: Genre
+            - img [ref=e2489]
+          - button "Difficulty" [ref=e2492] [cursor=pointer]:
+            - text: Difficulty
+            - img [ref=e2493]
+          - button "Has GP" [ref=e2496] [cursor=pointer]:
+            - text: Has GP
+            - img [ref=e2497]
+          - 'button "Sort: Popularity" [ref=e2500] [cursor=pointer]':
+            - text: "Sort: Popularity"
+            - img [ref=e2501]
+        - button "Clear all" [ref=e2504] [cursor=pointer]
+        - generic [ref=e2505]: Showing 18 of 8665 songs
+      - generic [ref=e2506]:
+        - button "Add Song Manually" [ref=e2507] [cursor=pointer]:
+          - img [ref=e2508]
+          - text: Add Song Manually
+        - button "Count-in 4" [ref=e2510] [cursor=pointer]
+      - button "Down in a Hole by Alice in Chains" [ref=e2511] [cursor=pointer]:
+        - generic [ref=e2512]:
+          - generic [ref=e2513]:
+            - generic [ref=e2514]:
+              - generic [ref=e2515]: Down in a Hole
+              - generic [ref=e2516]: Intermediate
+              - generic [ref=e2517]: GP
+            - generic [ref=e2518]: Alice in Chains
+            - generic [ref=e2519]:
+              - generic [ref=e2520]: Grunge
+              - generic [ref=e2521]: "Key: Em"
+              - generic [ref=e2522]: 69 BPM
+              - generic [ref=e2523]: Eb Standard
+          - button "Backing" [ref=e2525]:
+            - img [ref=e2526]
+            - text: Backing
+      - button "Teenage Dirtbag by Wheatus" [ref=e2530] [cursor=pointer]:
+        - generic [ref=e2531]:
+          - generic [ref=e2532]:
+            - generic [ref=e2533]:
+              - generic [ref=e2534]: Teenage Dirtbag
+              - generic [ref=e2535]: Intermediate
+              - generic [ref=e2536]: GP
+            - generic [ref=e2537]: Wheatus
+            - generic [ref=e2539]: Metal
+          - button "Backing" [ref=e2541]:
+            - img [ref=e2542]
+            - text: Backing
+      - button "Kreator by dirty lil' trollops" [ref=e2546] [cursor=pointer]:
+        - generic [ref=e2547]:
+          - generic [ref=e2548]:
+            - generic [ref=e2549]:
+              - generic [ref=e2550]: Kreator
+              - generic [ref=e2551]: Intermediate
+            - generic [ref=e2552]: dirty lil' trollops
+            - generic [ref=e2554]: Metal
+          - button "Backing" [ref=e2556]:
+            - img [ref=e2557]
+            - text: Backing
+      - button "Through Blood and Dirt and Bone by Trivium" [ref=e2561] [cursor=pointer]:
+        - generic [ref=e2562]:
+          - generic [ref=e2563]:
+            - generic [ref=e2564]:
+              - generic [ref=e2565]: Through Blood and Dirt and Bone
+              - generic [ref=e2566]: Intermediate
+            - generic [ref=e2567]: Trivium
+            - generic [ref=e2569]: Metal
+          - button "Backing" [ref=e2571]:
+            - img [ref=e2572]
+            - text: Backing
+      - button "Dirty Deeds Done Dirt Cheap by AC/DC" [ref=e2576] [cursor=pointer]:
+        - generic [ref=e2577]:
+          - generic [ref=e2578]:
+            - generic [ref=e2579]:
+              - generic [ref=e2580]: Dirty Deeds Done Dirt Cheap
+              - generic [ref=e2581]: Intermediate
+              - generic [ref=e2582]: GP
+            - generic [ref=e2583]: AC/DC
+            - generic [ref=e2585]: Hard Rock
+          - button "Backing" [ref=e2587]:
+            - img [ref=e2588]
+            - text: Backing
+      - button "Dirty Work by Steely Dan" [ref=e2592] [cursor=pointer]:
+        - generic [ref=e2593]:
+          - generic [ref=e2594]:
+            - generic [ref=e2595]:
+              - generic [ref=e2596]: Dirty Work
+              - generic [ref=e2597]: Intermediate
+            - generic [ref=e2598]: Steely Dan
+            - generic [ref=e2600]: Classic Rock
+          - button "Backing" [ref=e2602]:
+            - img [ref=e2603]
+            - text: Backing
+      - button "Dirty Window by Metallica" [ref=e2607] [cursor=pointer]:
+        - generic [ref=e2608]:
+          - generic [ref=e2609]:
+            - generic [ref=e2610]:
+              - generic [ref=e2611]: Dirty Window
+              - generic [ref=e2612]: Intermediate
+              - generic [ref=e2613]: GP
+            - generic [ref=e2614]: Metallica
+            - generic [ref=e2616]: Metal
+          - button "Backing" [ref=e2618]:
+            - img [ref=e2619]
+            - text: Backing
+      - button "I Like Dirt by Red Hot Chili Peppers" [ref=e2623] [cursor=pointer]:
+        - generic [ref=e2624]:
+          - generic [ref=e2625]:
+            - generic [ref=e2626]:
+              - generic [ref=e2627]: I Like Dirt
+              - generic [ref=e2628]: Intermediate
+              - generic [ref=e2629]: GP
+            - generic [ref=e2630]: Red Hot Chili Peppers
+            - generic [ref=e2632]: Alternative Rock
+          - button "Backing" [ref=e2634]:
+            - img [ref=e2635]
+            - text: Backing
+      - button "High Speed Dirt by Megadeth" [ref=e2639] [cursor=pointer]:
+        - generic [ref=e2640]:
+          - generic [ref=e2641]:
+            - generic [ref=e2642]:
+              - generic [ref=e2643]: High Speed Dirt
+              - generic [ref=e2644]: Advanced
+              - generic [ref=e2645]: GP
+            - generic [ref=e2646]: Megadeth
+            - generic [ref=e2648]: Thrash Metal
+          - button "Backing" [ref=e2650]:
+            - img [ref=e2651]
+            - text: Backing
+      - button "Dirty Women by Black Sabbath" [ref=e2655] [cursor=pointer]:
+        - generic [ref=e2656]:
+          - generic [ref=e2657]:
+            - generic [ref=e2658]:
+              - generic [ref=e2659]: Dirty Women
+              - generic [ref=e2660]: Intermediate
+              - generic [ref=e2661]: GP
+            - generic [ref=e2662]: Black Sabbath
+            - generic [ref=e2664]: Heavy Metal
+          - button "Backing" [ref=e2666]:
+            - img [ref=e2667]
+            - text: Backing
+      - button "Dirty Magic by Offspring" [ref=e2671] [cursor=pointer]:
+        - generic [ref=e2672]:
+          - generic [ref=e2673]:
+            - generic [ref=e2674]:
+              - generic [ref=e2675]: Dirty Magic
+              - generic [ref=e2676]: Beginner
+              - generic [ref=e2677]: GP
+            - generic [ref=e2678]: Offspring
+            - generic [ref=e2680]: Punk Rock
+          - button "Backing" [ref=e2682]:
+            - img [ref=e2683]
+            - text: Backing
+      - button "Dirty Black Hole by Steve Vai" [ref=e2687] [cursor=pointer]:
+        - generic [ref=e2688]:
+          - generic [ref=e2689]:
+            - generic [ref=e2690]:
+              - generic [ref=e2691]: Dirty Black Hole
+              - generic [ref=e2692]: Intermediate
+            - generic [ref=e2693]: Steve Vai
+            - generic [ref=e2695]: Hard Rock
+          - button "Backing" [ref=e2697]:
+            - img [ref=e2698]
+            - text: Backing
+      - button "Dirt by Alice In Chains" [ref=e2702] [cursor=pointer]:
+        - generic [ref=e2703]:
+          - generic [ref=e2704]:
+            - generic [ref=e2705]:
+              - generic [ref=e2706]: Dirt
+              - generic [ref=e2707]: Intermediate
+              - generic [ref=e2708]: GP
+            - generic [ref=e2709]: Alice In Chains
+            - generic [ref=e2710]:
+              - generic [ref=e2711]: Grunge
+              - generic [ref=e2712]: "Key: Em"
+              - generic [ref=e2713]: 90 BPM
+              - generic [ref=e2714]: Drop D
+          - button "Backing" [ref=e2716]:
+            - img [ref=e2717]
+            - text: Backing
+      - button "Dirty Pool by Stevie Ray Vaughan" [ref=e2721] [cursor=pointer]:
+        - generic [ref=e2722]:
+          - generic [ref=e2723]:
+            - generic [ref=e2724]:
+              - generic [ref=e2725]: Dirty Pool
+              - generic [ref=e2726]: Intermediate
+              - generic [ref=e2727]: GP
+            - generic [ref=e2728]: Stevie Ray Vaughan
+            - generic [ref=e2730]: Blues
+          - button "Backing" [ref=e2732]:
+            - img [ref=e2733]
+            - text: Backing
+      - button "The Girl In The Dirty Shirt by Oasis" [ref=e2737] [cursor=pointer]:
+        - generic [ref=e2738]:
+          - generic [ref=e2739]:
+            - generic [ref=e2740]:
+              - generic [ref=e2741]: The Girl In The Dirty Shirt
+              - generic [ref=e2742]: Intermediate
+              - generic [ref=e2743]: GP
+            - generic [ref=e2744]: Oasis
+            - generic [ref=e2746]: Britpop
+          - button "Backing" [ref=e2748]:
+            - img [ref=e2749]
+            - text: Backing
+      - button "Dirty Diana by Michael Jackson" [ref=e2753] [cursor=pointer]:
+        - generic [ref=e2754]:
+          - generic [ref=e2755]:
+            - generic [ref=e2756]:
+              - generic [ref=e2757]: Dirty Diana
+              - generic [ref=e2758]: Beginner
+              - generic [ref=e2759]: GP
+            - generic [ref=e2760]: Michael Jackson
+            - generic [ref=e2761]:
+              - generic [ref=e2762]: Pop
+              - generic [ref=e2763]: "Key: Am"
+              - generic [ref=e2764]: 114 BPM
+          - button "Backing" [ref=e2766]:
+            - img [ref=e2767]
+            - text: Backing
+      - button "Dirty Love by Franck Zappa" [ref=e2771] [cursor=pointer]:
+        - generic [ref=e2772]:
+          - generic [ref=e2773]:
+            - generic [ref=e2774]:
+              - generic [ref=e2775]: Dirty Love
+              - generic [ref=e2776]: Advanced
+            - generic [ref=e2777]: Franck Zappa
+            - generic [ref=e2779]: Experimental
+          - button "Backing" [ref=e2781]:
+            - img [ref=e2782]
+            - text: Backing
+      - button "Teenage Dirthag by Wheatus" [ref=e2786] [cursor=pointer]:
+        - generic [ref=e2787]:
+          - generic [ref=e2788]:
+            - generic [ref=e2789]:
+              - generic [ref=e2790]: Teenage Dirthag
+              - generic [ref=e2791]: Beginner
+              - generic [ref=e2792]: GP
+            - generic [ref=e2793]: Wheatus
+            - generic [ref=e2795]: Pop Rock
+          - button "Backing" [ref=e2797]:
+            - img [ref=e2798]
+            - text: Backing

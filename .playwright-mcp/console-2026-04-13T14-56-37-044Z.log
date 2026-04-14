@@ -1,0 +1,14 @@
+[     263ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/c7df3_next_dist_ce4b98b6._.js:2297
+[     310ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://www.chromium.org/developers/design-documents/create-amazing-password-forms) %o @ http://localhost:3000/login:0
+[     323ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/c7df3_next_dist_ce4b98b6._.js:2297
+[     355ms] [WARNING] Error while trying to use the following icon from the Manifest: http://localhost:3000/favicon.svg (Download error or resource isn't a valid image) @ http://localhost:3000/login:0
+[   10025ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/c7df3_next_dist_ce4b98b6._.js:2297
+[   10080ms] [LOG] [Fast Refresh] done in 86ms @ http://localhost:3000/_next/static/chunks/c7df3_next_dist_ce4b98b6._.js:2297
+[   11857ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/c7df3_next_dist_ce4b98b6._.js:2297
+[   12031ms] [LOG] [Fast Refresh] done in 268ms @ http://localhost:3000/_next/static/chunks/c7df3_next_dist_ce4b98b6._.js:2297
+[   12450ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/c7df3_next_dist_ce4b98b6._.js:2297
+[   12573ms] [LOG] [Fast Refresh] done in 226ms @ http://localhost:3000/_next/static/chunks/c7df3_next_dist_ce4b98b6._.js:2297
+[   13082ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://www.chromium.org/developers/design-documents/create-amazing-password-forms) %o @ http://localhost:3000/login:0
+[   13122ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/c7df3_next_dist_ce4b98b6._.js:2297
+[   13132ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/c7df3_next_dist_ce4b98b6._.js:2297
+[   13160ms] [WARNING] Error while trying to use the following icon from the Manifest: http://localhost:3000/favicon.svg (Download error or resource isn't a valid image) @ http://localhost:3000/login:0

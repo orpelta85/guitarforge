@@ -1,0 +1,264 @@
+- generic [active] [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - button "Open Next.js Dev Tools" [ref=e8] [cursor=pointer]:
+    - img [ref=e9]
+  - alert [ref=e12]
+  - generic [ref=e13]:
+    - complementary [ref=e14]:
+      - img "Guitar Practice" [ref=e17]
+      - navigation [ref=e19]:
+        - generic [ref=e20]: Main
+        - button "Home" [ref=e21] [cursor=pointer]:
+          - img [ref=e23]
+          - generic [ref=e25]: Home
+        - button "Practice" [ref=e26] [cursor=pointer]:
+          - img [ref=e28]
+          - generic [ref=e32]: Practice
+        - button "Learn" [ref=e33] [cursor=pointer]:
+          - img [ref=e35]
+          - generic [ref=e38]: Learn
+        - button "Studio" [ref=e39] [cursor=pointer]:
+          - img [ref=e41]
+          - generic [ref=e44]: Studio
+        - button "Jam Mode" [ref=e45] [cursor=pointer]:
+          - img [ref=e47]
+          - generic [ref=e50]: Jam Mode
+        - button "Library" [ref=e51] [cursor=pointer]:
+          - img [ref=e53]
+          - generic [ref=e56]: Library
+        - generic [ref=e57]: Tools
+        - button "AI Coach" [ref=e58] [cursor=pointer]:
+          - img [ref=e60]
+          - generic [ref=e62]: AI Coach
+        - button "Suno AI" [ref=e63] [cursor=pointer]:
+          - img [ref=e65]
+          - generic [ref=e68]: Suno AI
+        - button "Skills" [ref=e69] [cursor=pointer]:
+          - img [ref=e71]
+          - generic [ref=e77]: Skills
+        - button "Tuner" [ref=e78] [cursor=pointer]:
+          - img [ref=e80]
+          - generic [ref=e82]: Tuner
+      - button "Guest Sign in to sync" [ref=e85]:
+        - img [ref=e87]
+        - generic [ref=e90]:
+          - generic [ref=e91]: Guest
+          - generic [ref=e92]: Sign in to sync
+      - button "Sign in to sync" [ref=e94]
+    - generic [ref=e1719]:
+      - generic [ref=e1720]:
+        - button "Exercises" [ref=e1721] [cursor=pointer]:
+          - img [ref=e1722]
+          - text: Exercises
+        - button "Styles" [ref=e1724] [cursor=pointer]:
+          - img [ref=e1725]
+          - text: Styles
+        - button "My Songs" [ref=e1727] [cursor=pointer]:
+          - img [ref=e1728]
+          - text: My Songs
+        - button "Recordings" [ref=e1730] [cursor=pointer]:
+          - img [ref=e1731]
+          - text: Recordings
+        - button "Backing Tracks" [ref=e1733] [cursor=pointer]:
+          - img [ref=e1734]
+          - text: Backing Tracks
+        - button "Song Library" [ref=e1736] [cursor=pointer]:
+          - img [ref=e1737]
+          - text: Song Library
+      - generic [ref=e1739]:
+        - textbox "Search exercise..." [ref=e1740]: EXAMPLE EX
+        - button "Add Exercise" [ref=e1741] [cursor=pointer]:
+          - img [ref=e1742]
+          - text: Add Exercise
+      - generic [ref=e1744]:
+        - button "All (199)" [ref=e1745] [cursor=pointer]
+        - button "Warm-Up (17)" [ref=e1746] [cursor=pointer]
+        - button "Shred (10)" [ref=e1747] [cursor=pointer]
+        - button "Legato (9)" [ref=e1748] [cursor=pointer]
+        - button "Bends (6)" [ref=e1749] [cursor=pointer]
+        - button "Tapping (7)" [ref=e1750] [cursor=pointer]
+        - button "Sweep (5)" [ref=e1751] [cursor=pointer]
+        - button "Rhythm (12)" [ref=e1752] [cursor=pointer]
+        - button "Fretboard (4)" [ref=e1753] [cursor=pointer]
+        - button "Ear Training (6)" [ref=e1754] [cursor=pointer]
+        - button "Improv (6)" [ref=e1755] [cursor=pointer]
+        - button "Riffs (5)" [ref=e1756] [cursor=pointer]
+        - button "Phrasing (4)" [ref=e1757] [cursor=pointer]
+        - button "Modes (6)" [ref=e1758] [cursor=pointer]
+        - button "Composition (6)" [ref=e1759] [cursor=pointer]
+        - button "Dynamics (6)" [ref=e1760] [cursor=pointer]
+        - button "Chords (18)" [ref=e1761] [cursor=pointer]
+        - button "Harmonics (5)" [ref=e1762] [cursor=pointer]
+        - button "Picking (6)" [ref=e1763] [cursor=pointer]
+        - button "Arpeggios (6)" [ref=e1764] [cursor=pointer]
+        - button "Slide (4)" [ref=e1765] [cursor=pointer]
+        - button "Tunings (4)" [ref=e1766] [cursor=pointer]
+        - button "Keys (5)" [ref=e1767] [cursor=pointer]
+      - button "Show Flat List" [ref=e1769] [cursor=pointer]
+      - generic [ref=e1770]:
+        - generic [ref=e1771] [cursor=pointer]:
+          - img [ref=e1772]
+          - generic [ref=e1774]: Technique
+          - generic [ref=e1775]: "1"
+        - generic [ref=e1801]:
+          - generic [ref=e1802] [cursor=pointer]:
+            - generic [ref=e1803]: Warm-Up
+            - generic [ref=e1804]:
+              - generic [ref=e1805]: EXAMPLE EX — Am Pentatonic 1st Position
+              - generic [ref=e1806]: Pentatonic Scale, 1st Position · 5min · 120
+            - button "Delete exercise" [ref=e1807]:
+              - img [ref=e1808]
+            - generic [ref=e1810]: −
+          - generic [ref=e1909]:
+            - generic [ref=e1910]:
+              - generic [ref=e1911]:
+                - text: Name
+                - textbox "Name" [ref=e1912]: EXAMPLE EX — Am Pentatonic 1st Position
+              - generic [ref=e1913]:
+                - text: Category
+                - combobox "Category" [ref=e1914] [cursor=pointer]:
+                  - option "Warm-Up" [selected]
+                  - option "Shred"
+                  - option "Legato"
+                  - option "Bends"
+                  - option "Tapping"
+                  - option "Sweep"
+                  - option "Rhythm"
+                  - option "Fretboard"
+                  - option "Ear Training"
+                  - option "Improv"
+                  - option "Riffs"
+                  - option "Phrasing"
+                  - option "Modes"
+                  - option "Composition"
+                  - option "Dynamics"
+                  - option "Chords"
+                  - option "Harmonics"
+                  - option "Picking"
+                  - option "Arpeggios"
+                  - option "Slide"
+                  - option "Tunings"
+                  - option "Keys"
+              - generic [ref=e1915]:
+                - text: Duration (min)
+                - spinbutton "Duration (min)" [ref=e1916]: "5"
+            - generic [ref=e1917]:
+              - text: Description
+              - textbox "Description" [ref=e1918]: Am Pentatonic scale in 1st position (frets 5-8). Ascending all 6 strings then descending. Two notes per string. Repeat 99x for muscle memory.
+            - generic [ref=e1919]:
+              - text: Tips
+              - textbox "Tips" [ref=e1920]: Keep all fingers close to the fretboard. Use strict alternate picking. Start slow and build speed gradually.
+            - generic [ref=e1921]:
+              - generic [ref=e1922]:
+                - text: Min BPM
+                - spinbutton "Min BPM" [ref=e1923]: "120"
+              - generic [ref=e1924]:
+                - text: Max BPM
+                - spinbutton "Max BPM" [ref=e1925]
+            - generic [ref=e1926]:
+              - text: Focus Areas (comma-separated)
+              - textbox "Focus Areas (comma-separated)" [ref=e1927]:
+                - /placeholder: e.g. accuracy, speed, endurance
+                - text: Pentatonic Scale, 1st Position
+            - generic [ref=e1928]:
+              - generic [ref=e1929]:
+                - generic [ref=e1930]: Tutorial Video
+                - generic [ref=e1932]:
+                  - button "Next (1/20)" [ref=e1933] [cursor=pointer]:
+                    - img [ref=e1934]
+                    - text: Next (1/20)
+                  - button "🔓" [ref=e1936] [cursor=pointer]
+              - iframe [ref=e1938]:
+                - generic [active] [ref=f72e1]:
+                  - generic "נגן הסרטונים של YouTube" [ref=f72e3]
+                  - generic [ref=f72e5]:
+                    - generic:
+                      - generic:
+                        - button "הפעלת הסרטון" [ref=f72e10] [cursor=pointer]:
+                          - generic [ref=f72e13]:
+                            - img
+                        - button "הסתרת כפתורי הנגן" [ref=f72e14] [cursor=pointer]
+                        - generic [ref=f72e16]:
+                          - generic [ref=f72e21]:
+                            - generic [ref=f72e22]:
+                              - link "The A Minor Pentatonic Scale (1st Position)" [ref=f72e23] [cursor=pointer]:
+                                - /url: https://www.youtube.com/watch?v=IIZ2TxyW1BQ
+                              - link "Fretello" [ref=f72e24] [cursor=pointer]:
+                                - /url: /channel/UCxlHO3liQ-TaCDbjpTEDBMA
+                                - generic [ref=f72e25]: Fretello
+                            - generic [ref=f72e26]:
+                              - button "thumbnail-image" [ref=f72e27] [cursor=pointer]:
+                                - img "thumbnail-image" [ref=f72e28]
+                              - generic [ref=f72e30]:
+                                - generic: Fretello
+                                - generic: ‏‫5.94K‏‬‏ ‏מנויים‏
+                          - generic [ref=f72e31]:
+                            - button "שיתוף" [ref=f72e34] [cursor=pointer]:
+                              - generic [ref=f72e38]:
+                                - img
+                            - link "לצפייה ב-YouTube" [ref=f72e45] [cursor=pointer]:
+                              - /url: https://www.youtube.com/watch?v=IIZ2TxyW1BQ
+                              - generic [ref=f72e48]:
+                                - text: לצפייה באתר
+                                - img [ref=f72e50]:
+                                  - generic [ref=f72e52]:
+                                    - img
+              - generic [ref=e1939]:
+                - text: YouTube URL (paste to override auto-video)
+                - textbox "YouTube URL (paste to override auto-video)" [ref=e1940]:
+                  - /placeholder: https://youtube.com/watch?v=...
+              - generic [ref=e1941]:
+                - text: YouTube Search Query
+                - textbox "YouTube Search Query" [ref=e1942]: Am pentatonic 1st position guitar exercise
+              - button "Search more on YouTube" [ref=e1943] [cursor=pointer]
+            - generic [ref=e1944]:
+              - generic [ref=e1945]: Guitar Pro Tab
+              - generic [ref=e1948]:
+                - generic [ref=e1950]:
+                  - generic [ref=e1953]: Am Pentatonic 1st Position (120 BPM)
+                  - generic [ref=e1954]:
+                    - button "▲ Hide" [ref=e1955] [cursor=pointer]
+                    - button "Change" [ref=e1956] [cursor=pointer]
+                - generic [ref=e1957]:
+                  - generic [ref=e1958]:
+                    - button "Play" [ref=e1959] [cursor=pointer]:
+                      - generic [ref=e1960]: ▶
+                    - generic [ref=e1961]: 0:00 / 0:04
+                    - generic [ref=e1962]:
+                      - button "◀" [ref=e1963] [cursor=pointer]
+                      - generic [ref=e1964] [cursor=pointer]: Bar 0/8
+                      - button "▶" [ref=e1965] [cursor=pointer]
+                    - generic [ref=e1966]:
+                      - generic [ref=e1967]: ♩=
+                      - spinbutton "Playback BPM (main speed)" [ref=e1968]: "120"
+                      - generic [ref=e1969]: 100%
+                  - generic [ref=e1970]:
+                    - button "Loop OFF" [ref=e1971] [cursor=pointer]
+                    - button "A" [ref=e1972] [cursor=pointer]
+                    - button "B" [ref=e1973] [cursor=pointer]
+                    - generic [ref=e1974]: Click tab to jump
+                    - button "Met" [ref=e1976] [cursor=pointer]
+                    - button "Count-in" [ref=e1977] [cursor=pointer]
+                    - generic [ref=e1978]:
+                      - generic [ref=e1979]: Transpose
+                      - button "-" [ref=e1980] [cursor=pointer]
+                      - generic [ref=e1981]: "0"
+                      - button "+" [ref=e1982] [cursor=pointer]
+                    - generic [ref=e1983]:
+                      - button "Fretboard" [ref=e1984] [cursor=pointer]
+                      - button "Mixer" [ref=e1985] [cursor=pointer]
+                      - button "Clips" [ref=e1986] [cursor=pointer]
+                      - button "Display" [ref=e1987] [cursor=pointer]
+                  - generic [ref=e1988]:
+                    - generic [ref=e1989]: Volume
+                    - slider [ref=e1990]: "1"
+                    - generic [ref=e1991]: 100%
+                  - generic [ref=e1992]:
+                    - generic [ref=e1993]: Audio Enhancement
+                    - button "Reverb OFF" [ref=e1995] [cursor=pointer]
+              - button "Download from guitarprotabs.org" [ref=e2002] [cursor=pointer]
+            - generic [ref=e2003]:
+              - text: Personal Notes
+              - textbox "Personal Notes" [ref=e2004]
+            - button "Reset to Default" [ref=e2006] [cursor=pointer]

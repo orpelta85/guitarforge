@@ -1,0 +1,159 @@
+- generic [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - button "Open Next.js Dev Tools" [ref=e8] [cursor=pointer]:
+    - img [ref=e9]
+  - alert [ref=e12]
+  - generic [ref=e13]:
+    - complementary [ref=e14]:
+      - img "Guitar Practice" [ref=e17]
+      - navigation [ref=e19]:
+        - generic [ref=e20]: Main
+        - button "Home" [ref=e21] [cursor=pointer]:
+          - img [ref=e23]
+          - generic [ref=e25]: Home
+        - button "Practice" [active] [ref=e26] [cursor=pointer]:
+          - img [ref=e28]
+          - generic [ref=e32]: Practice
+        - button "Learn" [ref=e33] [cursor=pointer]:
+          - img [ref=e35]
+          - generic [ref=e38]: Learn
+        - button "Studio" [ref=e39] [cursor=pointer]:
+          - img [ref=e41]
+          - generic [ref=e44]: Studio
+        - button "Jam Mode" [ref=e45] [cursor=pointer]:
+          - img [ref=e47]
+          - generic [ref=e50]: Jam Mode
+        - button "Library" [ref=e51] [cursor=pointer]:
+          - img [ref=e53]
+          - generic [ref=e56]: Library
+        - generic [ref=e57]: Tools
+        - button "AI Coach" [ref=e58] [cursor=pointer]:
+          - img [ref=e60]
+          - generic [ref=e62]: AI Coach
+        - button "Suno AI" [ref=e63] [cursor=pointer]:
+          - img [ref=e65]
+          - generic [ref=e68]: Suno AI
+        - button "Skills" [ref=e69] [cursor=pointer]:
+          - img [ref=e71]
+          - generic [ref=e77]: Skills
+        - button "Tuner" [ref=e78] [cursor=pointer]:
+          - img [ref=e80]
+          - generic [ref=e82]: Tuner
+      - button "Guest Sign in to sync" [ref=e85]:
+        - img [ref=e87]
+        - generic [ref=e90]:
+          - generic [ref=e91]: Guest
+          - generic [ref=e92]: Sign in to sync
+      - button "Sign in to sync" [ref=e94]
+    - generic [ref=e300]:
+      - generic [ref=e301]:
+        - button "Sunday" [ref=e302] [cursor=pointer]
+        - button "Monday" [ref=e303] [cursor=pointer]
+        - button "Tuesday" [ref=e304] [cursor=pointer]
+        - button "Wednesday" [ref=e305] [cursor=pointer]
+        - button "Thursday" [ref=e306] [cursor=pointer]
+        - button "Friday" [ref=e307] [cursor=pointer]
+        - button "Saturday" [ref=e308] [cursor=pointer]
+      - generic [ref=e310]:
+        - generic [ref=e311]:
+          - generic [ref=e312]:
+            - generic [ref=e313]: Monday
+            - button "Edit" [ref=e314] [cursor=pointer]:
+              - img [ref=e315]
+              - text: Edit
+          - generic [ref=e318]:
+            - generic [ref=e319]: 2 exercises
+            - text: ·
+            - generic [ref=e320]: 15 min
+            - text: ·
+            - generic [ref=e321]: 0 done
+          - generic [ref=e322]:
+            - generic [ref=e323]: Warm-Up
+            - generic [ref=e324]: Ear Training
+            - generic [ref=e325]: Modes
+            - generic [ref=e326]: Improv
+        - generic [ref=e327]:
+          - button "Auto Fill" [ref=e328] [cursor=pointer]
+          - button "+ Exercise" [ref=e329] [cursor=pointer]
+          - button "+ Song" [ref=e330] [cursor=pointer]
+          - button "Copy" [ref=e331] [cursor=pointer]:
+            - img [ref=e332]
+            - generic [ref=e335]: Copy
+          - button "Paste" [ref=e336] [cursor=pointer]:
+            - img [ref=e337]
+            - generic [ref=e340]: Paste
+      - generic [ref=e341]:
+        - generic [ref=e342]:
+          - generic [ref=e343]:
+            - generic [ref=e344]: 00:00
+            - generic [ref=e345]: Session
+          - generic [ref=e346]:
+            - button "Log" [ref=e347] [cursor=pointer]:
+              - img [ref=e348]
+              - text: Log
+            - button "Start" [ref=e350]
+            - button "Reset" [ref=e351] [cursor=pointer]
+        - generic [ref=e353]:
+          - generic [ref=e354]: 0/2 exercises
+          - generic [ref=e355]: 0%
+        - generic [ref=e357]:
+          - button "Metronome" [ref=e358]:
+            - img [ref=e359]
+            - text: Metronome
+          - button "Tuner" [ref=e362]:
+            - img [ref=e363]
+            - text: Tuner
+          - button "Record" [ref=e368]:
+            - img [ref=e369]
+            - text: Record
+      - generic [ref=e373]:
+        - generic "Drag to reorder" [ref=e374]:
+          - img [ref=e375]
+        - button "Mark done" [ref=e382] [cursor=pointer]
+        - button "Dirt Song · 10min · 90 BPM" [ref=e385] [cursor=pointer]:
+          - generic [ref=e386]: Dirt
+          - generic [ref=e387]:
+            - generic [ref=e388]: Song ·
+            - button "10min" [ref=e389]
+            - generic [ref=e390]: · 90 BPM
+        - generic [ref=e391]:
+          - button "UP" [ref=e392] [cursor=pointer]
+          - button "DN" [ref=e393] [cursor=pointer]
+          - button "Del" [ref=e394] [cursor=pointer]
+      - generic [ref=e396]:
+        - generic "Drag to reorder" [ref=e397]:
+          - img [ref=e398]
+        - button "Mark done" [ref=e405] [cursor=pointer]
+        - button "Legato Warm-Up Am Pentatonic No Pick Warm-Up · 5min" [ref=e408] [cursor=pointer]:
+          - generic [ref=e409]: Legato Warm-Up Am Pentatonic No Pick
+          - generic [ref=e410]:
+            - generic [ref=e411]: Warm-Up ·
+            - button "5min" [ref=e412]
+        - generic [ref=e413]:
+          - button "UP" [ref=e414] [cursor=pointer]
+          - button "DN" [ref=e415] [cursor=pointer]
+          - button "Swap" [ref=e416] [cursor=pointer]
+          - button "Del" [ref=e417] [cursor=pointer]
+      - generic [ref=e418]:
+        - generic [ref=e419]: Suggested Exercises
+        - button "Chromatic 1-2-3-4 Hand Sync 5m +" [ref=e420]:
+          - generic [ref=e422]: Chromatic 1-2-3-4 Hand Sync
+          - generic [ref=e423]: 5m
+          - generic [ref=e424]: +
+        - button "Spider Exercise Finger Independence 5m +" [ref=e425]:
+          - generic [ref=e427]: Spider Exercise Finger Independence
+          - generic [ref=e428]: 5m
+          - generic [ref=e429]: +
+        - button "Hand Stretching and Injury Prevention 3m +" [ref=e430]:
+          - generic [ref=e432]: Hand Stretching and Injury Prevention
+          - generic [ref=e433]: 3m
+          - generic [ref=e434]: +
+        - button "Two-Octave Scale Am Pentatonic + Natural Minor 5m +" [ref=e435]:
+          - generic [ref=e437]: Two-Octave Scale Am Pentatonic + Natural Minor
+          - generic [ref=e438]: 5m
+          - generic [ref=e439]: +
+        - button "Interval Recognition musictheory.net 15m +" [ref=e440]:
+          - generic [ref=e442]: Interval Recognition musictheory.net
+          - generic [ref=e443]: 15m
+          - generic [ref=e444]: +

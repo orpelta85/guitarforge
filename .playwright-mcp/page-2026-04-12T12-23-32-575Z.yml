@@ -1,0 +1,216 @@
+- generic [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - button "Open Next.js Dev Tools" [ref=e11] [cursor=pointer]:
+    - img [ref=e12]
+  - alert [ref=e15]
+  - generic [ref=e16]:
+    - complementary [ref=e17]:
+      - img "Guitar Practice" [ref=e20]
+      - navigation [ref=e22]:
+        - generic [ref=e23]: Main
+        - button "Home" [ref=e24] [cursor=pointer]:
+          - img [ref=e26]
+          - generic [ref=e28]: Home
+        - button "Practice" [ref=e29] [cursor=pointer]:
+          - img [ref=e31]
+          - generic [ref=e35]: Practice
+        - button "Learn" [ref=e36] [cursor=pointer]:
+          - img [ref=e38]
+          - generic [ref=e41]: Learn
+        - button "Studio" [ref=e42] [cursor=pointer]:
+          - img [ref=e44]
+          - generic [ref=e47]: Studio
+        - button "Jam Mode" [ref=e48] [cursor=pointer]:
+          - img [ref=e50]
+          - generic [ref=e53]: Jam Mode
+        - button "Library" [ref=e54] [cursor=pointer]:
+          - img [ref=e56]
+          - generic [ref=e59]: Library
+        - generic [ref=e60]: Tools
+        - button "AI Coach" [ref=e61] [cursor=pointer]:
+          - img [ref=e63]
+          - generic [ref=e65]: AI Coach
+        - button "Suno AI" [ref=e66] [cursor=pointer]:
+          - img [ref=e68]
+          - generic [ref=e71]: Suno AI
+        - button "Skills" [ref=e72] [cursor=pointer]:
+          - img [ref=e74]
+          - generic [ref=e80]: Skills
+        - button "Tuner" [ref=e81] [cursor=pointer]:
+          - img [ref=e83]
+          - generic [ref=e85]: Tuner
+      - button "Guest Sign in to sync" [ref=e88]:
+        - img [ref=e90]
+        - generic [ref=e93]:
+          - generic [ref=e94]: Guest
+          - generic [ref=e95]: Sign in to sync
+      - button "Sign in to sync" [ref=e97]
+    - generic [ref=e98]:
+      - generic [ref=e862]:
+        - generic [ref=e863]:
+          - button "Exercises" [ref=e864] [cursor=pointer]:
+            - img [ref=e865]
+            - text: Exercises
+          - button "Styles" [ref=e867] [cursor=pointer]:
+            - img [ref=e868]
+            - text: Styles
+          - button "My Songs" [ref=e870] [cursor=pointer]:
+            - img [ref=e871]
+            - text: My Songs
+          - button "Recordings" [ref=e873] [cursor=pointer]:
+            - img [ref=e874]
+            - text: Recordings
+          - button "Backing Tracks" [ref=e876] [cursor=pointer]:
+            - img [ref=e877]
+            - text: Backing Tracks
+          - button "Song Library" [ref=e879] [cursor=pointer]:
+            - img [ref=e880]
+            - text: Song Library
+        - generic [ref=e1454]:
+          - generic [ref=e1455]: 1 saved songs
+          - generic [ref=e1457] [cursor=pointer]:
+            - generic [ref=e1458]:
+              - generic [ref=e1459]:
+                - generic [ref=e1460]: Black Hole Sun
+                - generic [ref=e1461]: Intermediate
+              - generic [ref=e1462]: Soundgarden
+              - generic [ref=e1463]:
+                - generic [ref=e1464]: Grunge
+                - generic [ref=e1465]: "Key: G"
+                - generic [ref=e1466]: 86 BPM
+            - button "Remove from My Songs" [ref=e1467]:
+              - img [ref=e1468]
+      - 'dialog "Song: Black Hole Sun by Soundgarden" [ref=e1470]':
+        - generic [ref=e1471]:
+          - generic [ref=e1472]:
+            - generic [ref=e1473]:
+              - generic [ref=e1474]:
+                - generic [ref=e1475]: Black Hole Sun
+                - generic [ref=e1476]: Soundgarden
+                - generic [ref=e1477]: Superunknown (Deluxe Edition) · 1994
+                - generic [ref=e1478]:
+                  - generic [ref=e1479]: Grunge
+                  - generic [ref=e1480]: Intermediate
+                  - generic [ref=e1481]: ♩ G
+                  - generic [ref=e1482]: 86 BPM
+                  - generic [ref=e1483]: ⚠ Drop D
+                  - generic [ref=e1484]: GP
+                  - button "Edit" [active] [ref=e1485] [cursor=pointer]
+              - generic [ref=e1486]:
+                - button "Remove from My Songs" [ref=e1487] [cursor=pointer]:
+                  - img [ref=e1488]
+                - button "Close" [ref=e1490] [cursor=pointer]: ×
+            - generic [ref=e1491]:
+              - generic [ref=e1492]:
+                - button "Not Started" [ref=e1493] [cursor=pointer]
+                - button "Learning" [ref=e1494] [cursor=pointer]
+                - button "Can Play Slow" [ref=e1495] [cursor=pointer]
+                - button "Full Speed" [ref=e1496] [cursor=pointer]
+                - button "Mastered" [ref=e1497] [cursor=pointer]
+              - generic [ref=e1498]:
+                - button "Start practice timer" [ref=e1499] [cursor=pointer]:
+                  - img [ref=e1500]
+                - generic [ref=e1502]: 00:00
+                - button "Set" [ref=e1503] [cursor=pointer]
+          - generic [ref=e1504]:
+            - button "Practice" [ref=e1505] [cursor=pointer]
+            - button "Tutorial" [ref=e1506] [cursor=pointer]
+            - button "Log" [ref=e1507] [cursor=pointer]
+          - generic [ref=e1509]:
+            - generic [ref=e1510]:
+              - generic [ref=e1511]: ⚠
+              - generic [ref=e1512]:
+                - generic [ref=e1513]: "Non-Standard Tuning: Drop D"
+                - text: — tune your guitar before playing
+            - generic [ref=e1514]:
+              - generic [ref=e1515]: BACKING TRACK
+              - generic [ref=e1517]:
+                - button "Backing Track" [ref=e1518] [cursor=pointer]
+                - button "Original" [ref=e1519] [cursor=pointer]
+              - generic [ref=e1520]:
+                - button "🔓" [ref=e1522] [cursor=pointer]
+                - iframe [ref=e1524]:
+                  - generic [active] [ref=f1e1]:
+                    - generic "נגן הסרטונים של YouTube" [ref=f1e3]
+                    - generic [ref=f1e5]:
+                      - generic:
+                        - generic:
+                          - button "הפעלת הסרטון" [ref=f1e10] [cursor=pointer]:
+                            - generic [ref=f1e13]:
+                              - img
+                          - button "הסתרת כפתורי הנגן" [ref=f1e14] [cursor=pointer]
+                          - generic [ref=f1e16]:
+                            - generic [ref=f1e21]:
+                              - generic [ref=f1e22]:
+                                - link "Soundgarden - Black Hole Sun" [ref=f1e23] [cursor=pointer]:
+                                  - /url: https://www.youtube.com/watch?v=3mbBbFH9fAg
+                                - link "SoundgardenVEVO" [ref=f1e24] [cursor=pointer]:
+                                  - /url: /channel/UCTSuGVPcfBRSZSdP3xQASqg
+                                  - generic [ref=f1e25]: SoundgardenVEVO
+                              - generic [ref=f1e26]:
+                                - button "thumbnail-image" [ref=f1e27] [cursor=pointer]:
+                                  - img "thumbnail-image" [ref=f1e28]
+                                - generic [ref=f1e30]:
+                                  - generic: SoundgardenVEVO
+                            - generic [ref=f1e31]:
+                              - button "שיתוף" [ref=f1e34] [cursor=pointer]:
+                                - generic [ref=f1e38]:
+                                  - img
+                              - link "לצפייה ב-YouTube" [ref=f1e45] [cursor=pointer]:
+                                - /url: https://www.youtube.com/watch?v=3mbBbFH9fAg
+                                - generic [ref=f1e48]:
+                                  - text: לצפייה באתר
+                                  - img [ref=f1e50]:
+                                    - generic [ref=f1e52]:
+                                      - img
+                - generic [ref=e1525]:
+                  - textbox "Paste YouTube URL..." [ref=e1526]
+                  - button "Load" [ref=e1527] [cursor=pointer]
+              - generic [ref=e1528]:
+                - generic [ref=e1529]: "Open in YouTube:"
+                - button "Backing Track" [ref=e1530] [cursor=pointer]
+                - button "Original" [ref=e1531] [cursor=pointer]
+                - button "Live" [ref=e1532] [cursor=pointer]
+            - generic [ref=e1533]:
+              - generic [ref=e1537]: RECORDER
+              - generic [ref=e1538]:
+                - button "Guitar Only" [ref=e1539] [cursor=pointer]
+                - button "Guitar + Browser Audio" [ref=e1540] [cursor=pointer]
+              - generic [ref=e1541]:
+                - img [ref=e1542]
+                - combobox [ref=e1545] [cursor=pointer]:
+                  - option "ברירת מחדל - Microphone (Camo)" [selected]
+                  - option "תקשורת - Microphone (BP-6500) (1b3f:1167)"
+                  - option "Microphone (BP-6500) (1b3f:1167)"
+                  - option "Microphone (Camo)"
+                  - option "Analogue 1 + 2 (Focusrite USB Audio)"
+              - generic [ref=e1546]:
+                - button "Record" [ref=e1547] [cursor=pointer]
+                - generic [ref=e1548]: Record guitar only
+            - generic [ref=e1549]:
+              - generic [ref=e1550]: GUITAR PRO TAB
+              - generic [ref=e1553]:
+                - button "Open GP / GuitarPro File" [ref=e1554] [cursor=pointer]:
+                  - img [ref=e1555]
+                  - text: Open GP / GuitarPro File
+                - generic [ref=e1558]: or drop a file here
+                - generic [ref=e1559]: .gp .gp3 .gp4 .gp5 .gpx
+                - button "Download from guitarprotabs.org" [ref=e1561] [cursor=pointer]
+              - generic [ref=e1562]:
+                - button "Download tabs" [ref=e1563] [cursor=pointer]
+                - link "Search Songsterr" [ref=e1564] [cursor=pointer]:
+                  - /url: https://www.songsterr.com/?pattern=Black%20Hole%20Sun%20Soundgarden
+            - generic [ref=e1565]:
+              - generic [ref=e1566]: SONG INFO
+              - generic [ref=e1568]:
+                - generic [ref=e1569]: "Artist: Soundgarden"
+                - generic [ref=e1570]: "Album: Superunknown (Deluxe Edition)"
+                - generic [ref=e1571]: "Year: 1994"
+                - generic [ref=e1572]: "Genre: Grunge"
+                - generic [ref=e1573]:
+                  - text: "Tempo:"
+                  - generic [ref=e1574]: 86 BPM
+                - generic [ref=e1575]: "Key: G"
+                - generic [ref=e1576]: "Tuning: Drop D"
+                - generic [ref=e1577]: "Difficulty: Intermediate"

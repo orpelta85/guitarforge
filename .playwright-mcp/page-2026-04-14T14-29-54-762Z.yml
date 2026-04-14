@@ -1,0 +1,683 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e6]:
+      - link "Home page" [ref=e7] [cursor=pointer]:
+        - /url: https://www.ultimate-guitar.com
+        - img [ref=e8]
+      - list "Main navigation" [ref=e10]:
+        - listitem [ref=e11]:
+          - link "Tabs" [ref=e12] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore
+        - listitem [ref=e13]:
+          - link "Courses" [ref=e14] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/courses
+        - listitem [ref=e15]:
+          - link "Songbooks" [ref=e16] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/books
+        - listitem [ref=e17]:
+          - link "Articles" [ref=e18] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/news/
+        - listitem [ref=e19]:
+          - link "Forums" [ref=e20] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/forum/
+        - listitem [ref=e21]:
+          - link "Publish tab" [ref=e22] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/contribution/submit/tabs?app_utm_campaign=top_menu&app_utm_content=button&app_utm_medium=internal&app_utm_source=ug&app_utm_term=publish
+        - listitem [ref=e23]:
+          - link "Pro+" [ref=e24] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/pro?app_utm_campaign=UG%20Tab%20Pro&app_utm_content=Search%20Index&app_utm_medium=Header&app_utm_source=UltimateGuitar
+            - emphasis [ref=e25]: Pro+
+      - generic [ref=e27]:
+        - searchbox "Enter artist name or song title" [ref=e28]: metallica
+        - button "Tabs" [ref=e29] [cursor=pointer]:
+          - img
+          - text: Tabs
+        - button "Search" [ref=e30] [cursor=pointer]
+      - button "Notifications" [ref=e32] [cursor=pointer]:
+        - img
+        - generic [ref=e33]: "1"
+  - main [ref=e34]:
+    - generic [ref=e37]:
+      - generic [ref=e38]:
+        - heading "metallica chords & tabs" [level=1] [ref=e40]
+        - generic [ref=e42]: 500 tabs found
+      - navigation [ref=e43]:
+        - navigation [ref=e45]:
+          - generic [ref=e46]: All
+          - link "Chords" [ref=e47] [cursor=pointer]:
+            - /url: /search.php?title=metallica&page=1&type=300
+          - link "Official" [ref=e48] [cursor=pointer]:
+            - /url: /search.php?title=metallica&page=1&type=900
+          - link "Tab" [ref=e49] [cursor=pointer]:
+            - /url: /search.php?title=metallica&page=1&type=200
+          - link "Ukulele" [ref=e50] [cursor=pointer]:
+            - /url: /search.php?title=metallica&page=1&type=800
+          - link "Guitar Pro" [ref=e51] [cursor=pointer]:
+            - /url: /search.php?title=metallica&page=1&type=500
+          - link "Bass" [ref=e52] [cursor=pointer]:
+            - /url: /search.php?title=metallica&page=1&type=400
+          - link "Power" [ref=e53] [cursor=pointer]:
+            - /url: /search.php?title=metallica&page=1&type=600
+          - link "Video" [ref=e54] [cursor=pointer]:
+            - /url: /search.php?title=metallica&page=1&type=100
+          - link "Drums" [ref=e55] [cursor=pointer]:
+            - /url: /search.php?title=metallica&page=1&type=700
+        - navigation [ref=e57]:
+          - generic [ref=e58]: Relevance
+          - link "ABC" [ref=e59] [cursor=pointer]:
+            - /url: /search.php?title=metallica&page=1&order=title_srt
+          - link "High rated" [ref=e60] [cursor=pointer]:
+            - /url: /search.php?title=metallica&page=1&rating%5B0%5D=4&rating%5B1%5D=5&order=myweight
+      - article [ref=e61]:
+        - generic [ref=e62]:
+          - generic [ref=e63]:
+            - generic [ref=e64]: Artist
+            - generic [ref=e65]: Song
+            - generic [ref=e66]: Rating
+            - generic [ref=e67]: Type
+          - generic [ref=e68]:
+            - link "Metallica" [ref=e71] [cursor=pointer]:
+              - /url: /artist/metallica_954
+              - generic [ref=e73]: Metallica
+            - generic [ref=e74]:
+              - generic [ref=e75]:
+                - link "Nothing Else Matters" [ref=e78] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-official-1910953
+                  - text: Nothing Else Matters
+                  - img [ref=e81]
+                - generic [ref=e83]: 6:15
+              - generic [ref=e84]: Official version created by UG Guitar Team. Includes chords with lyrics, and interactive tab synchronized with backing tracks
+            - generic [ref=e85]: High quality
+            - generic [ref=e86]: Official
+          - generic [ref=e87]:
+            - link "Nothing Else Matters Live" [ref=e93] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-guitar-pro-4947757
+              - text: Nothing Else Matters Live
+              - img [ref=e96]
+            - generic [ref=e106]: "8"
+            - generic [ref=e107]: Pro
+          - generic [ref=e108]:
+            - link "Nothing Else Matters" [ref=e114] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-chords-8802
+            - generic [ref=e123]: 4,120
+            - generic [ref=e124]: Chords
+          - generic [ref=e125]:
+            - link "Nothing Else Matters (ver 2)" [ref=e131] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-chords-698338
+            - generic [ref=e140]: "114"
+            - generic [ref=e141]: Chords
+          - generic [ref=e142]:
+            - generic [ref=e147]:
+              - link "Nothing Else Matters (ver 3)" [ref=e148] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-chords-830604
+              - text: "*"
+            - generic [ref=e157]: 5,360
+            - generic [ref=e158]: Chords
+          - generic [ref=e159]:
+            - generic [ref=e164]:
+              - link "Nothing Else Matters (ver 4)" [ref=e165] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-chords-1749746
+              - text: "*"
+            - generic [ref=e174]: "191"
+            - generic [ref=e175]: Chords
+          - generic [ref=e176]:
+            - generic [ref=e181]:
+              - link "Nothing Else Matters (ver 5)" [ref=e182] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-chords-1879544
+              - text: "*"
+            - generic [ref=e191]: "42"
+            - generic [ref=e192]: Chords
+          - generic [ref=e193]:
+            - generic [ref=e198]:
+              - link "Nothing Else Matters (ver 6)" [ref=e199] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-chords-2270599
+              - text: "*"
+            - generic [ref=e208]: "253"
+            - generic [ref=e209]: Chords
+          - generic [ref=e210]:
+            - generic [ref=e215]:
+              - link "Nothing Else Matters" [ref=e216] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-tabs-8519
+              - text: "*"
+            - generic [ref=e225]: 5,211
+            - generic [ref=e226]: Tab
+          - generic [ref=e227]:
+            - link "Nothing Else Matters Solo" [ref=e233] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-tabs-25265
+            - generic [ref=e242]: "78"
+            - generic [ref=e243]: Tab
+          - generic [ref=e244]:
+            - link "Nothing Else Matters Intro" [ref=e250] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-tabs-30154
+            - generic [ref=e259]: "896"
+            - generic [ref=e260]: Tab
+          - generic [ref=e261]:
+            - generic [ref=e266]:
+              - link "Nothing Else Matters Intro Live" [ref=e267] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-tabs-3653894
+              - text: "*"
+            - generic [ref=e276]: "3"
+            - generic [ref=e277]: Tab
+          - generic [ref=e278]:
+            - link "Nothing Else Matters (ver 2)" [ref=e284] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-tabs-8522
+            - generic [ref=e293]: "90"
+            - generic [ref=e294]: Tab
+          - generic [ref=e295]:
+            - link "Nothing Else Matters Solo (ver 2)" [ref=e301] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-tabs-28513
+            - generic [ref=e310]: "23"
+            - generic [ref=e311]: Tab
+          - generic [ref=e312]:
+            - link "Nothing Else Matters (ver 3)" [ref=e318] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-tabs-8799
+            - generic [ref=e327]: "19"
+            - generic [ref=e328]: Tab
+          - generic [ref=e329]:
+            - link "Nothing Else Matters Solo (ver 3)" [ref=e335] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-tabs-31637
+            - generic [ref=e344]: "100"
+            - generic [ref=e345]: Tab
+          - generic [ref=e346]:
+            - link "Nothing Else Matters (ver 4)" [ref=e352] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-tabs-24563
+            - generic [ref=e361]: "31"
+            - generic [ref=e362]: Tab
+          - generic [ref=e363]:
+            - link "Nothing Else Matters (ver 5)" [ref=e369] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-tabs-54340
+            - generic [ref=e378]: "42"
+            - generic [ref=e379]: Tab
+          - generic [ref=e380]:
+            - link "Nothing Else Matters (ver 6)" [ref=e386] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-tabs-58473
+            - generic [ref=e395]: "18"
+            - generic [ref=e396]: Tab
+          - generic [ref=e397]:
+            - generic [ref=e402]:
+              - link "Nothing Else Matters (ver 7)" [ref=e403] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-tabs-90841
+              - text: "*"
+            - generic [ref=e412]: 1,973
+            - generic [ref=e413]: Tab
+          - generic [ref=e414]:
+            - link "Nothing Else Matters (ver 8)" [ref=e420] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-tabs-729068
+            - generic [ref=e429]: "18"
+            - generic [ref=e430]: Tab
+          - generic [ref=e431]:
+            - generic [ref=e436]:
+              - link "Nothing Else Matters (ver 9)" [ref=e437] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-tabs-1758823
+              - text: "*"
+            - generic [ref=e446]: "38"
+            - generic [ref=e447]: Tab
+          - generic [ref=e448]:
+            - generic [ref=e453]:
+              - link "Nothing Else Matters (ver 10)" [ref=e454] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-tabs-1883943
+              - text: "*"
+            - generic [ref=e463]: "34"
+            - generic [ref=e464]: Tab
+          - generic [ref=e465]:
+            - link "Nothing Else Matters (ver 11)" [ref=e471] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-tabs-2510187
+            - generic [ref=e480]: "15"
+            - generic [ref=e481]: Tab
+          - generic [ref=e482]:
+            - generic [ref=e487]:
+              - link "Nothing Else Matters Intro" [ref=e488] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-guitar-pro-2595438
+              - text: "*"
+            - generic [ref=e497]: "52"
+            - generic [ref=e498]: Guitar Pro
+          - generic [ref=e499]:
+            - link "Nothing Else Matters" [ref=e505] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-guitar-pro-243748
+            - generic [ref=e514]: "124"
+            - generic [ref=e515]: Guitar Pro
+          - generic [ref=e516]:
+            - generic [ref=e521]:
+              - link "Nothing Else Matters Solo Live" [ref=e522] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-guitar-pro-4947757
+              - text: "*"
+            - generic [ref=e531]: "8"
+            - generic [ref=e532]: Guitar Pro
+          - generic [ref=e533]:
+            - generic [ref=e538]:
+              - link "Nothing Else Matters Live" [ref=e539] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-guitar-pro-4202944
+              - text: "*"
+            - generic [ref=e548]: "4"
+            - generic [ref=e549]: Guitar Pro
+          - generic [ref=e550]:
+            - link "Nothing Else Matters (ver 2)" [ref=e556] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-guitar-pro-243776
+            - generic [ref=e565]: "38"
+            - generic [ref=e566]: Guitar Pro
+          - generic [ref=e567]:
+            - link "Nothing Else Matters (ver 3)" [ref=e573] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-guitar-pro-243583
+            - generic [ref=e582]: "15"
+            - generic [ref=e583]: Guitar Pro
+          - generic [ref=e584]:
+            - link "Nothing Else Matters (ver 4)" [ref=e590] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-guitar-pro-225440
+            - generic [ref=e599]: "21"
+            - generic [ref=e600]: Guitar Pro
+          - generic [ref=e601]:
+            - generic [ref=e606]:
+              - link "Nothing Else Matters (ver 5)" [ref=e607] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-guitar-pro-225441
+              - text: "*"
+            - generic [ref=e616]: 3,069
+            - generic [ref=e617]: Guitar Pro
+          - generic [ref=e618]:
+            - link "Nothing Else Matters (ver 6)" [ref=e624] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-guitar-pro-225442
+            - generic [ref=e633]: "90"
+            - generic [ref=e634]: Guitar Pro
+          - generic [ref=e635]:
+            - link "Nothing Else Matters (ver 7)" [ref=e641] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-guitar-pro-225443
+            - generic [ref=e650]: "120"
+            - generic [ref=e651]: Guitar Pro
+          - generic [ref=e652]:
+            - link "Nothing Else Matters (ver 8)" [ref=e658] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-guitar-pro-225444
+            - generic [ref=e667]: "42"
+            - generic [ref=e668]: Guitar Pro
+          - generic [ref=e669]:
+            - link "Nothing Else Matters (ver 9)" [ref=e675] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-guitar-pro-318998
+            - generic [ref=e684]: "17"
+            - generic [ref=e685]: Guitar Pro
+          - generic [ref=e686]:
+            - link "Nothing Else Matters (ver 10)" [ref=e692] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-guitar-pro-466896
+            - generic [ref=e701]: "14"
+            - generic [ref=e702]: Guitar Pro
+          - generic [ref=e703]:
+            - link "Nothing Else Matters (ver 11)" [ref=e709] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-guitar-pro-764604
+            - generic [ref=e718]: "10"
+            - generic [ref=e719]: Guitar Pro
+          - generic [ref=e720]:
+            - generic [ref=e725]:
+              - link "Nothing Else Matters (ver 12)" [ref=e726] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-guitar-pro-865588
+              - text: "*"
+            - generic [ref=e735]: "5"
+            - generic [ref=e736]: Guitar Pro
+          - generic [ref=e737]:
+            - link "Nothing Else Matters (ver 13)" [ref=e743] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-guitar-pro-866409
+            - generic [ref=e752]: "6"
+            - generic [ref=e753]: Guitar Pro
+          - generic [ref=e754]:
+            - generic [ref=e759]:
+              - link "Nothing Else Matters (ver 14)" [ref=e760] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-guitar-pro-1178919
+              - text: "*"
+            - generic [ref=e769]: "20"
+            - generic [ref=e770]: Guitar Pro
+          - generic [ref=e771]:
+            - generic [ref=e776]:
+              - link "Nothing Else Matters (ver 15)" [ref=e777] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-guitar-pro-1193434
+              - text: "*"
+            - generic [ref=e786]: "7"
+            - generic [ref=e787]: Guitar Pro
+          - generic [ref=e788]:
+            - link "Nothing Else Matters" [ref=e794] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-power-306771
+            - generic [ref=e803]: "112"
+            - generic [ref=e804]: Power
+          - generic [ref=e805]:
+            - link "Nothing Else Matters (ver 2)" [ref=e811] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-power-306772
+            - generic [ref=e820]: "12"
+            - generic [ref=e821]: Power
+          - generic [ref=e822]:
+            - generic [ref=e827]:
+              - link "Nothing Else Matters (ver 3)" [ref=e828] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-power-306774
+              - text: "*"
+            - generic [ref=e837]: "12"
+            - generic [ref=e838]: Power
+          - generic [ref=e839]:
+            - link "Nothing Else Matters (ver 4)" [ref=e845] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-power-324112
+            - generic [ref=e854]: "4"
+            - generic [ref=e855]: Power
+          - generic [ref=e856]:
+            - link "Nothing Else Matters (ver 5)" [ref=e862] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-power-359210
+            - generic [ref=e871]: "37"
+            - generic [ref=e872]: Power
+          - generic [ref=e873]:
+            - link "Nothing Else Matters" [ref=e879] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-bass-8707
+            - generic [ref=e888]: "76"
+            - generic [ref=e889]: Bass
+          - generic [ref=e890]:
+            - link "Nothing Else Matters (ver 2)" [ref=e896] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-bass-36160
+            - generic [ref=e905]: "23"
+            - generic [ref=e906]: Bass
+          - generic [ref=e907]:
+            - generic [ref=e912]:
+              - link "Nothing Else Matters (ver 3)" [ref=e913] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-bass-925229
+              - text: "*"
+            - generic [ref=e922]: "115"
+            - generic [ref=e923]: Bass
+          - generic [ref=e924]:
+            - generic [ref=e929]:
+              - link "Nothing Else Matters (ver 4)" [ref=e930] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-bass-2097051
+              - text: "*"
+            - generic [ref=e939]: "7"
+            - generic [ref=e940]: Bass
+          - generic [ref=e941]:
+            - link "Nothing Else Matters (ver 5)" [ref=e947] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/metallica/nothing-else-matters-bass-2213931
+            - generic [ref=e956]: "7"
+            - generic [ref=e957]: Bass
+      - generic [ref=e959]:
+        - link "1" [ref=e960]:
+          - /url: https://www.ultimate-guitar.com/search.php?search_type=title&value=metallica
+        - link "2" [ref=e961] [cursor=pointer]:
+          - /url: https://www.ultimate-guitar.com/search.php?page=2&search_type=title&value=metallica
+        - link "3" [ref=e962] [cursor=pointer]:
+          - /url: https://www.ultimate-guitar.com/search.php?page=3&search_type=title&value=metallica
+        - link "4" [ref=e963] [cursor=pointer]:
+          - /url: https://www.ultimate-guitar.com/search.php?page=4&search_type=title&value=metallica
+        - link "5" [ref=e964] [cursor=pointer]:
+          - /url: https://www.ultimate-guitar.com/search.php?page=5&search_type=title&value=metallica
+        - link "6" [ref=e965] [cursor=pointer]:
+          - /url: https://www.ultimate-guitar.com/search.php?page=6&search_type=title&value=metallica
+        - link "7" [ref=e966] [cursor=pointer]:
+          - /url: https://www.ultimate-guitar.com/search.php?page=7&search_type=title&value=metallica
+        - link "8" [ref=e967] [cursor=pointer]:
+          - /url: https://www.ultimate-guitar.com/search.php?page=8&search_type=title&value=metallica
+        - link "9" [ref=e968] [cursor=pointer]:
+          - /url: https://www.ultimate-guitar.com/search.php?page=9&search_type=title&value=metallica
+        - link "10" [ref=e969] [cursor=pointer]:
+          - /url: https://www.ultimate-guitar.com/search.php?page=10&search_type=title&value=metallica
+        - link "Next >" [ref=e970] [cursor=pointer]:
+          - /url: https://www.ultimate-guitar.com/search.php?page=2&search_type=title&value=metallica
+  - generic [ref=e971]:
+    - generic [ref=e972]:
+      - generic [ref=e973]:
+        - link "orpelta85" [ref=e974] [cursor=pointer]:
+          - /url: https://www.ultimate-guitar.com/u/orpelta85
+          - img "orpelta85" [ref=e975]
+        - generic [ref=e976]:
+          - generic [ref=e978]:
+            - link "orpelta85" [ref=e979] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/u/orpelta85
+            - text: "[pro]"
+            - link "10" [ref=e980] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/user/activity/iq?user_id=32621864
+          - generic [ref=e981]: Joined 2019
+      - list "User navigation" [ref=e982]:
+        - listitem [ref=e983]:
+          - link "My tabs 11" [ref=e984] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/mytabs
+            - generic [ref=e985]:
+              - generic [ref=e986]: My tabs
+              - generic [ref=e987]: "11"
+        - listitem [ref=e988]:
+          - link "My courses 16" [ref=e989] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/courses
+            - generic [ref=e990]:
+              - generic [ref=e991]: My courses
+              - generic [ref=e992]: "16"
+        - listitem [ref=e993]:
+          - link "My books 0" [ref=e994] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/books
+            - generic [ref=e995]:
+              - generic [ref=e996]: My books
+              - generic [ref=e997]: "0"
+        - listitem [ref=e1000]:
+          - link "Playlists 1" [ref=e1001] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/playlist
+            - generic [ref=e1002]:
+              - generic [ref=e1003]: Playlists
+              - generic [ref=e1004]: "1"
+        - listitem [ref=e1005]:
+          - link "Messages" [ref=e1006] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/profile/messages
+            - generic [ref=e1008]: Messages
+        - listitem [ref=e1009]:
+          - link "Settings" [ref=e1010] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/forum/profile/update-profile
+            - generic [ref=e1012]: Settings
+        - listitem [ref=e1013]:
+          - link "Subscriptions" [ref=e1014] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/subscriptions
+            - generic [ref=e1016]: Subscriptions
+    - generic [ref=e1019]:
+      - generic [ref=e1020]: Bands found
+      - navigation [ref=e1021]:
+        - generic [ref=e1022]:
+          - link "Metallica" [ref=e1023] [cursor=pointer]:
+            - /url: /artist/metallica_954
+          - link "use" [ref=e1024] [cursor=pointer]:
+            - /url: /search.php?title=Metallica+metallica
+        - generic [ref=e1025]:
+          - link "Lou Reed" [ref=e1026] [cursor=pointer]:
+            - /url: /artist/lou_reed_11161
+          - link "use" [ref=e1027] [cursor=pointer]:
+            - /url: /search.php?title=Lou+Reed+metallica
+        - generic [ref=e1028]:
+          - link "Misc Unsigned Bands" [ref=e1029] [cursor=pointer]:
+            - /url: /artist/misc_unsigned_bands_3526
+          - link "use" [ref=e1030] [cursor=pointer]:
+            - /url: /search.php?title=Misc+Unsigned+Bands+metallica
+        - generic [ref=e1031]:
+          - link "Misc Mashups" [ref=e1032] [cursor=pointer]:
+            - /url: /artist/misc_mashups_173205
+          - link "use" [ref=e1033] [cursor=pointer]:
+            - /url: /search.php?title=Misc+Mashups+metallica
+        - generic [ref=e1034]:
+          - link "Catherine Wheel" [ref=e1035] [cursor=pointer]:
+            - /url: /artist/catherine_wheel_4504
+          - link "use" [ref=e1036] [cursor=pointer]:
+            - /url: /search.php?title=Catherine+Wheel+metallica
+      - button "Show All" [ref=e1038] [cursor=pointer]
+  - contentinfo [ref=e1042]:
+    - generic [ref=e1043]:
+      - generic [ref=e1044]:
+        - generic [ref=e1045]:
+          - generic [ref=e1046]: All artists
+          - list "All artists" [ref=e1047]:
+            - listitem [ref=e1048]:
+              - link "#" [ref=e1049] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/0-9.htm
+            - listitem [ref=e1050]:
+              - link "a" [ref=e1051] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/a.htm
+            - listitem [ref=e1052]:
+              - link "b" [ref=e1053] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/b.htm
+            - listitem [ref=e1054]:
+              - link "c" [ref=e1055] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/c.htm
+            - listitem [ref=e1056]:
+              - link "d" [ref=e1057] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/d.htm
+            - listitem [ref=e1058]:
+              - link "e" [ref=e1059] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/e.htm
+            - listitem [ref=e1060]:
+              - link "f" [ref=e1061] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/f.htm
+            - listitem [ref=e1062]:
+              - link "g" [ref=e1063] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/g.htm
+            - listitem [ref=e1064]:
+              - link "h" [ref=e1065] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/h.htm
+            - listitem [ref=e1066]:
+              - link "i" [ref=e1067] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/i.htm
+            - listitem [ref=e1068]:
+              - link "j" [ref=e1069] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/j.htm
+            - listitem [ref=e1070]:
+              - link "k" [ref=e1071] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/k.htm
+            - listitem [ref=e1072]:
+              - link "l" [ref=e1073] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/l.htm
+            - listitem [ref=e1074]:
+              - link "m" [ref=e1075] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/m.htm
+            - listitem [ref=e1076]:
+              - link "n" [ref=e1077] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/n.htm
+            - listitem [ref=e1078]:
+              - link "o" [ref=e1079] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/o.htm
+            - listitem [ref=e1080]:
+              - link "p" [ref=e1081] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/p.htm
+            - listitem [ref=e1082]:
+              - link "q" [ref=e1083] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/q.htm
+            - listitem [ref=e1084]:
+              - link "r" [ref=e1085] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/r.htm
+            - listitem [ref=e1086]:
+              - link "s" [ref=e1087] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/s.htm
+            - listitem [ref=e1088]:
+              - link "t" [ref=e1089] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/t.htm
+            - listitem [ref=e1090]:
+              - link "u" [ref=e1091] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/u.htm
+            - listitem [ref=e1092]:
+              - link "v" [ref=e1093] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/v.htm
+            - listitem [ref=e1094]:
+              - link "w" [ref=e1095] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/w.htm
+            - listitem [ref=e1096]:
+              - link "x" [ref=e1097] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/x.htm
+            - listitem [ref=e1098]:
+              - link "y" [ref=e1099] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/y.htm
+            - listitem [ref=e1100]:
+              - link "z" [ref=e1101] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/z.htm
+        - generic [ref=e1102]:
+          - link "facebook" [ref=e1103] [cursor=pointer]:
+            - /url: https://www.facebook.com/UltimateGuitar/
+            - img
+          - link "twitter" [ref=e1104] [cursor=pointer]:
+            - /url: https://twitter.com/ultimateguitar
+            - img
+          - link "instagram" [ref=e1105] [cursor=pointer]:
+            - /url: https://www.instagram.com/ultimateguitar/
+            - img
+          - link "youtube" [ref=e1106] [cursor=pointer]:
+            - /url: https://www.youtube.com/channel/UCf6prPsXYNYKXH4hX-cuEwQ
+            - img
+          - link "tiktok" [ref=e1107] [cursor=pointer]:
+            - /url: https://www.tiktok.com/@ultimateguitar
+            - img
+          - link "audio.com" [ref=e1108] [cursor=pointer]:
+            - /url: https://audio.com/ultimateguitar
+            - img
+          - link "linkedin" [ref=e1109] [cursor=pointer]:
+            - /url: https://www.linkedin.com/company/1567917
+            - img
+      - separator [ref=e1110]
+      - generic [ref=e1111]:
+        - region "Copyright" [ref=e1112]:
+          - link [ref=e1113] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com
+            - img [ref=e1114]
+          - generic [ref=e1116]: © 2026 Ultimate-Guitar.com All rights reserved
+        - region "Discover" [ref=e1117]:
+          - heading "Discover" [level=4] [ref=e1118]
+          - link "About UG" [ref=e1119] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/
+          - link "Site Rules" [ref=e1120] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/article/blog/site-rules/
+          - link "Advertise" [ref=e1121] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/advertise.htm
+          - link "Support" [ref=e1122] [cursor=pointer]:
+            - /url: https://help.ultimate-guitar.com/en/
+        - region "Legal" [ref=e1123]:
+          - heading "Legal" [level=4] [ref=e1124]
+          - link "Terms of Service" [ref=e1125] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/tos.htm
+          - link "Privacy Policy" [ref=e1126] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/privacy.htm
+          - link "DMCA" [ref=e1127] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/dmca.htm
+          - link "Accessibility Statement" [ref=e1128] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/accessibility-statement.htm
+        - region "Other" [ref=e1129]:
+          - heading "Other" [level=4] [ref=e1130]
+          - button "PRO+" [ref=e1131] [cursor=pointer]
+          - link "Articles Staff" [ref=e1132] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/news/editorial/
+          - link "Fresh Tabs" [ref=e1133] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/fresh?order=date
+          - link "MuseHub" [ref=e1134] [cursor=pointer]:
+            - /url: https://www.musehub.com/?utm_source=ug_web&utm_medium=footer&utm_campaign=musehub
+        - region "Language" [ref=e1135]:
+          - heading "Language" [level=4] [ref=e1136]
+          - link "English" [ref=e1137] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/search.php?search_type=title&value=metallica
+          - link "Português (Brasil)" [ref=e1138] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/search.php?search_type=title&value=metallica
+          - link "Español" [ref=e1139] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/search.php?search_type=title&value=metallica
+          - link "Italiano" [ref=e1140] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/search.php?search_type=title&value=metallica
+          - link "Français" [ref=e1141] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/search.php?search_type=title&value=metallica
+          - link "日本語" [ref=e1142] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/search.php?search_type=title&value=metallica
+        - region "Hot Chords" [ref=e1143]:
+          - heading "Hot Chords" [level=4] [ref=e1144]
+          - link "Indonesia" [ref=e1145] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?country_chart=7
+        - region "Download UG application" [ref=e1146]:
+          - generic [ref=e1147]:
+            - link "apple store" [ref=e1148] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/components/apps/market/redirect?app_name=ug_tabs_chords_ios&source=get_app_footer
+              - img "apple store"
+            - link "google play" [ref=e1149] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/components/apps/market/redirect?app_name=ug_tabs_chords_android&source=get_app_footer
+              - img "google play"
+            - link "huawei store" [ref=e1150] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/components/apps/market/redirect?app_name=ug_tabs_chords_huawei&source=get_app_footer
+              - img "huawei store"
+  - generic [ref=e1156]:
+    - generic [ref=e1157]: Add 2,000+ songbooks to your PRO+ now!
+    - generic [ref=e1158]:
+      - generic [ref=e1159]:
+        - generic [ref=e1160]: "0"
+        - generic [ref=e1162]: days
+      - generic [ref=e1163]: ":"
+      - generic [ref=e1164]:
+        - generic [ref=e1165]: "23"
+        - generic [ref=e1167]: hrs
+      - generic [ref=e1168]: ":"
+      - generic [ref=e1169]:
+        - generic [ref=e1170]: "53"
+        - generic [ref=e1172]: min
+      - generic [ref=e1173]: ":"
+      - generic [ref=e1174]:
+        - generic [ref=e1175]: "49"
+        - generic [ref=e1177]: sec
+    - button "TRY FOR FREE" [ref=e1178] [cursor=pointer]:
+      - generic [ref=e1179]: TRY FOR FREE

@@ -1,0 +1,348 @@
+- generic [active] [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - button "Open Next.js Dev Tools" [ref=e11] [cursor=pointer]:
+    - img [ref=e12]
+  - alert [ref=e15]
+  - generic [ref=e16]:
+    - complementary [ref=e17]:
+      - img "Guitar Practice" [ref=e20]
+      - navigation [ref=e22]:
+        - generic [ref=e23]: Main
+        - button "Home" [ref=e24] [cursor=pointer]:
+          - img [ref=e26]
+          - generic [ref=e28]: Home
+        - button "Practice" [ref=e29] [cursor=pointer]:
+          - img [ref=e31]
+          - generic [ref=e35]: Practice
+        - button "Learn" [ref=e36] [cursor=pointer]:
+          - img [ref=e38]
+          - generic [ref=e41]: Learn
+        - button "Studio" [ref=e42] [cursor=pointer]:
+          - img [ref=e44]
+          - generic [ref=e47]: Studio
+        - button "Jam Mode" [ref=e48] [cursor=pointer]:
+          - img [ref=e50]
+          - generic [ref=e53]: Jam Mode
+        - button "Library" [ref=e54] [cursor=pointer]:
+          - img [ref=e56]
+          - generic [ref=e59]: Library
+        - generic [ref=e60]: Tools
+        - button "AI Coach" [ref=e61] [cursor=pointer]:
+          - img [ref=e63]
+          - generic [ref=e65]: AI Coach
+        - button "Suno AI" [ref=e66] [cursor=pointer]:
+          - img [ref=e68]
+          - generic [ref=e71]: Suno AI
+        - button "Skills" [ref=e72] [cursor=pointer]:
+          - img [ref=e74]
+          - generic [ref=e80]: Skills
+        - button "Tuner" [ref=e81] [cursor=pointer]:
+          - img [ref=e83]
+          - generic [ref=e85]: Tuner
+      - button "Guest Sign in to sync" [ref=e88]:
+        - img [ref=e90]
+        - generic [ref=e93]:
+          - generic [ref=e94]: Guest
+          - generic [ref=e95]: Sign in to sync
+      - button "Sign in to sync" [ref=e97]
+    - generic [ref=e741]:
+      - generic [ref=e742]: Song Library
+      - generic [ref=e743]:
+        - generic [ref=e744]:
+          - img
+          - textbox "Search songs, artists, genres, keys..." [ref=e745]
+        - generic [ref=e746]:
+          - button "Genre" [ref=e748] [cursor=pointer]:
+            - text: Genre
+            - img [ref=e749]
+          - button "Difficulty" [ref=e752] [cursor=pointer]:
+            - text: Difficulty
+            - img [ref=e753]
+          - button "Has GP" [ref=e756] [cursor=pointer]:
+            - text: Has GP
+            - img [ref=e757]
+          - 'button "Sort: Popularity" [ref=e760] [cursor=pointer]':
+            - text: "Sort: Popularity"
+            - img [ref=e761]
+        - generic [ref=e763]: Showing 20 of 8665 songs
+      - generic [ref=e764]:
+        - button "Add Song Manually" [ref=e765] [cursor=pointer]:
+          - img [ref=e766]
+          - text: Add Song Manually
+        - button "Count-in 4" [ref=e768] [cursor=pointer]
+      - button "Black Hole Sun by Soundgarden" [ref=e769] [cursor=pointer]:
+        - generic [ref=e770]:
+          - generic [ref=e771]:
+            - generic [ref=e772]:
+              - generic [ref=e773]: Black Hole Sun
+              - generic [ref=e774]: Intermediate
+              - generic [ref=e775]: GP
+            - generic [ref=e776]: Soundgarden
+            - generic [ref=e777]:
+              - generic [ref=e778]: Grunge
+              - generic [ref=e779]: "Key: G"
+              - generic [ref=e780]: 86 BPM
+              - generic [ref=e781]: Drop D
+          - button "Backing" [ref=e783]:
+            - img [ref=e784]
+            - text: Backing
+      - button "Somebody Like You by Keith Urban" [ref=e788] [cursor=pointer]:
+        - generic [ref=e789]:
+          - generic [ref=e790]:
+            - generic [ref=e791]:
+              - generic [ref=e792]: Somebody Like You
+              - generic [ref=e793]: Beginner
+            - generic [ref=e794]: Keith Urban
+            - generic [ref=e795]:
+              - generic [ref=e796]: Country
+              - generic [ref=e797]: "Key: A"
+              - generic [ref=e798]: 120 BPM
+          - button "Backing" [ref=e800]:
+            - img [ref=e801]
+            - text: Backing
+      - button "Fell On Black Days by Soundgarden" [ref=e805] [cursor=pointer]:
+        - generic [ref=e806]:
+          - generic [ref=e807]:
+            - generic [ref=e808]:
+              - generic [ref=e809]: Fell On Black Days
+              - generic [ref=e810]: Intermediate
+              - generic [ref=e811]: GP
+            - generic [ref=e812]: Soundgarden
+            - generic [ref=e813]:
+              - generic [ref=e814]: Grunge
+              - generic [ref=e815]: "Key: C#m"
+              - generic [ref=e816]: 125 BPM
+              - generic [ref=e817]: Drop D
+          - button "Backing" [ref=e819]:
+            - img [ref=e820]
+            - text: Backing
+      - button "Spoonman by Soundgarden" [ref=e824] [cursor=pointer]:
+        - generic [ref=e825]:
+          - generic [ref=e826]:
+            - generic [ref=e827]:
+              - generic [ref=e828]: Spoonman
+              - generic [ref=e829]: Intermediate
+              - generic [ref=e830]: GP
+            - generic [ref=e831]: Soundgarden
+            - generic [ref=e832]:
+              - generic [ref=e833]: Grunge
+              - generic [ref=e834]: "Key: D"
+              - generic [ref=e835]: 112 BPM
+              - generic [ref=e836]: Drop D
+          - button "Backing" [ref=e838]:
+            - img [ref=e839]
+            - text: Backing
+      - button "Burden In My Hand by Soundgarden" [ref=e843] [cursor=pointer]:
+        - generic [ref=e844]:
+          - generic [ref=e845]:
+            - generic [ref=e846]:
+              - generic [ref=e847]: Burden In My Hand
+              - generic [ref=e848]: Intermediate
+              - generic [ref=e849]: GP
+            - generic [ref=e850]: Soundgarden
+            - generic [ref=e851]:
+              - generic [ref=e852]: Grunge
+              - generic [ref=e853]: "Key: Am"
+              - generic [ref=e854]: 76 BPM
+          - button "Backing" [ref=e856]:
+            - img [ref=e857]
+            - text: Backing
+      - button "Outshined by Soundgarden" [ref=e861] [cursor=pointer]:
+        - generic [ref=e862]:
+          - generic [ref=e863]:
+            - generic [ref=e864]:
+              - generic [ref=e865]: Outshined
+              - generic [ref=e866]: Intermediate
+              - generic [ref=e867]: GP
+            - generic [ref=e868]: Soundgarden
+            - generic [ref=e869]:
+              - generic [ref=e870]: Grunge
+              - generic [ref=e871]: "Key: Cm"
+              - generic [ref=e872]: 116 BPM
+              - generic [ref=e873]: Drop D
+          - button "Backing" [ref=e875]:
+            - img [ref=e876]
+            - text: Backing
+      - button "Blow Up The Outside World by Soundgarden" [ref=e880] [cursor=pointer]:
+        - generic [ref=e881]:
+          - generic [ref=e882]:
+            - generic [ref=e883]:
+              - generic [ref=e884]: Blow Up The Outside World
+              - generic [ref=e885]: Intermediate
+              - generic [ref=e886]: GP
+            - generic [ref=e887]: Soundgarden
+            - generic [ref=e888]:
+              - generic [ref=e889]: Grunge
+              - generic [ref=e890]: "Key: Em"
+              - generic [ref=e891]: 64 BPM
+              - generic [ref=e892]: Drop D
+          - button "Backing" [ref=e894]:
+            - img [ref=e895]
+            - text: Backing
+      - button "Pretty Noose by Soundgarden" [ref=e899] [cursor=pointer]:
+        - generic [ref=e900]:
+          - generic [ref=e901]:
+            - generic [ref=e902]:
+              - generic [ref=e903]: Pretty Noose
+              - generic [ref=e904]: Intermediate
+              - generic [ref=e905]: GP
+            - generic [ref=e906]: Soundgarden
+            - generic [ref=e907]:
+              - generic [ref=e908]: Grunge
+              - generic [ref=e909]: "Key: E"
+              - generic [ref=e910]: 100 BPM
+              - generic [ref=e911]: Drop D
+          - button "Backing" [ref=e913]:
+            - img [ref=e914]
+            - text: Backing
+      - button "That’s When (Taylor’s Version) (From The Vault) by Taylor Swift" [ref=e918] [cursor=pointer]:
+        - generic [ref=e919]:
+          - generic [ref=e920]:
+            - generic [ref=e921]:
+              - generic [ref=e922]: That’s When (Taylor’s Version) (From The Vault)
+              - generic [ref=e923]: Beginner
+            - generic [ref=e924]: Taylor Swift
+            - generic [ref=e926]: Country
+          - button "Backing" [ref=e928]:
+            - img [ref=e929]
+            - text: Backing
+      - button "The Day I Tried To Live by Soundgarden" [ref=e933] [cursor=pointer]:
+        - generic [ref=e934]:
+          - generic [ref=e935]:
+            - generic [ref=e936]:
+              - generic [ref=e937]: The Day I Tried To Live
+              - generic [ref=e938]: Intermediate
+              - generic [ref=e939]: GP
+            - generic [ref=e940]: Soundgarden
+            - generic [ref=e941]:
+              - generic [ref=e942]: Grunge
+              - generic [ref=e943]: "Key: Em"
+              - generic [ref=e944]: 100 BPM
+              - generic [ref=e945]: Drop D
+          - button "Backing" [ref=e947]:
+            - img [ref=e948]
+            - text: Backing
+      - button "Blue Ain't Your Color by Keith Urban" [ref=e952] [cursor=pointer]:
+        - generic [ref=e953]:
+          - generic [ref=e954]:
+            - generic [ref=e955]:
+              - generic [ref=e956]: Blue Ain't Your Color
+              - generic [ref=e957]: Beginner
+            - generic [ref=e958]: Keith Urban
+            - generic [ref=e960]: Country
+          - button "Backing" [ref=e962]:
+            - img [ref=e963]
+            - text: Backing
+      - button "Highway Don't Care by Tim McGraw" [ref=e967] [cursor=pointer]:
+        - generic [ref=e968]:
+          - generic [ref=e969]:
+            - generic [ref=e970]:
+              - generic [ref=e971]: Highway Don't Care
+              - generic [ref=e972]: Beginner
+            - generic [ref=e973]: Tim McGraw
+            - generic [ref=e975]: Country
+          - button "Backing" [ref=e977]:
+            - img [ref=e978]
+            - text: Backing
+      - button "Wild Hearts by Keith Urban" [ref=e982] [cursor=pointer]:
+        - generic [ref=e983]:
+          - generic [ref=e984]:
+            - generic [ref=e985]:
+              - generic [ref=e986]: Wild Hearts
+              - generic [ref=e987]: Beginner
+            - generic [ref=e988]: Keith Urban
+            - generic [ref=e990]: Country
+          - button "Backing" [ref=e992]:
+            - img [ref=e993]
+            - text: Backing
+      - button "Tonight I Wanna Cry by Keith Urban" [ref=e997] [cursor=pointer]:
+        - generic [ref=e998]:
+          - generic [ref=e999]:
+            - generic [ref=e1000]:
+              - generic [ref=e1001]: Tonight I Wanna Cry
+              - generic [ref=e1002]: Beginner
+            - generic [ref=e1003]: Keith Urban
+            - generic [ref=e1005]: Country
+          - button "Backing" [ref=e1007]:
+            - img [ref=e1008]
+            - text: Backing
+      - button "קח אותי by Hayehudim" [ref=e1012] [cursor=pointer]:
+        - generic [ref=e1013]:
+          - generic [ref=e1014]:
+            - generic [ref=e1015]:
+              - generic [ref=e1016]: קח אותי
+              - generic [ref=e1017]: Beginner
+            - generic [ref=e1018]: Hayehudim
+            - generic [ref=e1020]: Country
+          - button "Backing" [ref=e1022]:
+            - img [ref=e1023]
+            - text: Backing
+      - button "אם לא היום אז מחר by Yoni Bloch" [ref=e1027] [cursor=pointer]:
+        - generic [ref=e1028]:
+          - generic [ref=e1029]:
+            - generic [ref=e1030]:
+              - generic [ref=e1031]: אם לא היום אז מחר
+              - generic [ref=e1032]: Beginner
+            - generic [ref=e1033]: Yoni Bloch
+            - generic [ref=e1035]: Country
+          - button "Backing" [ref=e1037]:
+            - img [ref=e1038]
+            - text: Backing
+      - button "אי שם בלב by Korin Allal" [ref=e1042] [cursor=pointer]:
+        - generic [ref=e1043]:
+          - generic [ref=e1044]:
+            - generic [ref=e1045]:
+              - generic [ref=e1046]: אי שם בלב
+              - generic [ref=e1047]: Beginner
+            - generic [ref=e1048]: Korin Allal
+            - generic [ref=e1050]: Country
+          - button "Backing" [ref=e1052]:
+            - img [ref=e1053]
+            - text: Backing
+      - button "Master of Puppets by Metallica" [ref=e1057] [cursor=pointer]:
+        - generic [ref=e1058]:
+          - generic [ref=e1059]:
+            - generic [ref=e1060]:
+              - generic [ref=e1061]: Master of Puppets
+              - generic [ref=e1062]: Advanced
+              - generic [ref=e1063]: GP
+            - generic [ref=e1064]: Metallica
+            - generic [ref=e1065]:
+              - generic [ref=e1066]: Thrash Metal
+              - generic [ref=e1067]: "Key: Em"
+              - generic [ref=e1068]: 212 BPM
+          - button "Backing" [ref=e1070]:
+            - img [ref=e1071]
+            - text: Backing
+      - button "Enter Sandman by Metallica" [ref=e1075] [cursor=pointer]:
+        - generic [ref=e1076]:
+          - generic [ref=e1077]:
+            - generic [ref=e1078]:
+              - generic [ref=e1079]: Enter Sandman
+              - generic [ref=e1080]: Intermediate
+              - generic [ref=e1081]: GP
+            - generic [ref=e1082]: Metallica
+            - generic [ref=e1083]:
+              - generic [ref=e1084]: Heavy Metal
+              - generic [ref=e1085]: "Key: Em"
+              - generic [ref=e1086]: 123 BPM
+          - button "Backing" [ref=e1088]:
+            - img [ref=e1089]
+            - text: Backing
+      - button "Nothing Else Matters by Metallica" [ref=e1093] [cursor=pointer]:
+        - generic [ref=e1094]:
+          - generic [ref=e1095]:
+            - generic [ref=e1096]:
+              - generic [ref=e1097]: Nothing Else Matters
+              - generic [ref=e1098]: Intermediate
+              - generic [ref=e1099]: GP
+            - generic [ref=e1100]: Metallica
+            - generic [ref=e1101]:
+              - generic [ref=e1102]: Ballad
+              - generic [ref=e1103]: "Key: Em"
+              - generic [ref=e1104]: 46 BPM
+          - button "Backing" [ref=e1106]:
+            - img [ref=e1107]
+            - text: Backing
+      - button "Load more (8645 remaining)" [ref=e1111] [cursor=pointer]

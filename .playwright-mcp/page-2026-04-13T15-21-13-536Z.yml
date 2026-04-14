@@ -1,0 +1,467 @@
+- generic [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - button "Open Next.js Dev Tools" [ref=e11] [cursor=pointer]:
+    - img [ref=e12]
+  - alert [ref=e15]
+  - generic [ref=e16]:
+    - complementary [ref=e17]:
+      - img "Guitar Practice" [ref=e20]
+      - navigation [ref=e22]:
+        - generic [ref=e23]: Main
+        - button "Home" [ref=e24] [cursor=pointer]:
+          - img [ref=e26]
+          - generic [ref=e28]: Home
+        - button "Practice" [ref=e29] [cursor=pointer]:
+          - img [ref=e31]
+          - generic [ref=e35]: Practice
+        - button "Learn" [ref=e36] [cursor=pointer]:
+          - img [ref=e38]
+          - generic [ref=e41]: Learn
+        - button "Studio" [ref=e42] [cursor=pointer]:
+          - img [ref=e44]
+          - generic [ref=e47]: Studio
+        - button "Jam Mode" [ref=e48] [cursor=pointer]:
+          - img [ref=e50]
+          - generic [ref=e53]: Jam Mode
+        - button "Library" [ref=e54] [cursor=pointer]:
+          - img [ref=e56]
+          - generic [ref=e59]: Library
+        - generic [ref=e60]: Tools
+        - button "AI Coach" [ref=e61] [cursor=pointer]:
+          - img [ref=e63]
+          - generic [ref=e65]: AI Coach
+        - button "Suno AI" [ref=e66] [cursor=pointer]:
+          - img [ref=e68]
+          - generic [ref=e71]: Suno AI
+        - button "Skills" [ref=e72] [cursor=pointer]:
+          - img [ref=e74]
+          - generic [ref=e80]: Skills
+        - button "Tuner" [ref=e81] [cursor=pointer]:
+          - img [ref=e83]
+          - generic [ref=e85]: Tuner
+      - button "Guest Sign in to sync" [ref=e88]:
+        - img [ref=e90]
+        - generic [ref=e93]:
+          - generic [ref=e94]: Guest
+          - generic [ref=e95]: Sign in to sync
+      - button "Sign in to sync" [ref=e97]
+    - generic [ref=e98]:
+      - generic [ref=e100]:
+        - generic [ref=e101]: Song Library
+        - generic [ref=e102]:
+          - generic [ref=e103]:
+            - img
+            - textbox "Search songs, artists, genres, keys..." [ref=e104]: Dirt
+            - button [ref=e634] [cursor=pointer]:
+              - img [ref=e635]
+          - generic [ref=e105]:
+            - button "Genre" [ref=e107] [cursor=pointer]:
+              - text: Genre
+              - img [ref=e108]
+            - button "Difficulty" [ref=e111] [cursor=pointer]:
+              - text: Difficulty
+              - img [ref=e112]
+            - button "Has GP" [ref=e115] [cursor=pointer]:
+              - text: Has GP
+              - img [ref=e116]
+            - 'button "Sort: Popularity" [ref=e119] [cursor=pointer]':
+              - text: "Sort: Popularity"
+              - img [ref=e120]
+          - button "Clear all" [ref=e639] [cursor=pointer]
+          - generic [ref=e122]: Showing 18 of 8665 songs
+        - generic [ref=e123]:
+          - button "Add Song Manually" [ref=e124] [cursor=pointer]:
+            - img [ref=e125]
+            - text: Add Song Manually
+          - button "Count-in 4" [ref=e127] [cursor=pointer]
+        - button "Down in a Hole by Alice in Chains" [ref=e640] [cursor=pointer]:
+          - generic [ref=e641]:
+            - generic [ref=e642]:
+              - generic [ref=e643]:
+                - generic [ref=e644]: Down in a Hole
+                - generic [ref=e645]: Intermediate
+                - generic [ref=e646]: GP
+              - generic [ref=e647]: Alice in Chains
+              - generic [ref=e648]:
+                - generic [ref=e649]: Grunge
+                - generic [ref=e650]: "Key: Em"
+                - generic [ref=e651]: 69 BPM
+                - generic [ref=e652]: Eb Standard
+            - button "Backing" [ref=e654]:
+              - img [ref=e655]
+              - text: Backing
+        - button "Teenage Dirtbag by Wheatus" [ref=e659] [cursor=pointer]:
+          - generic [ref=e660]:
+            - generic [ref=e661]:
+              - generic [ref=e662]:
+                - generic [ref=e663]: Teenage Dirtbag
+                - generic [ref=e664]: Intermediate
+                - generic [ref=e665]: GP
+              - generic [ref=e666]: Wheatus
+              - generic [ref=e668]: Metal
+            - button "Backing" [ref=e670]:
+              - img [ref=e671]
+              - text: Backing
+        - button "Kreator by dirty lil' trollops" [ref=e675] [cursor=pointer]:
+          - generic [ref=e676]:
+            - generic [ref=e677]:
+              - generic [ref=e678]:
+                - generic [ref=e679]: Kreator
+                - generic [ref=e680]: Intermediate
+              - generic [ref=e681]: dirty lil' trollops
+              - generic [ref=e683]: Metal
+            - button "Backing" [ref=e685]:
+              - img [ref=e686]
+              - text: Backing
+        - button "Through Blood and Dirt and Bone by Trivium" [ref=e690] [cursor=pointer]:
+          - generic [ref=e691]:
+            - generic [ref=e692]:
+              - generic [ref=e693]:
+                - generic [ref=e694]: Through Blood and Dirt and Bone
+                - generic [ref=e695]: Intermediate
+              - generic [ref=e696]: Trivium
+              - generic [ref=e698]: Metal
+            - button "Backing" [ref=e700]:
+              - img [ref=e701]
+              - text: Backing
+        - button "Dirty Deeds Done Dirt Cheap by AC/DC" [ref=e705] [cursor=pointer]:
+          - generic [ref=e706]:
+            - generic [ref=e707]:
+              - generic [ref=e708]:
+                - generic [ref=e709]: Dirty Deeds Done Dirt Cheap
+                - generic [ref=e710]: Intermediate
+                - generic [ref=e711]: GP
+              - generic [ref=e712]: AC/DC
+              - generic [ref=e714]: Hard Rock
+            - button "Backing" [ref=e716]:
+              - img [ref=e717]
+              - text: Backing
+        - button "Dirty Work by Steely Dan" [ref=e721] [cursor=pointer]:
+          - generic [ref=e722]:
+            - generic [ref=e723]:
+              - generic [ref=e724]:
+                - generic [ref=e725]: Dirty Work
+                - generic [ref=e726]: Intermediate
+              - generic [ref=e727]: Steely Dan
+              - generic [ref=e729]: Classic Rock
+            - button "Backing" [ref=e731]:
+              - img [ref=e732]
+              - text: Backing
+        - button "Dirty Window by Metallica" [ref=e736] [cursor=pointer]:
+          - generic [ref=e737]:
+            - generic [ref=e738]:
+              - generic [ref=e739]:
+                - generic [ref=e740]: Dirty Window
+                - generic [ref=e741]: Intermediate
+                - generic [ref=e742]: GP
+              - generic [ref=e743]: Metallica
+              - generic [ref=e745]: Metal
+            - button "Backing" [ref=e747]:
+              - img [ref=e748]
+              - text: Backing
+        - button "I Like Dirt by Red Hot Chili Peppers" [ref=e752] [cursor=pointer]:
+          - generic [ref=e753]:
+            - generic [ref=e754]:
+              - generic [ref=e755]:
+                - generic [ref=e756]: I Like Dirt
+                - generic [ref=e757]: Intermediate
+                - generic [ref=e758]: GP
+              - generic [ref=e759]: Red Hot Chili Peppers
+              - generic [ref=e761]: Alternative Rock
+            - button "Backing" [ref=e763]:
+              - img [ref=e764]
+              - text: Backing
+        - button "High Speed Dirt by Megadeth" [ref=e768] [cursor=pointer]:
+          - generic [ref=e769]:
+            - generic [ref=e770]:
+              - generic [ref=e771]:
+                - generic [ref=e772]: High Speed Dirt
+                - generic [ref=e773]: Advanced
+                - generic [ref=e774]: GP
+              - generic [ref=e775]: Megadeth
+              - generic [ref=e777]: Thrash Metal
+            - button "Backing" [ref=e779]:
+              - img [ref=e780]
+              - text: Backing
+        - button "Dirty Women by Black Sabbath" [ref=e784] [cursor=pointer]:
+          - generic [ref=e785]:
+            - generic [ref=e786]:
+              - generic [ref=e787]:
+                - generic [ref=e788]: Dirty Women
+                - generic [ref=e789]: Intermediate
+                - generic [ref=e790]: GP
+              - generic [ref=e791]: Black Sabbath
+              - generic [ref=e793]: Heavy Metal
+            - button "Backing" [ref=e795]:
+              - img [ref=e796]
+              - text: Backing
+        - button "Dirty Magic by Offspring" [ref=e800] [cursor=pointer]:
+          - generic [ref=e801]:
+            - generic [ref=e802]:
+              - generic [ref=e803]:
+                - generic [ref=e804]: Dirty Magic
+                - generic [ref=e805]: Beginner
+                - generic [ref=e806]: GP
+              - generic [ref=e807]: Offspring
+              - generic [ref=e809]: Punk Rock
+            - button "Backing" [ref=e811]:
+              - img [ref=e812]
+              - text: Backing
+        - button "Dirty Black Hole by Steve Vai" [ref=e816] [cursor=pointer]:
+          - generic [ref=e817]:
+            - generic [ref=e818]:
+              - generic [ref=e819]:
+                - generic [ref=e820]: Dirty Black Hole
+                - generic [ref=e821]: Intermediate
+              - generic [ref=e822]: Steve Vai
+              - generic [ref=e824]: Hard Rock
+            - button "Backing" [ref=e826]:
+              - img [ref=e827]
+              - text: Backing
+        - button "Dirt by Alice In Chains" [ref=e831] [cursor=pointer]:
+          - generic [ref=e832]:
+            - generic [ref=e833]:
+              - generic [ref=e834]:
+                - generic [ref=e835]: Dirt
+                - generic [ref=e836]: Intermediate
+                - generic [ref=e837]: GP
+              - generic [ref=e838]: Alice In Chains
+              - generic [ref=e839]:
+                - generic [ref=e840]: Grunge
+                - generic [ref=e841]: "Key: Em"
+                - generic [ref=e842]: 90 BPM
+                - generic [ref=e843]: Drop D
+            - button "Backing" [ref=e845]:
+              - img [ref=e846]
+              - text: Backing
+        - button "Dirty Pool by Stevie Ray Vaughan" [ref=e850] [cursor=pointer]:
+          - generic [ref=e851]:
+            - generic [ref=e852]:
+              - generic [ref=e853]:
+                - generic [ref=e854]: Dirty Pool
+                - generic [ref=e855]: Intermediate
+                - generic [ref=e856]: GP
+              - generic [ref=e857]: Stevie Ray Vaughan
+              - generic [ref=e859]: Blues
+            - button "Backing" [ref=e861]:
+              - img [ref=e862]
+              - text: Backing
+        - button "The Girl In The Dirty Shirt by Oasis" [ref=e866] [cursor=pointer]:
+          - generic [ref=e867]:
+            - generic [ref=e868]:
+              - generic [ref=e869]:
+                - generic [ref=e870]: The Girl In The Dirty Shirt
+                - generic [ref=e871]: Intermediate
+                - generic [ref=e872]: GP
+              - generic [ref=e873]: Oasis
+              - generic [ref=e875]: Britpop
+            - button "Backing" [ref=e877]:
+              - img [ref=e878]
+              - text: Backing
+        - button "Dirty Diana by Michael Jackson" [ref=e882] [cursor=pointer]:
+          - generic [ref=e883]:
+            - generic [ref=e884]:
+              - generic [ref=e885]:
+                - generic [ref=e886]: Dirty Diana
+                - generic [ref=e887]: Beginner
+                - generic [ref=e888]: GP
+              - generic [ref=e889]: Michael Jackson
+              - generic [ref=e890]:
+                - generic [ref=e891]: Pop
+                - generic [ref=e892]: "Key: Am"
+                - generic [ref=e893]: 114 BPM
+            - button "Backing" [ref=e895]:
+              - img [ref=e896]
+              - text: Backing
+        - button "Dirty Love by Franck Zappa" [ref=e900] [cursor=pointer]:
+          - generic [ref=e901]:
+            - generic [ref=e902]:
+              - generic [ref=e903]:
+                - generic [ref=e904]: Dirty Love
+                - generic [ref=e905]: Advanced
+              - generic [ref=e906]: Franck Zappa
+              - generic [ref=e908]: Experimental
+            - button "Backing" [ref=e910]:
+              - img [ref=e911]
+              - text: Backing
+        - button "Teenage Dirthag by Wheatus" [ref=e915] [cursor=pointer]:
+          - generic [ref=e916]:
+            - generic [ref=e917]:
+              - generic [ref=e918]:
+                - generic [ref=e919]: Teenage Dirthag
+                - generic [ref=e920]: Beginner
+                - generic [ref=e921]: GP
+              - generic [ref=e922]: Wheatus
+              - generic [ref=e924]: Pop Rock
+            - button "Backing" [ref=e926]:
+              - img [ref=e927]
+              - text: Backing
+      - 'dialog "Song: Black Hole Sun by Soundgarden" [ref=e471]':
+        - generic [ref=e472]:
+          - generic [ref=e473]:
+            - generic [ref=e474]:
+              - generic [ref=e475]:
+                - generic [ref=e476]: Black Hole Sun
+                - generic [ref=e477]: Soundgarden
+                - generic [ref=e478]: Superunknown (Deluxe Edition) · 1994
+                - generic [ref=e479]:
+                  - generic [ref=e480]: Grunge
+                  - generic [ref=e481]: Intermediate
+                  - generic [ref=e482]: ♩ G
+                  - generic [ref=e483]: 86 BPM
+                  - generic [ref=e484]: ⚠ Drop D
+                  - generic [ref=e485]: GP
+                  - button "Edit" [active] [ref=e486] [cursor=pointer]
+              - generic [ref=e487]:
+                - button "Add to My Songs" [ref=e488] [cursor=pointer]:
+                  - img [ref=e489]
+                - button "Close" [ref=e491] [cursor=pointer]: ×
+            - generic [ref=e492]:
+              - generic [ref=e493]:
+                - button "Not Started" [ref=e494] [cursor=pointer]
+                - button "Learning" [ref=e495] [cursor=pointer]
+                - button "Can Play Slow" [ref=e496] [cursor=pointer]
+                - button "Full Speed" [ref=e497] [cursor=pointer]
+                - button "Mastered" [ref=e498] [cursor=pointer]
+              - generic [ref=e499]:
+                - button "Start practice timer" [ref=e500] [cursor=pointer]:
+                  - img [ref=e501]
+                - generic [ref=e503]: 00:00
+                - button "Set" [ref=e504] [cursor=pointer]
+          - generic [ref=e505]:
+            - button "Practice" [ref=e506] [cursor=pointer]
+            - button "Chords" [ref=e507] [cursor=pointer]
+            - button "Tutorial" [ref=e508] [cursor=pointer]
+            - button "Log" [ref=e509] [cursor=pointer]
+          - generic [ref=e511]:
+            - generic [ref=e512]:
+              - generic [ref=e513]: ⚠
+              - generic [ref=e514]:
+                - generic [ref=e515]: "Non-Standard Tuning: Drop D"
+                - text: — tune your guitar before playing
+            - generic [ref=e516]:
+              - generic [ref=e517]: BACKING TRACK
+              - generic [ref=e519]:
+                - button "Backing Track" [ref=e520] [cursor=pointer]
+                - button "Original" [ref=e521] [cursor=pointer]
+              - generic [ref=e522]:
+                - button "🔓" [ref=e524] [cursor=pointer]
+                - iframe [ref=e526]:
+                  - generic [active] [ref=f34e1]:
+                    - generic "נגן הסרטונים של YouTube" [ref=f34e3]
+                    - generic [ref=f34e5]:
+                      - generic:
+                        - generic:
+                          - button "הפעלת הסרטון" [ref=f34e10] [cursor=pointer]:
+                            - generic [ref=f34e13]:
+                              - img
+                          - button "הסתרת כפתורי הנגן" [ref=f34e14] [cursor=pointer]
+                          - generic [ref=f34e16]:
+                            - generic [ref=f34e21]:
+                              - generic [ref=f34e22]:
+                                - link "Soundgarden - Black Hole Sun" [ref=f34e23] [cursor=pointer]:
+                                  - /url: https://www.youtube.com/watch?v=3mbBbFH9fAg
+                                - link "SoundgardenVEVO" [ref=f34e24] [cursor=pointer]:
+                                  - /url: /channel/UCTSuGVPcfBRSZSdP3xQASqg
+                                  - generic [ref=f34e25]: SoundgardenVEVO
+                              - generic [ref=f34e26]:
+                                - button "thumbnail-image" [ref=f34e27] [cursor=pointer]:
+                                  - img "thumbnail-image" [ref=f34e28]
+                                - generic [ref=f34e30]:
+                                  - generic: SoundgardenVEVO
+                            - generic [ref=f34e31]:
+                              - button "שיתוף" [ref=f34e34] [cursor=pointer]:
+                                - generic [ref=f34e38]:
+                                  - img
+                              - link "לצפייה ב-YouTube" [ref=f34e45] [cursor=pointer]:
+                                - /url: https://www.youtube.com/watch?v=3mbBbFH9fAg
+                                - generic [ref=f34e48]:
+                                  - text: לצפייה באתר
+                                  - img [ref=f34e50]:
+                                    - generic [ref=f34e52]:
+                                      - img
+                - generic [ref=e527]:
+                  - textbox "Paste YouTube URL..." [ref=e528]
+                  - button "Load" [ref=e529] [cursor=pointer]
+              - generic [ref=e530]:
+                - generic [ref=e531]: "Open in YouTube:"
+                - button "Backing Track" [ref=e532] [cursor=pointer]
+                - button "Original" [ref=e533] [cursor=pointer]
+                - button "Live" [ref=e534] [cursor=pointer]
+            - generic [ref=e535]:
+              - generic [ref=e539]: RECORDER
+              - generic [ref=e540]:
+                - button "Guitar Only" [ref=e541] [cursor=pointer]
+                - button "Guitar + Browser Audio" [ref=e542] [cursor=pointer]
+              - generic [ref=e543]:
+                - button "Record" [ref=e544] [cursor=pointer]
+                - generic [ref=e545]: Record guitar only
+            - generic [ref=e546]:
+              - generic [ref=e547]: GUITAR PRO TAB
+              - generic [ref=e550]:
+                - generic [ref=e552]:
+                  - generic [ref=e555]: Black Hole Sun (55 BPM)
+                  - generic [ref=e556]:
+                    - button "▲ Hide" [ref=e557] [cursor=pointer]
+                    - button "Change" [ref=e558] [cursor=pointer]
+                - generic [ref=e559]:
+                  - generic [ref=e560]:
+                    - button "Play" [ref=e561] [cursor=pointer]:
+                      - generic [ref=e562]: ▶
+                    - generic [ref=e563]: 0:00 / 5:02
+                    - generic [ref=e564]:
+                      - button "◀" [ref=e565] [cursor=pointer]
+                      - generic [ref=e566] [cursor=pointer]: Bar 0/65
+                      - button "▶" [ref=e567] [cursor=pointer]
+                    - generic [ref=e568]:
+                      - generic [ref=e569]: ♩=
+                      - spinbutton "Playback BPM (main speed)" [ref=e570]: "55"
+                      - generic [ref=e571]: 100%
+                  - generic [ref=e572]:
+                    - button "Loop OFF" [ref=e573] [cursor=pointer]
+                    - button "A" [ref=e574] [cursor=pointer]
+                    - button "B" [ref=e575] [cursor=pointer]
+                    - generic [ref=e576]: Click tab to jump
+                    - button "Met" [ref=e578] [cursor=pointer]
+                    - button "Count-in" [ref=e579] [cursor=pointer]
+                    - combobox [ref=e580] [cursor=pointer]:
+                      - option "Clean Lead" [selected]
+                      - option "Clean Chords"
+                      - option "Heavy Lead"
+                      - option "Heavy Chords"
+                      - option "Bass"
+                    - generic [ref=e581]:
+                      - generic [ref=e582]: Transpose
+                      - button "-" [ref=e583] [cursor=pointer]
+                      - generic [ref=e584]: "0"
+                      - button "+" [ref=e585] [cursor=pointer]
+                    - generic [ref=e586]:
+                      - button "Fretboard" [ref=e587] [cursor=pointer]
+                      - button "Mixer" [ref=e588] [cursor=pointer]
+                      - button "Clips" [ref=e589] [cursor=pointer]
+                      - button "Display" [ref=e590] [cursor=pointer]
+                  - generic [ref=e591]:
+                    - generic [ref=e592]: Volume
+                    - slider [ref=e593]: "1"
+                    - generic [ref=e594]: 100%
+                  - generic [ref=e595]:
+                    - generic [ref=e596]: Audio Enhancement
+                    - button "Reverb OFF" [ref=e598] [cursor=pointer]
+              - generic [ref=e618]:
+                - button "Download tabs" [ref=e619] [cursor=pointer]
+                - link "Search Songsterr" [ref=e620] [cursor=pointer]:
+                  - /url: https://www.songsterr.com/?pattern=Black%20Hole%20Sun%20Soundgarden
+            - generic [ref=e621]:
+              - generic [ref=e622]: SONG INFO
+              - generic [ref=e624]:
+                - generic [ref=e625]: "Artist: Soundgarden"
+                - generic [ref=e626]: "Album: Superunknown (Deluxe Edition)"
+                - generic [ref=e627]: "Year: 1994"
+                - generic [ref=e628]: "Genre: Grunge"
+                - generic [ref=e629]:
+                  - text: "Tempo:"
+                  - generic [ref=e630]: 86 BPM
+                - generic [ref=e631]: "Key: G"
+                - generic [ref=e632]: "Tuning: Drop D"
+                - generic [ref=e633]: "Difficulty: Intermediate"

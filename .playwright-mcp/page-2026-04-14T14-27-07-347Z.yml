@@ -1,0 +1,1051 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e6]:
+      - link "Home page" [ref=e7] [cursor=pointer]:
+        - /url: https://www.ultimate-guitar.com
+        - img [ref=e8]
+      - list "Main navigation" [ref=e10]:
+        - listitem [ref=e11]:
+          - link "Tabs" [ref=e12] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore
+        - listitem [ref=e13]:
+          - link "Courses" [ref=e14] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/courses
+        - listitem [ref=e15]:
+          - link "Songbooks" [ref=e16] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/books
+        - listitem [ref=e17]:
+          - link "Articles" [ref=e18] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/news/
+        - listitem [ref=e19]:
+          - link "Forums" [ref=e20] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/forum/
+        - listitem [ref=e21]:
+          - link "Publish tab" [ref=e22] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/contribution/submit/tabs?app_utm_campaign=top_menu&app_utm_content=button&app_utm_medium=internal&app_utm_source=ug&app_utm_term=publish
+        - listitem [ref=e23]:
+          - link "Pro+" [ref=e24] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/pro?app_utm_campaign=UG%20Tab%20Pro&app_utm_content=Artist%20Index&app_utm_medium=Header&app_utm_source=UltimateGuitar
+            - emphasis [ref=e25]: Pro+
+      - generic [ref=e27]:
+        - searchbox "Enter artist name or song title" [ref=e28]
+        - button "Search" [ref=e29] [cursor=pointer]
+      - button "Notifications" [ref=e31] [cursor=pointer]:
+        - img
+        - generic [ref=e32]: "1"
+  - main [ref=e33]:
+    - generic [ref=e34]:
+      - generic [ref=e36]:
+        - generic [ref=e37]:
+          - heading "Metallica Chords & Tabs" [level=1] [ref=e39]
+          - generic [ref=e41]: 2,917 tabs
+        - navigation [ref=e42]:
+          - navigation [ref=e43]:
+            - generic [ref=e44]: All
+            - link "Official" [ref=e45] [cursor=pointer]:
+              - /url: /artist/metallica_954?filter=official
+            - link "Chords" [ref=e46] [cursor=pointer]:
+              - /url: /artist/metallica_954?filter=chords
+            - link "Tab" [ref=e47] [cursor=pointer]:
+              - /url: /artist/metallica_954?filter=tabs
+            - link "Guitar Pro" [ref=e48] [cursor=pointer]:
+              - /url: /artist/metallica_954?filter=guitar_pro
+            - link "Power" [ref=e49] [cursor=pointer]:
+              - /url: /artist/metallica_954?filter=power
+            - link "Bass" [ref=e50] [cursor=pointer]:
+              - /url: /artist/metallica_954?filter=bass
+            - link "Drums" [ref=e51] [cursor=pointer]:
+              - /url: /artist/metallica_954?filter=drums
+            - link "Video" [ref=e52] [cursor=pointer]:
+              - /url: /artist/metallica_954?filter=video
+            - link "Ukulele" [ref=e53] [cursor=pointer]:
+              - /url: /artist/metallica_954?filter=ukulele
+          - navigation [ref=e54]:
+            - generic [ref=e55]: Name
+            - link "Date" [ref=e56] [cursor=pointer]:
+              - /url: /artist/metallica_954?sort=date
+            - link "Hits" [ref=e57] [cursor=pointer]:
+              - /url: /artist/metallica_954?sort=hits
+        - article [ref=e58]:
+          - generic [ref=e59]:
+            - generic [ref=e60]:
+              - generic [ref=e61]: Full Metallica albums
+              - generic [ref=e62]: Rating
+              - generic [ref=e63]: Type
+            - generic [ref=e64]:
+              - link "And Justice For All Album" [ref=e69] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/and-justice-for-all-tabs-202697
+              - generic [ref=e78]: "32"
+              - generic [ref=e79]: Tab
+            - generic [ref=e80]:
+              - link "And Justice For All Album (ver 2)" [ref=e85] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/and-justice-for-all-tabs-2361509
+              - generic [ref=e87]: Tab
+            - generic [ref=e88]:
+              - link "And Justice For All Album" [ref=e93] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/and-justice-for-all-bass-202696
+              - generic [ref=e102]: "3"
+              - generic [ref=e103]: Bass
+            - generic [ref=e104]:
+              - link "And Justice For All Album (ver 2)" [ref=e109] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/and-justice-for-all-bass-202698
+              - generic [ref=e118]: "3"
+              - generic [ref=e119]: Bass
+            - generic [ref=e120]:
+              - generic [ref=e124]:
+                - link "And Justice For All Album (ver 3)" [ref=e125] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/and-justice-for-all-bass-1684810
+                - text: "*"
+              - generic [ref=e134]: "7"
+              - generic [ref=e135]: Bass
+            - generic [ref=e136]:
+              - generic [ref=e140]:
+                - link "Beyond Magnetic Album" [ref=e141] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/beyond-magnetic-bass-1168971
+                - text: "*"
+              - generic [ref=e143]: Bass
+            - generic [ref=e144]:
+              - link "Cliff Em All Album" [ref=e149] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/cliff-em-all-tabs-150663
+              - generic [ref=e158]: "12"
+              - generic [ref=e159]: Tab
+            - generic [ref=e160]:
+              - link "Cliff Em All Album" [ref=e165] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/cliff-em-all-bass-151694
+              - generic [ref=e174]: "9"
+              - generic [ref=e175]: Bass
+            - generic [ref=e176]:
+              - link "Cunning Stunts Album" [ref=e181] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/cunning-stunts-tabs-150669
+              - generic [ref=e190]: "9"
+              - generic [ref=e191]: Tab
+            - generic [ref=e192]:
+              - link "Cunning Stunts Album" [ref=e197] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/cunning-stunts-bass-150935
+              - generic [ref=e199]: Bass
+            - generic [ref=e200]:
+              - generic [ref=e204]:
+                - link "Death Magnetic Album" [ref=e205] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/death-magnetic-tabs-736248
+                - text: "*"
+              - generic [ref=e214]: "21"
+              - generic [ref=e215]: Tab
+            - generic [ref=e216]:
+              - link "Death Magnetic Album (ver 2)" [ref=e221] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/death-magnetic-tabs-797683
+              - generic [ref=e230]: "19"
+              - generic [ref=e231]: Tab
+            - generic [ref=e232]:
+              - generic [ref=e236]:
+                - link "Death Magnetic Album (ver 3)" [ref=e237] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/death-magnetic-tabs-889658
+                - text: "*"
+              - generic [ref=e246]: "5"
+              - generic [ref=e247]: Tab
+            - generic [ref=e248]:
+              - generic [ref=e252]:
+                - link "Death Magnetic Album" [ref=e253] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/death-magnetic-guitar-pro-911698
+                - text: "*"
+              - generic [ref=e262]: "11"
+              - generic [ref=e263]: Pro
+            - generic [ref=e264]:
+              - generic [ref=e268]:
+                - link "Death Magnetic Album" [ref=e269] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/death-magnetic-bass-746833
+                - text: "*"
+              - generic [ref=e278]: "6"
+              - generic [ref=e279]: Bass
+            - generic [ref=e280]:
+              - link "Garage Days Re-Visited Album" [ref=e285] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/garage-days-re-visited-tabs-148278
+              - generic [ref=e294]: "8"
+              - generic [ref=e295]: Tab
+            - generic [ref=e296]:
+              - link "Garage Days Re-Visited Album" [ref=e301] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/garage-days-re-visited-bass-158052
+              - generic [ref=e303]: Bass
+            - generic [ref=e304]:
+              - link "Garage Inc Album" [ref=e309] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/garage-inc-tabs-29531
+              - generic [ref=e318]: "19"
+              - generic [ref=e319]: Tab
+            - generic [ref=e320]:
+              - link "Garage Inc Album (ver 2)" [ref=e325] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/garage-inc-tabs-148284
+              - generic [ref=e334]: "4"
+              - generic [ref=e335]: Tab
+            - generic [ref=e336]:
+              - link "Garage Inc Album" [ref=e341] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/garage-inc-bass-138962
+              - generic [ref=e343]: Bass
+            - generic [ref=e344]:
+              - link "Kill Em All Album" [ref=e349] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/kill-em-all-tabs-148275
+              - generic [ref=e358]: "38"
+              - generic [ref=e359]: Tab
+            - generic [ref=e360]:
+              - generic [ref=e364]:
+                - link "Kill Em All Album (ver 2)" [ref=e365] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/kill-em-all-tabs-903631
+                - text: "*"
+              - generic [ref=e374]: "4"
+              - generic [ref=e375]: Tab
+            - generic [ref=e376]:
+              - link "Kill Em All Album" [ref=e381] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/kill-em-all-bass-138605
+              - generic [ref=e390]: "9"
+              - generic [ref=e391]: Bass
+            - generic [ref=e392]:
+              - link "Kill Em All Album (ver 2)" [ref=e397] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/kill-em-all-bass-158058
+              - generic [ref=e406]: "3"
+              - generic [ref=e407]: Bass
+            - generic [ref=e408]:
+              - link "Live Shit Binge And Purge Mexico City Disc 1 Album" [ref=e413] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/live-shit-binge-and-purge-mexico-city-disc-1-tabs-157258
+              - generic [ref=e422]: "6"
+              - generic [ref=e423]: Tab
+            - generic [ref=e424]:
+              - link "Live Shit Binge And Purge Mexico City Disc 1 Album" [ref=e429] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/live-shit-binge-and-purge-mexico-city-disc-1-bass-139273
+              - generic [ref=e438]: "7"
+              - generic [ref=e439]: Bass
+            - generic [ref=e440]:
+              - link "Live Shit Binge And Purge Mexico City Disc 2 Album" [ref=e445] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/live-shit-binge-and-purge-mexico-city-disc-2-tabs-157254
+              - generic [ref=e447]: Tab
+            - generic [ref=e448]:
+              - link "Live Shit Binge And Purge Mexico City Disc 2 Album" [ref=e453] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/live-shit-binge-and-purge-mexico-city-disc-2-bass-139274
+              - generic [ref=e455]: Bass
+            - generic [ref=e456]:
+              - link "Live Shit Binge And Purge Mexico City Disc 3 Album" [ref=e461] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/live-shit-binge-and-purge-mexico-city-disc-3-tabs-157407
+              - generic [ref=e470]: "4"
+              - generic [ref=e471]: Tab
+            - generic [ref=e472]:
+              - link "Live Shit Binge And Purge Mexico City Disc 3 Album" [ref=e477] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/live-shit-binge-and-purge-mexico-city-disc-3-bass-139275
+              - generic [ref=e479]: Bass
+            - generic [ref=e480]:
+              - link "Live Shit Binge And Purge San Diego Part 1 Album" [ref=e485] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/live-shit-binge-and-purge-san-diego-part-1-tabs-157409
+              - generic [ref=e487]: Tab
+            - generic [ref=e488]:
+              - link "Live Shit Binge And Purge San Diego Part 1 Album" [ref=e493] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/live-shit-binge-and-purge-san-diego-part-1-bass-139260
+              - generic [ref=e495]: Bass
+            - generic [ref=e496]:
+              - link "Live Shit Binge And Purge San Diego Part 2 Album" [ref=e501] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/live-shit-binge-and-purge-san-diego-part-2-tabs-157412
+              - generic [ref=e503]: Tab
+            - generic [ref=e504]:
+              - link "Live Shit Binge And Purge San Diego Part 2 Album" [ref=e509] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/live-shit-binge-and-purge-san-diego-part-2-bass-139261
+              - generic [ref=e511]: Bass
+            - generic [ref=e512]:
+              - link "Live Shit Binge And Purge Seattle Album" [ref=e517] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/live-shit-binge-and-purge-seattle-tabs-157250
+              - generic [ref=e526]: "4"
+              - generic [ref=e527]: Tab
+            - generic [ref=e528]:
+              - link "Live Shit Binge And Purge Seattle Album" [ref=e533] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/live-shit-binge-and-purge-seattle-bass-139224
+              - generic [ref=e542]: "4"
+              - generic [ref=e543]: Bass
+            - generic [ref=e544]:
+              - link "Live Shit Riffs Album" [ref=e549] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/live-shit-riffs-tabs-8606
+              - generic [ref=e558]: "6"
+              - generic [ref=e559]: Tab
+            - generic [ref=e560]:
+              - link "Load Album" [ref=e565] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/load-tabs-29613
+              - generic [ref=e574]: "15"
+              - generic [ref=e575]: Tab
+            - generic [ref=e576]:
+              - link "Load Album (ver 2)" [ref=e581] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/load-tabs-148281
+              - generic [ref=e590]: "3"
+              - generic [ref=e591]: Tab
+            - generic [ref=e592]:
+              - link "Load Album" [ref=e597] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/load-bass-138801
+              - generic [ref=e599]: Bass
+            - generic [ref=e600]:
+              - generic [ref=e604]:
+                - link "Load Album (ver 2)" [ref=e605] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/load-bass-1683347
+                - text: "*"
+              - generic [ref=e607]: Bass
+            - generic [ref=e608]:
+              - link "Master Of Puppets Album" [ref=e613] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/master-of-puppets-tabs-29609
+              - generic [ref=e622]: "85"
+              - generic [ref=e623]: Tab
+            - generic [ref=e624]:
+              - link "Master Of Puppets Album (ver 2)" [ref=e629] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/master-of-puppets-tabs-148277
+              - generic [ref=e638]: "12"
+              - generic [ref=e639]: Tab
+            - generic [ref=e640]:
+              - link "Master Of Puppets Album (ver 3)" [ref=e645] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/master-of-puppets-tabs-462864
+              - generic [ref=e654]: "25"
+              - generic [ref=e655]: Tab
+            - generic [ref=e656]:
+              - generic [ref=e660]:
+                - link "Master Of Puppets Album" [ref=e661] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/master-of-puppets-guitar-pro-1059315
+                - text: "*"
+              - generic [ref=e670]: "37"
+              - generic [ref=e671]: Pro
+            - generic [ref=e672]:
+              - link "Master Of Puppets Album" [ref=e677] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/master-of-puppets-bass-138493
+              - generic [ref=e686]: "10"
+              - generic [ref=e687]: Bass
+            - generic [ref=e688]:
+              - generic [ref=e692]:
+                - link "Metal Up Your Ass Album" [ref=e693] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/metal-up-your-ass-tabs-903693
+                - text: "*"
+              - generic [ref=e702]: "5"
+              - generic [ref=e703]: Tab
+            - generic [ref=e704]:
+              - link "Metallica Album" [ref=e709] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/metallica-tabs-29455
+              - generic [ref=e718]: "28"
+              - generic [ref=e719]: Tab
+            - generic [ref=e720]:
+              - link "Metallica Album (ver 2)" [ref=e725] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/metallica-tabs-2364503
+              - generic [ref=e727]: Tab
+            - generic [ref=e728]:
+              - link "Metallica Album" [ref=e733] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/metallica-bass-138617
+              - generic [ref=e742]: "8"
+              - generic [ref=e743]: Bass
+            - generic [ref=e744]:
+              - link "Metallica Album (ver 2)" [ref=e749] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/metallica-bass-158007
+              - generic [ref=e758]: "3"
+              - generic [ref=e759]: Bass
+            - generic [ref=e760]:
+              - link "Metallica Album (ver 3)" [ref=e765] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/metallica-bass-1450203
+              - generic [ref=e767]: Bass
+            - generic [ref=e768]:
+              - generic [ref=e772]:
+                - link "Metallica Album" [ref=e773] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/metallica-drums-902318
+                - text: "*"
+              - generic [ref=e782]: "3"
+              - generic [ref=e783]: Drums
+            - generic [ref=e784]:
+              - link "Metallica Part 1 Album" [ref=e789] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/metallica-part-1-guitar-pro-225321
+              - generic [ref=e798]: "12"
+              - generic [ref=e799]: Pro
+            - generic [ref=e800]:
+              - link "Metallica Part 2 Album" [ref=e805] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/metallica-part-2-guitar-pro-225322
+              - generic [ref=e814]: "6"
+              - generic [ref=e815]: Pro
+            - generic [ref=e816]:
+              - generic [ref=e820]:
+                - link "No Life Til Leather Album" [ref=e821] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/no-life-til-leather-tabs-889666
+                - text: "*"
+              - generic [ref=e830]: "9"
+              - generic [ref=e831]: Tab
+            - generic [ref=e832]:
+              - link "Reload Album" [ref=e837] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/reload-tabs-114221
+              - generic [ref=e846]: "7"
+              - generic [ref=e847]: Tab
+            - generic [ref=e848]:
+              - link "Reload Album (ver 2)" [ref=e853] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/reload-tabs-148282
+              - generic [ref=e855]: Tab
+            - generic [ref=e856]:
+              - link "Reload Album (ver 3)" [ref=e861] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/reload-tabs-183192
+              - generic [ref=e870]: "10"
+              - generic [ref=e871]: Tab
+            - generic [ref=e872]:
+              - link "Reload Album" [ref=e877] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/reload-bass-138812
+              - generic [ref=e886]: "4"
+              - generic [ref=e887]: Bass
+            - generic [ref=e888]:
+              - link "Ride The Lightning Album" [ref=e893] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/ride-the-lightning-tabs-29615
+              - generic [ref=e902]: "44"
+              - generic [ref=e903]: Tab
+            - generic [ref=e904]:
+              - link "Ride The Lightning Album (ver 2)" [ref=e909] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/ride-the-lightning-tabs-148276
+              - generic [ref=e918]: "10"
+              - generic [ref=e919]: Tab
+            - generic [ref=e920]:
+              - link "Ride The Lightning Album" [ref=e925] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/ride-the-lightning-guitar-pro-827774
+              - generic [ref=e934]: "39"
+              - generic [ref=e935]: Pro
+            - generic [ref=e936]:
+              - link "Ride The Lightning Album" [ref=e941] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/ride-the-lightning-bass-138492
+              - generic [ref=e950]: "6"
+              - generic [ref=e951]: Bass
+            - generic [ref=e952]:
+              - generic [ref=e956]:
+                - link "Ron Mcgovneys 82 Garage Demo Album" [ref=e957] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/ron-mcgovneys-82-garage-demo-tabs-904329
+                - text: "*"
+              - generic [ref=e966]: "3"
+              - generic [ref=e967]: Tab
+            - generic [ref=e968]:
+              - link "S And M Album" [ref=e973] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/s-and-m-tabs-148432
+              - generic [ref=e982]: "19"
+              - generic [ref=e983]: Tab
+            - generic [ref=e984]:
+              - link "S And M Album" [ref=e989] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/s-and-m-bass-139122
+              - generic [ref=e998]: "4"
+              - generic [ref=e999]: Bass
+            - generic [ref=e1000]:
+              - link "St Anger Album" [ref=e1005] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/st-anger-tabs-115000
+              - generic [ref=e1014]: "70"
+              - generic [ref=e1015]: Tab
+            - generic [ref=e1016]:
+              - link "St Anger Album (ver 2)" [ref=e1021] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/st-anger-tabs-115738
+              - generic [ref=e1030]: "6"
+              - generic [ref=e1031]: Tab
+            - generic [ref=e1032]:
+              - link "St Anger Album" [ref=e1037] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/st-anger-bass-139138
+              - generic [ref=e1046]: "6"
+              - generic [ref=e1047]: Bass
+            - generic [ref=e1048]:
+              - generic [ref=e1052]:
+                - link "St Anger Album (ver 2)" [ref=e1053] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/st-anger-bass-887488
+                - text: "*"
+              - generic [ref=e1062]: "7"
+              - generic [ref=e1063]: Bass
+        - article [ref=e1064]:
+          - generic [ref=e1065]:
+            - generic [ref=e1066]:
+              - generic [ref=e1067]: Songs Featuring Metallica
+              - generic [ref=e1068]: Rating
+              - generic [ref=e1069]: Type
+            - generic [ref=e1070]:
+              - generic [ref=e1074]:
+                - link "Dragon" [ref=e1075] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/lou-reed/dragon-tabs-1103443
+                - text: "*"
+              - generic [ref=e1084]: "5"
+              - generic [ref=e1085]: Tab
+            - generic [ref=e1086]:
+              - generic [ref=e1090]:
+                - link "Dragon" [ref=e1091] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/lou-reed/dragon-bass-1171008
+                - text: "*"
+              - generic [ref=e1093]: Bass
+            - generic [ref=e1094]:
+              - link "Frustration" [ref=e1099] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/lou-reed/frustration-tabs-1110490
+              - generic [ref=e1101]: Tab
+            - generic [ref=e1102]:
+              - generic [ref=e1106]:
+                - link "Frustration" [ref=e1107] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/lou-reed/frustration-bass-1171575
+                - text: "*"
+              - generic [ref=e1109]: Bass
+            - generic [ref=e1110]:
+              - generic [ref=e1114]:
+                - link "Iced Honey" [ref=e1115] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/lou-reed/iced-honey-chords-1114803
+                - text: "*"
+              - generic [ref=e1124]: "8"
+              - generic [ref=e1125]: Chords
+            - generic [ref=e1126]:
+              - generic [ref=e1130]:
+                - link "Iced Honey Intro" [ref=e1131] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/lou-reed/iced-honey-tabs-1517076
+                - text: "*"
+              - generic [ref=e1133]: Tab
+            - generic [ref=e1134]:
+              - generic [ref=e1138]:
+                - link "Iced Honey" [ref=e1139] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/lou-reed/iced-honey-tabs-3789977
+                - text: "*"
+              - generic [ref=e1141]: Tab
+            - generic [ref=e1142]:
+              - generic [ref=e1146]:
+                - link "Junior Dad" [ref=e1147] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/lou-reed/junior-dad-tabs-1119805
+                - text: "*"
+              - generic [ref=e1156]: "5"
+              - generic [ref=e1157]: Tab
+            - generic [ref=e1158]:
+              - link "Junior Dad Intro" [ref=e1163] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/lou-reed/junior-dad-tabs-1459351
+              - generic [ref=e1165]: Tab
+            - generic [ref=e1166]:
+              - generic [ref=e1170]:
+                - link "Junior Dad (ver 2)" [ref=e1171] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/lou-reed/junior-dad-tabs-1413238
+                - text: "*"
+              - generic [ref=e1180]: "3"
+              - generic [ref=e1181]: Tab
+            - generic [ref=e1182]:
+              - generic [ref=e1186]:
+                - link "Junior Dad (ver 3)" [ref=e1187] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/lou-reed/junior-dad-tabs-1707248
+                - text: "*"
+              - generic [ref=e1196]: "3"
+              - generic [ref=e1197]: Tab
+            - generic [ref=e1198]:
+              - link "Junior Dad" [ref=e1203] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/lou-reed/junior-dad-bass-1171511
+              - generic [ref=e1205]: Bass
+            - generic [ref=e1206]:
+              - generic [ref=e1210]:
+                - link "Little Dog" [ref=e1211] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/lou-reed/little-dog-bass-1171582
+                - text: "*"
+              - generic [ref=e1213]: Bass
+            - generic [ref=e1214]:
+              - generic [ref=e1218]:
+                - link "Mistress Dread" [ref=e1219] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/lou-reed/mistress-dread-bass-1171498
+                - text: "*"
+              - generic [ref=e1221]: Bass
+            - generic [ref=e1222]:
+              - generic [ref=e1226]:
+                - link "Pumping Blood Intro" [ref=e1227] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/lou-reed/pumping-blood-tabs-1105411
+                - text: "*"
+              - generic [ref=e1229]: Tab
+            - generic [ref=e1230]:
+              - generic [ref=e1234]:
+                - link "Pumping Blood" [ref=e1235] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/lou-reed/pumping-blood-bass-1171596
+                - text: "*"
+              - generic [ref=e1237]: Bass
+            - generic [ref=e1238]:
+              - generic [ref=e1242]:
+                - link "The Star-Spangled Banner Live" [ref=e1243] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/kirk-hammett/the-star-spangled-banner-guitar-pro-2107657
+                - text: "*"
+              - generic [ref=e1252]: "160"
+              - generic [ref=e1253]: Pro
+            - generic [ref=e1254]:
+              - link "The View" [ref=e1259] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/lou-reed/the-view-chords-3872894
+              - generic [ref=e1261]: Chords
+            - generic [ref=e1262]:
+              - generic [ref=e1266]:
+                - link "The View" [ref=e1267] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/lou-reed/the-view-tabs-1095983
+                - text: "*"
+              - generic [ref=e1276]: "17"
+              - generic [ref=e1277]: Tab
+            - generic [ref=e1278]:
+              - generic [ref=e1282]:
+                - link "The View (ver 2)" [ref=e1283] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/lou-reed/the-view-tabs-1096103
+                - text: "*"
+              - generic [ref=e1285]: Tab
+            - generic [ref=e1286]:
+              - generic [ref=e1290]:
+                - link "The View (ver 3)" [ref=e1291] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/lou-reed/the-view-tabs-1098758
+                - text: "*"
+              - generic [ref=e1300]: "4"
+              - generic [ref=e1301]: Tab
+            - generic [ref=e1302]:
+              - generic [ref=e1306]:
+                - link "The View" [ref=e1307] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/lou-reed/the-view-guitar-pro-1106780
+                - text: "*"
+              - generic [ref=e1316]: "12"
+              - generic [ref=e1317]: Pro
+            - generic [ref=e1318]:
+              - generic [ref=e1322]:
+                - link "The View" [ref=e1323] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/lou-reed/the-view-bass-1171027
+                - text: "*"
+              - generic [ref=e1325]: Bass
+        - article [ref=e1326]:
+          - generic [ref=e1327]:
+            - generic [ref=e1328]:
+              - generic [ref=e1329]: Metallica Chords & Tabs
+              - generic [ref=e1330]: Rating
+              - generic [ref=e1331]: Type
+            - generic [ref=e1332]:
+              - generic [ref=e1336]:
+                - link "- Human" [ref=e1337] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/-human-tabs-8603
+                - text: "*"
+              - generic [ref=e1346]: "3"
+              - generic [ref=e1347]: Tab
+            - generic [ref=e1348]:
+              - generic [ref=e1352]:
+                - link "- Human (ver 2)" [ref=e1353] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/-human-tabs-8605
+                - text: "*"
+              - generic [ref=e1362]: "6"
+              - generic [ref=e1363]: Tab
+            - generic [ref=e1364]:
+              - generic [ref=e1368]:
+                - link "- Human (ver 3)" [ref=e1369] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/-human-tabs-27967
+                - text: "*"
+              - generic [ref=e1378]: "11"
+              - generic [ref=e1379]: Tab
+            - generic [ref=e1380]:
+              - generic [ref=e1384]:
+                - link "- Human (ver 4)" [ref=e1385] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/-human-tabs-379253
+                - text: "*"
+              - generic [ref=e1394]: "7"
+              - generic [ref=e1395]: Tab
+            - generic [ref=e1396]:
+              - generic [ref=e1400]:
+                - link "- Human (ver 5)" [ref=e1401] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/-human-tabs-636129
+                - text: "*"
+              - generic [ref=e1410]: "4"
+              - generic [ref=e1411]: Tab
+            - generic [ref=e1412]:
+              - generic [ref=e1416]:
+                - link "- Human" [ref=e1417] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/-human-guitar-pro-225397
+                - text: "*"
+              - generic [ref=e1426]: "31"
+              - generic [ref=e1427]: Pro
+            - generic [ref=e1428]:
+              - generic [ref=e1432]:
+                - link "- Human (ver 2)" [ref=e1433] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/-human-guitar-pro-826489
+                - text: "*"
+              - generic [ref=e1442]: "6"
+              - generic [ref=e1443]: Pro
+            - generic [ref=e1444]:
+              - generic [ref=e1448]:
+                - link "- Human (ver 3)" [ref=e1449] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/-human-guitar-pro-3325844
+                - text: "*"
+              - generic [ref=e1451]: Pro
+            - generic [ref=e1452]:
+              - generic [ref=e1456]:
+                - link "- Human (ver 4)" [ref=e1457] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/-human-guitar-pro-3880559
+                - text: "*"
+              - generic [ref=e1466]: "4"
+              - generic [ref=e1467]: Pro
+            - generic [ref=e1468]:
+              - generic [ref=e1472]:
+                - link "- Human" [ref=e1473] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/-human-power-306729
+                - text: "*"
+              - generic [ref=e1475]: Power
+            - generic [ref=e1476]:
+              - generic [ref=e1480]:
+                - link "- Human" [ref=e1481] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/-human-bass-402119
+                - text: "*"
+              - generic [ref=e1483]: Bass
+            - generic [ref=e1484]:
+              - generic [ref=e1488]:
+                - link "- Human (ver 2)" [ref=e1489] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/-human-bass-440243
+                - text: "*"
+              - generic [ref=e1498]: "4"
+              - generic [ref=e1499]: Bass
+            - generic [ref=e1500]:
+              - generic [ref=e1504]:
+                - link "- Human (ver 3)" [ref=e1505] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/-human-bass-2813486
+                - text: "*"
+              - generic [ref=e1507]: Bass
+            - generic [ref=e1508]:
+              - generic [ref=e1512]:
+                - link "2 X 4" [ref=e1513] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/2-x-4-official-2099637
+                - text: "*"
+              - generic [ref=e1514]: High quality
+              - generic [ref=e1515]: Official
+            - generic [ref=e1516]:
+              - link "2 X 4 Intro" [ref=e1521] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/2-x-4-tabs-5583768
+              - generic [ref=e1523]: Tab
+            - generic [ref=e1524]:
+              - link "2 X 4" [ref=e1529] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/2-x-4-tabs-8551
+              - generic [ref=e1538]: "22"
+              - generic [ref=e1539]: Tab
+            - generic [ref=e1540]:
+              - link "2 X 4 (ver 2)" [ref=e1545] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/2-x-4-tabs-117181
+              - generic [ref=e1554]: "6"
+              - generic [ref=e1555]: Tab
+            - generic [ref=e1556]:
+              - link "2 X 4 (ver 3)" [ref=e1561] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/2-x-4-tabs-160749
+              - generic [ref=e1570]: "7"
+              - generic [ref=e1571]: Tab
+            - generic [ref=e1572]:
+              - generic [ref=e1576]:
+                - link "2 X 4" [ref=e1577] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/2-x-4-guitar-pro-225297
+                - text: "*"
+              - generic [ref=e1586]: "16"
+              - generic [ref=e1587]: Pro
+            - generic [ref=e1588]:
+              - generic [ref=e1592]:
+                - link "2 X 4 (ver 2)" [ref=e1593] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/2-x-4-guitar-pro-225298
+                - text: "*"
+              - generic [ref=e1602]: "3"
+              - generic [ref=e1603]: Pro
+            - generic [ref=e1604]:
+              - generic [ref=e1608]:
+                - link "2 X 4 (ver 3)" [ref=e1609] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/2-x-4-guitar-pro-882434
+                - text: "*"
+              - generic [ref=e1618]: "10"
+              - generic [ref=e1619]: Pro
+            - generic [ref=e1620]:
+              - generic [ref=e1624]:
+                - link "2 X 4" [ref=e1625] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/2-x-4-power-306659
+                - text: "*"
+              - generic [ref=e1627]: Power
+            - generic [ref=e1628]:
+              - generic [ref=e1632]:
+                - link "2 X 4 (ver 2)" [ref=e1633] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/2-x-4-power-306660
+                - text: "*"
+              - generic [ref=e1635]: Power
+            - generic [ref=e1636]:
+              - link "2 X 4 (ver 3)" [ref=e1641] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/2-x-4-power-822717
+              - generic [ref=e1643]: Power
+            - generic [ref=e1644]:
+              - generic [ref=e1648]:
+                - link "2 X 4" [ref=e1649] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/2-x-4-bass-8765
+                - text: "*"
+              - generic [ref=e1658]: "4"
+              - generic [ref=e1659]: Bass
+            - generic [ref=e1660]:
+              - link "2 X 4 (ver 2)" [ref=e1665] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/2-x-4-bass-1875136
+              - generic [ref=e1667]: Bass
+            - generic [ref=e1668]:
+              - link "53Rd And 3Rd" [ref=e1673] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/53rd-and-3rd-tabs-49950
+              - generic [ref=e1682]: "10"
+              - generic [ref=e1683]: Tab
+            - generic [ref=e1684]:
+              - generic [ref=e1688]:
+                - link "53Rd And 3Rd (ver 2)" [ref=e1689] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/metallica/53rd-and-3rd-tabs-392142
+                - text: "*"
+              - generic [ref=e1691]: Tab
+            - generic [ref=e1692]:
+              - link "53Rd And 3Rd" [ref=e1697] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/metallica/53rd-and-3rd-guitar-pro-225299
+              - generic [ref=e1699]: Pro
+        - generic [ref=e1701]:
+          - link "1" [ref=e1702]:
+            - /url: /artist/metallica_954
+          - link "2" [ref=e1703] [cursor=pointer]:
+            - /url: /artist/metallica_954?page=2
+          - link "3" [ref=e1704] [cursor=pointer]:
+            - /url: /artist/metallica_954?page=3
+          - link "4" [ref=e1705] [cursor=pointer]:
+            - /url: /artist/metallica_954?page=4
+          - link "5" [ref=e1706] [cursor=pointer]:
+            - /url: /artist/metallica_954?page=5
+          - link "6" [ref=e1707] [cursor=pointer]:
+            - /url: /artist/metallica_954?page=6
+          - link "7" [ref=e1708] [cursor=pointer]:
+            - /url: /artist/metallica_954?page=7
+          - link "8" [ref=e1709] [cursor=pointer]:
+            - /url: /artist/metallica_954?page=8
+          - link "9" [ref=e1710] [cursor=pointer]:
+            - /url: /artist/metallica_954?page=9
+          - link "10" [ref=e1711] [cursor=pointer]:
+            - /url: /artist/metallica_954?page=10
+          - link "Next >" [ref=e1712] [cursor=pointer]:
+            - /url: /artist/metallica_954?page=2
+      - article [ref=e1713]: Learn how to play 290 songs by Metallica easily. At Ultimate-Guitar.com you will find 2,917 chords & tabs made by our community and UG professionals. Use short videos (shots), guitar pro versions and audio back tracking to become super star faster 🤩. Also, you can try our ukulele, piano, bass chords and drum tabs. If you still haven't found what you're looking for, please Request tab from community.
+  - generic [ref=e1714]:
+    - generic [ref=e1715]:
+      - generic [ref=e1716]:
+        - link "orpelta85" [ref=e1717] [cursor=pointer]:
+          - /url: https://www.ultimate-guitar.com/u/orpelta85
+          - img "orpelta85" [ref=e1718]
+        - generic [ref=e1719]:
+          - generic [ref=e1721]:
+            - link "orpelta85" [ref=e1722] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/u/orpelta85
+            - text: "[pro]"
+            - link "10" [ref=e1723] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/user/activity/iq?user_id=32621864
+          - generic [ref=e1724]: Joined 2019
+      - list "User navigation" [ref=e1725]:
+        - listitem [ref=e1726]:
+          - link "My tabs 11" [ref=e1727] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/mytabs
+            - generic [ref=e1728]:
+              - generic [ref=e1729]: My tabs
+              - generic [ref=e1730]: "11"
+        - listitem [ref=e1731]:
+          - link "My courses 16" [ref=e1732] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/courses
+            - generic [ref=e1733]:
+              - generic [ref=e1734]: My courses
+              - generic [ref=e1735]: "16"
+        - listitem [ref=e1736]:
+          - link "My books 0" [ref=e1737] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/books
+            - generic [ref=e1738]:
+              - generic [ref=e1739]: My books
+              - generic [ref=e1740]: "0"
+        - listitem [ref=e1743]:
+          - link "Playlists 1" [ref=e1744] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/playlist
+            - generic [ref=e1745]:
+              - generic [ref=e1746]: Playlists
+              - generic [ref=e1747]: "1"
+        - listitem [ref=e1748]:
+          - link "Messages" [ref=e1749] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/profile/messages
+            - generic [ref=e1751]: Messages
+        - listitem [ref=e1752]:
+          - link "Settings" [ref=e1753] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/forum/profile/update-profile
+            - generic [ref=e1755]: Settings
+        - listitem [ref=e1756]:
+          - link "Subscriptions" [ref=e1757] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/subscriptions
+            - generic [ref=e1759]: Subscriptions
+    - generic [ref=e1763]:
+      - generic [ref=e1764]: Difficulty
+      - navigation [ref=e1765]:
+        - link "Absolute beginner" [ref=e1766] [cursor=pointer]:
+          - /url: https://www.ultimate-guitar.com/artist/metallica_954?difficulty[]=1
+          - generic [ref=e1767]: Absolute beginner
+        - link "beginner" [ref=e1768] [cursor=pointer]:
+          - /url: https://www.ultimate-guitar.com/artist/metallica_954?difficulty[]=2
+          - generic [ref=e1769]: beginner
+        - link "intermediate" [ref=e1770] [cursor=pointer]:
+          - /url: https://www.ultimate-guitar.com/artist/metallica_954?difficulty[]=3
+          - generic [ref=e1771]: intermediate
+        - link "advanced" [ref=e1772] [cursor=pointer]:
+          - /url: https://www.ultimate-guitar.com/artist/metallica_954?difficulty[]=4
+          - generic [ref=e1773]: advanced
+  - contentinfo [ref=e1777]:
+    - generic [ref=e1778]:
+      - generic [ref=e1779]:
+        - generic [ref=e1780]:
+          - generic [ref=e1781]: All artists
+          - list "All artists" [ref=e1782]:
+            - listitem [ref=e1783]:
+              - link "#" [ref=e1784] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/0-9.htm
+            - listitem [ref=e1785]:
+              - link "a" [ref=e1786] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/a.htm
+            - listitem [ref=e1787]:
+              - link "b" [ref=e1788] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/b.htm
+            - listitem [ref=e1789]:
+              - link "c" [ref=e1790] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/c.htm
+            - listitem [ref=e1791]:
+              - link "d" [ref=e1792] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/d.htm
+            - listitem [ref=e1793]:
+              - link "e" [ref=e1794] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/e.htm
+            - listitem [ref=e1795]:
+              - link "f" [ref=e1796] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/f.htm
+            - listitem [ref=e1797]:
+              - link "g" [ref=e1798] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/g.htm
+            - listitem [ref=e1799]:
+              - link "h" [ref=e1800] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/h.htm
+            - listitem [ref=e1801]:
+              - link "i" [ref=e1802] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/i.htm
+            - listitem [ref=e1803]:
+              - link "j" [ref=e1804] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/j.htm
+            - listitem [ref=e1805]:
+              - link "k" [ref=e1806] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/k.htm
+            - listitem [ref=e1807]:
+              - link "l" [ref=e1808] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/l.htm
+            - listitem [ref=e1809]:
+              - link "m" [ref=e1810] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/m.htm
+            - listitem [ref=e1811]:
+              - link "n" [ref=e1812] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/n.htm
+            - listitem [ref=e1813]:
+              - link "o" [ref=e1814] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/o.htm
+            - listitem [ref=e1815]:
+              - link "p" [ref=e1816] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/p.htm
+            - listitem [ref=e1817]:
+              - link "q" [ref=e1818] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/q.htm
+            - listitem [ref=e1819]:
+              - link "r" [ref=e1820] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/r.htm
+            - listitem [ref=e1821]:
+              - link "s" [ref=e1822] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/s.htm
+            - listitem [ref=e1823]:
+              - link "t" [ref=e1824] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/t.htm
+            - listitem [ref=e1825]:
+              - link "u" [ref=e1826] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/u.htm
+            - listitem [ref=e1827]:
+              - link "v" [ref=e1828] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/v.htm
+            - listitem [ref=e1829]:
+              - link "w" [ref=e1830] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/w.htm
+            - listitem [ref=e1831]:
+              - link "x" [ref=e1832] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/x.htm
+            - listitem [ref=e1833]:
+              - link "y" [ref=e1834] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/y.htm
+            - listitem [ref=e1835]:
+              - link "z" [ref=e1836] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/z.htm
+        - generic [ref=e1837]:
+          - link "facebook" [ref=e1838] [cursor=pointer]:
+            - /url: https://www.facebook.com/UltimateGuitar/
+            - img
+          - link "twitter" [ref=e1839] [cursor=pointer]:
+            - /url: https://twitter.com/ultimateguitar
+            - img
+          - link "instagram" [ref=e1840] [cursor=pointer]:
+            - /url: https://www.instagram.com/ultimateguitar/
+            - img
+          - link "youtube" [ref=e1841] [cursor=pointer]:
+            - /url: https://www.youtube.com/channel/UCf6prPsXYNYKXH4hX-cuEwQ
+            - img
+          - link "tiktok" [ref=e1842] [cursor=pointer]:
+            - /url: https://www.tiktok.com/@ultimateguitar
+            - img
+          - link "audio.com" [ref=e1843] [cursor=pointer]:
+            - /url: https://audio.com/ultimateguitar
+            - img
+          - link "linkedin" [ref=e1844] [cursor=pointer]:
+            - /url: https://www.linkedin.com/company/1567917
+            - img
+      - separator [ref=e1845]
+      - generic [ref=e1846]:
+        - region "Copyright" [ref=e1847]:
+          - link [ref=e1848] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com
+            - img [ref=e1849]
+          - generic [ref=e1851]: © 2026 Ultimate-Guitar.com All rights reserved
+        - region "Discover" [ref=e1852]:
+          - heading "Discover" [level=4] [ref=e1853]
+          - link "About UG" [ref=e1854] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/
+          - link "Site Rules" [ref=e1855] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/article/blog/site-rules/
+          - link "Advertise" [ref=e1856] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/advertise.htm
+          - link "Support" [ref=e1857] [cursor=pointer]:
+            - /url: https://help.ultimate-guitar.com/en/
+        - region "Legal" [ref=e1858]:
+          - heading "Legal" [level=4] [ref=e1859]
+          - link "Terms of Service" [ref=e1860] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/tos.htm
+          - link "Privacy Policy" [ref=e1861] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/privacy.htm
+          - link "DMCA" [ref=e1862] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/dmca.htm
+          - link "Accessibility Statement" [ref=e1863] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/accessibility-statement.htm
+        - region "Other" [ref=e1864]:
+          - heading "Other" [level=4] [ref=e1865]
+          - button "PRO+" [ref=e1866] [cursor=pointer]
+          - link "Articles Staff" [ref=e1867] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/news/editorial/
+          - link "Fresh Tabs" [ref=e1868] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/fresh?order=date
+          - link "MuseHub" [ref=e1869] [cursor=pointer]:
+            - /url: https://www.musehub.com/?utm_source=ug_web&utm_medium=footer&utm_campaign=musehub
+        - region "Language" [ref=e1870]:
+          - heading "Language" [level=4] [ref=e1871]
+          - link "English" [ref=e1872] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/artist/metallica_954
+          - link "Português (Brasil)" [ref=e1873] [cursor=pointer]:
+            - /url: https://pt.ultimate-guitar.com/artist/metallica_954
+          - link "Español" [ref=e1874] [cursor=pointer]:
+            - /url: https://es.ultimate-guitar.com/artist/metallica_954
+          - link "Italiano" [ref=e1875] [cursor=pointer]:
+            - /url: https://it.ultimate-guitar.com/artist/metallica_954
+          - link "Français" [ref=e1876] [cursor=pointer]:
+            - /url: https://fr.ultimate-guitar.com/artist/metallica_954
+          - link "日本語" [ref=e1877] [cursor=pointer]:
+            - /url: https://ja.ultimate-guitar.com/artist/metallica_954
+        - region "Hot Chords" [ref=e1878]:
+          - heading "Hot Chords" [level=4] [ref=e1879]
+          - link "Indonesia" [ref=e1880] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?country_chart=7
+        - region "Download UG application" [ref=e1881]:
+          - generic [ref=e1882]:
+            - link "apple store" [ref=e1883] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/components/apps/market/redirect?app_name=ug_tabs_chords_ios&source=get_app_footer
+              - img "apple store" [ref=e1884]
+            - link "google play" [ref=e1885] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/components/apps/market/redirect?app_name=ug_tabs_chords_android&source=get_app_footer
+              - img "google play" [ref=e1886]
+            - link "huawei store" [ref=e1887] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/components/apps/market/redirect?app_name=ug_tabs_chords_huawei&source=get_app_footer
+              - img "huawei store" [ref=e1888]
+  - generic [ref=e1894]:
+    - generic [ref=e1895]: Add 2,000+ songbooks to your PRO+ now!
+    - generic [ref=e1896]:
+      - generic [ref=e1897]:
+        - generic [ref=e1898]: "0"
+        - generic [ref=e1900]: days
+      - generic [ref=e1901]: ":"
+      - generic [ref=e1902]:
+        - generic [ref=e1903]: "23"
+        - generic [ref=e1905]: hrs
+      - generic [ref=e1906]: ":"
+      - generic [ref=e1907]:
+        - generic [ref=e1908]: "56"
+        - generic [ref=e1910]: min
+      - generic [ref=e1911]: ":"
+      - generic [ref=e1912]:
+        - generic [ref=e1913]: "36"
+        - generic [ref=e1915]: sec
+    - button "TRY FOR FREE" [ref=e1916] [cursor=pointer]:
+      - generic [ref=e1917]: TRY FOR FREE

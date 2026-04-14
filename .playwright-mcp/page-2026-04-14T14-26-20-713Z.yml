@@ -1,0 +1,1777 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e6]:
+      - link "Home page" [ref=e7] [cursor=pointer]:
+        - /url: https://www.ultimate-guitar.com
+        - img [ref=e8]
+      - list "Main navigation" [ref=e10]:
+        - listitem [ref=e11]:
+          - link "Tabs" [ref=e12] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore
+        - listitem [ref=e13]:
+          - link "Courses" [ref=e14] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/courses
+        - listitem [ref=e15]:
+          - link "Songbooks" [ref=e16] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/books
+        - listitem [ref=e17]:
+          - link "Articles" [ref=e18] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/news/
+        - listitem [ref=e19]:
+          - link "Forums" [ref=e20] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/forum/
+        - listitem [ref=e21]:
+          - link "Publish tab" [ref=e22] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/contribution/submit/tabs?app_utm_campaign=top_menu&app_utm_content=button&app_utm_medium=internal&app_utm_source=ug&app_utm_term=publish
+        - listitem [ref=e23]:
+          - link "Pro+" [ref=e24] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/pro?app_utm_campaign=UG%20Tab%20Pro&app_utm_content=Main%20Index&app_utm_medium=Header&app_utm_source=UltimateGuitar
+            - emphasis [ref=e25]: Pro+
+      - generic [ref=e27]:
+        - searchbox "Enter artist name or song title" [ref=e28]
+        - button "Search" [ref=e29] [cursor=pointer]
+      - button "Notifications" [ref=e31] [cursor=pointer]:
+        - img
+        - generic [ref=e32]: "1"
+  - main [ref=e33]:
+    - article [ref=e35]:
+      - generic [ref=e36]:
+        - generic [ref=e38]:
+          - generic [ref=e39]:
+            - navigation [ref=e40]:
+              - heading "Official tabs" [level=3] [ref=e41]
+              - navigation [ref=e42]:
+                - generic [ref=e43]: Top
+                - button "New" [ref=e44] [cursor=pointer]
+            - link "More" [ref=e45] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/explore?type[]=Official
+          - generic [ref=e46]:
+            - generic [ref=e47]:
+              - generic [ref=e48]: "1"
+              - link "Eagles" [ref=e51] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/artist/eagles_1509
+              - link "Hotel California" [ref=e53] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/eagles/hotel-california-official-1910943
+              - generic [ref=e54]: 771 hits
+            - generic [ref=e55]:
+              - generic [ref=e56]: "2"
+              - link "Led Zeppelin" [ref=e59] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/artist/led_zeppelin_1036
+              - link "Stairway To Heaven" [ref=e61] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/led-zeppelin/stairway-to-heaven-official-1911433
+              - generic [ref=e62]: 402 hits
+            - generic [ref=e63]:
+              - generic [ref=e64]: "3"
+              - link "Rage Against The Machine" [ref=e67] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/artist/rage_against_the_machine_584
+              - link "Killing In The Name" [ref=e69] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/rage-against-the-machine/killing-in-the-name-official-2238297
+              - generic [ref=e70]: 423 hits
+            - generic [ref=e71]:
+              - generic [ref=e72]: "4"
+              - link "Bruno Mars" [ref=e75] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/artist/bruno_mars_28280
+              - link "Risk It All" [ref=e77] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/bruno-mars/risk-it-all-official-6179957
+              - generic [ref=e78]: 642 hits
+            - generic [ref=e79]:
+              - generic [ref=e80]: "5"
+              - link "Guns N' Roses" [ref=e83] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/artist/guns_n_roses_1367
+              - link "Sweet Child O Mine" [ref=e85] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/guns-n-roses/sweet-child-o-mine-official-1910965
+              - generic [ref=e86]: 408 hits
+            - generic [ref=e87]:
+              - generic [ref=e88]: "6"
+              - link "Dire Straits" [ref=e91] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/artist/dire_straits_1644
+              - link "Sultans Of Swing" [ref=e93] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/dire-straits/sultans-of-swing-official-1911505
+              - generic [ref=e94]: 414 hits
+            - generic [ref=e95]:
+              - generic [ref=e96]: "7"
+              - link "Pink Floyd" [ref=e99] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/artist/pink_floyd_684
+              - link "Comfortably Numb" [ref=e101] [cursor=pointer]:
+                - /url: https://tabs.ultimate-guitar.com/tab/pink-floyd/comfortably-numb-official-1939571
+              - generic [ref=e102]: 267 hits
+        - generic [ref=e104]:
+          - generic [ref=e105]:
+            - navigation [ref=e106]:
+              - heading "Tab requests" [level=3] [ref=e107]
+              - navigation [ref=e108]:
+                - generic [ref=e109]: Top
+                - button "My" [ref=e110] [cursor=pointer]
+            - link "More" [ref=e111] [cursor=pointer]:
+              - /url: /forum/forumdisplay.php?f=120
+          - generic [ref=e114]:
+            - generic [ref=e117]:
+              - text: Top Official Tab requests by votes. UG guitar team fulfills the most upvoted requests daily. Upvote the ones you like.
+              - link "Read more" [ref=e118] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/forum/showthread.php?t=1802890
+            - generic [ref=e119]:
+              - generic [ref=e120]:
+                - generic [ref=e123]:
+                  - link "Snowy White - Midnight Blues" [ref=e124] [cursor=pointer]:
+                    - /url: https://www.ultimate-guitar.com/forum/showthread.php?t=1830684
+                  - generic [ref=e125]: 820 votes
+                - generic [ref=e127]: upvote
+              - generic [ref=e128]:
+                - generic [ref=e131]:
+                  - link "Buddy Guy - What Kind Of Woman Is This" [ref=e132] [cursor=pointer]:
+                    - /url: https://www.ultimate-guitar.com/forum/showthread.php?t=1929394
+                  - generic [ref=e133]: 654 votes
+                - generic [ref=e135]: upvote
+              - generic [ref=e136]:
+                - generic [ref=e139]:
+                  - link "The Who - Love Reign Oer Me" [ref=e140] [cursor=pointer]:
+                    - /url: https://www.ultimate-guitar.com/forum/showthread.php?t=2003333
+                  - generic [ref=e141]: 652 votes
+                - generic [ref=e143]: upvote
+              - generic [ref=e144]:
+                - generic [ref=e147]:
+                  - link "Stevie Wonder - Do I Do" [ref=e148] [cursor=pointer]:
+                    - /url: https://www.ultimate-guitar.com/forum/showthread.php?t=1979759
+                  - generic [ref=e149]: 587 votes
+                - generic [ref=e151]: upvote
+              - generic [ref=e152]:
+                - generic [ref=e155]:
+                  - link "Santana - Shes Not There" [ref=e156] [cursor=pointer]:
+                    - /url: https://www.ultimate-guitar.com/forum/showthread.php?t=2008538
+                  - generic [ref=e157]: 553 votes
+                - generic [ref=e159]: upvote
+              - generic [ref=e160]:
+                - generic [ref=e163]:
+                  - link "Simple Minds - Alive And Kicking" [ref=e164] [cursor=pointer]:
+                    - /url: https://www.ultimate-guitar.com/forum/showthread.php?t=1994867
+                  - generic [ref=e165]: 436 votes
+                - generic [ref=e167]: upvote
+              - generic [ref=e168]:
+                - generic [ref=e171]:
+                  - link "Jamiroquai - Too Young To Die" [ref=e172] [cursor=pointer]:
+                    - /url: https://www.ultimate-guitar.com/forum/showthread.php?t=1982705
+                  - generic [ref=e173]: 426 votes
+                - generic [ref=e175]: upvote
+              - generic [ref=e176]:
+                - generic [ref=e179]:
+                  - link "Yes - Ive Seen All Good People" [ref=e180] [cursor=pointer]:
+                    - /url: https://www.ultimate-guitar.com/forum/showthread.php?t=1973003
+                  - generic [ref=e181]: 414 votes
+                - generic [ref=e183]: upvote
+              - generic [ref=e184]:
+                - generic [ref=e187]:
+                  - link "Journey - Send Her My Love" [ref=e188] [cursor=pointer]:
+                    - /url: https://www.ultimate-guitar.com/forum/showthread.php?t=2001575
+                  - generic [ref=e189]: 404 votes
+                - generic [ref=e191]: upvote
+              - generic [ref=e192]:
+                - generic [ref=e195]:
+                  - link "Derek And The Dominos - Little Wing" [ref=e196] [cursor=pointer]:
+                    - /url: https://www.ultimate-guitar.com/forum/showthread.php?t=1936187
+                  - generic [ref=e197]: 400 votes
+                - generic [ref=e199]: upvote
+            - link "View all" [ref=e201] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/forum/tab-request-top
+        - generic [ref=e203]:
+          - navigation [ref=e205]:
+            - heading "About Pro" [level=3] [ref=e206]
+          - article [ref=e207]:
+            - generic [ref=e208]:
+              - generic [ref=e209]:
+                - 'link "Pro Users: Watch Quick Tour to UG Official Tabs" [ref=e211] [cursor=pointer]':
+                  - /url: https://www.ultimate-guitar.com/news/ug_news/pro_users_watch_quick_tour_to_ug_official_tabs.html
+                - generic [ref=e212]: Apr 7, 2452
+                - generic [ref=e213]: LEARN HOW TO GET THE MOST FROM OFFICIAL TABS
+              - complementary [ref=e214]:
+                - 'link "Pro Users: Watch Quick Tour to UG Official Tabs" [ref=e215] [cursor=pointer]':
+                  - /url: https://www.ultimate-guitar.com/news/ug_news/pro_users_watch_quick_tour_to_ug_official_tabs.html
+                  - 'img "Pro Users: Watch Quick Tour to UG Official Tabs" [ref=e216]'
+          - article [ref=e217]:
+            - heading "Recent articles" [level=4] [ref=e219]
+            - generic [ref=e221]:
+              - generic [ref=e222]:
+                - link "Introducing Practice Mode in the Ultimate Guitar App" [ref=e224] [cursor=pointer]:
+                  - /url: https://www.ultimate-guitar.com/news/ug_news/introducing_practice_mode_in_the_ultimate_guitar_app_music-learning_powered_by_machine-learning.html
+                - generic [ref=e225]: Music-Learning Powered by Machine-Learning
+              - generic [ref=e226]:
+                - link "Meet the New Ultimate Guitar" [ref=e228] [cursor=pointer]:
+                  - /url: https://www.ultimate-guitar.com/news/ug_news/meet_the_new_ultimate_guitar.html
+                - generic [ref=e229]: The change you've been waiting for
+              - generic [ref=e230]:
+                - link "A Useful Update for the Pro Account Users" [ref=e232] [cursor=pointer]:
+                  - /url: https://www.ultimate-guitar.com/news/ug_news/a_useful_update_for_the_pro_account_users.html
+                - generic [ref=e233]: A feature that will make it easier for you to track Official Tabs requests
+              - generic [ref=e234]:
+                - 'link "Official Tabs Requests: To Infinity and Beyond!" [ref=e236] [cursor=pointer]':
+                  - /url: https://www.ultimate-guitar.com/news/ug_news/official_tabs_requests_to_infinity_and_beyond.html
+                - generic [ref=e237]: If you can't find a tab for your favorite song - sent a request to the UG Guitar Team
+      - generic [ref=e238]:
+        - generic [ref=e239]:
+          - generic [ref=e240]:
+            - generic [ref=e241]:
+              - navigation [ref=e242]:
+                - heading "shots" [level=3] [ref=e243]
+              - link "Explore" [ref=e244] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/shots/explore
+            - img [ref=e246]
+          - generic [ref=e248]:
+            - generic [ref=e249]:
+              - navigation [ref=e250]:
+                - heading "Explore tab catalog" [level=1] [ref=e251]
+              - link "Explore" [ref=e252] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/explore
+            - generic [ref=e253]:
+              - generic [ref=e256]:
+                - heading "Type" [level=4] [ref=e257]
+                - generic [ref=e258]:
+                  - generic [ref=e259]:
+                    - link "Chords" [ref=e260] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/explore?type[]=Chords
+                    - generic [ref=e261]: 1,195,763
+                  - generic [ref=e262]:
+                    - link "Official" [ref=e263] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/explore?type[]=Official
+                    - generic [ref=e264]: 35,043
+                  - generic [ref=e265]:
+                    - link "Tab" [ref=e266] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/explore?type[]=Tabs
+                    - generic [ref=e267]: 366,071
+                  - generic [ref=e268]:
+                    - link "Ukulele" [ref=e269] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/explore?type[]=Ukulele%20Chords
+                    - generic [ref=e270]: 152,402
+                  - generic [ref=e271]:
+                    - link "Guitar Pro" [ref=e272] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/explore?type[]=Pro
+                    - generic [ref=e273]: 260,167
+                  - generic [ref=e274]:
+                    - link "Bass" [ref=e275] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/explore?type[]=Bass%20Tabs
+                    - generic [ref=e276]: 119,967
+                - link "Show All" [ref=e279] [cursor=pointer]:
+                  - /url: https://www.ultimate-guitar.com/explore?active_filter=type
+              - generic [ref=e282]:
+                - heading "Decade" [level=4] [ref=e283]
+                - generic [ref=e284]:
+                  - generic [ref=e285]:
+                    - link "2020s" [ref=e286] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/explore?decade[]=2020
+                    - generic [ref=e287]: 81,908
+                  - generic [ref=e288]:
+                    - link "2010s" [ref=e289] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/explore?decade[]=2010
+                    - generic [ref=e290]: 348,047
+                  - generic [ref=e291]:
+                    - link "2000s" [ref=e292] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/explore?decade[]=2000
+                    - generic [ref=e293]: 412,016
+                  - generic [ref=e294]:
+                    - link "1990s" [ref=e295] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/explore?decade[]=1990
+                    - generic [ref=e296]: 207,716
+                  - generic [ref=e297]:
+                    - link "1980s" [ref=e298] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/explore?decade[]=1980
+                    - generic [ref=e299]: 112,870
+                  - generic [ref=e300]:
+                    - link "1970s" [ref=e301] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/explore?decade[]=1970
+                    - generic [ref=e302]: 90,422
+                - link "Show All" [ref=e305] [cursor=pointer]:
+                  - /url: https://www.ultimate-guitar.com/explore?active_filter=decade
+              - generic [ref=e308]:
+                - heading "Genre" [level=4] [ref=e309]
+                - generic [ref=e310]:
+                  - generic [ref=e311]:
+                    - link "Rock" [ref=e312] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/explore?genres[]=4
+                    - generic [ref=e313]: 1,248,096
+                  - generic [ref=e314]:
+                    - link "Pop" [ref=e315] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/explore?genres[]=14
+                    - generic [ref=e316]: 254,860
+                  - generic [ref=e317]:
+                    - link "Metal" [ref=e318] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/explore?genres[]=8
+                    - generic [ref=e319]: 251,839
+                  - generic [ref=e320]:
+                    - link "Folk" [ref=e321] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/explore?genres[]=666
+                    - generic [ref=e322]: 242,474
+                  - generic [ref=e323]:
+                    - link "Country" [ref=e324] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/explore?genres[]=49
+                    - generic [ref=e325]: 133,351
+                  - generic [ref=e326]:
+                    - link "Soundtrack" [ref=e327] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/explore?genres[]=680
+                    - generic [ref=e328]: 101,415
+                - link "Show All" [ref=e331] [cursor=pointer]:
+                  - /url: https://www.ultimate-guitar.com/explore?active_filter=genres
+          - navigation [ref=e333]:
+            - heading "#whatsup" [level=3] [ref=e334]
+            - navigation [ref=e335]:
+              - generic [ref=e336]: New
+              - button "Hot" [ref=e337] [cursor=pointer]
+          - generic [ref=e338]:
+            - img [ref=e339]
+            - text: "Updated today:"
+            - generic [ref=e341]: 256 NEW TABS
+            - generic [ref=e342]: ", 3 NEWS"
+          - generic [ref=e343]:
+            - generic [ref=e344]:
+              - article [ref=e345]:
+                - generic [ref=e346]:
+                  - generic [ref=e347]:
+                    - 'link "''I''ll Play If My Arm Falls Off'': Ex-NIN Drummer on Unexpected Health Scare That Almost Cost Him the Gig" [ref=e349] [cursor=pointer]':
+                      - /url: /news/general_music_news/ill-play-if-my-arm-falls-off-ex-nin-drummer-on-unexpected-health-scare-that-almost-cost-him-the-gig
+                    - generic [ref=e351]:
+                      - text: posted 2 hours ago by gregprato1
+                      - generic [ref=e352]:
+                        - text: in
+                        - link "News" [ref=e353] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "0 comments" [ref=e354] [cursor=pointer]:
+                        - /url: /news/general_music_news/ill-play-if-my-arm-falls-off-ex-nin-drummer-on-unexpected-health-scare-that-almost-cost-him-the-gig#comments
+                    - generic [ref=e355]:
+                      - generic [ref=e356]: "Tags:"
+                      - link "Hard rock" [ref=e357] [cursor=pointer]:
+                        - /url: /news/tag/hard-rock/
+                      - text: ·
+                      - link "Rock" [ref=e358] [cursor=pointer]:
+                        - /url: /news/tag/rock/
+                  - complementary [ref=e359]
+              - article [ref=e361]:
+                - generic [ref=e362]:
+                  - generic [ref=e363]:
+                    - 'link "Billy Gibbons Convinced a Tired Dusty Hill to Sing ''Viva Las Vegas'' in Elvis''s Last Dressing Room: ''Start the Machine''" [ref=e365] [cursor=pointer]':
+                      - /url: /news/general_music_news/billy-gibbons-convinced-a-tired-dusty-hill-to-sing-viva-las-vegas-in-elviss-last-dressing-room-start-the-machine
+                    - generic [ref=e367]:
+                      - text: posted 8 hours ago by The_Phoenician
+                      - generic [ref=e368]:
+                        - text: in
+                        - link "News" [ref=e369] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "3 comments" [ref=e370] [cursor=pointer]:
+                        - /url: /news/general_music_news/billy-gibbons-convinced-a-tired-dusty-hill-to-sing-viva-las-vegas-in-elviss-last-dressing-room-start-the-machine#comments
+                    - generic [ref=e371]:
+                      - generic [ref=e372]: "Tags:"
+                      - link "Hard rock" [ref=e373] [cursor=pointer]:
+                        - /url: /news/tag/hard-rock/
+                      - text: ·
+                      - link "Music history" [ref=e374] [cursor=pointer]:
+                        - /url: /news/tag/music-history/
+                  - complementary [ref=e375]
+              - article [ref=e377]:
+                - generic [ref=e378]:
+                  - generic [ref=e379]:
+                    - 'link "''John Lennon Would Say Just Finish It. We Can''t Do That'': Karnivool''s Guitarist on Why Their New Album Took 13 Years" [ref=e381] [cursor=pointer]':
+                      - /url: /news/general_music_news/john-lennon-would-say-just-finish-it-we-cant-do-that-karnivools-guitarist-on-why-their-new-album-took-13-years
+                    - generic [ref=e383]:
+                      - text: posted 10 hours ago by The_Phoenician
+                      - generic [ref=e384]:
+                        - text: in
+                        - link "News" [ref=e385] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "3 comments" [ref=e386] [cursor=pointer]:
+                        - /url: /news/general_music_news/john-lennon-would-say-just-finish-it-we-cant-do-that-karnivools-guitarist-on-why-their-new-album-took-13-years#comments
+                    - generic [ref=e387]:
+                      - generic [ref=e388]: "Tags:"
+                      - link "Music history" [ref=e389] [cursor=pointer]:
+                        - /url: /news/tag/music-history/
+                      - text: ·
+                      - link "Progressive metal" [ref=e390] [cursor=pointer]:
+                        - /url: /news/tag/progressive-metal/
+                  - complementary [ref=e391]
+              - article [ref=e393]:
+                - generic [ref=e394]:
+                  - generic [ref=e395]:
+                    - 'link "Mazzy Star''s ''Fade Into You'' Isn''t Really About Romance, Author Says: It''s About ''Comfortable Silence''" [ref=e397] [cursor=pointer]':
+                      - /url: /news/general_music_news/mazzy-stars-fade-into-you-isnt-really-about-romance-author-says-its-about-comfortable-silence
+                    - generic [ref=e399]:
+                      - text: posted 19 hours ago by gregprato1
+                      - generic [ref=e400]:
+                        - text: in
+                        - link "News" [ref=e401] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "3 comments" [ref=e402] [cursor=pointer]:
+                        - /url: /news/general_music_news/mazzy-stars-fade-into-you-isnt-really-about-romance-author-says-its-about-comfortable-silence#comments
+                    - generic [ref=e403]:
+                      - generic [ref=e404]: "Tags:"
+                      - link "Music history" [ref=e405] [cursor=pointer]:
+                        - /url: /news/tag/music-history/
+                      - text: ·
+                      - link "Rock" [ref=e406] [cursor=pointer]:
+                        - /url: /news/tag/rock/
+                  - complementary [ref=e407]
+              - article [ref=e409]:
+                - generic [ref=e410]:
+                  - generic [ref=e411]:
+                    - 'link "Most Players Get It Wrong: Fleetwood Mac''s ''Tusk'' Riff Is About Rhythm, Not Technique" [ref=e413] [cursor=pointer]':
+                      - /url: /news/tab_spotlight/most-players-get-it-wrong-fleetwood-macs-tusk-riff-is-about-rhythm-not-technique
+                    - generic [ref=e415]:
+                      - text: posted yesterday by JustinBeckner
+                      - generic [ref=e416]:
+                        - text: in
+                        - link "News" [ref=e417] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "2 comments" [ref=e418] [cursor=pointer]:
+                        - /url: /news/tab_spotlight/most-players-get-it-wrong-fleetwood-macs-tusk-riff-is-about-rhythm-not-technique#comments
+                    - generic [ref=e419]:
+                      - generic [ref=e420]: "Tags:"
+                      - link "Guitar" [ref=e421] [cursor=pointer]:
+                        - /url: /news/tag/guitar/
+                      - text: ·
+                      - link "Music history" [ref=e422] [cursor=pointer]:
+                        - /url: /news/tag/music-history/
+                  - complementary [ref=e423]:
+                    - 'link "Most Players Get It Wrong: Fleetwood Mac''s ''Tusk'' Riff Is About Rhythm, Not Technique" [ref=e424] [cursor=pointer]':
+                      - /url: /news/tab_spotlight/most-players-get-it-wrong-fleetwood-macs-tusk-riff-is-about-rhythm-not-technique
+                      - 'img "Most Players Get It Wrong: Fleetwood Mac''s ''Tusk'' Riff Is About Rhythm, Not Technique" [ref=e425]'
+              - article [ref=e426]:
+                - generic [ref=e427]:
+                  - generic [ref=e428]:
+                    - 'link "''It Was Like a White-Hot Rage'': Billy Corgan Tells Courtney Love What He Remembered From First Seeing Hole Live" [ref=e430] [cursor=pointer]':
+                      - /url: /news/general_music_news/it-was-like-a-white-hot-rage-billy-corgan-tells-courtney-love-what-he-remembered-from-first-seeing-hole-live
+                    - generic [ref=e432]:
+                      - text: posted yesterday by gregprato1
+                      - generic [ref=e433]:
+                        - text: in
+                        - link "News" [ref=e434] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "1 comment" [ref=e435] [cursor=pointer]:
+                        - /url: /news/general_music_news/it-was-like-a-white-hot-rage-billy-corgan-tells-courtney-love-what-he-remembered-from-first-seeing-hole-live#comments
+                    - generic [ref=e436]:
+                      - generic [ref=e437]: "Tags:"
+                      - link "Guitar" [ref=e438] [cursor=pointer]:
+                        - /url: /news/tag/guitar/
+                      - text: ·
+                      - link "Hard rock" [ref=e439] [cursor=pointer]:
+                        - /url: /news/tag/hard-rock/
+                  - complementary [ref=e440]
+              - article [ref=e442]:
+                - generic [ref=e443]:
+                  - generic [ref=e444]:
+                    - 'link "George Lynch Says Dokken''s ''Into the Fire'' Solo Is Technically ''Wrong'', but He Was Too ''Lazy'' to Fix It: ''I Just Try to Burn Through It, So Nobody Notices''" [ref=e446] [cursor=pointer]':
+                      - /url: /news/general_music_news/george-lynch-says-dokkens-into-the-fire-solo-is-technically-wrong-but-he-was-too-lazy-to-fix-it-i-just-try-to-burn-through-it-so-nobody-notices
+                    - generic [ref=e448]:
+                      - text: posted yesterday by The_Phoenician
+                      - generic [ref=e449]:
+                        - text: in
+                        - link "News" [ref=e450] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "8 comments" [ref=e451] [cursor=pointer]:
+                        - /url: /news/general_music_news/george-lynch-says-dokkens-into-the-fire-solo-is-technically-wrong-but-he-was-too-lazy-to-fix-it-i-just-try-to-burn-through-it-so-nobody-notices#comments
+                    - generic [ref=e452]:
+                      - generic [ref=e453]: "Tags:"
+                      - link "Guitar" [ref=e454] [cursor=pointer]:
+                        - /url: /news/tag/guitar/
+                      - text: ·
+                      - link "Solos" [ref=e455] [cursor=pointer]:
+                        - /url: /news/tag/solos/
+                  - complementary [ref=e456]
+              - article [ref=e458]:
+                - generic [ref=e459]:
+                  - generic [ref=e460]:
+                    - link "Matteo Mancuso Still Considers Himself a Rock Player. And Yet He Has Classical Training and a Jazz Degree With Honors" [ref=e462] [cursor=pointer]:
+                      - /url: /articles/features/matteo-mancuso-still-considers-himself-a-rock-player-and-yet-he-has-classical-training-and-a-jazz-degree-with-honors-186005
+                    - generic [ref=e464]:
+                      - text: posted yesterday by kalu15051
+                      - generic [ref=e465]:
+                        - text: in
+                        - link "News" [ref=e466] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "2 comments" [ref=e467] [cursor=pointer]:
+                        - /url: /articles/features/matteo-mancuso-still-considers-himself-a-rock-player-and-yet-he-has-classical-training-and-a-jazz-degree-with-honors-186005#comments
+                    - generic [ref=e468]:
+                      - generic [ref=e469]: "Tags:"
+                      - link "Guitar" [ref=e470] [cursor=pointer]:
+                        - /url: /news/tag/guitar/
+                      - text: ·
+                      - link "Jazz" [ref=e471] [cursor=pointer]:
+                        - /url: /news/tag/jazz/
+                  - complementary [ref=e472]
+              - article [ref=e474]:
+                - generic [ref=e475]:
+                  - generic [ref=e476]:
+                    - link "In a World of Strat and Tele Copies, This Chambered Walnut Guitar From Phoenix Stands Out" [ref=e478] [cursor=pointer]:
+                      - /url: /news/guitar_of_the_week/in-a-world-of-strat-and-tele-copies-this-chambered-walnut-guitar-from-phoenix-stands-out
+                    - generic [ref=e480]:
+                      - text: posted yesterday by Matt_Dunn
+                      - generic [ref=e481]:
+                        - text: in
+                        - link "News" [ref=e482] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "3 comments" [ref=e483] [cursor=pointer]:
+                        - /url: /news/guitar_of_the_week/in-a-world-of-strat-and-tele-copies-this-chambered-walnut-guitar-from-phoenix-stands-out#comments
+                    - generic [ref=e484]:
+                      - generic [ref=e485]: "Tags:"
+                      - link "Guitar" [ref=e486] [cursor=pointer]:
+                        - /url: /news/tag/guitar/
+                      - text: ·
+                      - link "Guitar gear" [ref=e487] [cursor=pointer]:
+                        - /url: /news/tag/guitar-gear/
+                  - complementary [ref=e488]
+              - article [ref=e490]:
+                - generic [ref=e491]:
+                  - generic [ref=e492]:
+                    - link "Jay Weinberg Says Slipknot Made Him a 'Scapegoat' for Tensions That Predated His Arrival" [ref=e494] [cursor=pointer]:
+                      - /url: /news/general_music_news/jay-weinberg-says-slipknot-made-him-a-scapegoat-for-tensions-that-predated-his-arrival
+                    - generic [ref=e496]:
+                      - text: posted 2 days ago by The_Phoenician
+                      - generic [ref=e497]:
+                        - text: in
+                        - link "News" [ref=e498] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "8 comments" [ref=e499] [cursor=pointer]:
+                        - /url: /news/general_music_news/jay-weinberg-says-slipknot-made-him-a-scapegoat-for-tensions-that-predated-his-arrival#comments
+                    - generic [ref=e500]:
+                      - generic [ref=e501]: "Tags:"
+                      - link "Metal" [ref=e502] [cursor=pointer]:
+                        - /url: /news/tag/metal/
+                      - text: ·
+                      - link "Music history" [ref=e503] [cursor=pointer]:
+                        - /url: /news/tag/music-history/
+                  - complementary [ref=e504]
+              - article [ref=e506]:
+                - generic [ref=e507]:
+                  - generic [ref=e508]:
+                    - 'link "Young Dave Grohl on Why Nirvana Never Wanted to Be Rich Rock Stars: ''if You''ve Got Your Heart Set on It, and You Become One, You''re an Asshole''" [ref=e510] [cursor=pointer]':
+                      - /url: /news/retrospective/young-dave-grohl-on-why-nirvana-never-wanted-to-be-rich-rock-stars-if-youve-got-your-heart-set-on-it-and-you-become-one-youre-an-asshole
+                    - generic [ref=e512]:
+                      - text: posted 2 days ago by The_Phoenician
+                      - generic [ref=e513]:
+                        - text: in
+                        - link "News" [ref=e514] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "2 comments" [ref=e515] [cursor=pointer]:
+                        - /url: /news/retrospective/young-dave-grohl-on-why-nirvana-never-wanted-to-be-rich-rock-stars-if-youve-got-your-heart-set-on-it-and-you-become-one-youre-an-asshole#comments
+                    - generic [ref=e516]:
+                      - generic [ref=e517]: "Tags:"
+                      - link "Music history" [ref=e518] [cursor=pointer]:
+                        - /url: /news/tag/music-history/
+                      - text: ·
+                      - link "Music business" [ref=e519] [cursor=pointer]:
+                        - /url: /news/tag/music-business/
+                  - complementary [ref=e520]
+              - article [ref=e522]:
+                - generic [ref=e523]:
+                  - generic [ref=e524]:
+                    - 'link "Opeth''s Mikael Åkerfeldt On Why The Beatles Were More ''Progressive'' Than Most Modern Prog: ''It Doesn''t Have to Be Wiggly Guitar Solos''" [ref=e526] [cursor=pointer]':
+                      - /url: /news/general_music_news/opeths-mikael-kerfeldt-on-why-the-beatles-were-more-progressive-than-most-modern-prog-it-doesnt-have-to-be-wiggly-guitar-solos
+                    - generic [ref=e528]:
+                      - text: posted 2 days ago by The_Phoenician
+                      - generic [ref=e529]:
+                        - text: in
+                        - link "News" [ref=e530] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "5 comments" [ref=e531] [cursor=pointer]:
+                        - /url: /news/general_music_news/opeths-mikael-kerfeldt-on-why-the-beatles-were-more-progressive-than-most-modern-prog-it-doesnt-have-to-be-wiggly-guitar-solos#comments
+                    - generic [ref=e532]:
+                      - generic [ref=e533]: "Tags:"
+                      - link "Metal" [ref=e534] [cursor=pointer]:
+                        - /url: /news/tag/metal/
+                      - text: ·
+                      - link "Music history" [ref=e535] [cursor=pointer]:
+                        - /url: /news/tag/music-history/
+                  - complementary [ref=e536]
+              - article [ref=e538]:
+                - generic [ref=e539]:
+                  - generic [ref=e540]:
+                    - 'link "Ex-Deep Purple''s Steve Morse: ''I''ve Never Played a Show Perfectly. Only John Petrucci Can Do That''" [ref=e542] [cursor=pointer]':
+                      - /url: /news/general_music_news/ex-deep-purples-steve-morse-ive-never-played-a-show-perfectly-only-john-petrucci-can-do-that
+                    - generic [ref=e544]:
+                      - text: posted 2 days ago by The_Phoenician
+                      - generic [ref=e545]:
+                        - text: in
+                        - link "News" [ref=e546] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "3 comments" [ref=e547] [cursor=pointer]:
+                        - /url: /news/general_music_news/ex-deep-purples-steve-morse-ive-never-played-a-show-perfectly-only-john-petrucci-can-do-that#comments
+                    - generic [ref=e548]:
+                      - generic [ref=e549]: "Tags:"
+                      - link "Guitar" [ref=e550] [cursor=pointer]:
+                        - /url: /news/tag/guitar/
+                      - text: ·
+                      - link "Hard rock" [ref=e551] [cursor=pointer]:
+                        - /url: /news/tag/hard-rock/
+                  - complementary [ref=e552]
+              - article [ref=e554]:
+                - generic [ref=e555]:
+                  - generic [ref=e556]:
+                    - 'link "Jake E. Lee vs. Zakk Wylde: How One Guitarist Was Written Out of Ozzy''s Legacy" [ref=e558] [cursor=pointer]':
+                      - /url: /articles/features/jake-e-lee-vs-zakk-wylde-how-one-guitarist-was-written-out-of-ozzys-legacy-185987
+                    - generic [ref=e560]:
+                      - text: posted 2 days ago by kalu15051
+                      - generic [ref=e561]:
+                        - text: in
+                        - link "News" [ref=e562] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "12 comments" [ref=e563] [cursor=pointer]:
+                        - /url: /articles/features/jake-e-lee-vs-zakk-wylde-how-one-guitarist-was-written-out-of-ozzys-legacy-185987#comments
+                    - generic [ref=e564]:
+                      - generic [ref=e565]: "Tags:"
+                      - link "Guitar" [ref=e566] [cursor=pointer]:
+                        - /url: /news/tag/guitar/
+                      - text: ·
+                      - link "Metal" [ref=e567] [cursor=pointer]:
+                        - /url: /news/tag/metal/
+                  - complementary [ref=e568]
+              - article [ref=e570]:
+                - generic [ref=e571]:
+                  - generic [ref=e572]:
+                    - 'link "''I Loved the New Wave of British Heavy Metal'': Pearl Jam''s Mike McCready on His Metal Background as a Grunge Musician" [ref=e574] [cursor=pointer]':
+                      - /url: /news/general_music_news/i-loved-the-new-wave-of-british-heavy-metal-pearl-jams-mike-mccready-on-his-metal-background-as-a-grunge-musician
+                    - generic [ref=e576]:
+                      - text: posted 2 days ago by gregprato1
+                      - generic [ref=e577]:
+                        - text: in
+                        - link "News" [ref=e578] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "1 comment" [ref=e579] [cursor=pointer]:
+                        - /url: /news/general_music_news/i-loved-the-new-wave-of-british-heavy-metal-pearl-jams-mike-mccready-on-his-metal-background-as-a-grunge-musician#comments
+                    - generic [ref=e580]:
+                      - generic [ref=e581]: "Tags:"
+                      - link "Guitar" [ref=e582] [cursor=pointer]:
+                        - /url: /news/tag/guitar/
+                      - text: ·
+                      - link "Metal" [ref=e583] [cursor=pointer]:
+                        - /url: /news/tag/metal/
+                  - complementary [ref=e584]
+              - article [ref=e586]:
+                - generic [ref=e587]:
+                  - generic [ref=e588]:
+                    - 'link "Tom Morello Says the Hardest Guitar Part He Ever Wrote Was ''Know Your Enemy'': ''I Practiced 20,000 Hours to Be Able to Play Like That''" [ref=e590] [cursor=pointer]':
+                      - /url: /news/general_music_news/tom-morello-says-the-hardest-guitar-part-he-ever-wrote-was-know-your-enemy-i-practiced-20000-hours-to-be-able-to-play-like-that
+                    - generic [ref=e592]:
+                      - text: posted 3 days ago by JustinBeckner
+                      - generic [ref=e593]:
+                        - text: in
+                        - link "News" [ref=e594] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "12 comments" [ref=e595] [cursor=pointer]:
+                        - /url: /news/general_music_news/tom-morello-says-the-hardest-guitar-part-he-ever-wrote-was-know-your-enemy-i-practiced-20000-hours-to-be-able-to-play-like-that#comments
+                    - generic [ref=e596]:
+                      - generic [ref=e597]: "Tags:"
+                      - link "Guitar" [ref=e598] [cursor=pointer]:
+                        - /url: /news/tag/guitar/
+                      - text: ·
+                      - link "Hard rock" [ref=e599] [cursor=pointer]:
+                        - /url: /news/tag/hard-rock/
+                  - complementary [ref=e600]:
+                    - 'link "Tom Morello Says the Hardest Guitar Part He Ever Wrote Was ''Know Your Enemy'': ''I Practiced 20,000 Hours to Be Able to Play Like That''" [ref=e601] [cursor=pointer]':
+                      - /url: /news/general_music_news/tom-morello-says-the-hardest-guitar-part-he-ever-wrote-was-know-your-enemy-i-practiced-20000-hours-to-be-able-to-play-like-that
+                      - 'img "Tom Morello Says the Hardest Guitar Part He Ever Wrote Was ''Know Your Enemy'': ''I Practiced 20,000 Hours to Be Able to Play Like That''" [ref=e602]'
+              - article [ref=e603]:
+                - generic [ref=e604]:
+                  - generic [ref=e605]:
+                    - 'link "Zakk Wylde Says He Could Identify Vai, Yngwie, and Nuno ''Within Two Notes'' at Generation Axe Soundcheck: ''That''s the Beauty of Guitar''" [ref=e607] [cursor=pointer]':
+                      - /url: /news/general_music_news/zakk-wylde-says-he-could-identify-vai-yngwie-and-nuno-within-two-notes-at-generation-axe-soundcheck-thats-the-beauty-of-guitar
+                    - generic [ref=e609]:
+                      - text: posted 3 days ago by The_Phoenician
+                      - generic [ref=e610]:
+                        - text: in
+                        - link "News" [ref=e611] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "2 comments" [ref=e612] [cursor=pointer]:
+                        - /url: /news/general_music_news/zakk-wylde-says-he-could-identify-vai-yngwie-and-nuno-within-two-notes-at-generation-axe-soundcheck-thats-the-beauty-of-guitar#comments
+                    - generic [ref=e613]:
+                      - generic [ref=e614]: "Tags:"
+                      - link "Guitar" [ref=e615] [cursor=pointer]:
+                        - /url: /news/tag/guitar/
+                      - text: ·
+                      - link "Metal" [ref=e616] [cursor=pointer]:
+                        - /url: /news/tag/metal/
+                  - complementary [ref=e617]
+              - article [ref=e619]:
+                - generic [ref=e620]:
+                  - generic [ref=e621]:
+                    - 'link "Dave Mustaine Looks Back on Career Haunted by Metallica Firing: ''Them Saying I Can''t Play; Are You Out of Your Mind?''" [ref=e623] [cursor=pointer]':
+                      - /url: /news/general_music_news/dave-mustaine-looks-back-on-career-haunted-by-metallica-firing-them-saying-i-cant-play-are-you-out-of-your-mind
+                    - generic [ref=e625]:
+                      - text: posted 3 days ago by The_Phoenician
+                      - generic [ref=e626]:
+                        - text: in
+                        - link "News" [ref=e627] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "22 comments" [ref=e628] [cursor=pointer]:
+                        - /url: /news/general_music_news/dave-mustaine-looks-back-on-career-haunted-by-metallica-firing-them-saying-i-cant-play-are-you-out-of-your-mind#comments
+                    - generic [ref=e629]:
+                      - generic [ref=e630]: "Tags:"
+                      - link "Metal" [ref=e631] [cursor=pointer]:
+                        - /url: /news/tag/metal/
+                      - text: ·
+                      - link "Music history" [ref=e632] [cursor=pointer]:
+                        - /url: /news/tag/music-history/
+                  - complementary [ref=e633]
+              - article [ref=e635]:
+                - generic [ref=e636]:
+                  - generic [ref=e637]:
+                    - 'link "Two Ad Designers Accidentally Built One of Germany''s Biggest Rock Bands: They Were Drunk When They Came Up With It" [ref=e639] [cursor=pointer]':
+                      - /url: /articles/features/two-ad-designers-accidentally-built-one-of-germanys-biggest-rock-bands-they-were-drunk-when-they-came-up-with-it-185975
+                    - generic [ref=e641]:
+                      - text: posted 3 days ago by kalu15051
+                      - generic [ref=e642]:
+                        - text: in
+                        - link "News" [ref=e643] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "4 comments" [ref=e644] [cursor=pointer]:
+                        - /url: /articles/features/two-ad-designers-accidentally-built-one-of-germanys-biggest-rock-bands-they-were-drunk-when-they-came-up-with-it-185975#comments
+                    - generic [ref=e645]:
+                      - generic [ref=e646]: "Tags:"
+                      - link "Country" [ref=e647] [cursor=pointer]:
+                        - /url: /news/tag/country/
+                      - text: ·
+                      - link "Music history" [ref=e648] [cursor=pointer]:
+                        - /url: /news/tag/music-history/
+                  - complementary [ref=e649]
+              - article [ref=e651]:
+                - generic [ref=e652]:
+                  - generic [ref=e653]:
+                    - link "'Killing in the Name' Is Easy to Learn, Hard to Play Right. The Gap Lives in Tom Morello's Right Hand." [ref=e655] [cursor=pointer]:
+                      - /url: /news/tab_spotlight/killing-in-the-name-is-easy-to-learn-hard-to-play-right-the-gap-lives-in-tom-morellos-right-hand
+                    - generic [ref=e657]:
+                      - text: posted 4 days ago by JustinBeckner
+                      - generic [ref=e658]:
+                        - text: in
+                        - link "News" [ref=e659] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "8 comments" [ref=e660] [cursor=pointer]:
+                        - /url: /news/tab_spotlight/killing-in-the-name-is-easy-to-learn-hard-to-play-right-the-gap-lives-in-tom-morellos-right-hand#comments
+                    - generic [ref=e661]:
+                      - generic [ref=e662]: "Tags:"
+                      - link "Guitar" [ref=e663] [cursor=pointer]:
+                        - /url: /news/tag/guitar/
+                      - text: ·
+                      - link "Metal" [ref=e664] [cursor=pointer]:
+                        - /url: /news/tag/metal/
+                  - complementary [ref=e665]:
+                    - link "'Killing in the Name' Is Easy to Learn, Hard to Play Right. The Gap Lives in Tom Morello's Right Hand." [ref=e666] [cursor=pointer]:
+                      - /url: /news/tab_spotlight/killing-in-the-name-is-easy-to-learn-hard-to-play-right-the-gap-lives-in-tom-morellos-right-hand
+                      - img "'Killing in the Name' Is Easy to Learn, Hard to Play Right. The Gap Lives in Tom Morello's Right Hand." [ref=e667]
+              - article [ref=e668]:
+                - generic [ref=e669]:
+                  - generic [ref=e670]:
+                    - 'link "Eric Johnson on Why the Choice of Guitar Pick Matters More Than You May Think: ''The Material and the Way You Pick Is Essential''" [ref=e672] [cursor=pointer]':
+                      - /url: /news/general_music_news/eric-johnson-on-why-the-choice-of-guitar-pick-matters-more-than-you-may-think-the-material-and-the-way-you-pick-is-essential
+                    - generic [ref=e674]:
+                      - text: posted 4 days ago by The_Phoenician
+                      - generic [ref=e675]:
+                        - text: in
+                        - link "News" [ref=e676] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "2 comments" [ref=e677] [cursor=pointer]:
+                        - /url: /news/general_music_news/eric-johnson-on-why-the-choice-of-guitar-pick-matters-more-than-you-may-think-the-material-and-the-way-you-pick-is-essential#comments
+                    - generic [ref=e678]:
+                      - generic [ref=e679]: "Tags:"
+                      - link "Rock" [ref=e680] [cursor=pointer]:
+                        - /url: /news/tag/rock/
+                      - text: ·
+                      - link "Electric guitars" [ref=e681] [cursor=pointer]:
+                        - /url: /news/tag/electric-guitars/
+                  - complementary [ref=e682]
+              - article [ref=e684]:
+                - generic [ref=e685]:
+                  - generic [ref=e686]:
+                    - 'link "''Oh, Sh_t! Somebody Did It on Record!'': How Tapping Pioneer Steve Lynch Reacted to Eddie Van Halen''s Breakthrough, and the Influence Emmett Chapman Had on His Technique" [ref=e688] [cursor=pointer]':
+                      - /url: /news/retrospective/oh-sh-t-somebody-did-it-on-record-how-tapping-pioneer-steve-lynch-reacted-to-eddie-van-halens-breakthrough-and-the-influence-emmett-chapman-had-on-his-technique
+                    - generic [ref=e690]:
+                      - text: posted 4 days ago by The_Phoenician
+                      - generic [ref=e691]:
+                        - text: in
+                        - link "News" [ref=e692] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "5 comments" [ref=e693] [cursor=pointer]:
+                        - /url: /news/retrospective/oh-sh-t-somebody-did-it-on-record-how-tapping-pioneer-steve-lynch-reacted-to-eddie-van-halens-breakthrough-and-the-influence-emmett-chapman-had-on-his-technique#comments
+                    - generic [ref=e694]:
+                      - generic [ref=e695]: "Tags:"
+                      - link "Guitar" [ref=e696] [cursor=pointer]:
+                        - /url: /news/tag/guitar/
+                      - text: ·
+                      - link "Hard rock" [ref=e697] [cursor=pointer]:
+                        - /url: /news/tag/hard-rock/
+                  - complementary [ref=e698]
+              - article [ref=e700]:
+                - generic [ref=e701]:
+                  - generic [ref=e702]:
+                    - 'link "Bob Daisley Addresses ''Travesty'' of Not Being Credited on Ozzy Osbourne''s ''Diary of a Madman'': ''It Was a True Crime Against Lee Kerslake and Me''" [ref=e704] [cursor=pointer]':
+                      - /url: /news/general_music_news/bob-daisley-addresses-travesty-of-not-being-credited-on-ozzy-osbournes-diary-of-a-madman-it-was-a-true-crime-against-lee-kerslake-and-me
+                    - generic [ref=e706]:
+                      - text: posted 4 days ago by The_Phoenician
+                      - generic [ref=e707]:
+                        - text: in
+                        - link "News" [ref=e708] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "14 comments" [ref=e709] [cursor=pointer]:
+                        - /url: /news/general_music_news/bob-daisley-addresses-travesty-of-not-being-credited-on-ozzy-osbournes-diary-of-a-madman-it-was-a-true-crime-against-lee-kerslake-and-me#comments
+                    - generic [ref=e710]:
+                      - generic [ref=e711]: "Tags:"
+                      - link "Hard rock" [ref=e712] [cursor=pointer]:
+                        - /url: /news/tag/hard-rock/
+                      - text: ·
+                      - link "Music history" [ref=e713] [cursor=pointer]:
+                        - /url: /news/tag/music-history/
+                  - complementary [ref=e714]
+              - article [ref=e716]:
+                - generic [ref=e717]:
+                  - generic [ref=e718]:
+                    - link "The Jeopardy! Theme Started as a Lullaby Merv Griffin Wrote for His Baby. It Made Him $70 Million." [ref=e720] [cursor=pointer]:
+                      - /url: /articles/features/the-jeopardy-theme-started-as-a-lullaby-merv-griffin-wrote-for-his-baby-it-made-him-70-million-185705
+                    - generic [ref=e722]:
+                      - text: posted 4 days ago by JustinBeckner
+                      - generic [ref=e723]:
+                        - text: in
+                        - link "News" [ref=e724] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "7 comments" [ref=e725] [cursor=pointer]:
+                        - /url: /articles/features/the-jeopardy-theme-started-as-a-lullaby-merv-griffin-wrote-for-his-baby-it-made-him-70-million-185705#comments
+                    - generic [ref=e726]:
+                      - generic [ref=e727]: "Tags:"
+                      - link "Music history" [ref=e728] [cursor=pointer]:
+                        - /url: /news/tag/music-history/
+                      - text: ·
+                      - link "Music business" [ref=e729] [cursor=pointer]:
+                        - /url: /news/tag/music-business/
+                  - complementary [ref=e730]:
+                    - link "The Jeopardy! Theme Started as a Lullaby Merv Griffin Wrote for His Baby. It Made Him $70 Million." [ref=e731] [cursor=pointer]:
+                      - /url: /articles/features/the-jeopardy-theme-started-as-a-lullaby-merv-griffin-wrote-for-his-baby-it-made-him-70-million-185705
+                      - img "The Jeopardy! Theme Started as a Lullaby Merv Griffin Wrote for His Baby. It Made Him $70 Million." [ref=e732]
+              - article [ref=e733]:
+                - generic [ref=e734]:
+                  - generic [ref=e735]:
+                    - link "Punk Tried to Kill Prog Rock. But Rush, Genesis, and King Crimson Used It to Survive the '80s" [ref=e737] [cursor=pointer]:
+                      - /url: /articles/features/punk-tried-to-kill-prog-rock-but-rush-genesis-and-king-crimson-used-it-to-survive-the-80s-185951
+                    - generic [ref=e739]:
+                      - text: posted 5 days ago by gregprato1
+                      - generic [ref=e740]:
+                        - text: in
+                        - link "News" [ref=e741] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "13 comments" [ref=e742] [cursor=pointer]:
+                        - /url: /articles/features/punk-tried-to-kill-prog-rock-but-rush-genesis-and-king-crimson-used-it-to-survive-the-80s-185951#comments
+                    - generic [ref=e743]:
+                      - generic [ref=e744]: "Tags:"
+                      - link "Music history" [ref=e745] [cursor=pointer]:
+                        - /url: /news/tag/music-history/
+                      - text: ·
+                      - link "Progressive metal" [ref=e746] [cursor=pointer]:
+                        - /url: /news/tag/progressive-metal/
+                  - complementary [ref=e747]
+              - article [ref=e749]:
+                - generic [ref=e750]:
+                  - generic [ref=e751]:
+                    - 'link "Guns N'' Roses Wrote ''My Michelle'' About a Real Person: She Says They Got the Drugs, the Death, and Her Dad''s Job Wrong" [ref=e753] [cursor=pointer]':
+                      - /url: /articles/features/guns-n-roses-wrote-my-michelle-about-a-real-person-she-says-they-got-the-drugs-the-death-and-her-dads-job-wrong-185702
+                    - generic [ref=e755]:
+                      - text: posted 5 days ago by JustinBeckner
+                      - generic [ref=e756]:
+                        - text: in
+                        - link "News" [ref=e757] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "14 comments" [ref=e758] [cursor=pointer]:
+                        - /url: /articles/features/guns-n-roses-wrote-my-michelle-about-a-real-person-she-says-they-got-the-drugs-the-death-and-her-dads-job-wrong-185702#comments
+                    - generic [ref=e759]:
+                      - generic [ref=e760]: "Tags:"
+                      - link "Hard rock" [ref=e761] [cursor=pointer]:
+                        - /url: /news/tag/hard-rock/
+                      - text: ·
+                      - link "Music history" [ref=e762] [cursor=pointer]:
+                        - /url: /news/tag/music-history/
+                  - complementary [ref=e763]
+              - article [ref=e765]:
+                - generic [ref=e766]:
+                  - generic [ref=e767]:
+                    - 'link "Nancy Wilson Had to Learn Steve Howe''s Notoriously Difficult ''Clap'' to Join Heart and Prove She Wasn''t a ''Nepotistic'' Hire: ''My Addition Was Heavily Scrutinized''" [ref=e769] [cursor=pointer]':
+                      - /url: /news/general_music_news/nancy-wilson-had-to-learn-steve-howes-notoriously-difficult-clap-to-join-heart-and-prove-she-wasnt-a-nepotistic-hire-my-addition-was-heavily-scrutinized
+                    - generic [ref=e771]:
+                      - text: posted 5 days ago by The_Phoenician
+                      - generic [ref=e772]:
+                        - text: in
+                        - link "News" [ref=e773] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "7 comments" [ref=e774] [cursor=pointer]:
+                        - /url: /news/general_music_news/nancy-wilson-had-to-learn-steve-howes-notoriously-difficult-clap-to-join-heart-and-prove-she-wasnt-a-nepotistic-hire-my-addition-was-heavily-scrutinized#comments
+                    - generic [ref=e775]:
+                      - generic [ref=e776]: "Tags:"
+                      - link "Guitar" [ref=e777] [cursor=pointer]:
+                        - /url: /news/tag/guitar/
+                      - text: ·
+                      - link "Music history" [ref=e778] [cursor=pointer]:
+                        - /url: /news/tag/music-history/
+                  - complementary [ref=e779]
+              - article [ref=e781]:
+                - generic [ref=e782]:
+                  - generic [ref=e783]:
+                    - 'link "Rush''s Anika Nilles on What Makes Neil Peart So Hard to Replace: ''He Had a Very Distinctive Way; You Recognize Him Immediately''" [ref=e785] [cursor=pointer]':
+                      - /url: /news/general_music_news/rushs-anika-nilles-on-what-makes-neil-peart-so-hard-to-replace-he-had-a-very-distinctive-way-you-recognize-him-immediately
+                    - generic [ref=e787]:
+                      - text: posted 5 days ago by The_Phoenician
+                      - generic [ref=e788]:
+                        - text: in
+                        - link "News" [ref=e789] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "2 comments" [ref=e790] [cursor=pointer]:
+                        - /url: /news/general_music_news/rushs-anika-nilles-on-what-makes-neil-peart-so-hard-to-replace-he-had-a-very-distinctive-way-you-recognize-him-immediately#comments
+                    - generic [ref=e791]:
+                      - generic [ref=e792]: "Tags:"
+                      - link "Live music" [ref=e793] [cursor=pointer]:
+                        - /url: /news/tag/live-music/
+                      - text: ·
+                      - link "Progressive rock" [ref=e794] [cursor=pointer]:
+                        - /url: /news/tag/progressive-rock/
+                  - complementary [ref=e795]
+              - article [ref=e797]:
+                - generic [ref=e798]:
+                  - generic [ref=e799]:
+                    - link "'When Death Calls' Features One of Tony Iommi's Most Underrated Riffs. It Can Teach You How to Control Your Muting" [ref=e801] [cursor=pointer]:
+                      - /url: /news/tab_spotlight/when-death-calls-features-one-of-tony-iommis-most-underrated-riffs-it-can-teach-you-how-to-control-your-muting
+                    - generic [ref=e803]:
+                      - text: posted 5 days ago by kalu15051
+                      - generic [ref=e804]:
+                        - text: in
+                        - link "News" [ref=e805] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "6 comments" [ref=e806] [cursor=pointer]:
+                        - /url: /news/tab_spotlight/when-death-calls-features-one-of-tony-iommis-most-underrated-riffs-it-can-teach-you-how-to-control-your-muting#comments
+                    - generic [ref=e807]:
+                      - generic [ref=e808]: "Tags:"
+                      - link "Guitar" [ref=e809] [cursor=pointer]:
+                        - /url: /news/tag/guitar/
+                      - text: ·
+                      - link "Metal" [ref=e810] [cursor=pointer]:
+                        - /url: /news/tag/metal/
+                  - complementary [ref=e811]:
+                    - link "'When Death Calls' Features One of Tony Iommi's Most Underrated Riffs. It Can Teach You How to Control Your Muting" [ref=e812] [cursor=pointer]:
+                      - /url: /news/tab_spotlight/when-death-calls-features-one-of-tony-iommis-most-underrated-riffs-it-can-teach-you-how-to-control-your-muting
+                      - img "'When Death Calls' Features One of Tony Iommi's Most Underrated Riffs. It Can Teach You How to Control Your Muting" [ref=e813]
+              - article [ref=e814]:
+                - generic [ref=e815]:
+                  - generic [ref=e816]:
+                    - 'link "''He Didn''t Want to Be in a Mega Band'': Izzy Stradlin''s Decision to Leave GN''R Was Due to Band''s Massive Success, Author Explains" [ref=e818] [cursor=pointer]':
+                      - /url: /news/general_music_news/he-didnt-want-to-be-in-a-mega-band-izzy-stradlins-decision-to-leave-gnr-was-due-to-bands-massive-success-author-explains
+                    - generic [ref=e820]:
+                      - text: posted 5 days ago by gregprato1
+                      - generic [ref=e821]:
+                        - text: in
+                        - link "News" [ref=e822] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "11 comments" [ref=e823] [cursor=pointer]:
+                        - /url: /news/general_music_news/he-didnt-want-to-be-in-a-mega-band-izzy-stradlins-decision-to-leave-gnr-was-due-to-bands-massive-success-author-explains#comments
+                    - generic [ref=e824]:
+                      - generic [ref=e825]: "Tags:"
+                      - link "Hard rock" [ref=e826] [cursor=pointer]:
+                        - /url: /news/tag/hard-rock/
+                      - text: ·
+                      - link "Music history" [ref=e827] [cursor=pointer]:
+                        - /url: /news/tag/music-history/
+                  - complementary [ref=e828]
+              - article [ref=e830]:
+                - generic [ref=e831]:
+                  - generic [ref=e832]:
+                    - link "Kurt Cobain Said He Couldn't Play. He Was Actually Getting Sloppier on Purpose" [ref=e834] [cursor=pointer]:
+                      - /url: /articles/features/kurt-cobain-said-he-couldnt-play-he-was-actually-getting-sloppier-on-purpose-185933
+                    - generic [ref=e836]:
+                      - text: posted 6 days ago by kalu15051
+                      - generic [ref=e837]:
+                        - text: in
+                        - link "News" [ref=e838] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "31 comments" [ref=e839] [cursor=pointer]:
+                        - /url: /articles/features/kurt-cobain-said-he-couldnt-play-he-was-actually-getting-sloppier-on-purpose-185933#comments
+                    - generic [ref=e840]:
+                      - generic [ref=e841]: "Tags:"
+                      - link "Guitar" [ref=e842] [cursor=pointer]:
+                        - /url: /news/tag/guitar/
+                      - text: ·
+                      - link "Hard rock" [ref=e843] [cursor=pointer]:
+                        - /url: /news/tag/hard-rock/
+                  - complementary [ref=e844]
+              - article [ref=e846]:
+                - generic [ref=e847]:
+                  - generic [ref=e848]:
+                    - link "Ex-Scorpions' Uli Jon Roth Says 'Too Many Guitarists Sound Like Typewriters' Now. His Advice Is to 'Do the Opposite'" [ref=e850] [cursor=pointer]:
+                      - /url: /news/general_music_news/ex-scorpions-uli-jon-roth-says-too-many-guitarists-sound-like-typewriters-now-his-advice-is-to-do-the-opposite
+                    - generic [ref=e852]:
+                      - text: posted 6 days ago by The_Phoenician
+                      - generic [ref=e853]:
+                        - text: in
+                        - link "News" [ref=e854] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "5 comments" [ref=e855] [cursor=pointer]:
+                        - /url: /news/general_music_news/ex-scorpions-uli-jon-roth-says-too-many-guitarists-sound-like-typewriters-now-his-advice-is-to-do-the-opposite#comments
+                    - generic [ref=e856]:
+                      - generic [ref=e857]: "Tags:"
+                      - link "Guitar" [ref=e858] [cursor=pointer]:
+                        - /url: /news/tag/guitar/
+                      - text: ·
+                      - link "Rock" [ref=e859] [cursor=pointer]:
+                        - /url: /news/tag/rock/
+                  - complementary [ref=e860]
+              - article [ref=e862]:
+                - generic [ref=e863]:
+                  - generic [ref=e864]:
+                    - 'link "Why Rush Didn''t Want Someone Like Dream Theater''s Mike Portnoy as Neil Peart''s Successor: ''It''s Just Too Easy to Make Comments''" [ref=e866] [cursor=pointer]':
+                      - /url: /news/general_music_news/why-rush-didnt-want-someone-like-dream-theaters-mike-portnoy-as-neil-pearts-successor-its-just-too-easy-to-make-comments
+                    - generic [ref=e868]:
+                      - text: posted 6 days ago by The_Phoenician
+                      - generic [ref=e869]:
+                        - text: in
+                        - link "News" [ref=e870] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "6 comments" [ref=e871] [cursor=pointer]:
+                        - /url: /news/general_music_news/why-rush-didnt-want-someone-like-dream-theaters-mike-portnoy-as-neil-pearts-successor-its-just-too-easy-to-make-comments#comments
+                    - generic [ref=e872]:
+                      - generic [ref=e873]: "Tags:"
+                      - link "Live music" [ref=e874] [cursor=pointer]:
+                        - /url: /news/tag/live-music/
+                      - text: ·
+                      - link "Progressive rock" [ref=e875] [cursor=pointer]:
+                        - /url: /news/tag/progressive-rock/
+                  - complementary [ref=e876]
+              - article [ref=e878]:
+                - generic [ref=e879]:
+                  - generic [ref=e880]:
+                    - 'link "Mike McCready on Choosing a Strat During a Humbucker-Heavy Era: ''I Went in a Blues Direction Out of Metal''" [ref=e882] [cursor=pointer]':
+                      - /url: /news/interviews/mike-mccready-on-choosing-a-strat-during-a-humbucker-heavy-era-i-went-in-a-blues-direction-out-of-metal
+                    - generic [ref=e884]:
+                      - text: posted 6 days ago by gregprato1
+                      - generic [ref=e885]:
+                        - text: in
+                        - link "News" [ref=e886] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "4 comments" [ref=e887] [cursor=pointer]:
+                        - /url: /news/interviews/mike-mccready-on-choosing-a-strat-during-a-humbucker-heavy-era-i-went-in-a-blues-direction-out-of-metal#comments
+                    - generic [ref=e888]:
+                      - generic [ref=e889]: "Tags:"
+                      - link "Rock" [ref=e890] [cursor=pointer]:
+                        - /url: /news/tag/rock/
+                      - text: ·
+                      - link "Electric guitars" [ref=e891] [cursor=pointer]:
+                        - /url: /news/tag/electric-guitars/
+                  - complementary [ref=e892]:
+                    - 'link "Mike McCready on Choosing a Strat During a Humbucker-Heavy Era: ''I Went in a Blues Direction Out of Metal''" [ref=e893] [cursor=pointer]':
+                      - /url: /news/interviews/mike-mccready-on-choosing-a-strat-during-a-humbucker-heavy-era-i-went-in-a-blues-direction-out-of-metal
+                      - 'img "Mike McCready on Choosing a Strat During a Humbucker-Heavy Era: ''I Went in a Blues Direction Out of Metal''" [ref=e894]'
+              - article [ref=e895]:
+                - generic [ref=e896]:
+                  - generic [ref=e897]:
+                    - 'link "Months Before ''Superunknown,'' Two Soundgarden Members Made a ''60s-style Album in ''93: Almost Nobody Knows About It" [ref=e899] [cursor=pointer]':
+                      - /url: /articles/features/months-before-superunknown-two-soundgarden-members-made-a-60s-style-album-in-93-almost-nobody-knows-about-it-185921
+                    - generic [ref=e901]:
+                      - text: posted 6 days ago by gregprato1
+                      - generic [ref=e902]:
+                        - text: in
+                        - link "News" [ref=e903] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "4 comments" [ref=e904] [cursor=pointer]:
+                        - /url: /articles/features/months-before-superunknown-two-soundgarden-members-made-a-60s-style-album-in-93-almost-nobody-knows-about-it-185921#comments
+                    - generic [ref=e905]:
+                      - generic [ref=e906]: "Tags:"
+                      - link "Hard rock" [ref=e907] [cursor=pointer]:
+                        - /url: /news/tag/hard-rock/
+                      - text: ·
+                      - link "Music history" [ref=e908] [cursor=pointer]:
+                        - /url: /news/tag/music-history/
+                  - complementary [ref=e909]
+              - article [ref=e911]:
+                - generic [ref=e912]:
+                  - generic [ref=e913]:
+                    - 'link "Gary Holt Says Exodus Formed Alongside Metallica and Never Got the Same Credit: ''We Carry the World''s Biggest Chip on Our Shoulders''" [ref=e915] [cursor=pointer]':
+                      - /url: /news/general_music_news/gary-holt-says-exodus-formed-alongside-metallica-and-never-got-the-same-credit-we-carry-the-worlds-biggest-chip-on-our-shoulders
+                    - generic [ref=e917]:
+                      - text: posted 7 days ago by gregprato1
+                      - generic [ref=e918]:
+                        - text: in
+                        - link "News" [ref=e919] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "11 comments" [ref=e920] [cursor=pointer]:
+                        - /url: /news/general_music_news/gary-holt-says-exodus-formed-alongside-metallica-and-never-got-the-same-credit-we-carry-the-worlds-biggest-chip-on-our-shoulders#comments
+                    - generic [ref=e921]:
+                      - generic [ref=e922]: "Tags:"
+                      - link "Guitar" [ref=e923] [cursor=pointer]:
+                        - /url: /news/tag/guitar/
+                      - text: ·
+                      - link "Metal" [ref=e924] [cursor=pointer]:
+                        - /url: /news/tag/metal/
+                  - complementary [ref=e925]
+              - article [ref=e927]:
+                - generic [ref=e928]:
+                  - generic [ref=e929]:
+                    - link "In '76, This Moog Album Came Free With a Houseplant. It Was Made for the Plants, Not You" [ref=e931] [cursor=pointer]:
+                      - /url: /articles/features/in-76-this-moog-album-came-free-with-a-houseplant-it-was-made-for-the-plants-not-you-185699
+                    - generic [ref=e933]:
+                      - text: posted 7 days ago by JustinBeckner
+                      - generic [ref=e934]:
+                        - text: in
+                        - link "News" [ref=e935] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "12 comments" [ref=e936] [cursor=pointer]:
+                        - /url: /articles/features/in-76-this-moog-album-came-free-with-a-houseplant-it-was-made-for-the-plants-not-you-185699#comments
+                    - generic [ref=e937]:
+                      - generic [ref=e938]: "Tags:"
+                      - link "Music history" [ref=e939] [cursor=pointer]:
+                        - /url: /news/tag/music-history/
+                      - text: ·
+                      - link "Music business" [ref=e940] [cursor=pointer]:
+                        - /url: /news/tag/music-business/
+                  - complementary [ref=e941]:
+                    - link "In '76, This Moog Album Came Free With a Houseplant. It Was Made for the Plants, Not You" [ref=e942] [cursor=pointer]:
+                      - /url: /articles/features/in-76-this-moog-album-came-free-with-a-houseplant-it-was-made-for-the-plants-not-you-185699
+                      - img "In '76, This Moog Album Came Free With a Houseplant. It Was Made for the Plants, Not You" [ref=e943]
+              - article [ref=e944]:
+                - generic [ref=e945]:
+                  - generic [ref=e946]:
+                    - link "Rob Halford on Why Leaving Judas Priest After 'Painkiller' Was Something He 'Had to Do,' and What He Found When He Came Back" [ref=e948] [cursor=pointer]:
+                      - /url: /news/retrospective/rob-halford-on-why-leaving-judas-priest-after-painkiller-was-something-he-had-to-do-and-what-he-found-when-he-came-back
+                    - generic [ref=e950]:
+                      - text: posted 7 days ago by The_Phoenician
+                      - generic [ref=e951]:
+                        - text: in
+                        - link "News" [ref=e952] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "10 comments" [ref=e953] [cursor=pointer]:
+                        - /url: /news/retrospective/rob-halford-on-why-leaving-judas-priest-after-painkiller-was-something-he-had-to-do-and-what-he-found-when-he-came-back#comments
+                    - generic [ref=e954]:
+                      - generic [ref=e955]: "Tags:"
+                      - link "Metal" [ref=e956] [cursor=pointer]:
+                        - /url: /news/tag/metal/
+                      - text: ·
+                      - link "Music history" [ref=e957] [cursor=pointer]:
+                        - /url: /news/tag/music-history/
+                  - complementary [ref=e958]
+              - article [ref=e960]:
+                - generic [ref=e961]:
+                  - generic [ref=e962]:
+                    - 'link "''I Could Be Happy or Miserable. I Choose Happy'': Zakk Wylde on the Words Pantera''s Dimebag Darrell Lived By" [ref=e964] [cursor=pointer]':
+                      - /url: /news/general_music_news/i-could-be-happy-or-miserable-i-choose-happy-zakk-wylde-on-the-words-panteras-dimebag-darrell-lived-by
+                    - generic [ref=e966]:
+                      - text: posted 7 days ago by The_Phoenician
+                      - generic [ref=e967]:
+                        - text: in
+                        - link "News" [ref=e968] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "1 comment" [ref=e969] [cursor=pointer]:
+                        - /url: /news/general_music_news/i-could-be-happy-or-miserable-i-choose-happy-zakk-wylde-on-the-words-panteras-dimebag-darrell-lived-by#comments
+                    - generic [ref=e970]:
+                      - generic [ref=e971]: "Tags:"
+                      - link "Metal" [ref=e972] [cursor=pointer]:
+                        - /url: /news/tag/metal/
+                      - text: ·
+                      - link "Music history" [ref=e973] [cursor=pointer]:
+                        - /url: /news/tag/music-history/
+                  - complementary [ref=e974]
+              - article [ref=e976]:
+                - generic [ref=e977]:
+                  - generic [ref=e978]:
+                    - link "'Get the Fuck Off the Stage!' Billy Corgan Ignored Rock Snobs. His Father's Standard Was Albert King, SRV, and Hendrix" [ref=e980] [cursor=pointer]:
+                      - /url: /news/general_music_news/get-the-fuck-off-the-stage-billy-corgan-ignored-rock-snobs-his-fathers-standard-was-albert-king-srv-and-hendrix
+                    - generic [ref=e982]:
+                      - text: posted 7 days ago by gregprato1
+                      - generic [ref=e983]:
+                        - text: in
+                        - link "News" [ref=e984] [cursor=pointer]:
+                          - /url: https://www.ultimate-guitar.com/news/
+                      - text: ","
+                      - link "8 comments" [ref=e985] [cursor=pointer]:
+                        - /url: /news/general_music_news/get-the-fuck-off-the-stage-billy-corgan-ignored-rock-snobs-his-fathers-standard-was-albert-king-srv-and-hendrix#comments
+                    - generic [ref=e986]:
+                      - generic [ref=e987]: "Tags:"
+                      - link "Blues" [ref=e988] [cursor=pointer]:
+                        - /url: /news/tag/blues/
+                      - text: ·
+                      - link "Guitar" [ref=e989] [cursor=pointer]:
+                        - /url: /news/tag/guitar/
+                  - complementary [ref=e990]
+            - button "Load more" [ref=e993] [cursor=pointer]
+        - generic [ref=e994]:
+          - generic [ref=e996]:
+            - generic [ref=e997]:
+              - navigation [ref=e998]:
+                - heading "Top tabs" [level=3] [ref=e999]
+                - navigation [ref=e1000]:
+                  - generic [ref=e1001]: Today
+                  - button "All-time" [ref=e1002] [cursor=pointer]
+              - link "Top 100 tabs" [ref=e1003] [cursor=pointer]:
+                - /url: /top/tabs
+            - generic [ref=e1004]:
+              - generic [ref=e1005]:
+                - generic [ref=e1006]: "1"
+                - link "Radiohead" [ref=e1009] [cursor=pointer]:
+                  - /url: https://www.ultimate-guitar.com/artist/radiohead_578
+                - link "Creep" [ref=e1011] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/radiohead/creep-chords-4169
+                - generic [ref=e1012]: 7,671 hits
+              - generic [ref=e1013]:
+                - generic [ref=e1014]: "2"
+                - link "Ed Sheeran" [ref=e1017] [cursor=pointer]:
+                  - /url: https://www.ultimate-guitar.com/artist/ed_sheeran_30232
+                - link "Perfect" [ref=e1019] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/ed-sheeran/perfect-chords-1956589
+                - generic [ref=e1020]: 7,509 hits
+              - generic [ref=e1021]:
+                - generic [ref=e1022]: "3"
+                - link "Dominic Fike" [ref=e1025] [cursor=pointer]:
+                  - /url: https://www.ultimate-guitar.com/artist/dominic_fike_176892
+                - link "Babydoll" [ref=e1027] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/dominic-fike/babydoll-chords-2937476
+                - generic [ref=e1028]: 6,276 hits
+              - generic [ref=e1029]:
+                - generic [ref=e1030]: "4"
+                - link "Goo Goo Dolls" [ref=e1033] [cursor=pointer]:
+                  - /url: https://www.ultimate-guitar.com/artist/goo_goo_dolls_1375
+                - link "Iris (ver 4)" [ref=e1035] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/goo-goo-dolls/iris-chords-54512
+                - generic [ref=e1036]: 5,739 hits
+              - generic [ref=e1037]:
+                - generic [ref=e1038]: "5"
+                - link "Eagles" [ref=e1041] [cursor=pointer]:
+                  - /url: https://www.ultimate-guitar.com/artist/eagles_1509
+                - link "Hotel California" [ref=e1043] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/eagles/hotel-california-chords-46190
+                - generic [ref=e1044]: 5,292 hits
+              - generic [ref=e1045]:
+                - generic [ref=e1046]: "6"
+                - link "Vance Joy" [ref=e1049] [cursor=pointer]:
+                  - /url: https://www.ultimate-guitar.com/artist/vance_joy_37940
+                - link "Riptide (ver 2)" [ref=e1051] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/vance-joy/riptide-chords-1237247
+                - generic [ref=e1052]: 5,262 hits
+              - generic [ref=e1053]:
+                - generic [ref=e1054]: "7"
+                - link "Elvis Presley" [ref=e1057] [cursor=pointer]:
+                  - /url: https://www.ultimate-guitar.com/artist/elvis_presley_11125
+                - link "Cant Help Falling In Love" [ref=e1059] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/elvis-presley/cant-help-falling-in-love-chords-1086983
+                - generic [ref=e1060]: 4,533 hits
+            - generic [ref=e1061]:
+              - generic [ref=e1062]:
+                - link "192 tabs in a queue" [ref=e1063] [cursor=pointer]:
+                  - /url: /contribution/queue/list/view/
+                - text: ×
+              - generic [ref=e1064]:
+                - link "17,978 fresh tabs" [ref=e1065] [cursor=pointer]:
+                  - /url: /fresh
+                - text: ×
+              - link "Top rated this week" [ref=e1067] [cursor=pointer]:
+                - /url: /top/tabs?order=rating&period=7_days
+          - generic [ref=e1068]:
+            - generic [ref=e1069]:
+              - navigation [ref=e1070]:
+                - heading "Backing tracks" [level=3] [ref=e1071]
+              - link "All" [ref=e1072] [cursor=pointer]:
+                - /url: /backing_track/
+            - generic [ref=e1073]:
+              - generic [ref=e1074]:
+                - img [ref=e1076]
+                - generic [ref=e1079]: Ed Sheeran
+                - link "Perfect" [ref=e1081] [cursor=pointer]:
+                  - /url: https://www.ultimate-guitar.com/backing_track/ed_sheeran/perfect_34815
+                - generic [ref=e1082]: 592,407 hits
+              - generic [ref=e1083]:
+                - img [ref=e1085]
+                - generic [ref=e1088]: Aerosmith
+                - link "Dream On" [ref=e1090] [cursor=pointer]:
+                  - /url: https://www.ultimate-guitar.com/backing_track/aerosmith/dream_on_19897
+                - generic [ref=e1091]: 390,720 hits
+              - generic [ref=e1092]:
+                - img [ref=e1094]
+                - generic [ref=e1097]: Queen
+                - link "Another One Bites The Dust" [ref=e1099] [cursor=pointer]:
+                  - /url: https://www.ultimate-guitar.com/backing_track/queen/another_one_bites_the_dust_16843
+                - generic [ref=e1100]: 323,524 hits
+              - generic [ref=e1101]:
+                - img [ref=e1103]
+                - generic [ref=e1106]: AC/DC
+                - link "You Shook Me All Night Long" [ref=e1108] [cursor=pointer]:
+                  - /url: https://www.ultimate-guitar.com/backing_track/acdc/you_shook_me_all_night_long_16845
+                - generic [ref=e1109]: 248,402 hits
+              - generic [ref=e1110]:
+                - img [ref=e1112]
+                - generic [ref=e1115]: Guns N' Roses
+                - link "Welcome To The Jungle" [ref=e1117] [cursor=pointer]:
+                  - /url: https://www.ultimate-guitar.com/backing_track/guns_n_roses/welcome_to_the_jungle_16809
+                - generic [ref=e1118]: 205,320 hits
+              - generic [ref=e1119]:
+                - img [ref=e1121]
+                - generic [ref=e1124]: Nirvana
+                - link "Pennyroyal Tea" [ref=e1126] [cursor=pointer]:
+                  - /url: https://www.ultimate-guitar.com/backing_track/nirvana/pennyroyal_tea_16863
+                - generic [ref=e1127]: 165,598 hits
+              - generic [ref=e1128]:
+                - img [ref=e1130]
+                - generic [ref=e1133]: Limp Bizkit
+                - link "Break Stuff" [ref=e1135] [cursor=pointer]:
+                  - /url: https://www.ultimate-guitar.com/backing_track/limp_bizkit/break_stuff_17285
+                - generic [ref=e1136]: 117,045 hits
+              - generic [ref=e1137]:
+                - img [ref=e1139]
+                - generic [ref=e1142]: Bloodhound Gang
+                - link "The Ballad Of Chasey Lain" [ref=e1144] [cursor=pointer]:
+                  - /url: https://www.ultimate-guitar.com/backing_track/bloodhound_gang/the_ballad_of_chasey_lain_16923
+                - generic [ref=e1145]: 91,394 hits
+          - generic [ref=e1146]:
+            - generic [ref=e1147]:
+              - navigation [ref=e1148]:
+                - heading "Tab collections" [level=3] [ref=e1149]
+              - link "Collections" [ref=e1150] [cursor=pointer]:
+                - /url: /collections/
+            - article [ref=e1151]:
+              - generic [ref=e1152]:
+                - generic [ref=e1153]:
+                  - link "Ella Langley - Dandelion" [ref=e1155] [cursor=pointer]:
+                    - /url: /collections/31303364/
+                  - generic [ref=e1156]: 333 views
+                  - generic [ref=e1157]: Featuring all Official tabs for the whole album!
+                - complementary [ref=e1158]:
+                  - link "Ella Langley - Dandelion" [ref=e1159] [cursor=pointer]:
+                    - /url: /collections/31303364/
+                    - img "Ella Langley - Dandelion" [ref=e1160]
+            - generic [ref=e1161]:
+              - heading "WEEKLY COLLECTIONS" [level=4] [ref=e1162]
+              - generic [ref=e1163]:
+                - generic [ref=e1164]:
+                  - generic [ref=e1165]:
+                    - link "Ella Langley - Dandelion" [ref=e1167] [cursor=pointer]:
+                      - /url: /collections/31303364/
+                    - generic [ref=e1168]: 333 views
+                  - generic [ref=e1169]:
+                    - link "Easter Songs" [ref=e1171] [cursor=pointer]:
+                      - /url: /collections/1097247/
+                    - generic [ref=e1172]: 63,454 views
+                  - generic [ref=e1173]:
+                    - link "Oscar-Winning Songs" [ref=e1175] [cursor=pointer]:
+                      - /url: /collections/1025269/
+                    - generic [ref=e1176]: 75,715 views
+                  - generic [ref=e1177]:
+                    - link "Harry Styles - Kiss All the Time. Disco, Occasionally" [ref=e1179] [cursor=pointer]:
+                      - /url: /collections/31020149/
+                    - generic [ref=e1180]: 1,664 views
+                - generic [ref=e1181]:
+                  - generic [ref=e1182]:
+                    - link "Bruno Mars - The Romantic" [ref=e1184] [cursor=pointer]:
+                      - /url: /collections/30864122/
+                    - generic [ref=e1185]: 2,759 views
+                  - generic [ref=e1186]:
+                    - link "Gorillaz" [ref=e1188] [cursor=pointer]:
+                      - /url: /collections/23651425/
+                    - generic [ref=e1189]: 3,562 views
+                  - generic [ref=e1190]:
+                    - link "Joji - Piss in the Wind" [ref=e1192] [cursor=pointer]:
+                      - /url: /collections/30679235/
+                    - generic [ref=e1193]: 2,353 views
+                  - generic [ref=e1194]:
+                    - link "GRAMMY 2026" [ref=e1196] [cursor=pointer]:
+                      - /url: /collections/30665105/
+                    - generic [ref=e1197]: 4,498 views
+          - generic [ref=e1198]:
+            - generic [ref=e1199]:
+              - navigation [ref=e1200]:
+                - heading "Recently viewed" [level=3] [ref=e1201]
+              - button "clear" [ref=e1202] [cursor=pointer]:
+                - img [ref=e1203]
+                - text: clear
+            - article [ref=e1205]:
+              - generic [ref=e1206]:
+                - complementary [ref=e1207]:
+                  - generic [ref=e1208]: Tabs
+                - generic [ref=e1209]:
+                  - link "Led Zeppelin - Stairway To Heaven official" [ref=e1211] [cursor=pointer]:
+                    - /url: https://tabs.ultimate-guitar.com/tab/led-zeppelin/stairway-to-heaven-official-1911433
+                  - link "491 comments" [ref=e1213] [cursor=pointer]:
+                    - /url: https://tabs.ultimate-guitar.com/tab/led-zeppelin/stairway-to-heaven-official-1911433#comments
+            - article [ref=e1214]:
+              - generic [ref=e1215]:
+                - complementary [ref=e1216]:
+                  - generic [ref=e1217]: Tabs
+                - generic [ref=e1218]:
+                  - link "Led Zeppelin - Stairway To Heaven guitar pro" [ref=e1220] [cursor=pointer]:
+                    - /url: https://tabs.ultimate-guitar.com/tab/led-zeppelin/stairway-to-heaven-guitar-pro-223796
+                  - link "125 comments" [ref=e1222] [cursor=pointer]:
+                    - /url: https://tabs.ultimate-guitar.com/tab/led-zeppelin/stairway-to-heaven-guitar-pro-223796#comments
+          - generic [ref=e1223]:
+            - navigation [ref=e1225]:
+              - heading "Community" [level=3] [ref=e1226]
+            - generic [ref=e1227]:
+              - generic [ref=e1228]:
+                - heading "UG forum" [level=4] [ref=e1229]
+                - article [ref=e1231]:
+                  - generic [ref=e1233]:
+                    - link "Looking for a (maybe) odd wiring diagram" [ref=e1235] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/forum/showthread.php?t=3246950
+                    - generic [ref=e1236]: posted 5 days ago by gh0styboi
+                    - generic [ref=e1237]: Morning, all. Looking for a wiring diagram that's apparently odd - can't find one anywhere, and I'm not...
+              - generic [ref=e1238]:
+                - heading "Top users by UG IQ" [level=4] [ref=e1239]
+                - generic [ref=e1240]: "Updated: Jan 21, 1970, restarts in 5 days"
+                - generic [ref=e1241]:
+                  - generic [ref=e1242]:
+                    - generic [ref=e1243]: "1"
+                    - link "siriusb42 siriusb42" [ref=e1246] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/u/siriusb42
+                      - img "siriusb42" [ref=e1247]
+                      - text: siriusb42
+                    - generic [ref=e1248]: 2,548
+                  - generic [ref=e1249]:
+                    - generic [ref=e1250]: "2"
+                    - link "Neckwringer Neckwringer" [ref=e1253] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/u/Neckwringer
+                      - img "Neckwringer" [ref=e1254]
+                      - text: Neckwringer
+                    - generic [ref=e1255]: 1,008
+                  - generic [ref=e1256]:
+                    - generic [ref=e1257]: "3"
+                    - link "ArtOnFlames ArtOnFlames" [ref=e1260] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/u/ArtOnFlames
+                      - img "ArtOnFlames" [ref=e1261]
+                      - text: ArtOnFlames
+                    - generic [ref=e1262]: "725"
+                  - generic [ref=e1263]:
+                    - generic [ref=e1264]: "4"
+                    - link "tockaa4848 tockaa4848" [ref=e1267] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/u/tockaa4848
+                      - img "tockaa4848" [ref=e1268]
+                      - text: tockaa4848
+                    - generic [ref=e1269]: "242"
+                  - generic [ref=e1270]:
+                    - generic [ref=e1271]: "5"
+                    - link "Doheuvel Doheuvel" [ref=e1274] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/u/Doheuvel
+                      - img "Doheuvel" [ref=e1275]
+                      - text: Doheuvel
+                    - generic [ref=e1276]: "238"
+                  - generic [ref=e1277]:
+                    - generic [ref=e1278]: "6"
+                    - link "sinomod sinomod" [ref=e1281] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/u/sinomod
+                      - img "sinomod" [ref=e1282]
+                      - text: sinomod
+                    - generic [ref=e1283]: "217"
+                  - generic [ref=e1284]:
+                    - generic [ref=e1285]: "7"
+                    - link "DON CZARSKI DON CZARSKI" [ref=e1288] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/u/DON%20CZARSKI
+                      - img "DON CZARSKI" [ref=e1289]
+                      - text: DON CZARSKI
+                    - generic [ref=e1290]: "186"
+                  - generic [ref=e1291]:
+                    - generic [ref=e1292]: "8"
+                    - link "ddemes ddemes" [ref=e1295] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/u/ddemes
+                      - img "ddemes" [ref=e1296]
+                      - text: ddemes
+                    - generic [ref=e1297]: "156"
+                  - generic [ref=e1298]:
+                    - generic [ref=e1299]: "9"
+                    - link "NSpen1 NSpen1" [ref=e1302] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/u/NSpen1
+                      - img "NSpen1" [ref=e1303]
+                      - text: NSpen1
+                    - generic [ref=e1304]: "127"
+                  - generic [ref=e1305]:
+                    - generic [ref=e1306]: "10"
+                    - link "jsdratm jsdratm" [ref=e1309] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/u/jsdratm
+                      - img "jsdratm" [ref=e1310]
+                      - text: jsdratm
+                    - generic [ref=e1311]: "124"
+                  - generic [ref=e1312]:
+                    - generic [ref=e1313]: ...
+                    - generic [ref=e1314]:
+                      - generic [ref=e1315]: 1,140
+                      - link "orpelta85 orpelta85" [ref=e1318] [cursor=pointer]:
+                        - /url: https://www.ultimate-guitar.com/u/orpelta85
+                        - img "orpelta85" [ref=e1319]
+                        - text: orpelta85
+                      - link "0" [ref=e1321] [cursor=pointer]:
+                        - /url: https://www.ultimate-guitar.com/user/activity/iq?user_id=32621864
+                - link "Top 100 users" [ref=e1324] [cursor=pointer]:
+                  - /url: /top/ugiq?period=7_days
+  - generic [ref=e1325]:
+    - generic [ref=e1326]:
+      - generic [ref=e1327]:
+        - link "orpelta85" [ref=e1328] [cursor=pointer]:
+          - /url: https://www.ultimate-guitar.com/u/orpelta85
+          - img "orpelta85" [ref=e1329]
+        - generic [ref=e1330]:
+          - generic [ref=e1332]:
+            - link "orpelta85" [ref=e1333] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/u/orpelta85
+            - text: "[pro]"
+            - link "10" [ref=e1334] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/user/activity/iq?user_id=32621864
+          - generic [ref=e1335]: Joined 2019
+      - list "User navigation" [ref=e1336]:
+        - listitem [ref=e1337]:
+          - link "My tabs 11" [ref=e1338] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/mytabs
+            - generic [ref=e1339]:
+              - generic [ref=e1340]: My tabs
+              - generic [ref=e1341]: "11"
+        - listitem [ref=e1342]:
+          - link "My courses 16" [ref=e1343] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/courses
+            - generic [ref=e1344]:
+              - generic [ref=e1345]: My courses
+              - generic [ref=e1346]: "16"
+        - listitem [ref=e1347]:
+          - link "My books 0" [ref=e1348] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/books
+            - generic [ref=e1349]:
+              - generic [ref=e1350]: My books
+              - generic [ref=e1351]: "0"
+        - listitem [ref=e1354]:
+          - link "Playlists 1" [ref=e1355] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/playlist
+            - generic [ref=e1356]:
+              - generic [ref=e1357]: Playlists
+              - generic [ref=e1358]: "1"
+        - listitem [ref=e1359]:
+          - link "Messages" [ref=e1360] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/profile/messages
+            - generic [ref=e1362]: Messages
+        - listitem [ref=e1363]:
+          - link "Settings" [ref=e1364] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/forum/profile/update-profile
+            - generic [ref=e1366]: Settings
+        - listitem [ref=e1367]:
+          - link "Subscriptions" [ref=e1368] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/subscriptions
+            - generic [ref=e1370]: Subscriptions
+    - generic [ref=e1372]:
+      - banner [ref=e1373]: "Users online: 12227"
+      - generic [ref=e1374]:
+        - generic [ref=e1375]: 10961 members
+        - generic [ref=e1376]: 1266 guests
+  - contentinfo [ref=e1380]:
+    - generic [ref=e1381]:
+      - generic [ref=e1382]:
+        - generic [ref=e1383]:
+          - generic [ref=e1384]: All artists
+          - list "All artists" [ref=e1385]:
+            - listitem [ref=e1386]:
+              - link "#" [ref=e1387] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/0-9.htm
+            - listitem [ref=e1388]:
+              - link "a" [ref=e1389] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/a.htm
+            - listitem [ref=e1390]:
+              - link "b" [ref=e1391] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/b.htm
+            - listitem [ref=e1392]:
+              - link "c" [ref=e1393] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/c.htm
+            - listitem [ref=e1394]:
+              - link "d" [ref=e1395] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/d.htm
+            - listitem [ref=e1396]:
+              - link "e" [ref=e1397] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/e.htm
+            - listitem [ref=e1398]:
+              - link "f" [ref=e1399] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/f.htm
+            - listitem [ref=e1400]:
+              - link "g" [ref=e1401] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/g.htm
+            - listitem [ref=e1402]:
+              - link "h" [ref=e1403] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/h.htm
+            - listitem [ref=e1404]:
+              - link "i" [ref=e1405] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/i.htm
+            - listitem [ref=e1406]:
+              - link "j" [ref=e1407] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/j.htm
+            - listitem [ref=e1408]:
+              - link "k" [ref=e1409] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/k.htm
+            - listitem [ref=e1410]:
+              - link "l" [ref=e1411] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/l.htm
+            - listitem [ref=e1412]:
+              - link "m" [ref=e1413] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/m.htm
+            - listitem [ref=e1414]:
+              - link "n" [ref=e1415] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/n.htm
+            - listitem [ref=e1416]:
+              - link "o" [ref=e1417] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/o.htm
+            - listitem [ref=e1418]:
+              - link "p" [ref=e1419] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/p.htm
+            - listitem [ref=e1420]:
+              - link "q" [ref=e1421] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/q.htm
+            - listitem [ref=e1422]:
+              - link "r" [ref=e1423] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/r.htm
+            - listitem [ref=e1424]:
+              - link "s" [ref=e1425] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/s.htm
+            - listitem [ref=e1426]:
+              - link "t" [ref=e1427] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/t.htm
+            - listitem [ref=e1428]:
+              - link "u" [ref=e1429] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/u.htm
+            - listitem [ref=e1430]:
+              - link "v" [ref=e1431] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/v.htm
+            - listitem [ref=e1432]:
+              - link "w" [ref=e1433] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/w.htm
+            - listitem [ref=e1434]:
+              - link "x" [ref=e1435] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/x.htm
+            - listitem [ref=e1436]:
+              - link "y" [ref=e1437] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/y.htm
+            - listitem [ref=e1438]:
+              - link "z" [ref=e1439] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/z.htm
+        - generic [ref=e1440]:
+          - link "facebook" [ref=e1441] [cursor=pointer]:
+            - /url: https://www.facebook.com/UltimateGuitar/
+            - img
+          - link "twitter" [ref=e1442] [cursor=pointer]:
+            - /url: https://twitter.com/ultimateguitar
+            - img
+          - link "instagram" [ref=e1443] [cursor=pointer]:
+            - /url: https://www.instagram.com/ultimateguitar/
+            - img
+          - link "youtube" [ref=e1444] [cursor=pointer]:
+            - /url: https://www.youtube.com/channel/UCf6prPsXYNYKXH4hX-cuEwQ
+            - img
+          - link "tiktok" [ref=e1445] [cursor=pointer]:
+            - /url: https://www.tiktok.com/@ultimateguitar
+            - img
+          - link "audio.com" [ref=e1446] [cursor=pointer]:
+            - /url: https://audio.com/ultimateguitar
+            - img
+          - link "linkedin" [ref=e1447] [cursor=pointer]:
+            - /url: https://www.linkedin.com/company/1567917
+            - img
+      - separator [ref=e1448]
+      - generic [ref=e1449]:
+        - region "Copyright" [ref=e1450]:
+          - link [ref=e1451] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com
+            - img [ref=e1452]
+          - generic [ref=e1454]: © 2026 Ultimate-Guitar.com All rights reserved
+        - region "Discover" [ref=e1455]:
+          - heading "Discover" [level=4] [ref=e1456]
+          - link "About UG" [ref=e1457] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/
+          - link "Site Rules" [ref=e1458] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/article/blog/site-rules/
+          - link "Advertise" [ref=e1459] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/advertise.htm
+          - link "Support" [ref=e1460] [cursor=pointer]:
+            - /url: https://help.ultimate-guitar.com/en/
+        - region "Legal" [ref=e1461]:
+          - heading "Legal" [level=4] [ref=e1462]
+          - link "Terms of Service" [ref=e1463] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/tos.htm
+          - link "Privacy Policy" [ref=e1464] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/privacy.htm
+          - link "DMCA" [ref=e1465] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/dmca.htm
+          - link "Accessibility Statement" [ref=e1466] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/accessibility-statement.htm
+        - region "Other" [ref=e1467]:
+          - heading "Other" [level=4] [ref=e1468]
+          - button "PRO+" [ref=e1469] [cursor=pointer]
+          - link "Articles Staff" [ref=e1470] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/news/editorial/
+          - link "Fresh Tabs" [ref=e1471] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/fresh?order=date
+          - link "MuseHub" [ref=e1472] [cursor=pointer]:
+            - /url: https://www.musehub.com/?utm_source=ug_web&utm_medium=footer&utm_campaign=musehub
+        - region "Language" [ref=e1473]:
+          - heading "Language" [level=4] [ref=e1474]
+          - link "English" [ref=e1475] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/
+          - link "Português (Brasil)" [ref=e1476] [cursor=pointer]:
+            - /url: https://pt.ultimate-guitar.com/
+          - link "Español" [ref=e1477] [cursor=pointer]:
+            - /url: https://es.ultimate-guitar.com/
+          - link "Italiano" [ref=e1478] [cursor=pointer]:
+            - /url: https://it.ultimate-guitar.com/
+          - link "Français" [ref=e1479] [cursor=pointer]:
+            - /url: https://fr.ultimate-guitar.com/
+          - link "日本語" [ref=e1480] [cursor=pointer]:
+            - /url: https://ja.ultimate-guitar.com/
+        - region "Hot Chords" [ref=e1481]:
+          - heading "Hot Chords" [level=4] [ref=e1482]
+          - link "Indonesia" [ref=e1483] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?country_chart=7
+        - region "Download UG application" [ref=e1484]:
+          - generic [ref=e1485]:
+            - link "apple store" [ref=e1486] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/components/apps/market/redirect?app_name=ug_tabs_chords_ios&source=get_app_footer
+              - img "apple store" [ref=e1487]
+            - link "google play" [ref=e1488] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/components/apps/market/redirect?app_name=ug_tabs_chords_android&source=get_app_footer
+              - img "google play" [ref=e1489]
+            - link "huawei store" [ref=e1490] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/components/apps/market/redirect?app_name=ug_tabs_chords_huawei&source=get_app_footer
+              - img "huawei store" [ref=e1491]
+  - generic [ref=e1497]:
+    - generic [ref=e1498]: Add 2,000+ songbooks to your PRO+ now!
+    - generic [ref=e1499]:
+      - generic [ref=e1500]:
+        - generic [ref=e1501]: "0"
+        - generic [ref=e1503]: days
+      - generic [ref=e1504]: ":"
+      - generic [ref=e1505]:
+        - generic [ref=e1506]: "23"
+        - generic [ref=e1508]: hrs
+      - generic [ref=e1509]: ":"
+      - generic [ref=e1510]:
+        - generic [ref=e1511]: "57"
+        - generic [ref=e1513]: min
+      - generic [ref=e1514]: ":"
+      - generic [ref=e1515]:
+        - generic [ref=e1516]: "23"
+        - generic [ref=e1518]: sec
+    - button "TRY FOR FREE" [ref=e1519] [cursor=pointer]:
+      - generic [ref=e1520]: TRY FOR FREE

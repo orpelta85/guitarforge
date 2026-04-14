@@ -1,0 +1,168 @@
+- generic [active] [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - button "Open Next.js Dev Tools" [ref=e8] [cursor=pointer]:
+    - img [ref=e9]
+  - alert [ref=e12]
+  - generic [ref=e13]:
+    - complementary [ref=e14]:
+      - img "Guitar Practice" [ref=e17]
+      - navigation [ref=e19]:
+        - generic [ref=e20]: Main
+        - button "Home" [ref=e21] [cursor=pointer]:
+          - img [ref=e23]
+          - generic [ref=e25]: Home
+        - button "Practice" [ref=e26] [cursor=pointer]:
+          - img [ref=e28]
+          - generic [ref=e32]: Practice
+        - button "Learn" [ref=e33] [cursor=pointer]:
+          - img [ref=e35]
+          - generic [ref=e38]: Learn
+        - button "Studio" [ref=e39] [cursor=pointer]:
+          - img [ref=e41]
+          - generic [ref=e44]: Studio
+        - button "Jam Mode" [ref=e45] [cursor=pointer]:
+          - img [ref=e47]
+          - generic [ref=e50]: Jam Mode
+        - button "Library" [ref=e51] [cursor=pointer]:
+          - img [ref=e53]
+          - generic [ref=e56]: Library
+        - generic [ref=e57]: Tools
+        - button "AI Coach" [ref=e58] [cursor=pointer]:
+          - img [ref=e60]
+          - generic [ref=e62]: AI Coach
+        - button "Suno AI" [ref=e63] [cursor=pointer]:
+          - img [ref=e65]
+          - generic [ref=e68]: Suno AI
+        - button "Skills" [ref=e69] [cursor=pointer]:
+          - img [ref=e71]
+          - generic [ref=e77]: Skills
+        - button "Tuner" [ref=e78] [cursor=pointer]:
+          - img [ref=e80]
+          - generic [ref=e82]: Tuner
+      - button "Guest Sign in to sync" [ref=e85]:
+        - img [ref=e87]
+        - generic [ref=e90]:
+          - generic [ref=e91]: Guest
+          - generic [ref=e92]: Sign in to sync
+      - button "Sign in to sync" [ref=e94]
+    - generic [ref=e5706]:
+      - generic [ref=e5707]:
+        - generic [ref=e5708]:
+          - img [ref=e5709]
+          - generic [ref=e5712]: Sign in to sync your progress across devices
+        - generic [ref=e5713]:
+          - button "Sign In" [ref=e5714]
+          - button "Dismiss" [ref=e5715]:
+            - img [ref=e5716]
+      - generic [ref=e5719]:
+        - generic [ref=e5720]:
+          - generic [ref=e5721]:
+            - generic [ref=e5722]: Monday, Apr 13, 2026
+            - heading "Today's Focus" [level=1] [ref=e5723]
+            - generic [ref=e5724]: 1 exercises · 10 min · Warm-Up, Ear Training, Modes, Improv
+          - generic [ref=e5725]:
+            - img [ref=e5727]
+            - generic [ref=e5729]:
+              - generic [ref=e5730]: "0"
+              - generic [ref=e5731]: day streak
+        - button "Dirt Songs · 10 min 90 BPM" [ref=e5733]:
+          - generic [ref=e5735]:
+            - generic [ref=e5736]: Dirt
+            - generic [ref=e5737]: Songs · 10 min
+          - generic [ref=e5738]: 90 BPM
+        - generic [ref=e5739]:
+          - button "Start Practice" [ref=e5740]:
+            - img [ref=e5741]
+            - text: Start Practice
+          - generic [ref=e5744]:
+            - generic [ref=e5745]: 0% complete
+            - generic [ref=e5746]: 0/1
+      - button "Quick Jam Am Am · Metal" [ref=e5749] [cursor=pointer]:
+        - img [ref=e5750]
+        - generic [ref=e5754]: Quick Jam
+        - generic [ref=e5755]: Am Am · Metal
+        - img [ref=e5756]
+      - generic [ref=e5758]:
+        - generic [ref=e5759]:
+          - generic [ref=e5760]: Song of the Week
+          - generic [ref=e5761]:
+            - text: No songs scheduled this week
+            - button "Restore dismissed" [ref=e5762] [cursor=pointer]
+        - generic [ref=e5763]:
+          - generic [ref=e5764]:
+            - generic [ref=e5765]: This Week
+            - button "Reset" [ref=e5766] [cursor=pointer]:
+              - img [ref=e5767]
+              - text: Reset
+          - generic [ref=e5770]:
+            - generic [ref=e5771]:
+              - generic [ref=e5772]: 0%
+              - generic [ref=e5773]: Progress
+            - generic [ref=e5774]:
+              - generic [ref=e5775]: "10"
+              - generic [ref=e5776]: Minutes
+            - generic [ref=e5777]:
+              - generic [ref=e5778]: 0/1
+              - generic [ref=e5779]: Exercises
+            - generic [ref=e5780]:
+              - generic [ref=e5781]: 0/7
+              - generic [ref=e5782]: Days Active
+        - generic [ref=e5783]:
+          - generic [ref=e5784]:
+            - img [ref=e5785]
+            - text: Coach Tip
+          - paragraph [ref=e5787]: You haven't practiced Warm-Up yet — consider adding it to your routine.
+          - button "Ask the Coach →" [ref=e5788]
+      - generic [ref=e5789]:
+        - button "Weekly Focus W1 · Aeolian · Am · Metal" [ref=e5790] [cursor=pointer]:
+          - generic [ref=e5792]: Weekly Focus
+          - generic [ref=e5793]: W1 · Aeolian · Am · Metal
+          - img [ref=e5794]
+        - generic [ref=e5796]:
+          - generic [ref=e5797]:
+            - generic [ref=e5798]:
+              - img [ref=e5799]
+              - text: Week 1 Schedule
+            - button "Edit" [ref=e5802] [cursor=pointer]:
+              - img [ref=e5803]
+              - text: Edit
+          - generic [ref=e5806]:
+            - generic [ref=e5807] [cursor=pointer]:
+              - generic [ref=e5808]: Sunday
+              - generic [ref=e5809]: 2h
+            - generic [ref=e5810] [cursor=pointer]:
+              - generic [ref=e5811]: Monday
+              - generic [ref=e5812]: 2h
+              - generic [ref=e5814]: 0/1
+            - generic [ref=e5815] [cursor=pointer]:
+              - generic [ref=e5816]: Tuesday
+              - generic [ref=e5817]: 2h
+            - generic [ref=e5818] [cursor=pointer]:
+              - generic [ref=e5819]: Wednesday
+              - generic [ref=e5820]: 2h
+            - generic [ref=e5821] [cursor=pointer]:
+              - generic [ref=e5822]: Thursday
+              - generic [ref=e5823]: 2h
+            - generic [ref=e5824] [cursor=pointer]:
+              - generic [ref=e5825]: Friday
+              - generic [ref=e5826]: 1.5h
+            - generic [ref=e5827] [cursor=pointer]:
+              - generic [ref=e5828]: Saturday
+              - generic [ref=e5829]: 0h
+      - generic [ref=e5831]:
+        - generic [ref=e5832]:
+          - img [ref=e5833]
+          - text: Songs for This Week
+          - generic [ref=e5837]: (0 songs)
+        - generic [ref=e5838]: No songs added yet. Search your library below.
+        - generic [ref=e5840]:
+          - img [ref=e5841]
+          - textbox "Search songs from library..." [ref=e5844]
+        - group [ref=e5845]:
+          - generic "Add manually..." [ref=e5846] [cursor=pointer]
+      - button "Week Analytics 0/1 done · 0%" [ref=e5848] [cursor=pointer]:
+        - img [ref=e5849]
+        - generic [ref=e5851]: Week Analytics
+        - generic [ref=e5852]: 0/1 done · 0%
+        - img [ref=e5853]

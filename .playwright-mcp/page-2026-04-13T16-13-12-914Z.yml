@@ -1,0 +1,257 @@
+- generic [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - button "Open Next.js Dev Tools" [ref=e8] [cursor=pointer]:
+    - img [ref=e9]
+  - alert [ref=e12]
+  - generic [ref=e13]:
+    - complementary [ref=e14]:
+      - img "Guitar Practice" [ref=e17]
+      - navigation [ref=e19]:
+        - generic [ref=e20]: Main
+        - button "Home" [ref=e21] [cursor=pointer]:
+          - img [ref=e23]
+          - generic [ref=e25]: Home
+        - button "Practice" [ref=e26] [cursor=pointer]:
+          - img [ref=e28]
+          - generic [ref=e32]: Practice
+        - button "Learn" [ref=e33] [cursor=pointer]:
+          - img [ref=e35]
+          - generic [ref=e38]: Learn
+        - button "Studio" [ref=e39] [cursor=pointer]:
+          - img [ref=e41]
+          - generic [ref=e44]: Studio
+        - button "Jam Mode" [ref=e45] [cursor=pointer]:
+          - img [ref=e47]
+          - generic [ref=e50]: Jam Mode
+        - button "Library" [ref=e51] [cursor=pointer]:
+          - img [ref=e53]
+          - generic [ref=e56]: Library
+        - generic [ref=e57]: Tools
+        - button "AI Coach" [ref=e58] [cursor=pointer]:
+          - img [ref=e60]
+          - generic [ref=e62]: AI Coach
+        - button "Suno AI" [ref=e63] [cursor=pointer]:
+          - img [ref=e65]
+          - generic [ref=e68]: Suno AI
+        - button "Skills" [ref=e69] [cursor=pointer]:
+          - img [ref=e71]
+          - generic [ref=e77]: Skills
+        - button "Tuner" [ref=e78] [cursor=pointer]:
+          - img [ref=e80]
+          - generic [ref=e82]: Tuner
+      - button "Guest Sign in to sync" [ref=e85]:
+        - img [ref=e87]
+        - generic [ref=e90]:
+          - generic [ref=e91]: Guest
+          - generic [ref=e92]: Sign in to sync
+      - button "Sign in to sync" [ref=e94]
+    - generic [ref=e95]:
+      - generic [ref=e2008]:
+        - generic [ref=e2009]:
+          - button "Sunday" [ref=e2010] [cursor=pointer]
+          - button "Monday" [ref=e2011] [cursor=pointer]
+          - button "Tuesday" [ref=e2012] [cursor=pointer]
+          - button "Wednesday" [ref=e2013] [cursor=pointer]
+          - button "Thursday" [ref=e2014] [cursor=pointer]
+          - button "Friday" [ref=e2015] [cursor=pointer]
+          - button "Saturday" [ref=e2016] [cursor=pointer]
+        - generic [ref=e2018]:
+          - generic [ref=e2019]:
+            - generic [ref=e2020]:
+              - generic [ref=e2021]: Monday
+              - button "Edit" [ref=e2022] [cursor=pointer]:
+                - img [ref=e2023]
+                - text: Edit
+            - generic [ref=e2026]:
+              - generic [ref=e2027]: 5 exercises
+              - text: ·
+              - generic [ref=e2028]: 45 min
+              - text: ·
+              - generic [ref=e2029]: 0 done
+            - generic [ref=e2030]:
+              - generic [ref=e2031]: Warm-Up
+              - generic [ref=e2032]: Ear Training
+              - generic [ref=e2033]: Modes
+              - generic [ref=e2034]: Improv
+          - generic [ref=e2035]:
+            - button "Auto Fill" [ref=e2036] [cursor=pointer]
+            - button "+ Exercise" [ref=e2037] [cursor=pointer]
+            - button "+ Song" [ref=e2038] [cursor=pointer]
+            - button "Copy" [ref=e2039] [cursor=pointer]:
+              - img [ref=e2040]
+              - generic [ref=e2043]: Copy
+            - button "Paste" [ref=e2044] [cursor=pointer]:
+              - img [ref=e2045]
+              - generic [ref=e2048]: Paste
+        - generic [ref=e2049]:
+          - generic [ref=e2050]:
+            - generic [ref=e2051]:
+              - generic [ref=e2052]: 00:00
+              - generic [ref=e2053]: Session
+            - generic [ref=e2054]:
+              - button "Log" [ref=e2055] [cursor=pointer]:
+                - img [ref=e2056]
+                - text: Log
+              - button "Start" [ref=e2058]
+              - button "Reset" [ref=e2059] [cursor=pointer]
+          - generic [ref=e2061]:
+            - generic [ref=e2062]: 0/5 exercises
+            - generic [ref=e2063]: 0%
+          - generic [ref=e2065]:
+            - button "Metronome" [ref=e2066]:
+              - img [ref=e2067]
+              - text: Metronome
+            - button "Tuner" [ref=e2070]:
+              - img [ref=e2071]
+              - text: Tuner
+            - button "Record" [ref=e2076]:
+              - img [ref=e2077]
+              - text: Record
+        - generic [ref=e2081]:
+          - generic "Drag to reorder" [ref=e2082]:
+            - img [ref=e2083]
+          - button "Mark done" [ref=e2090] [cursor=pointer]
+          - button "Dirt Song · 10min · 90 BPM" [ref=e2093] [cursor=pointer]:
+            - generic [ref=e2094]: Dirt
+            - generic [ref=e2095]:
+              - generic [ref=e2096]: Song ·
+              - button "10min" [ref=e2097]
+              - generic [ref=e2098]: · 90 BPM
+          - generic [ref=e2099]:
+            - button "UP" [ref=e2100] [cursor=pointer]
+            - button "DN" [ref=e2101] [cursor=pointer]
+            - button "Del" [ref=e2102] [cursor=pointer]
+        - generic [ref=e2104]:
+          - generic "Drag to reorder" [ref=e2105]:
+            - img [ref=e2106]
+          - button "Mark done" [ref=e2113] [cursor=pointer]
+          - button "Legato Warm-Up Am Pentatonic No Pick Warm-Up · 5min" [ref=e2116] [cursor=pointer]:
+            - generic [ref=e2117]: Legato Warm-Up Am Pentatonic No Pick
+            - generic [ref=e2118]:
+              - generic [ref=e2119]: Warm-Up ·
+              - button "5min" [ref=e2120]
+          - generic [ref=e2121]:
+            - button "UP" [ref=e2122] [cursor=pointer]
+            - button "DN" [ref=e2123] [cursor=pointer]
+            - button "Swap" [ref=e2124] [cursor=pointer]
+            - button "Del" [ref=e2125] [cursor=pointer]
+        - generic [ref=e2127]:
+          - generic "Drag to reorder" [ref=e2128]:
+            - img [ref=e2129]
+          - button "Mark done" [ref=e2136] [cursor=pointer]
+          - button "Metallica - Enter Sandman Song · 20min" [ref=e2139] [cursor=pointer]:
+            - generic [ref=e2140]: Metallica - Enter Sandman
+            - generic [ref=e2141]:
+              - generic [ref=e2142]: Song ·
+              - button "20min" [ref=e2143]
+          - generic [ref=e2144]:
+            - button "UP" [ref=e2145] [cursor=pointer]
+            - button "DN" [ref=e2146] [cursor=pointer]
+            - button "Del" [ref=e2147] [cursor=pointer]
+        - generic [ref=e2149]:
+          - generic "Drag to reorder" [ref=e2150]:
+            - img [ref=e2151]
+          - button "Mark done" [ref=e2158] [cursor=pointer]
+          - button "Chromatic 1-2-3-4 Hand Sync Warm-Up · 5min · 80-120 BPM" [ref=e2161] [cursor=pointer]:
+            - generic [ref=e2162]: Chromatic 1-2-3-4 Hand Sync
+            - generic [ref=e2163]:
+              - generic [ref=e2164]: Warm-Up ·
+              - button "5min" [ref=e2165]
+              - generic [ref=e2166]: · 80-120 BPM
+          - generic [ref=e2167]:
+            - button "UP" [ref=e2168] [cursor=pointer]
+            - button "DN" [ref=e2169] [cursor=pointer]
+            - button "Swap" [ref=e2170] [cursor=pointer]
+            - button "Del" [ref=e2171] [cursor=pointer]
+        - generic [ref=e3228]:
+          - generic "Drag to reorder" [ref=e3229]:
+            - img [ref=e3230]
+          - button "Mark done" [ref=e3237] [cursor=pointer]
+          - button "EXAMPLE EX — Am Pentatonic 1st Position Warm-Up · 5min · 120 BPM" [ref=e3240] [cursor=pointer]:
+            - generic [ref=e3241]: EXAMPLE EX — Am Pentatonic 1st Position
+            - generic [ref=e3242]:
+              - generic [ref=e3243]: Warm-Up ·
+              - button "5min" [ref=e3244]
+              - generic [ref=e3245]: · 120 BPM
+          - generic [ref=e3246]:
+            - button "UP" [ref=e3247] [cursor=pointer]
+            - button "DN" [ref=e3248] [cursor=pointer]
+            - button "Swap" [ref=e3249] [cursor=pointer]
+            - button "Del" [ref=e3250] [cursor=pointer]
+      - 'dialog "Exercise: EXAMPLE EX — Am Pentatonic 1st Position" [ref=e3251]':
+        - generic [ref=e3253]:
+          - generic [ref=e3254]:
+            - generic [ref=e3255]:
+              - generic [ref=e3257]: EXAMPLE EX — Am Pentatonic 1st Position
+              - generic [ref=e3258]: 120 BPM
+              - button "5m" [active] [ref=e3259] [cursor=pointer]:
+                - text: 5m
+                - img [ref=e3260]
+            - generic [ref=e3263]:
+              - generic [ref=e3264]:
+                - button "Start timer" [ref=e3265] [cursor=pointer]:
+                  - img [ref=e3266]
+                - generic [ref=e3268]: 05:00
+              - button "Record" [ref=e3269] [cursor=pointer]:
+                - img [ref=e3270]
+                - text: Record
+              - button "Records" [ref=e3273] [cursor=pointer]:
+                - img [ref=e3274]
+                - text: Records
+              - button "Notes" [ref=e3276] [cursor=pointer]:
+                - img [ref=e3277]
+                - text: Notes
+              - button "Done" [ref=e3280] [cursor=pointer]
+              - button "Close" [ref=e3281] [cursor=pointer]: ×
+          - generic [ref=e3282]:
+            - tablist [ref=e3284]:
+              - tab "Practice" [ref=e3285] [cursor=pointer]
+              - tab "Tabs" [selected] [ref=e3286] [cursor=pointer]
+              - tab "Backing Track" [ref=e3287] [cursor=pointer]
+              - tab "Tutorial" [ref=e3288] [cursor=pointer]
+            - generic [ref=e3363]:
+              - generic [ref=e3365]:
+                - generic [ref=e3367]:
+                  - generic [ref=e3370]: Am Pentatonic 1st Position (120 BPM)
+                  - generic [ref=e3371]:
+                    - button "▲ Hide" [ref=e3372] [cursor=pointer]
+                    - button "Change" [ref=e3373] [cursor=pointer]
+                - generic [ref=e3374]:
+                  - generic [ref=e3375]:
+                    - button "Play" [ref=e3376] [cursor=pointer]:
+                      - generic [ref=e3377]: ▶
+                    - generic [ref=e3378]: 0:00 / 0:04
+                    - generic [ref=e3379]:
+                      - button "◀" [ref=e3380] [cursor=pointer]
+                      - generic [ref=e3381] [cursor=pointer]: Bar 0/8
+                      - button "▶" [ref=e3382] [cursor=pointer]
+                    - generic [ref=e3383]:
+                      - generic [ref=e3384]: ♩=
+                      - spinbutton "Playback BPM (main speed)" [ref=e3385]: "120"
+                      - generic [ref=e3386]: 100%
+                  - generic [ref=e3387]:
+                    - button "Loop OFF" [ref=e3388] [cursor=pointer]
+                    - button "A" [ref=e3389] [cursor=pointer]
+                    - button "B" [ref=e3390] [cursor=pointer]
+                    - generic [ref=e3391]: Click tab to jump
+                    - button "Met" [ref=e3393] [cursor=pointer]
+                    - button "Count-in" [ref=e3394] [cursor=pointer]
+                    - generic [ref=e3395]:
+                      - generic [ref=e3396]: Transpose
+                      - button "-" [ref=e3397] [cursor=pointer]
+                      - generic [ref=e3398]: "0"
+                      - button "+" [ref=e3399] [cursor=pointer]
+                    - generic [ref=e3400]:
+                      - button "Fretboard" [ref=e3401] [cursor=pointer]
+                      - button "Mixer" [ref=e3402] [cursor=pointer]
+                      - button "Clips" [ref=e3403] [cursor=pointer]
+                      - button "Display" [ref=e3404] [cursor=pointer]
+                  - generic [ref=e3405]:
+                    - generic [ref=e3406]: Volume
+                    - slider [ref=e3407]: "1"
+                    - generic [ref=e3408]: 100%
+                  - generic [ref=e3409]:
+                    - generic [ref=e3410]: Audio Enhancement
+                    - button "Reverb OFF" [ref=e3412] [cursor=pointer]
+              - button "Download tabs" [ref=e3426] [cursor=pointer]

@@ -1,0 +1,111 @@
+- generic [active] [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - alert [ref=e3]
+  - generic [ref=e4]:
+    - complementary [ref=e5]:
+      - img "Guitar Practice" [ref=e8]
+      - navigation [ref=e10]:
+        - generic [ref=e11]: Main
+        - button "Home" [ref=e12] [cursor=pointer]:
+          - img [ref=e14]
+          - generic [ref=e16]: Home
+        - button "Practice" [ref=e17] [cursor=pointer]:
+          - img [ref=e19]
+          - generic [ref=e23]: Practice
+        - button "Learn" [ref=e24] [cursor=pointer]:
+          - img [ref=e26]
+          - generic [ref=e29]: Learn
+        - button "Studio" [ref=e30] [cursor=pointer]:
+          - img [ref=e32]
+          - generic [ref=e35]: Studio
+        - button "Jam Mode" [ref=e36] [cursor=pointer]:
+          - img [ref=e38]
+          - generic [ref=e41]: Jam Mode
+        - button "Library" [ref=e42] [cursor=pointer]:
+          - img [ref=e44]
+          - generic [ref=e47]: Library
+        - generic [ref=e48]: Tools
+        - button "AI Coach" [ref=e49] [cursor=pointer]:
+          - img [ref=e51]
+          - generic [ref=e53]: AI Coach
+        - button "Suno AI" [ref=e54] [cursor=pointer]:
+          - img [ref=e56]
+          - generic [ref=e59]: Suno AI
+        - button "Skills" [ref=e60] [cursor=pointer]:
+          - img [ref=e62]
+          - generic [ref=e68]: Skills
+        - button "Tuner" [ref=e69] [cursor=pointer]:
+          - img [ref=e71]
+          - generic [ref=e73]: Tuner
+      - button "Guest Sign in to sync" [ref=e76]:
+        - img [ref=e78]
+        - generic [ref=e81]:
+          - generic [ref=e82]: Guest
+          - generic [ref=e83]: Sign in to sync
+      - button "Sign in to sync" [ref=e85]
+    - generic [ref=e224]:
+      - generic [ref=e225]:
+        - button "Sunday" [ref=e226] [cursor=pointer]
+        - button "Monday" [ref=e227] [cursor=pointer]
+        - button "Tuesday" [ref=e228] [cursor=pointer]
+        - button "Wednesday" [ref=e229] [cursor=pointer]
+        - button "Thursday" [ref=e230] [cursor=pointer]
+        - button "Friday" [ref=e231] [cursor=pointer]
+        - button "Saturday" [ref=e232] [cursor=pointer]
+      - generic [ref=e234]:
+        - generic [ref=e235]:
+          - generic [ref=e236]:
+            - generic [ref=e237]: Tuesday
+            - button "Edit" [ref=e238] [cursor=pointer]:
+              - img [ref=e239]
+              - text: Edit
+          - generic [ref=e242]:
+            - generic [ref=e243]: 0 exercises
+            - text: ·
+            - generic [ref=e244]: 0 min
+            - text: ·
+            - generic [ref=e245]: 0 done
+          - generic [ref=e246]:
+            - generic [ref=e247]: Warm-Up
+            - generic [ref=e248]: Legato
+            - generic [ref=e249]: Bends
+            - generic [ref=e250]: Phrasing
+        - generic [ref=e251]:
+          - button "Auto Fill" [ref=e252] [cursor=pointer]
+          - button "+ Exercise" [ref=e253] [cursor=pointer]
+          - button "+ Song" [ref=e254] [cursor=pointer]
+          - button "Copy" [ref=e255] [cursor=pointer]:
+            - img [ref=e256]
+            - generic [ref=e259]: Copy
+          - button "Paste" [ref=e260] [cursor=pointer]:
+            - img [ref=e261]
+            - generic [ref=e264]: Paste
+      - generic [ref=e265]:
+        - generic [ref=e266]:
+          - generic [ref=e267]:
+            - generic [ref=e268]: 00:00
+            - generic [ref=e269]: Session
+          - generic [ref=e270]:
+            - button "Log" [ref=e271] [cursor=pointer]:
+              - img [ref=e272]
+              - text: Log
+            - button "Start" [ref=e274]
+            - button "Reset" [ref=e275] [cursor=pointer]
+        - generic [ref=e276]:
+          - button "Metronome" [ref=e277]:
+            - img [ref=e278]
+            - text: Metronome
+          - button "Tuner" [ref=e281]:
+            - img [ref=e282]
+            - text: Tuner
+          - button "Record" [ref=e287]:
+            - img [ref=e288]
+            - text: Record
+      - generic [ref=e291]:
+        - img [ref=e292]
+        - generic [ref=e297]: Ready to Practice?
+        - generic [ref=e298]: Your categories are set. Hit Auto Fill to generate a personalized routine for today.
+        - generic [ref=e299]:
+          - button "Auto Fill" [ref=e300] [cursor=pointer]
+          - button "+ Add Exercise" [ref=e301] [cursor=pointer]

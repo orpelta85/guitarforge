@@ -1,0 +1,536 @@
+- generic [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - button "Open Next.js Dev Tools" [ref=e11] [cursor=pointer]:
+    - img [ref=e12]
+  - alert [ref=e15]
+  - generic [ref=e16]:
+    - complementary [ref=e17]:
+      - img "Guitar Practice" [ref=e20]
+      - navigation [ref=e22]:
+        - generic [ref=e23]: Main
+        - button "Home" [ref=e24] [cursor=pointer]:
+          - img [ref=e26]
+          - generic [ref=e28]: Home
+        - button "Practice" [ref=e29] [cursor=pointer]:
+          - img [ref=e31]
+          - generic [ref=e35]: Practice
+        - button "Learn" [ref=e36] [cursor=pointer]:
+          - img [ref=e38]
+          - generic [ref=e41]: Learn
+        - button "Studio" [ref=e42] [cursor=pointer]:
+          - img [ref=e44]
+          - generic [ref=e47]: Studio
+        - button "Jam Mode" [ref=e48] [cursor=pointer]:
+          - img [ref=e50]
+          - generic [ref=e53]: Jam Mode
+        - button "Library" [ref=e54] [cursor=pointer]:
+          - img [ref=e56]
+          - generic [ref=e59]: Library
+        - generic [ref=e60]: Tools
+        - button "AI Coach" [ref=e61] [cursor=pointer]:
+          - img [ref=e63]
+          - generic [ref=e65]: AI Coach
+        - button "Suno AI" [ref=e66] [cursor=pointer]:
+          - img [ref=e68]
+          - generic [ref=e71]: Suno AI
+        - button "Skills" [ref=e72] [cursor=pointer]:
+          - img [ref=e74]
+          - generic [ref=e80]: Skills
+        - button "Tuner" [ref=e81] [cursor=pointer]:
+          - img [ref=e83]
+          - generic [ref=e85]: Tuner
+      - button "Guest Sign in to sync" [ref=e88]:
+        - img [ref=e90]
+        - generic [ref=e93]:
+          - generic [ref=e94]: Guest
+          - generic [ref=e95]: Sign in to sync
+      - button "Sign in to sync" [ref=e97]
+    - generic [ref=e98]:
+      - generic [ref=e100]:
+        - generic [ref=e101]:
+          - button "Exercises" [ref=e102] [cursor=pointer]:
+            - img [ref=e103]
+            - text: Exercises
+          - button "Styles" [ref=e105] [cursor=pointer]:
+            - img [ref=e106]
+            - text: Styles
+          - button "My Songs" [ref=e108] [cursor=pointer]:
+            - img [ref=e109]
+            - text: My Songs
+          - button "Recordings" [ref=e111] [cursor=pointer]:
+            - img [ref=e112]
+            - text: Recordings
+          - button "Backing Tracks" [ref=e114] [cursor=pointer]:
+            - img [ref=e115]
+            - text: Backing Tracks
+          - button "Song Library" [ref=e117] [cursor=pointer]:
+            - img [ref=e118]
+            - text: Song Library
+        - generic [ref=e120]:
+          - generic [ref=e121]:
+            - generic [ref=e122]:
+              - img
+              - textbox "Search songs, artists, genres, keys..." [ref=e123]
+            - generic [ref=e124]:
+              - button "Genre" [ref=e126] [cursor=pointer]:
+                - text: Genre
+                - img [ref=e127]
+              - button "Difficulty" [ref=e130] [cursor=pointer]:
+                - text: Difficulty
+                - img [ref=e131]
+              - button "Has GP" [ref=e134] [cursor=pointer]:
+                - text: Has GP
+                - img [ref=e135]
+              - 'button "Sort: Popularity" [ref=e138] [cursor=pointer]':
+                - text: "Sort: Popularity"
+                - img [ref=e139]
+            - generic [ref=e141]: Showing 20 of 8665 songs
+          - generic [ref=e142]:
+            - button "All" [ref=e143] [cursor=pointer]
+            - button "#" [ref=e144] [cursor=pointer]
+            - button "A" [ref=e145] [cursor=pointer]
+            - button "B" [ref=e146] [cursor=pointer]
+            - button "C" [ref=e147] [cursor=pointer]
+            - button "D" [ref=e148] [cursor=pointer]
+            - button "E" [ref=e149] [cursor=pointer]
+            - button "F" [ref=e150] [cursor=pointer]
+            - button "G" [ref=e151] [cursor=pointer]
+            - button "H" [ref=e152] [cursor=pointer]
+            - button "I" [ref=e153] [cursor=pointer]
+            - button "J" [ref=e154] [cursor=pointer]
+            - button "K" [ref=e155] [cursor=pointer]
+            - button "L" [ref=e156] [cursor=pointer]
+            - button "M" [ref=e157] [cursor=pointer]
+            - button "N" [ref=e158] [cursor=pointer]
+            - button "O" [ref=e159] [cursor=pointer]
+            - button "P" [ref=e160] [cursor=pointer]
+            - button "Q" [ref=e161] [cursor=pointer]
+            - button "R" [ref=e162] [cursor=pointer]
+            - button "S" [ref=e163] [cursor=pointer]
+            - button "T" [ref=e164] [cursor=pointer]
+            - button "U" [ref=e165] [cursor=pointer]
+            - button "V" [ref=e166] [cursor=pointer]
+            - button "W" [ref=e167] [cursor=pointer]
+            - button "X" [ref=e168] [cursor=pointer]
+            - button "Y" [ref=e169] [cursor=pointer]
+            - button "Z" [ref=e170] [cursor=pointer]
+            - button "א-ת" [ref=e171] [cursor=pointer]
+          - button "Add Song Manually" [ref=e173] [cursor=pointer]:
+            - img [ref=e174]
+            - text: Add Song Manually
+          - generic [ref=e177] [cursor=pointer]:
+            - generic [ref=e178]:
+              - generic [ref=e179]:
+                - generic [ref=e180]: Black Hole Sun
+                - generic [ref=e181]: Intermediate
+                - generic [ref=e182]: GP
+              - generic [ref=e183]: Soundgarden
+              - generic [ref=e184]:
+                - generic [ref=e185]: Grunge
+                - generic [ref=e186]: "Key: G"
+                - generic [ref=e187]: 86 BPM
+                - generic [ref=e188]: Drop D
+            - button "Remove from My Songs" [ref=e190]:
+              - img [ref=e191]
+          - generic [ref=e194] [cursor=pointer]:
+            - generic [ref=e195]:
+              - generic [ref=e196]:
+                - generic [ref=e197]: Somebody Like You
+                - generic [ref=e198]: Beginner
+              - generic [ref=e199]: Keith Urban
+              - generic [ref=e200]:
+                - generic [ref=e201]: Country
+                - generic [ref=e202]: "Key: A"
+                - generic [ref=e203]: 120 BPM
+            - button "Add to My Songs" [ref=e205]:
+              - img [ref=e206]
+          - generic [ref=e209] [cursor=pointer]:
+            - generic [ref=e210]:
+              - generic [ref=e211]:
+                - generic [ref=e212]: Fell On Black Days
+                - generic [ref=e213]: Intermediate
+                - generic [ref=e214]: GP
+              - generic [ref=e215]: Soundgarden
+              - generic [ref=e216]:
+                - generic [ref=e217]: Grunge
+                - generic [ref=e218]: "Key: C#m"
+                - generic [ref=e219]: 125 BPM
+                - generic [ref=e220]: Drop D
+            - button "Add to My Songs" [ref=e222]:
+              - img [ref=e223]
+          - generic [ref=e226] [cursor=pointer]:
+            - generic [ref=e227]:
+              - generic [ref=e228]:
+                - generic [ref=e229]: Spoonman
+                - generic [ref=e230]: Intermediate
+                - generic [ref=e231]: GP
+              - generic [ref=e232]: Soundgarden
+              - generic [ref=e233]:
+                - generic [ref=e234]: Grunge
+                - generic [ref=e235]: "Key: D"
+                - generic [ref=e236]: 112 BPM
+                - generic [ref=e237]: Drop D
+            - button "Add to My Songs" [ref=e239]:
+              - img [ref=e240]
+          - generic [ref=e243] [cursor=pointer]:
+            - generic [ref=e244]:
+              - generic [ref=e245]:
+                - generic [ref=e246]: Burden In My Hand
+                - generic [ref=e247]: Intermediate
+                - generic [ref=e248]: GP
+              - generic [ref=e249]: Soundgarden
+              - generic [ref=e250]:
+                - generic [ref=e251]: Grunge
+                - generic [ref=e252]: "Key: Am"
+                - generic [ref=e253]: 76 BPM
+            - button "Add to My Songs" [ref=e255]:
+              - img [ref=e256]
+          - generic [ref=e259] [cursor=pointer]:
+            - generic [ref=e260]:
+              - generic [ref=e261]:
+                - generic [ref=e262]: Outshined
+                - generic [ref=e263]: Intermediate
+                - generic [ref=e264]: GP
+              - generic [ref=e265]: Soundgarden
+              - generic [ref=e266]:
+                - generic [ref=e267]: Grunge
+                - generic [ref=e268]: "Key: Cm"
+                - generic [ref=e269]: 116 BPM
+                - generic [ref=e270]: Drop D
+            - button "Add to My Songs" [ref=e272]:
+              - img [ref=e273]
+          - generic [ref=e276] [cursor=pointer]:
+            - generic [ref=e277]:
+              - generic [ref=e278]:
+                - generic [ref=e279]: Blow Up The Outside World
+                - generic [ref=e280]: Intermediate
+                - generic [ref=e281]: GP
+              - generic [ref=e282]: Soundgarden
+              - generic [ref=e283]:
+                - generic [ref=e284]: Grunge
+                - generic [ref=e285]: "Key: Em"
+                - generic [ref=e286]: 64 BPM
+                - generic [ref=e287]: Drop D
+            - button "Add to My Songs" [ref=e289]:
+              - img [ref=e290]
+          - generic [ref=e293] [cursor=pointer]:
+            - generic [ref=e294]:
+              - generic [ref=e295]:
+                - generic [ref=e296]: Pretty Noose
+                - generic [ref=e297]: Intermediate
+                - generic [ref=e298]: GP
+              - generic [ref=e299]: Soundgarden
+              - generic [ref=e300]:
+                - generic [ref=e301]: Grunge
+                - generic [ref=e302]: "Key: E"
+                - generic [ref=e303]: 100 BPM
+                - generic [ref=e304]: Drop D
+            - button "Add to My Songs" [ref=e306]:
+              - img [ref=e307]
+          - generic [ref=e310] [cursor=pointer]:
+            - generic [ref=e311]:
+              - generic [ref=e312]:
+                - generic [ref=e313]: That’s When (Taylor’s Version) (From The Vault)
+                - generic [ref=e314]: Beginner
+              - generic [ref=e315]: Taylor Swift
+              - generic [ref=e317]: Country
+            - button "Add to My Songs" [ref=e319]:
+              - img [ref=e320]
+          - generic [ref=e323] [cursor=pointer]:
+            - generic [ref=e324]:
+              - generic [ref=e325]:
+                - generic [ref=e326]: The Day I Tried To Live
+                - generic [ref=e327]: Intermediate
+                - generic [ref=e328]: GP
+              - generic [ref=e329]: Soundgarden
+              - generic [ref=e330]:
+                - generic [ref=e331]: Grunge
+                - generic [ref=e332]: "Key: Em"
+                - generic [ref=e333]: 100 BPM
+                - generic [ref=e334]: Drop D
+            - button "Add to My Songs" [ref=e336]:
+              - img [ref=e337]
+          - generic [ref=e340] [cursor=pointer]:
+            - generic [ref=e341]:
+              - generic [ref=e342]:
+                - generic [ref=e343]: Blue Ain't Your Color
+                - generic [ref=e344]: Beginner
+              - generic [ref=e345]: Keith Urban
+              - generic [ref=e347]: Country
+            - button "Add to My Songs" [ref=e349]:
+              - img [ref=e350]
+          - generic [ref=e353] [cursor=pointer]:
+            - generic [ref=e354]:
+              - generic [ref=e355]:
+                - generic [ref=e356]: Highway Don't Care
+                - generic [ref=e357]: Beginner
+              - generic [ref=e358]: Tim McGraw
+              - generic [ref=e360]: Country
+            - button "Add to My Songs" [ref=e362]:
+              - img [ref=e363]
+          - generic [ref=e366] [cursor=pointer]:
+            - generic [ref=e367]:
+              - generic [ref=e368]:
+                - generic [ref=e369]: Wild Hearts
+                - generic [ref=e370]: Beginner
+              - generic [ref=e371]: Keith Urban
+              - generic [ref=e373]: Country
+            - button "Add to My Songs" [ref=e375]:
+              - img [ref=e376]
+          - generic [ref=e379] [cursor=pointer]:
+            - generic [ref=e380]:
+              - generic [ref=e381]:
+                - generic [ref=e382]: Tonight I Wanna Cry
+                - generic [ref=e383]: Beginner
+              - generic [ref=e384]: Keith Urban
+              - generic [ref=e386]: Country
+            - button "Add to My Songs" [ref=e388]:
+              - img [ref=e389]
+          - generic [ref=e392] [cursor=pointer]:
+            - generic [ref=e393]:
+              - generic [ref=e394]:
+                - generic [ref=e395]: קח אותי
+                - generic [ref=e396]: Beginner
+              - generic [ref=e397]: Hayehudim
+              - generic [ref=e399]: Country
+            - button "Add to My Songs" [ref=e401]:
+              - img [ref=e402]
+          - generic [ref=e405] [cursor=pointer]:
+            - generic [ref=e406]:
+              - generic [ref=e407]:
+                - generic [ref=e408]: אם לא היום אז מחר
+                - generic [ref=e409]: Beginner
+              - generic [ref=e410]: Yoni Bloch
+              - generic [ref=e412]: Country
+            - button "Add to My Songs" [ref=e414]:
+              - img [ref=e415]
+          - generic [ref=e418] [cursor=pointer]:
+            - generic [ref=e419]:
+              - generic [ref=e420]:
+                - generic [ref=e421]: אי שם בלב
+                - generic [ref=e422]: Beginner
+              - generic [ref=e423]: Korin Allal
+              - generic [ref=e425]: Country
+            - button "Add to My Songs" [ref=e427]:
+              - img [ref=e428]
+          - generic [ref=e431] [cursor=pointer]:
+            - generic [ref=e432]:
+              - generic [ref=e433]:
+                - generic [ref=e434]: Master of Puppets
+                - generic [ref=e435]: Advanced
+                - generic [ref=e436]: GP
+              - generic [ref=e437]: Metallica
+              - generic [ref=e438]:
+                - generic [ref=e439]: Thrash Metal
+                - generic [ref=e440]: "Key: Em"
+                - generic [ref=e441]: 212 BPM
+            - button "Add to My Songs" [ref=e443]:
+              - img [ref=e444]
+          - generic [ref=e447] [cursor=pointer]:
+            - generic [ref=e448]:
+              - generic [ref=e449]:
+                - generic [ref=e450]: Enter Sandman
+                - generic [ref=e451]: Intermediate
+                - generic [ref=e452]: GP
+              - generic [ref=e453]: Metallica
+              - generic [ref=e454]:
+                - generic [ref=e455]: Heavy Metal
+                - generic [ref=e456]: "Key: Em"
+                - generic [ref=e457]: 123 BPM
+            - button "Add to My Songs" [ref=e459]:
+              - img [ref=e460]
+          - generic [ref=e463] [cursor=pointer]:
+            - generic [ref=e464]:
+              - generic [ref=e465]:
+                - generic [ref=e466]: Nothing Else Matters
+                - generic [ref=e467]: Intermediate
+                - generic [ref=e468]: GP
+              - generic [ref=e469]: Metallica
+              - generic [ref=e470]:
+                - generic [ref=e471]: Ballad
+                - generic [ref=e472]: "Key: Em"
+                - generic [ref=e473]: 46 BPM
+            - button "Add to My Songs" [ref=e475]:
+              - img [ref=e476]
+          - button "Load more (8645 remaining)" [ref=e478] [cursor=pointer]
+      - 'dialog "Song: Black Hole Sun by Soundgarden" [ref=e479]':
+        - generic [ref=e480]:
+          - generic [ref=e481]:
+            - generic [ref=e482]:
+              - generic [ref=e483]:
+                - generic [ref=e484]: Black Hole Sun
+                - generic [ref=e485]: Soundgarden
+                - generic [ref=e486]: Superunknown (Deluxe Edition) · 1994
+                - generic [ref=e487]:
+                  - generic [ref=e488]: Grunge
+                  - generic [ref=e489]: Intermediate
+                  - generic [ref=e490]: ♩ G
+                  - generic [ref=e491]: 86 BPM
+                  - generic [ref=e492]: ⚠ Drop D
+                  - generic [ref=e493]: GP
+                  - button "Edit" [active] [ref=e494] [cursor=pointer]
+              - generic [ref=e495]:
+                - button "Remove from My Songs" [ref=e496] [cursor=pointer]:
+                  - img [ref=e497]
+                - button "Close" [ref=e499] [cursor=pointer]: ×
+            - generic [ref=e500]:
+              - generic [ref=e501]:
+                - button "Not Started" [ref=e502] [cursor=pointer]
+                - button "Learning" [ref=e503] [cursor=pointer]
+                - button "Can Play Slow" [ref=e504] [cursor=pointer]
+                - button "Full Speed" [ref=e505] [cursor=pointer]
+                - button "Mastered" [ref=e506] [cursor=pointer]
+              - generic [ref=e507]:
+                - button "Start practice timer" [ref=e508] [cursor=pointer]:
+                  - img [ref=e509]
+                - generic [ref=e511]: 00:00
+                - button "Set" [ref=e512] [cursor=pointer]
+          - generic [ref=e513]:
+            - button "Practice" [ref=e514] [cursor=pointer]
+            - button "Chords" [ref=e515] [cursor=pointer]
+            - button "Tutorial" [ref=e516] [cursor=pointer]
+            - button "Log" [ref=e517] [cursor=pointer]
+          - generic [ref=e519]:
+            - generic [ref=e520]:
+              - generic [ref=e521]: ⚠
+              - generic [ref=e522]:
+                - generic [ref=e523]: "Non-Standard Tuning: Drop D"
+                - text: — tune your guitar before playing
+            - generic [ref=e524]:
+              - generic [ref=e525]: BACKING TRACK
+              - generic [ref=e527]:
+                - button "Backing Track" [ref=e528] [cursor=pointer]
+                - button "Original" [ref=e529] [cursor=pointer]
+              - generic [ref=e530]:
+                - button "🔓" [ref=e532] [cursor=pointer]
+                - iframe [ref=e534]:
+                  - generic [active] [ref=f93e1]:
+                    - generic "נגן הסרטונים של YouTube" [ref=f93e3]
+                    - generic [ref=f93e5]:
+                      - generic:
+                        - generic:
+                          - button "הפעלת הסרטון" [ref=f93e10] [cursor=pointer]
+                          - button "הסתרת כפתורי הנגן" [ref=f93e12] [cursor=pointer]
+                          - generic [ref=f93e14]:
+                            - generic [ref=f93e19]:
+                              - generic [ref=f93e20]:
+                                - link "Soundgarden - Black Hole Sun" [ref=f93e21] [cursor=pointer]:
+                                  - /url: https://www.youtube.com/watch?v=3mbBbFH9fAg
+                                - link "SoundgardenVEVO" [ref=f93e22] [cursor=pointer]:
+                                  - /url: /channel/UCTSuGVPcfBRSZSdP3xQASqg
+                                  - generic [ref=f93e23]: SoundgardenVEVO
+                              - generic [ref=f93e24]:
+                                - button [ref=f93e25] [cursor=pointer]
+                                - generic [ref=f93e27]:
+                                  - generic: SoundgardenVEVO
+                            - generic [ref=f93e28]:
+                              - generic [ref=f93e29]:
+                                - button "שיתוף" [ref=f93e31] [cursor=pointer]:
+                                  - generic [ref=f93e35]:
+                                    - img
+                                - button "לצפייה בהמשך" [ref=f93e40] [cursor=pointer]:
+                                  - generic [ref=f93e44]:
+                                    - img
+                              - link "לצפייה ב-YouTube" [ref=f93e51] [cursor=pointer]:
+                                - /url: https://www.youtube.com/watch?v=3mbBbFH9fAg
+                                - generic [ref=f93e54]:
+                                  - text: לצפייה באתר
+                                  - img [ref=f93e56]:
+                                    - generic [ref=f93e58]:
+                                      - img
+                - generic [ref=e535]:
+                  - textbox "Paste YouTube URL..." [ref=e536]
+                  - button "Load" [ref=e537] [cursor=pointer]
+              - generic [ref=e538]:
+                - generic [ref=e539]: "Open in YouTube:"
+                - button "Backing Track" [ref=e540] [cursor=pointer]
+                - button "Original" [ref=e541] [cursor=pointer]
+                - button "Live" [ref=e542] [cursor=pointer]
+            - generic [ref=e543]:
+              - generic [ref=e547]: RECORDER
+              - generic [ref=e548]:
+                - button "Guitar Only" [ref=e549] [cursor=pointer]
+                - button "Guitar + Browser Audio" [ref=e550] [cursor=pointer]
+              - generic [ref=e551]:
+                - img [ref=e552]
+                - combobox [ref=e555] [cursor=pointer]:
+                  - option "ברירת מחדל - Microphone (Camo)" [selected]
+                  - option "תקשורת - Microphone (BP-6500) (1b3f:1167)"
+                  - option "Microphone (BP-6500) (1b3f:1167)"
+                  - option "Microphone (Camo)"
+                  - option "Analogue 1 + 2 (Focusrite USB Audio)"
+              - generic [ref=e556]:
+                - button "Record" [ref=e557] [cursor=pointer]
+                - generic [ref=e558]: Record guitar only
+            - generic [ref=e559]:
+              - generic [ref=e560]: GUITAR PRO TAB
+              - generic [ref=e563]:
+                - generic [ref=e565]:
+                  - generic [ref=e566]:
+                    - generic [ref=e568]: Black Hole Sun (55 BPM)
+                    - generic [ref=e569]: Loading player...
+                  - generic [ref=e570]:
+                    - button "▲ Hide" [ref=e571] [cursor=pointer]
+                    - button "Change" [ref=e572] [cursor=pointer]
+                - generic [ref=e573]:
+                  - generic [ref=e574]:
+                    - button "Play" [ref=e575] [cursor=pointer]:
+                      - generic [ref=e576]: ▶
+                    - generic [ref=e577]: 0:00 / 0:00
+                    - generic [ref=e578]:
+                      - button "◀" [ref=e579] [cursor=pointer]
+                      - generic [ref=e580] [cursor=pointer]: Bar 0/65
+                      - button "▶" [ref=e581] [cursor=pointer]
+                    - generic [ref=e582]:
+                      - generic [ref=e583]: ♩=
+                      - spinbutton "Playback BPM (main speed)" [ref=e584]: "55"
+                      - generic [ref=e585]: 100%
+                  - generic [ref=e586]:
+                    - button "Loop OFF" [ref=e587] [cursor=pointer]
+                    - button "A" [ref=e588] [cursor=pointer]
+                    - button "B" [ref=e589] [cursor=pointer]
+                    - generic [ref=e590]: Click tab to jump
+                    - button "Met" [ref=e592] [cursor=pointer]
+                    - slider [ref=e593]: "1"
+                    - button "Count-in" [ref=e594] [cursor=pointer]
+                    - combobox [ref=e595] [cursor=pointer]:
+                      - option "Clean Lead" [selected]
+                      - option "Clean Chords"
+                      - option "Heavy Lead"
+                      - option "Heavy Chords"
+                      - option "Bass"
+                    - generic [ref=e596]:
+                      - generic [ref=e597]: Transpose
+                      - button "-" [ref=e598] [cursor=pointer]
+                      - generic [ref=e599]: "0"
+                      - button "+" [ref=e600] [cursor=pointer]
+                    - generic [ref=e601]:
+                      - button "Fretboard" [ref=e602] [cursor=pointer]
+                      - button "Mixer" [ref=e603] [cursor=pointer]
+                      - button "Clips" [ref=e604] [cursor=pointer]
+                      - button "Display" [ref=e605] [cursor=pointer]
+                  - generic [ref=e606]:
+                    - generic [ref=e607]: Volume
+                    - slider [ref=e608]: "1"
+                    - generic [ref=e609]: 100%
+                  - generic [ref=e610]:
+                    - generic [ref=e611]: Audio Enhancement
+                    - button "Reverb OFF" [ref=e613] [cursor=pointer]
+              - generic [ref=e639]:
+                - button "Download tabs" [ref=e640] [cursor=pointer]
+                - link "Search Songsterr" [ref=e641] [cursor=pointer]:
+                  - /url: https://www.songsterr.com/?pattern=Black%20Hole%20Sun%20Soundgarden
+            - generic [ref=e642]:
+              - generic [ref=e643]: SONG INFO
+              - generic [ref=e645]:
+                - generic [ref=e646]: "Artist: Soundgarden"
+                - generic [ref=e647]: "Album: Superunknown (Deluxe Edition)"
+                - generic [ref=e648]: "Year: 1994"
+                - generic [ref=e649]: "Genre: Grunge"
+                - generic [ref=e650]:
+                  - text: "Tempo:"
+                  - generic [ref=e651]: 86 BPM
+                - generic [ref=e652]: "Key: G"
+                - generic [ref=e653]: "Tuning: Drop D"
+                - generic [ref=e654]: "Difficulty: Intermediate"

@@ -1,0 +1,179 @@
+- generic [active] [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - button "Open Next.js Dev Tools" [ref=e11] [cursor=pointer]:
+    - img [ref=e12]
+  - alert [ref=e15]
+  - generic [ref=e16]:
+    - complementary [ref=e17]:
+      - img "Guitar Practice" [ref=e20]
+      - navigation [ref=e22]:
+        - generic [ref=e23]: Main
+        - button "Home" [ref=e24] [cursor=pointer]:
+          - img [ref=e26]
+          - generic [ref=e28]: Home
+        - button "Practice" [ref=e29] [cursor=pointer]:
+          - img [ref=e31]
+          - generic [ref=e35]: Practice
+        - button "Learn" [ref=e36] [cursor=pointer]:
+          - img [ref=e38]
+          - generic [ref=e41]: Learn
+        - button "Studio" [ref=e42] [cursor=pointer]:
+          - img [ref=e44]
+          - generic [ref=e47]: Studio
+        - button "Jam Mode" [ref=e48] [cursor=pointer]:
+          - img [ref=e50]
+          - generic [ref=e53]: Jam Mode
+        - button "Library" [ref=e54] [cursor=pointer]:
+          - img [ref=e56]
+          - generic [ref=e59]: Library
+        - generic [ref=e60]: Tools
+        - button "AI Coach" [ref=e61] [cursor=pointer]:
+          - img [ref=e63]
+          - generic [ref=e65]: AI Coach
+        - button "Suno AI" [ref=e66] [cursor=pointer]:
+          - img [ref=e68]
+          - generic [ref=e71]: Suno AI
+        - button "Skills" [ref=e72] [cursor=pointer]:
+          - img [ref=e74]
+          - generic [ref=e80]: Skills
+        - button "Tuner" [ref=e81] [cursor=pointer]:
+          - img [ref=e83]
+          - generic [ref=e85]: Tuner
+      - button "Guest Sign in to sync" [ref=e88]:
+        - img [ref=e90]
+        - generic [ref=e93]:
+          - generic [ref=e94]: Guest
+          - generic [ref=e95]: Sign in to sync
+      - button "Sign in to sync" [ref=e97]
+    - generic [ref=e100]:
+      - generic [ref=e101]:
+        - generic [ref=e102]:
+          - img [ref=e103]
+          - generic [ref=e106]: Sign in to sync your progress across devices
+        - generic [ref=e107]:
+          - button "Sign In" [ref=e108]
+          - button "Dismiss" [ref=e109]:
+            - img [ref=e110]
+      - generic [ref=e113]:
+        - generic [ref=e114]:
+          - generic [ref=e115]:
+            - generic [ref=e116]: Sunday, Apr 12, 2026
+            - heading "Today's Focus" [level=1] [ref=e117]
+            - generic [ref=e118]: 12 exercises · 119 min · Warm-Up, Shred, Riffs
+          - generic [ref=e119]:
+            - img [ref=e121]
+            - generic [ref=e123]:
+              - generic [ref=e124]: "0"
+              - generic [ref=e125]: day streak
+        - generic [ref=e126]:
+          - button "EXAMPLE EX — Am Pentatonic 1st Position Warm-Up · 5 min 120 BPM" [ref=e237]:
+            - generic [ref=e239]:
+              - generic [ref=e240]: EXAMPLE EX — Am Pentatonic 1st Position
+              - generic [ref=e241]: Warm-Up · 5 min
+            - generic [ref=e242]: 120 BPM
+          - button "asymetric spinning alternate phrase - Mobius Warm-Up · 10 min 60-100 BPM" [ref=e243]:
+            - generic [ref=e245]:
+              - generic [ref=e246]: asymetric spinning alternate phrase - Mobius
+              - generic [ref=e247]: Warm-Up · 10 min
+            - generic [ref=e248]: 60-100 BPM
+          - button "Pentatonic - Five Positions Warm-Up · 10 min 60-100 BPM" [ref=e249]:
+            - generic [ref=e251]:
+              - generic [ref=e252]: Pentatonic - Five Positions
+              - generic [ref=e253]: Warm-Up · 10 min
+            - generic [ref=e254]: 60-100 BPM
+          - generic [ref=e255]: + 9 more exercises
+        - generic [ref=e129]:
+          - button "Start Practice" [ref=e130]:
+            - img [ref=e131]
+            - text: Start Practice
+          - generic [ref=e134]:
+            - generic [ref=e135]: 0% complete
+            - generic [ref=e136]: 0/12
+      - button "Quick Jam Am Am · Metal" [ref=e139] [cursor=pointer]:
+        - img [ref=e140]
+        - generic [ref=e144]: Quick Jam
+        - generic [ref=e145]: Am Am · Metal
+        - img [ref=e146]
+      - generic [ref=e148]:
+        - generic [ref=e149]:
+          - generic [ref=e150]: Song of the Week
+          - generic [ref=e151]: No songs scheduled this week
+        - generic [ref=e152]:
+          - generic [ref=e153]: This Week
+          - generic [ref=e154]:
+            - generic [ref=e155]:
+              - generic [ref=e156]: 0%
+              - generic [ref=e157]: Progress
+            - generic [ref=e158]:
+              - generic [ref=e159]: "679"
+              - generic [ref=e160]: Minutes
+            - generic [ref=e161]:
+              - generic [ref=e162]: 0/69
+              - generic [ref=e163]: Exercises
+            - generic [ref=e164]:
+              - generic [ref=e165]: 0/7
+              - generic [ref=e166]: Days Active
+        - generic [ref=e167]:
+          - generic [ref=e168]:
+            - img [ref=e169]
+            - text: Coach Tip
+          - paragraph [ref=e171]: You haven't practiced Warm-Up yet — consider adding it to your routine.
+          - button "Ask the Coach →" [ref=e172]
+      - generic [ref=e173]:
+        - button "Weekly Focus W1 · Aeolian · Am · Metal" [ref=e174] [cursor=pointer]:
+          - generic [ref=e176]: Weekly Focus
+          - generic [ref=e177]: W1 · Aeolian · Am · Metal
+          - img [ref=e178]
+        - generic [ref=e180]:
+          - generic [ref=e181]:
+            - generic [ref=e182]:
+              - img [ref=e183]
+              - text: Week 1 Schedule
+            - button "Edit" [ref=e186] [cursor=pointer]:
+              - img [ref=e187]
+              - text: Edit
+          - generic [ref=e190]:
+            - generic [ref=e191] [cursor=pointer]:
+              - generic [ref=e192]: Sunday
+              - generic [ref=e193]: 2h
+              - generic [ref=e257]: 0/12
+            - generic [ref=e194] [cursor=pointer]:
+              - generic [ref=e195]: Monday
+              - generic [ref=e196]: 2h
+              - generic [ref=e259]: 0/10
+            - generic [ref=e197] [cursor=pointer]:
+              - generic [ref=e198]: Tuesday
+              - generic [ref=e199]: 2h
+              - generic [ref=e261]: 0/12
+            - generic [ref=e200] [cursor=pointer]:
+              - generic [ref=e201]: Wednesday
+              - generic [ref=e202]: 2h
+              - generic [ref=e263]: 0/10
+            - generic [ref=e203] [cursor=pointer]:
+              - generic [ref=e204]: Thursday
+              - generic [ref=e205]: 2h
+              - generic [ref=e265]: 0/15
+            - generic [ref=e206] [cursor=pointer]:
+              - generic [ref=e207]: Friday
+              - generic [ref=e208]: 1.5h
+              - generic [ref=e267]: 0/10
+            - generic [ref=e209] [cursor=pointer]:
+              - generic [ref=e210]: Saturday
+              - generic [ref=e211]: 0h
+      - generic [ref=e213]:
+        - generic [ref=e214]:
+          - img [ref=e215]
+          - text: Songs for This Week
+          - generic [ref=e219]: (0 songs)
+        - generic [ref=e220]: No songs added yet. Search your library below.
+        - generic [ref=e222]:
+          - img [ref=e223]
+          - textbox "Search songs from library..." [ref=e226]
+        - group [ref=e227]:
+          - generic "Add manually..." [ref=e228] [cursor=pointer]
+      - button "Week Analytics 0/69 done · 0%" [ref=e268] [cursor=pointer]:
+        - img [ref=e231]
+        - generic [ref=e233]: Week Analytics
+        - generic [ref=e234]: 0/69 done · 0%
+        - img [ref=e235]

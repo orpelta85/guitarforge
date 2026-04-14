@@ -1,0 +1,193 @@
+- generic [active] [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - button "Open Next.js Dev Tools" [ref=e8] [cursor=pointer]:
+    - img [ref=e9]
+  - alert [ref=e12]
+  - generic [ref=e13]:
+    - complementary [ref=e14]:
+      - img "Guitar Practice" [ref=e17]
+      - navigation [ref=e19]:
+        - generic [ref=e20]: Main
+        - button "Home" [ref=e21] [cursor=pointer]:
+          - img [ref=e23]
+          - generic [ref=e25]: Home
+        - button "Practice" [ref=e26] [cursor=pointer]:
+          - img [ref=e28]
+          - generic [ref=e32]: Practice
+        - button "Learn" [ref=e33] [cursor=pointer]:
+          - img [ref=e35]
+          - generic [ref=e38]: Learn
+        - button "Studio" [ref=e39] [cursor=pointer]:
+          - img [ref=e41]
+          - generic [ref=e44]: Studio
+        - button "Jam Mode" [ref=e45] [cursor=pointer]:
+          - img [ref=e47]
+          - generic [ref=e50]: Jam Mode
+        - button "Library" [ref=e51] [cursor=pointer]:
+          - img [ref=e53]
+          - generic [ref=e56]: Library
+        - generic [ref=e57]: Tools
+        - button "AI Coach" [ref=e58] [cursor=pointer]:
+          - img [ref=e60]
+          - generic [ref=e62]: AI Coach
+        - button "Suno AI" [ref=e63] [cursor=pointer]:
+          - img [ref=e65]
+          - generic [ref=e68]: Suno AI
+        - button "Skills" [ref=e69] [cursor=pointer]:
+          - img [ref=e71]
+          - generic [ref=e77]: Skills
+        - button "Tuner" [ref=e78] [cursor=pointer]:
+          - img [ref=e80]
+          - generic [ref=e82]: Tuner
+      - button "Guest Sign in to sync" [ref=e85]:
+        - img [ref=e87]
+        - generic [ref=e90]:
+          - generic [ref=e91]: Guest
+          - generic [ref=e92]: Sign in to sync
+      - button "Sign in to sync" [ref=e94]
+    - generic [ref=e789]:
+      - generic [ref=e791]:
+        - generic [ref=e792]:
+          - generic [ref=e793]: Learning Center
+          - generic [ref=e794]: 0/39 lessons completed
+        - generic [ref=e795]:
+          - generic [ref=e796]:
+            - generic [ref=e797]: LV.1
+            - generic [ref=e798]: 0 XP
+          - generic [ref=e800]: 0/100 XP to next level
+      - generic [ref=e802] [cursor=pointer]:
+        - generic [ref=e804]: "N"
+        - generic [ref=e805]:
+          - generic [ref=e806]: Start Your Journey
+          - generic [ref=e807]: What Is a Note?
+          - generic [ref=e808]: Fundamentals · 5 min · Beginner
+        - generic [ref=e810]: Start
+      - generic [ref=e811]:
+        - button "Lessons39" [ref=e812] [cursor=pointer]
+        - button "Exercises17" [ref=e813] [cursor=pointer]
+        - button "Tools10" [ref=e814] [cursor=pointer]
+      - generic [ref=e815]:
+        - generic [ref=e816]:
+          - generic [ref=e817] [cursor=pointer]:
+            - generic [ref=e818]: F
+            - generic [ref=e819]:
+              - generic [ref=e821]: Fundamentals
+              - generic [ref=e822]: 6 lessons · 0 completed
+            - generic [ref=e823]:
+              - generic [ref=e825]: 0%
+              - generic [ref=e827]: ▶
+          - generic [ref=e829]:
+            - generic [ref=e831] [cursor=pointer]:
+              - generic [ref=e832]: "N"
+              - generic [ref=e833]:
+                - generic [ref=e834]: What Is a Note?
+                - generic [ref=e835]: Frequency, pitch and note names
+                - generic [ref=e836]:
+                  - generic [ref=e837]: 5 min
+                  - generic [ref=e838]: Beginner
+                  - generic [ref=e839]: · Interactive
+                  - generic [ref=e840]: · Quiz
+            - generic [ref=e842] [cursor=pointer]:
+              - generic [ref=e843]: C
+              - generic [ref=e844]:
+                - generic [ref=e845]: The Chromatic Scale
+                - generic [ref=e846]: All 12 notes in semitone order
+                - generic [ref=e847]:
+                  - generic [ref=e848]: 5 min
+                  - generic [ref=e849]: Beginner
+                  - generic [ref=e850]: · Interactive
+                  - generic [ref=e851]: · Quiz
+            - generic [ref=e853] [cursor=pointer]:
+              - generic [ref=e854]: "#"
+              - generic [ref=e855]:
+                - generic [ref=e856]: Sharps and Flats
+                - generic [ref=e857]: Sharp (#) and Flat (b) — same note, different name
+                - generic [ref=e858]:
+                  - generic [ref=e859]: 3 min
+                  - generic [ref=e860]: Beginner
+                  - generic [ref=e861]: · Quiz
+            - generic [ref=e863] [cursor=pointer]:
+              - generic [ref=e864]: "8"
+              - generic [ref=e865]:
+                - generic [ref=e866]: The Octave
+                - generic [ref=e867]: Why C sounds like C, just higher
+                - generic [ref=e868]:
+                  - generic [ref=e869]: 4 min
+                  - generic [ref=e870]: Beginner
+                  - generic [ref=e871]: · Interactive
+                  - generic [ref=e872]: · Quiz
+            - generic [ref=e874] [cursor=pointer]:
+              - generic [ref=e875]: D
+              - generic [ref=e876]:
+                - generic [ref=e877]: Note Durations
+                - generic [ref=e878]: Whole, half, quarter, eighth, sixteenth
+                - generic [ref=e879]:
+                  - generic [ref=e880]: 5 min
+                  - generic [ref=e881]: Beginner
+                  - generic [ref=e882]: · Quiz
+            - generic [ref=e884] [cursor=pointer]:
+              - generic [ref=e885]: S
+              - generic [ref=e886]:
+                - generic [ref=e887]: Steps and Accidentals
+                - generic [ref=e888]: Half steps, whole steps, enharmonic equivalents
+                - generic [ref=e889]:
+                  - generic [ref=e890]: 4 min
+                  - generic [ref=e891]: Beginner
+                  - generic [ref=e892]: · Quiz
+        - generic [ref=e894] [cursor=pointer]:
+          - generic [ref=e895]: R
+          - generic [ref=e896]:
+            - generic [ref=e898]: Rhythm
+            - generic [ref=e899]: 4 lessons · 0 completed
+          - generic [ref=e900]:
+            - generic [ref=e902]: 0%
+            - generic [ref=e904]: ▶
+        - generic [ref=e906] [cursor=pointer]:
+          - generic [ref=e907]: S
+          - generic [ref=e908]:
+            - generic [ref=e910]: Scales
+            - generic [ref=e911]: 5 lessons · 0 completed
+          - generic [ref=e912]:
+            - generic [ref=e914]: 0%
+            - generic [ref=e916]: ▶
+        - generic [ref=e918] [cursor=pointer]:
+          - generic [ref=e919]: I
+          - generic [ref=e920]:
+            - generic [ref=e922]: Intervals
+            - generic [ref=e923]: 4 lessons · 0 completed
+          - generic [ref=e924]:
+            - generic [ref=e926]: 0%
+            - generic [ref=e928]: ▶
+        - generic [ref=e930] [cursor=pointer]:
+          - generic [ref=e931]: C
+          - generic [ref=e932]:
+            - generic [ref=e934]: Chords
+            - generic [ref=e935]: 6 lessons · 0 completed
+          - generic [ref=e936]:
+            - generic [ref=e938]: 0%
+            - generic [ref=e940]: ▶
+        - generic [ref=e942] [cursor=pointer]:
+          - generic [ref=e943]: D
+          - generic [ref=e944]:
+            - generic [ref=e946]: Diatonic Chords
+            - generic [ref=e947]: 4 lessons · 0 completed
+          - generic [ref=e948]:
+            - generic [ref=e950]: 0%
+            - generic [ref=e952]: ▶
+        - generic [ref=e954] [cursor=pointer]:
+          - generic [ref=e955]: P
+          - generic [ref=e956]:
+            - generic [ref=e958]: Progressions
+            - generic [ref=e959]: 5 lessons · 0 completed
+          - generic [ref=e960]:
+            - generic [ref=e962]: 0%
+            - generic [ref=e964]: ▶
+        - generic [ref=e966] [cursor=pointer]:
+          - generic [ref=e967]: A
+          - generic [ref=e968]:
+            - generic [ref=e970]: Advanced
+            - generic [ref=e971]: 5 lessons · 0 completed
+          - generic [ref=e972]:
+            - generic [ref=e974]: 0%
+            - generic [ref=e976]: ▶

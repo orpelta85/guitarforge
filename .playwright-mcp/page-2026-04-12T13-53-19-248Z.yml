@@ -1,0 +1,193 @@
+- generic [active] [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - alert [ref=e3]
+  - generic [ref=e4]:
+    - complementary [ref=e5]:
+      - img "Guitar Practice" [ref=e444]
+      - navigation [ref=e8]:
+        - generic [ref=e9]: Main
+        - button "Home" [ref=e10] [cursor=pointer]:
+          - img [ref=e12]
+          - generic [ref=e14]: Home
+        - button "Practice" [ref=e15] [cursor=pointer]:
+          - img [ref=e17]
+          - generic [ref=e21]: Practice
+        - button "Learn" [ref=e22] [cursor=pointer]:
+          - img [ref=e24]
+          - generic [ref=e27]: Learn
+        - button "Studio" [ref=e28] [cursor=pointer]:
+          - img [ref=e30]
+          - generic [ref=e33]: Studio
+        - button "Jam Mode" [ref=e34] [cursor=pointer]:
+          - img [ref=e36]
+          - generic [ref=e39]: Jam Mode
+        - button "Library" [ref=e40] [cursor=pointer]:
+          - img [ref=e42]
+          - generic [ref=e45]: Library
+        - generic [ref=e46]: Tools
+        - button "AI Coach" [ref=e47] [cursor=pointer]:
+          - img [ref=e49]
+          - generic [ref=e51]: AI Coach
+        - button "Suno AI" [ref=e52] [cursor=pointer]:
+          - img [ref=e54]
+          - generic [ref=e57]: Suno AI
+        - button "Skills" [ref=e58] [cursor=pointer]:
+          - img [ref=e60]
+          - generic [ref=e66]: Skills
+        - button "Tuner" [ref=e67] [cursor=pointer]:
+          - img [ref=e69]
+          - generic [ref=e71]: Tuner
+      - button "Guest Sign in to sync" [ref=e74]:
+        - img [ref=e76]
+        - generic [ref=e79]:
+          - generic [ref=e80]: Guest
+          - generic [ref=e81]: Sign in to sync
+      - button "Sign in to sync" [ref=e83]
+    - generic [ref=e84]:
+      - generic [ref=e1501]:
+        - generic [ref=e1502]:
+          - generic [ref=e1503]:
+            - generic [ref=e1504]:
+              - spinbutton [ref=e1505]: "120"
+              - generic [ref=e1506]: BPM
+            - button "Metronome (M)" [ref=e1507] [cursor=pointer]:
+              - img [ref=e1508]
+            - generic [ref=e1511]:
+              - img [ref=e1512]
+              - combobox [ref=e1515] [cursor=pointer]:
+                - option "No devices" [selected]
+          - generic [ref=e1516]:
+            - button "Rewind (Enter)" [ref=e1517] [cursor=pointer]:
+              - img [ref=e1518]
+            - button "Play (Space)" [disabled] [ref=e1520] [cursor=pointer]:
+              - img [ref=e1521]
+            - button "Stop" [ref=e1523] [cursor=pointer]
+            - button "Record (R)" [ref=e1525] [cursor=pointer]
+            - button "Loop (C)" [ref=e1527] [cursor=pointer]:
+              - img [ref=e1528]
+            - generic [ref=e1534]:
+              - generic [ref=e1535]: 88:88.8
+              - generic [ref=e1536]: 00:00.0
+            - generic [ref=e1537]: /
+            - generic [ref=e1538]: 00:00.0
+          - generic [ref=e1539]:
+            - generic [ref=e1540]: 0 trk
+            - generic [ref=e1541]:
+              - img [ref=e1542]
+              - slider [ref=e1545] [cursor=pointer]: "80"
+              - generic [ref=e1546]: 80%
+            - button "Save" [disabled] [ref=e1547]
+        - generic [ref=e1549]:
+          - generic [ref=e1551]:
+            - generic [ref=e1552]: 🎸
+            - generic [ref=e1553]: Start Creating
+            - generic [ref=e1554]: Drop an audio file here or pick an option below
+            - generic [ref=e1555]:
+              - button "Record" [ref=e1556] [cursor=pointer]:
+                - img [ref=e1557]
+                - text: Record
+              - button "🥁 Drum Machine" [ref=e1560] [cursor=pointer]
+              - button "🎵 AI Backing" [ref=e1561] [cursor=pointer]
+              - button "📁 Import File" [ref=e1562] [cursor=pointer]
+          - generic [ref=e1563]:
+            - button "Add Track" [ref=e1564] [cursor=pointer]:
+              - img [ref=e1565]
+              - text: Add Track
+            - button "🎙 Record" [ref=e1567] [cursor=pointer]
+            - button "🥁 Drums" [ref=e1568] [cursor=pointer]
+            - button "🎵 AI Backing" [ref=e1569] [cursor=pointer]
+            - button "📁 Import" [ref=e1570] [cursor=pointer]
+        - generic [ref=e1572]:
+          - button "🥁 Drum Machine" [ref=e1573] [cursor=pointer]:
+            - generic [ref=e1574]: 🥁
+            - generic [ref=e1575]: Drum Machine
+          - button "🔁 Looper" [ref=e1576] [cursor=pointer]:
+            - generic [ref=e1577]: 🔁
+            - generic [ref=e1578]: Looper
+          - button "🎵 AI Backing" [ref=e1579] [cursor=pointer]:
+            - generic [ref=e1580]: 🎵
+            - generic [ref=e1581]: AI Backing
+          - button "🎨 Mixer" [ref=e1582] [cursor=pointer]:
+            - generic [ref=e1583]: 🎨
+            - generic [ref=e1584]: Mixer
+          - button "💾 Recordings" [ref=e1585] [cursor=pointer]:
+            - generic [ref=e1586]: 💾
+            - generic [ref=e1587]: Recordings
+      - 'dialog "Exercise: Spider Exercise Finger Independence" [ref=e895]':
+        - generic [ref=e897]:
+          - generic [ref=e898]:
+            - generic [ref=e899]:
+              - generic [ref=e901]: Spider Exercise Finger Independence
+              - generic [ref=e902]: 75-95 BPM
+              - button "5m" [ref=e903] [cursor=pointer]:
+                - text: 5m
+                - img [ref=e904]
+            - generic [ref=e907]:
+              - generic [ref=e908]:
+                - button "Start timer" [ref=e909] [cursor=pointer]:
+                  - img [ref=e910]
+                - generic [ref=e912]: 05:00
+              - button "Record" [ref=e913] [cursor=pointer]:
+                - img [ref=e914]
+                - text: Record
+              - button "Records" [ref=e917] [cursor=pointer]:
+                - img [ref=e918]
+                - text: Records
+              - button "Notes" [ref=e920] [cursor=pointer]:
+                - img [ref=e921]
+                - text: Notes
+              - button "Done" [ref=e924] [cursor=pointer]
+              - button "Close" [ref=e925] [cursor=pointer]: ×
+          - generic [ref=e926]:
+            - tablist [ref=e928]:
+              - tab "Practice" [ref=e929] [cursor=pointer]
+              - tab "Tabs" [selected] [ref=e930] [cursor=pointer]
+              - tab "Backing Track" [ref=e931] [cursor=pointer]
+              - tab "Tutorial" [ref=e932] [cursor=pointer]
+            - generic [ref=e1003]:
+              - generic [ref=e1005]:
+                - generic [ref=e1007]:
+                  - generic [ref=e1010]: Spider Exercise (75 BPM)
+                  - generic [ref=e1011]:
+                    - button "▲ Hide" [ref=e1012] [cursor=pointer]
+                    - button "Change" [ref=e1013] [cursor=pointer]
+                - generic [ref=e1014]:
+                  - generic [ref=e1015]:
+                    - button "▶" [ref=e1071] [cursor=pointer]:
+                      - generic [ref=e1072]: ▶
+                    - generic [ref=e1018]: 0:00 / 0:32
+                    - generic [ref=e1019]:
+                      - button "◀" [ref=e1020] [cursor=pointer]
+                      - generic [ref=e1021] [cursor=pointer]: Bar 10/10
+                      - button "▶" [ref=e1022] [cursor=pointer]
+                    - generic [ref=e1070]: S1F5
+                    - generic [ref=e1023]:
+                      - generic [ref=e1024]: ♩=
+                      - spinbutton [ref=e1025]: "75"
+                      - generic [ref=e1026]: 100%
+                  - generic [ref=e1027]:
+                    - button "Loop OFF" [ref=e1028] [cursor=pointer]
+                    - button "A" [ref=e1029] [cursor=pointer]
+                    - button "B" [ref=e1030] [cursor=pointer]
+                    - generic [ref=e1031]: Click tab to jump
+                    - button "Met" [ref=e1033] [cursor=pointer]
+                    - button "Count-in" [ref=e1034] [cursor=pointer]
+                    - generic [ref=e1035]:
+                      - generic [ref=e1036]: Transpose
+                      - button "-" [ref=e1037] [cursor=pointer]
+                      - generic [ref=e1038]: "0"
+                      - button "+" [ref=e1039] [cursor=pointer]
+                    - generic [ref=e1040]:
+                      - button "Fretboard" [ref=e1041] [cursor=pointer]
+                      - button "Mixer" [ref=e1042] [cursor=pointer]
+                      - button "Clips" [ref=e1043] [cursor=pointer]
+                      - button "Display" [ref=e1044] [cursor=pointer]
+                  - generic [ref=e1045]:
+                    - generic [ref=e1046]: Volume
+                    - slider [ref=e1047]: "1"
+                    - generic [ref=e1048]: 100%
+                  - generic [ref=e1049]:
+                    - generic [ref=e1050]: Audio Enhancement
+                    - button "Reverb OFF" [ref=e1052] [cursor=pointer]
+              - button "Download tabs" [ref=e1066] [cursor=pointer]

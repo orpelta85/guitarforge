@@ -1,0 +1,620 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e6]:
+      - link "Home page" [ref=e7] [cursor=pointer]:
+        - /url: https://www.ultimate-guitar.com
+        - img [ref=e8]
+      - list "Main navigation" [ref=e10]:
+        - listitem [ref=e11]:
+          - link "Tabs" [ref=e12] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore
+        - listitem [ref=e13]:
+          - link "Courses" [ref=e14] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/courses
+        - listitem [ref=e15]:
+          - link "Songbooks" [ref=e16] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/books
+        - listitem [ref=e17]:
+          - link "Articles" [ref=e18] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/news/
+        - listitem [ref=e19]:
+          - link "Forums" [ref=e20] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/forum/
+        - listitem [ref=e21]:
+          - link "Publish tab" [ref=e22] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/contribution/submit/tabs?app_utm_campaign=top_menu&app_utm_content=button&app_utm_medium=internal&app_utm_source=ug&app_utm_term=publish
+        - listitem [ref=e23]:
+          - link "Pro+" [ref=e24] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/pro?app_utm_campaign=UG%20Tab%20Pro&app_utm_content=View%20Index&app_utm_medium=Header&app_utm_source=UltimateGuitar
+            - emphasis [ref=e25]: Pro+
+      - generic [ref=e27]:
+        - searchbox "Enter artist name or song title" [ref=e28]
+        - button "Search" [ref=e29] [cursor=pointer]
+      - button "Notifications" [ref=e31] [cursor=pointer]:
+        - img
+        - generic [ref=e32]: "1"
+  - main [ref=e33]:
+    - generic [ref=e35]:
+      - generic [ref=e36]:
+        - generic [ref=e37]:
+          - generic [ref=e38]:
+            - generic [ref=e39]:
+              - heading "Stairway To Heaven Guitar Pro" [level=1] [ref=e40]
+              - text: by
+              - link "Led Zeppelin" [ref=e42] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/artist/led_zeppelin_1036
+            - generic [ref=e44]:
+              - generic [ref=e45]:
+                - generic [ref=e46]: 1,284,909 views
+                - generic [ref=e47]: ·47,505 saves
+                - generic [ref=e48]:
+                  - text: ·
+                  - link "125 comments" [ref=e49] [cursor=pointer]:
+                    - /url: "#comments"
+              - generic [ref=e50]:
+                - generic [ref=e51]:
+                  - generic [ref=e52]: "Author:"
+                  - text: Unregistered
+                - generic [ref=e53]:
+                  - text: ·
+                  - button "3 contributors" [ref=e54] [cursor=pointer]
+          - generic [ref=e55]:
+            - button "Print" [ref=e56] [cursor=pointer]:
+              - img
+              - generic [ref=e57]: Print
+            - button "Save" [ref=e58] [cursor=pointer]:
+              - img
+              - generic [ref=e59]:
+                - generic [ref=e60]: Save
+                - img
+        - generic [ref=e62]:
+          - generic [ref=e64]:
+            - generic [ref=e65]:
+              - button [ref=e66] [cursor=pointer]:
+                - img
+              - button [ref=e67] [cursor=pointer]:
+                - img
+              - button [ref=e68] [cursor=pointer]:
+                - img
+              - spinbutton [ref=e70]:
+                - generic [ref=e71]:
+                  - button [ref=e72] [cursor=pointer]:
+                    - img
+                  - button [ref=e73] [cursor=pointer]:
+                    - generic [ref=e74]: 100%
+                  - button [ref=e75] [cursor=pointer]:
+                    - img
+              - spinbutton [ref=e77]:
+                - generic [ref=e78]:
+                  - button "Transpose Down" [ref=e79] [cursor=pointer]:
+                    - img
+                  - generic [ref=e80]: Tr. 0
+                  - button "Transpose Up" [ref=e81] [cursor=pointer]:
+                    - img
+              - button [ref=e82] [cursor=pointer]:
+                - img
+              - button "Settings" [ref=e83] [cursor=pointer]:
+                - img
+              - button "Collapse" [ref=e84] [cursor=pointer]:
+                - img
+            - generic [ref=e85]:
+              - button "Open Official" [ref=e86] [cursor=pointer]:
+                - img
+                - generic [ref=e87]: Open Official
+              - generic [ref=e88]:
+                - button [ref=e89] [cursor=pointer]:
+                  - img
+                - button [ref=e90] [cursor=pointer]:
+                  - img
+          - generic [ref=e91]:
+            - generic [ref=e94]:
+              - generic [ref=e95]:
+                - generic [ref=e96]: "Tuning:"
+                - link "E A D G B E" [ref=e97] [cursor=pointer]:
+                  - /url: https://www.ultimate-guitar.com/tools/tuner?tuning=E%20A%20D%20G%20B%20E
+              - generic [ref=e98]:
+                - text: ·
+                - generic [ref=e99]: "Key:"
+                - text: Am
+              - generic [ref=e100]:
+                - text: ·
+                - generic [ref=e101]: "Capo:"
+                - text: No capo
+            - generic [ref=e107]:
+              - generic [ref=e108]:
+                - img
+              - generic [ref=e109]:
+                - button [ref=e111] [cursor=pointer]:
+                  - img
+                - generic [ref=e112]:
+                  - button [disabled] [ref=e113]
+                  - generic [ref=e114]:
+                    - generic:
+                      - img
+                - generic [ref=e115]:
+                  - button [ref=e116] [cursor=pointer]
+                  - generic [ref=e117]:
+                    - generic:
+                      - img
+                - generic [ref=e118]:
+                  - button [ref=e119] [cursor=pointer]
+                  - generic [ref=e120]:
+                    - generic:
+                      - img
+                - generic [ref=e121]:
+                  - button [ref=e122] [cursor=pointer]
+                  - generic [ref=e123]:
+                    - generic:
+                      - img
+                - generic [ref=e124]:
+                  - button [ref=e125] [cursor=pointer]
+                  - generic [ref=e126]:
+                    - generic:
+                      - img
+                - generic [ref=e127]:
+                  - button [ref=e128] [cursor=pointer]
+                  - generic [ref=e129]:
+                    - generic:
+                      - img
+                - generic [ref=e130]:
+                  - button [ref=e131] [cursor=pointer]
+                  - generic [ref=e132]:
+                    - generic:
+                      - img
+                - generic [ref=e133]:
+                  - button [ref=e134] [cursor=pointer]
+                  - generic [ref=e135]:
+                    - generic:
+                      - img
+          - generic [ref=e139]:
+            - generic [ref=e140]:
+              - generic [ref=e141]: Parts
+              - generic [ref=e142]: 0:00
+            - button [ref=e143] [cursor=pointer]
+            - generic [ref=e147]: 7:58
+        - generic [ref=e148]:
+          - generic [ref=e149]:
+            - generic [ref=e150]:
+              - button "Download (gp)" [ref=e152] [cursor=pointer]:
+                - img
+                - generic [ref=e153]: Download (gp)
+              - button "Create correction" [ref=e154] [cursor=pointer]:
+                - img
+                - generic [ref=e155]: Create correction
+            - generic [ref=e156]: "Last update: Feb 13, 2026"
+          - separator [ref=e157]
+          - generic [ref=e158]:
+            - generic [ref=e160]: Rating
+            - generic [ref=e161]:
+              - generic [ref=e162]:
+                - generic [ref=e163]: "4.8"
+                - generic [ref=e164]: 2,694 rates
+              - generic [ref=e165]:
+                - generic [ref=e166]:
+                  - button "rate 1" [ref=e167] [cursor=pointer]:
+                    - img
+                  - button "rate 2" [ref=e168] [cursor=pointer]:
+                    - img
+                  - button "rate 3" [ref=e169] [cursor=pointer]:
+                    - img
+                  - button "rate 4" [ref=e170] [cursor=pointer]:
+                    - img
+                  - button "rate 5" [ref=e171] [cursor=pointer]:
+                    - img
+                - generic [ref=e172]: Please, rate this tab
+          - separator [ref=e173]
+          - generic [ref=e174]:
+            - heading "Related tabs" [level=2] [ref=e177]
+            - list [ref=e178]:
+              - listitem [ref=e179]:
+                - link "Led Zeppelin Bron-Yr-Aur" [ref=e180] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/led-zeppelin/bron-yr-aur-guitar-pro-582036
+                - img "Led Zeppelin Album Cover" [ref=e181]
+                - generic [ref=e182]: Bron-Yr-Aur
+                - link "Led Zeppelin" [ref=e184] [cursor=pointer]:
+                  - /url: https://www.ultimate-guitar.com/artist/led_zeppelin_1036
+                - meter "Rating" [ref=e185]:
+                  - generic [ref=e186]:
+                    - img
+                    - generic [ref=e187]: "5.0"
+                    - generic [ref=e188]: (38)
+              - listitem [ref=e189]:
+                - link "Led Zeppelin Since Ive Been Loving You" [ref=e190] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/led-zeppelin/since-ive-been-loving-you-guitar-pro-223794
+                - img "Led Zeppelin Album Cover" [ref=e191]
+                - generic [ref=e192]: Since Ive Been Loving You
+                - link "Led Zeppelin" [ref=e194] [cursor=pointer]:
+                  - /url: https://www.ultimate-guitar.com/artist/led_zeppelin_1036
+                - meter "Rating" [ref=e195]:
+                  - generic [ref=e196]:
+                    - img
+                    - generic [ref=e197]: "4.9"
+                    - generic [ref=e198]: (475)
+              - listitem [ref=e199]:
+                - link "Led Zeppelin Over The Hills And Far Away" [ref=e200] [cursor=pointer]:
+                  - /url: https://tabs.ultimate-guitar.com/tab/led-zeppelin/over-the-hills-and-far-away-guitar-pro-1208014
+                - img "Led Zeppelin Album Cover" [ref=e201]
+                - generic [ref=e202]: Over The Hills And Far Away
+                - link "Led Zeppelin" [ref=e204] [cursor=pointer]:
+                  - /url: https://www.ultimate-guitar.com/artist/led_zeppelin_1036
+                - meter "Rating" [ref=e205]:
+                  - generic [ref=e206]:
+                    - img
+                    - generic [ref=e207]: "4.9"
+                    - generic [ref=e208]: (282)
+          - generic [ref=e210]:
+            - heading "Get effects" [level=2] [ref=e214]
+            - generic [ref=e215]:
+              - generic [ref=e216]:
+                - generic [ref=e217]: Play "Stairway To Heaven" with its authentic sound, plus 30K+ other iconic presets for your guitar tone
+                - button "Get Tonebridge free" [ref=e218] [cursor=pointer]:
+                  - img
+                  - generic [ref=e219]: Get Tonebridge free
+              - separator [ref=e220]
+              - generic [ref=e221]:
+                - generic [ref=e222]: Craft your own guitar tone with custom amps, pedals, and effects in AmpKit
+                - button "Get Ampkit" [ref=e223] [cursor=pointer]:
+                  - img
+                  - generic [ref=e224]: Get Ampkit
+        - generic [ref=e226]:
+          - heading "125 comments" [level=2] [ref=e229]
+          - generic [ref=e232]:
+            - img "orpelta85" [ref=e233]
+            - generic [ref=e235]:
+              - textbox "What do you think about this tab?" [ref=e236]
+              - generic [ref=e237]:
+                - img
+            - button "Send" [disabled] [ref=e238]:
+              - img
+          - generic [ref=e239]:
+            - generic [ref=e240]:
+              - article [ref=e241]:
+                - img "sword shredder" [ref=e243]
+                - generic [ref=e245]:
+                  - generic [ref=e247]:
+                    - link "sword shredder" [ref=e248] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/u/sword%20shredder
+                    - text: "[a] 246"
+                  - link "Oct 13, 2005" [ref=e249] [cursor=pointer]:
+                    - /url: "#946580"
+                - generic [ref=e250]: awesome.
+                - button "reply" [ref=e252] [cursor=pointer]
+                - generic [ref=e253]:
+                  - button "Vote up" [ref=e254] [cursor=pointer]:
+                    - img
+                  - generic [ref=e255]: "26"
+                  - button "Vote down" [ref=e256] [cursor=pointer]:
+                    - img
+              - article [ref=e257]:
+                - img "guitar98765432" [ref=e259]
+                - generic [ref=e261]:
+                  - generic [ref=e263]:
+                    - link "guitar98765432" [ref=e264] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/u/guitar98765432
+                    - text: "[a] 80"
+                  - link "Apr 20, 2006" [ref=e265] [cursor=pointer]:
+                    - /url: "#1185120"
+                - generic [ref=e266]: gud job musta took you a long time
+                - button "reply" [ref=e268] [cursor=pointer]
+                - generic [ref=e269]:
+                  - button "Vote up" [ref=e270] [cursor=pointer]:
+                    - img
+                  - generic [ref=e271]: "21"
+                  - button "Vote down" [ref=e272] [cursor=pointer]:
+                    - img
+              - article [ref=e273]:
+                - img "chrisb92" [ref=e275]
+                - generic [ref=e277]:
+                  - generic [ref=e279]:
+                    - link "chrisb92" [ref=e280] [cursor=pointer]:
+                      - /url: https://www.ultimate-guitar.com/u/chrisb92
+                    - text: "20"
+                  - link "Jul 26, 2006" [ref=e281] [cursor=pointer]:
+                    - /url: "#1330149"
+                - generic [ref=e282]: diahrea
+                - button "reply" [ref=e284] [cursor=pointer]
+                - generic [ref=e285]:
+                  - button "Vote up" [ref=e286] [cursor=pointer]:
+                    - img
+                  - generic [ref=e287]: "12"
+                  - button "Vote down" [ref=e288] [cursor=pointer]:
+                    - img
+            - button "Show all (125)" [ref=e289] [cursor=pointer]:
+              - generic [ref=e290]: Show all (125)
+      - generic [ref=e291]: X
+  - generic [ref=e292]:
+    - generic [ref=e293]:
+      - generic [ref=e294]:
+        - link "orpelta85" [ref=e295] [cursor=pointer]:
+          - /url: https://www.ultimate-guitar.com/u/orpelta85
+          - img "orpelta85" [ref=e296]
+        - generic [ref=e297]:
+          - generic [ref=e299]:
+            - link "orpelta85" [ref=e300] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/u/orpelta85
+            - text: "[pro]"
+            - link "10" [ref=e301] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/user/activity/iq?user_id=32621864
+          - generic [ref=e302]: Joined 2019
+      - list "User navigation" [ref=e303]:
+        - listitem [ref=e304]:
+          - link "My tabs 11" [ref=e305] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/mytabs
+            - generic [ref=e306]:
+              - generic [ref=e307]: My tabs
+              - generic [ref=e308]: "11"
+        - listitem [ref=e309]:
+          - link "My courses 16" [ref=e310] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/courses
+            - generic [ref=e311]:
+              - generic [ref=e312]: My courses
+              - generic [ref=e313]: "16"
+        - listitem [ref=e314]:
+          - link "My books 0" [ref=e315] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/books
+            - generic [ref=e316]:
+              - generic [ref=e317]: My books
+              - generic [ref=e318]: "0"
+        - listitem [ref=e321]:
+          - link "Playlists 1" [ref=e322] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/playlist
+            - generic [ref=e323]:
+              - generic [ref=e324]: Playlists
+              - generic [ref=e325]: "1"
+        - listitem [ref=e326]:
+          - link "Messages" [ref=e327] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/profile/messages
+            - generic [ref=e329]: Messages
+        - listitem [ref=e330]:
+          - link "Settings" [ref=e331] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/forum/profile/update-profile
+            - generic [ref=e333]: Settings
+        - listitem [ref=e334]:
+          - link "Subscriptions" [ref=e335] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/subscriptions
+            - generic [ref=e337]: Subscriptions
+    - region "More Versions" [ref=e339]:
+      - heading "More Versions" [level=3] [ref=e340]
+      - navigation "More Versions" [ref=e341]:
+        - link "Official Rating 4.8" [ref=e343] [cursor=pointer]:
+          - /url: https://tabs.ultimate-guitar.com/tab/led-zeppelin/stairway-to-heaven-official-1911433
+          - img
+          - generic [ref=e344]: Official
+          - meter "Rating" [ref=e345]:
+            - generic [ref=e346]:
+              - img
+              - generic [ref=e347]: "4.8"
+              - generic [ref=e348]: (11.1K)
+        - generic [ref=e349]:
+          - link "Ver 1 Rating 4.8":
+            - /url: https://tabs.ultimate-guitar.com/tab/led-zeppelin/stairway-to-heaven-guitar-pro-223796
+            - generic: Ver 1
+            - meter "Rating":
+              - generic:
+                - img
+                - generic: "4.8"
+                - generic: (2.7K)
+        - link "Ver 2 Rating 4.4" [ref=e351] [cursor=pointer]:
+          - /url: https://tabs.ultimate-guitar.com/tab/led-zeppelin/stairway-to-heaven-guitar-pro-223797
+          - generic [ref=e352]: Ver 2
+          - meter "Rating" [ref=e353]:
+            - generic [ref=e354]:
+              - img
+              - generic [ref=e355]: "4.4"
+              - generic [ref=e356]: (80)
+        - link "Ver 3 Rating 4.4" [ref=e358] [cursor=pointer]:
+          - /url: https://tabs.ultimate-guitar.com/tab/led-zeppelin/stairway-to-heaven-guitar-pro-223798
+          - generic [ref=e359]: Ver 3
+          - meter "Rating" [ref=e360]:
+            - generic [ref=e361]:
+              - img
+              - generic [ref=e362]: "4.4"
+              - generic [ref=e363]: (24)
+        - link "Ver 4 Rating 3.4" [ref=e365] [cursor=pointer]:
+          - /url: https://tabs.ultimate-guitar.com/tab/led-zeppelin/stairway-to-heaven-guitar-pro-223799
+          - generic [ref=e366]: Ver 4
+          - meter "Rating" [ref=e367]:
+            - generic [ref=e368]:
+              - img
+              - generic [ref=e369]: "3.4"
+              - generic [ref=e370]: (9)
+      - button "Show all" [ref=e371] [cursor=pointer]:
+        - img
+        - text: Show all
+  - button "Guitar karaoke" [ref=e375] [cursor=pointer]:
+    - img
+    - generic [ref=e376]: Guitar karaoke
+  - contentinfo [ref=e377]:
+    - generic [ref=e378]:
+      - generic [ref=e379]:
+        - generic [ref=e380]:
+          - generic [ref=e381]: All artists
+          - list "All artists" [ref=e382]:
+            - listitem [ref=e383]:
+              - link "#" [ref=e384] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/0-9.htm
+            - listitem [ref=e385]:
+              - link "a" [ref=e386] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/a.htm
+            - listitem [ref=e387]:
+              - link "b" [ref=e388] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/b.htm
+            - listitem [ref=e389]:
+              - link "c" [ref=e390] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/c.htm
+            - listitem [ref=e391]:
+              - link "d" [ref=e392] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/d.htm
+            - listitem [ref=e393]:
+              - link "e" [ref=e394] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/e.htm
+            - listitem [ref=e395]:
+              - link "f" [ref=e396] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/f.htm
+            - listitem [ref=e397]:
+              - link "g" [ref=e398] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/g.htm
+            - listitem [ref=e399]:
+              - link "h" [ref=e400] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/h.htm
+            - listitem [ref=e401]:
+              - link "i" [ref=e402] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/i.htm
+            - listitem [ref=e403]:
+              - link "j" [ref=e404] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/j.htm
+            - listitem [ref=e405]:
+              - link "k" [ref=e406] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/k.htm
+            - listitem [ref=e407]:
+              - link "l" [ref=e408] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/l.htm
+            - listitem [ref=e409]:
+              - link "m" [ref=e410] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/m.htm
+            - listitem [ref=e411]:
+              - link "n" [ref=e412] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/n.htm
+            - listitem [ref=e413]:
+              - link "o" [ref=e414] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/o.htm
+            - listitem [ref=e415]:
+              - link "p" [ref=e416] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/p.htm
+            - listitem [ref=e417]:
+              - link "q" [ref=e418] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/q.htm
+            - listitem [ref=e419]:
+              - link "r" [ref=e420] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/r.htm
+            - listitem [ref=e421]:
+              - link "s" [ref=e422] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/s.htm
+            - listitem [ref=e423]:
+              - link "t" [ref=e424] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/t.htm
+            - listitem [ref=e425]:
+              - link "u" [ref=e426] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/u.htm
+            - listitem [ref=e427]:
+              - link "v" [ref=e428] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/v.htm
+            - listitem [ref=e429]:
+              - link "w" [ref=e430] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/w.htm
+            - listitem [ref=e431]:
+              - link "x" [ref=e432] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/x.htm
+            - listitem [ref=e433]:
+              - link "y" [ref=e434] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/y.htm
+            - listitem [ref=e435]:
+              - link "z" [ref=e436] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/z.htm
+        - generic [ref=e437]:
+          - link "facebook" [ref=e438] [cursor=pointer]:
+            - /url: https://www.facebook.com/UltimateGuitar/
+            - img
+          - link "twitter" [ref=e439] [cursor=pointer]:
+            - /url: https://twitter.com/ultimateguitar
+            - img
+          - link "instagram" [ref=e440] [cursor=pointer]:
+            - /url: https://www.instagram.com/ultimateguitar/
+            - img
+          - link "youtube" [ref=e441] [cursor=pointer]:
+            - /url: https://www.youtube.com/channel/UCf6prPsXYNYKXH4hX-cuEwQ
+            - img
+          - link "tiktok" [ref=e442] [cursor=pointer]:
+            - /url: https://www.tiktok.com/@ultimateguitar
+            - img
+          - link "audio.com" [ref=e443] [cursor=pointer]:
+            - /url: https://audio.com/ultimateguitar
+            - img
+          - link "linkedin" [ref=e444] [cursor=pointer]:
+            - /url: https://www.linkedin.com/company/1567917
+            - img
+      - separator [ref=e445]
+      - generic [ref=e446]:
+        - region "Copyright" [ref=e447]:
+          - link [ref=e448] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com
+            - img [ref=e449]
+          - generic [ref=e451]: © 2026 Ultimate-Guitar.com All rights reserved
+        - region "Discover" [ref=e452]:
+          - heading "Discover" [level=4] [ref=e453]
+          - link "About UG" [ref=e454] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/
+          - link "Site Rules" [ref=e455] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/article/blog/site-rules/
+          - link "Advertise" [ref=e456] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/advertise.htm
+          - link "Support" [ref=e457] [cursor=pointer]:
+            - /url: https://help.ultimate-guitar.com/en/
+        - region "Legal" [ref=e458]:
+          - heading "Legal" [level=4] [ref=e459]
+          - link "Terms of Service" [ref=e460] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/tos.htm
+          - link "Privacy Policy" [ref=e461] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/privacy.htm
+          - link "DMCA" [ref=e462] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/dmca.htm
+          - link "Accessibility Statement" [ref=e463] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/accessibility-statement.htm
+        - region "Other" [ref=e464]:
+          - heading "Other" [level=4] [ref=e465]
+          - button "PRO+" [ref=e466] [cursor=pointer]
+          - link "Articles Staff" [ref=e467] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/news/editorial/
+          - link "Fresh Tabs" [ref=e468] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/fresh?order=date
+          - link "MuseHub" [ref=e469] [cursor=pointer]:
+            - /url: https://www.musehub.com/?utm_source=ug_web&utm_medium=footer&utm_campaign=musehub
+        - region "Language" [ref=e470]:
+          - heading "Language" [level=4] [ref=e471]
+          - link "English" [ref=e472] [cursor=pointer]:
+            - /url: https://tabs.ultimate-guitar.com/tab/led-zeppelin/stairway-to-heaven-guitar-pro-223796
+          - link "Português (Brasil)" [ref=e473] [cursor=pointer]:
+            - /url: https://pt.ultimate-guitar.com/tab/led-zeppelin/stairway-to-heaven-guitar-pro-223796
+          - link "Español" [ref=e474] [cursor=pointer]:
+            - /url: https://es.ultimate-guitar.com/tab/led-zeppelin/stairway-to-heaven-guitar-pro-223796
+          - link "Italiano" [ref=e475] [cursor=pointer]:
+            - /url: https://it.ultimate-guitar.com/tab/led-zeppelin/stairway-to-heaven-guitar-pro-223796
+          - link "Français" [ref=e476] [cursor=pointer]:
+            - /url: https://fr.ultimate-guitar.com/tab/led-zeppelin/stairway-to-heaven-guitar-pro-223796
+          - link "日本語" [ref=e477] [cursor=pointer]:
+            - /url: https://ja.ultimate-guitar.com/tab/led-zeppelin/stairway-to-heaven-guitar-pro-223796
+        - region "Hot Chords" [ref=e478]:
+          - heading "Hot Chords" [level=4] [ref=e479]
+          - link "Indonesia" [ref=e480] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?country_chart=7
+        - region "Download UG application" [ref=e481]:
+          - generic [ref=e482]:
+            - link "apple store" [ref=e483] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/components/apps/market/redirect?app_name=ug_tabs_chords_ios&source=get_app_footer
+              - img "apple store"
+            - link "google play" [ref=e484] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/components/apps/market/redirect?app_name=ug_tabs_chords_android&source=get_app_footer
+              - img "google play"
+            - link "huawei store" [ref=e485] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/components/apps/market/redirect?app_name=ug_tabs_chords_huawei&source=get_app_footer
+              - img "huawei store"
+  - generic [ref=e491]:
+    - generic [ref=e492]: Add 2,000+ songbooks to your PRO+ now!
+    - generic [ref=e493]:
+      - generic [ref=e494]:
+        - generic [ref=e495]: "0"
+        - generic [ref=e497]: days
+      - generic [ref=e498]: ":"
+      - generic [ref=e499]:
+        - generic [ref=e500]: "23"
+        - generic [ref=e502]: hrs
+      - generic [ref=e503]: ":"
+      - generic [ref=e504]:
+        - generic [ref=e505]: "07"
+        - generic [ref=e507]: min
+      - generic [ref=e508]: ":"
+      - generic [ref=e509]:
+        - generic [ref=e510]: "31"
+        - generic [ref=e512]: sec
+    - button "TRY FOR FREE" [ref=e513] [cursor=pointer]:
+      - generic [ref=e514]: TRY FOR FREE

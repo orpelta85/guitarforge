@@ -1,0 +1,25 @@
+[    7159ms] ReferenceError: setKbPicked is not defined
+    at newQ (http://localhost:3001/_next/static/chunks/guitarforge_src_components_LearningCenterPage_tsx_7479d8cc._.js?id=%255Bproject%255D%252Fguitarforge%252Fsrc%252Fcomponents%252FLearningCenterPage.tsx+%255Bapp-client%255D+%2528ecmascript%2529:4608:9)
+    at executeDispatch (http://localhost:3001/_next/static/chunks/a266a_next_dist_compiled_react-dom_f0bbb541._.js:10314:13)
+    at runWithFiberInDEV (http://localhost:3001/_next/static/chunks/a266a_next_dist_compiled_react-dom_f0bbb541._.js:965:74)
+    at processDispatchQueue (http://localhost:3001/_next/static/chunks/a266a_next_dist_compiled_react-dom_f0bbb541._.js:10340:41)
+    at http://localhost:3001/_next/static/chunks/a266a_next_dist_compiled_react-dom_f0bbb541._.js:10615:13
+    at batchedUpdates$1 (http://localhost:3001/_next/static/chunks/a266a_next_dist_compiled_react-dom_f0bbb541._.js:2253:44)
+    at dispatchEventForPluginEventSystem (http://localhost:3001/_next/static/chunks/a266a_next_dist_compiled_react-dom_f0bbb541._.js:10416:9)
+    at dispatchEvent (http://localhost:3001/_next/static/chunks/a266a_next_dist_compiled_react-dom_f0bbb541._.js:12935:37)
+    at dispatchDiscreteEvent (http://localhost:3001/_next/static/chunks/a266a_next_dist_compiled_react-dom_f0bbb541._.js:12917:64)
+    at eval (eval at evaluate (:302:30), <anonymous>:13:13)
+[    9162ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[    9214ms] [LOG] [Fast Refresh] done in 120ms @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   24688ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   25000ms] [LOG] [Fast Refresh] done in 419ms @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   39586ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   39612ms] [LOG] [Fast Refresh] done in 115ms @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   62253ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   62283ms] [LOG] [Fast Refresh] done in 96ms @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   70528ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   70558ms] [LOG] [Fast Refresh] done in 98ms @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   82063ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   82089ms] [LOG] [Fast Refresh] done in 111ms @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   82838ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297
+[   82864ms] [LOG] [Fast Refresh] done in 109ms @ http://localhost:3001/_next/static/chunks/a266a_next_dist_cfedd8c2._.js:2297

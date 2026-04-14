@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GuitarForge - Chords Preview</title>
+<style>
+  body {
+    background: #0a0a0a;
+    color: #e5e5e5;
+    font-family: system-ui, -apple-system, sans-serif;
+    margin: 0;
+    padding: 40px 20px;
+    min-height: 100vh;
+  }
+  .container { max-width: 900px; margin: 0 auto; }
+  h1 {
+    color: #f59e0b;
+    font-size: 24px;
+    margin: 0 0 8px;
+    letter-spacing: 0.5px;
+  }
+  .subtitle { color: #888; font-size: 13px; margin-bottom: 40px; }
+  .song-card {
+    background: #141414;
+    border: 1px solid #262626;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+  .song-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid #262626;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .song-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    margin: 0;
+  }
+  .song-artist { color: #888; font-size: 13px; margin-top: 2px; }
+  .song-meta {
+    display: flex;
+    gap: 12px;
+    font-size: 11px;
+    color: #666;
+  }
+  .meta-pill {
+    background: #1f1f1f;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid #2a2a2a;
+  }
+  .controls {
+    padding: 12px 24px;
+    background: #0f0f0f;
+    border-bottom: 1px solid #262626;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 12px;
+  }
+  .controls button {
+    background: #1f1f1f;
+    color: #ccc;
+    border: 1px solid #2a2a2a;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .controls button:hover { border-color: #f59e0b; color: #f59e0b; }
+  .controls .label { color: #666; margin-right: 4px; }
+  .controls .key-display {
+    color: #f59e0b;
+    font-weight: 600;
+    min-width: 28px;
+    text-align: center;
+  }
+  .chord-sheet {
+    padding: 28px 24px;
+    font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+    font-size: 14px;
+    line-height: 1.9;
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .chord { color: #f59e0b; font-weight: 600; }
+  .section { color: #3b82f6; font-weight: 600; margin-top: 8px; }
+  .lyric { color: #e5e5e5; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Chords Preview</h1>
+<div class="subtitle">What the new "Chords" tab will look like in the Practice screen</div>
+
+<!-- SONG 1: Nothing Else Matters -->
+<div class="song-card">
+  <div class="song-header">
+    <div>
+      <div class="song-title">Nothing Else Matters</div>
+      <div class="song-artist">Metallica</div>
+    </div>
+    <div class="song-meta">
+      <span class="meta-pill">Key: Em</span>
+      <span class="meta-pill">BPM: 69</span>
+      <span class="meta-pill">Difficulty: Intermediate</span>
+    </div>
+  </div>
+  <div class="controls">
+    <span class="label">Transpose:</span>
+    <button>−</button>
+    <span class="key-display">0</span>
+    <button>+</button>
+    <span style="margin-left:16px" class="label">Capo:</span>
+    <button>0</button>
+    <span style="margin-left:auto; color:#4ade80; font-size:11px;">● Synced with playback</span>
+  </div>
+  <div class="chord-sheet"><span class="section">[Intro]</span>
+<span class="chord">Em         D          C           G</span>
+
+<span class="section">[Verse 1]</span>
+<span class="chord">Em                      D</span>
+<span class="lyric">So close, no matter how far</span>
+<span class="chord">C                            G            Em</span>
+<span class="lyric">Couldn't be much more from the heart</span>
+<span class="chord">                       D</span>
+<span class="lyric">Forever trusting who we are</span>
+<span class="chord">C              G             Em</span>
+<span class="lyric">And nothing else matters</span>
+
+<span class="section">[Verse 2]</span>
+<span class="chord">Em                    D</span>
+<span class="lyric">Never opened myself this way</span>
+<span class="chord">C                        G         Em</span>
+<span class="lyric">Life is ours, we live it our way</span>
+<span class="chord">                    D</span>
+<span class="lyric">All these words I don't just say</span>
+<span class="chord">C              G             Em</span>
+<span class="lyric">And nothing else matters</span>
+
+<span class="section">[Chorus]</span>
+<span class="chord">D                  C            G</span>
+<span class="lyric">Trust I seek and I find in you</span>
+<span class="chord">D                    C            G</span>
+<span class="lyric">Every day for us something new</span>
+<span class="chord">D                  C            G              Em</span>
+<span class="lyric">Open mind for a different view</span>
+<span class="chord">  D              C          B7</span>
+<span class="lyric">And nothing else matters</span>
+</div>
+</div>
+
+<!-- SONG 2: Wonderwall -->
+<div class="song-card">
+  <div class="song-header">
+    <div>
+      <div class="song-title">Wonderwall</div>
+      <div class="song-artist">Oasis</div>
+    </div>
+    <div class="song-meta">
+      <span class="meta-pill">Key: F#m</span>
+      <span class="meta-pill">Capo: 2</span>
+      <span class="meta-pill">Difficulty: Beginner</span>
+    </div>
+  </div>
+  <div class="controls">
+    <span class="label">Transpose:</span>
+    <button>−</button>
+    <span class="key-display">+2</span>
+    <button>+</button>
+    <span style="margin-left:16px" class="label">Capo:</span>
+    <button>2</button>
+    <span style="margin-left:auto; color:#666; font-size:11px;">○ Chords only</span>
+  </div>
+  <div class="chord-sheet"><span class="section">[Intro]</span>
+<span class="chord">Em7    G    Dsus4    A7sus4</span>  (x2)
+
+<span class="section">[Verse 1]</span>
+<span class="chord">Em7                G</span>
+<span class="lyric">Today is gonna be the day</span>
+<span class="chord">Dsus4                      A7sus4</span>
+<span class="lyric">That they're gonna throw it back to you</span>
+<span class="chord">Em7                 G</span>
+<span class="lyric">By now you should've somehow</span>
+<span class="chord">Dsus4                  A7sus4</span>
+<span class="lyric">Realized what you gotta do</span>
+
+<span class="section">[Pre-Chorus]</span>
+<span class="chord">C             D          Em7</span>
+<span class="lyric">And all the roads we have to walk are winding</span>
+<span class="chord">C           D                  Em7</span>
+<span class="lyric">And all the lights that lead us there are blinding</span>
+
+<span class="section">[Chorus]</span>
+<span class="chord">C       Em7     G      Em7</span>
+<span class="lyric">And after all, you're my wonderwall</span>
+</div>
+</div>
+
+<!-- SONG 3: Master of Puppets -->
+<div class="song-card">
+  <div class="song-header">
+    <div>
+      <div class="song-title">Master of Puppets</div>
+      <div class="song-artist">Metallica</div>
+    </div>
+    <div class="song-meta">
+      <span class="meta-pill">Key: Em</span>
+      <span class="meta-pill">BPM: 212</span>
+      <span class="meta-pill">Difficulty: Expert</span>
+    </div>
+  </div>
+  <div class="controls">
+    <span class="label">Transpose:</span>
+    <button>−</button>
+    <span class="key-display">0</span>
+    <button>+</button>
+    <span style="margin-left:16px" class="label">Capo:</span>
+    <button>0</button>
+    <span style="margin-left:auto; color:#4ade80; font-size:11px;">● Synced with playback</span>
+  </div>
+  <div class="chord-sheet"><span class="section">[Main Riff]</span>
+<span class="chord">E5  F5  E5  F5  E5  F5  E5  F5</span>
+
+<span class="section">[Verse 1]</span>
+<span class="chord">Em                                  D</span>
+<span class="lyric">End of passion play, crumbling away</span>
+<span class="chord">                        Em</span>
+<span class="lyric">I'm your source of self-destruction</span>
+<span class="chord">                                              D</span>
+<span class="lyric">Veins that pump with fear, sucking darkest clear</span>
+<span class="chord">                        Em</span>
+<span class="lyric">Leading on your death's construction</span>
+
+<span class="section">[Chorus]</span>
+<span class="chord">                 D                  E5</span>
+<span class="lyric">Master, master, where's the dreams that I've been after?</span>
+<span class="chord">                 D                E5</span>
+<span class="lyric">Master, master, you promised only lies</span>
+<span class="chord">                 D                  E5</span>
+<span class="lyric">Laughter, laughter, all I hear or see is laughter</span>
+<span class="chord">                 D                   E5</span>
+<span class="lyric">Laughter, laughter, laughing at my cries</span>
+
+<span class="section">[Bridge - Clean]</span>
+<span class="chord">Am       E         Am        E</span>
+<span class="chord">Am       E         Am        B7</span>
+</div>
+</div>
+
+</div>
+</body>
+</html>

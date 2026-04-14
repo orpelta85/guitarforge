@@ -1,0 +1,10 @@
+[   36389ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://guitarforge.vercel.app/alphatab/soundfont/MuseScore_General.sf3:0
+[   36390ms] [ERROR] [AlphaTab][AlphaSynth] Could not load soundfont from bytes Error: Soundfont is not a valid Soundfont2 file @ https://guitarforge.vercel.app/alphatab/alphaTab.core.mjs:1634
+[   36390ms] [ERROR] [AlphaTab][API] An unexpected error occurred {type: FormatError, message: Soundfont is not a valid Soundfont2 file, stack: Error: Soundfont is not a valid Soundfont2 file
+  …e.vercel.app/alphatab/alphaTab.core.mjs:44804:30)} @ https://guitarforge.vercel.app/_next/static/chunks/3df73b3a232236db.js:0
+[   36391ms] [ERROR] alphaTab error: {type: FormatError, message: Soundfont is not a valid Soundfont2 file, stack: Error: Soundfont is not a valid Soundfont2 file
+  …e.vercel.app/alphatab/alphaTab.core.mjs:44804:30)} @ https://guitarforge.vercel.app/_next/static/chunks/3161f11da6dca554.js:0
+[   36391ms] [ERROR] [AlphaTab][API] An unexpected error occurred {type: FormatError, message: Soundfont is not a valid Soundfont2 file, stack: Error: Soundfont is not a valid Soundfont2 file
+  …e.vercel.app/alphatab/alphaTab.core.mjs:44804:30)} @ https://guitarforge.vercel.app/_next/static/chunks/3df73b3a232236db.js:0
+[   36391ms] [ERROR] alphaTab error: {type: FormatError, message: Soundfont is not a valid Soundfont2 file, stack: Error: Soundfont is not a valid Soundfont2 file
+  …e.vercel.app/alphatab/alphaTab.core.mjs:44804:30)} @ https://guitarforge.vercel.app/_next/static/chunks/3161f11da6dca554.js:0

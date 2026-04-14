@@ -1,0 +1,976 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e6]:
+      - link "Home page" [ref=e7] [cursor=pointer]:
+        - /url: https://www.ultimate-guitar.com
+        - img [ref=e8]
+      - list "Main navigation" [ref=e10]:
+        - listitem [ref=e11]:
+          - link "Tabs" [ref=e12] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore
+        - listitem [ref=e13]:
+          - link "Courses" [ref=e14] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/courses
+        - listitem [ref=e15]:
+          - link "Songbooks" [ref=e16] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/books
+        - listitem [ref=e17]:
+          - link "Articles" [ref=e18] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/news/
+        - listitem [ref=e19]:
+          - link "Forums" [ref=e20] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/forum/
+        - listitem [ref=e21]:
+          - link "Publish tab" [ref=e22] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/contribution/submit/tabs?app_utm_campaign=top_menu&app_utm_content=button&app_utm_medium=internal&app_utm_source=ug&app_utm_term=publish
+        - listitem [ref=e23]:
+          - link "Pro+" [ref=e24] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/pro?app_utm_campaign=UG%20Tab%20Pro&app_utm_content=Explore%20Index&app_utm_medium=Header&app_utm_source=UltimateGuitar
+            - emphasis [ref=e25]: Pro+
+      - generic [ref=e27]:
+        - searchbox "Enter artist name or song title" [ref=e28]
+        - button "Search" [ref=e29] [cursor=pointer]
+      - button "Notifications" [ref=e31] [cursor=pointer]:
+        - img
+        - generic [ref=e32]: "1"
+  - main [ref=e33]:
+    - generic [ref=e36]:
+      - heading "Explore chords and tabs" [level=1] [ref=e39]
+      - navigation [ref=e40]:
+        - navigation [ref=e42]:
+          - generic [ref=e43]: All
+          - link "Chords" [ref=e44] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?type[]=Chords
+          - link "Official" [ref=e45] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?type[]=Official
+          - link "Tab" [ref=e46] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?type[]=Tabs
+          - link "Ukulele" [ref=e47] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?type[]=Ukulele%20Chords
+          - link "Guitar Pro" [ref=e48] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?type[]=Pro
+          - link "Bass" [ref=e49] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?type[]=Bass%20Tabs
+          - link "Power" [ref=e50] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?type[]=Power
+          - link "Video" [ref=e51] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?type[]=Video
+          - link "Drums" [ref=e52] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?type[]=Drum%20Tabs
+          - link "MuseScore" [ref=e53] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?type[]=MuseScore
+        - generic [ref=e56] [cursor=pointer]:
+          - text: Global
+          - img [ref=e57]
+        - generic [ref=e61] [cursor=pointer]:
+          - text: Today's most popular
+          - img [ref=e62]
+      - article [ref=e64]:
+        - generic [ref=e65]:
+          - generic [ref=e66]:
+            - generic [ref=e67]: Artist
+            - generic [ref=e68]: Song
+            - generic [ref=e69]: Rating
+            - generic [ref=e70]: Hits
+            - generic [ref=e71]: Type
+          - generic [ref=e72]:
+            - link "Radiohead" [ref=e75] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/radiohead_578
+            - link "Creep" [ref=e80] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/radiohead/creep-chords-4169
+            - generic [ref=e89]: 41,878
+            - generic [ref=e90]: 7,671
+            - generic [ref=e91]: Chords
+          - generic [ref=e92]:
+            - link "Ed Sheeran" [ref=e95] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/ed_sheeran_30232
+            - link "Perfect" [ref=e100] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/ed-sheeran/perfect-chords-1956589
+            - generic [ref=e109]: 53,734
+            - generic [ref=e110]: 7,509
+            - generic [ref=e111]: Chords
+          - generic [ref=e112]:
+            - link "Dominic Fike" [ref=e115] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/dominic_fike_176892
+            - link "Babydoll" [ref=e120] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/dominic-fike/babydoll-chords-2937476
+            - generic [ref=e129]: "624"
+            - generic [ref=e130]: 6,276
+            - generic [ref=e131]: Chords
+          - generic [ref=e132]:
+            - link "Goo Goo Dolls" [ref=e135] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/goo_goo_dolls_1375
+            - link "Iris (ver 4)" [ref=e140] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/goo-goo-dolls/iris-chords-54512
+            - generic [ref=e149]: 11,672
+            - generic [ref=e150]: 5,739
+            - generic [ref=e151]: Chords
+          - generic [ref=e152]:
+            - link "Eagles" [ref=e155] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/eagles_1509
+            - link "Hotel California" [ref=e160] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/eagles/hotel-california-chords-46190
+            - generic [ref=e169]: 38,531
+            - generic [ref=e170]: 5,292
+            - generic [ref=e171]: Chords
+          - generic [ref=e172]:
+            - link "Vance Joy" [ref=e175] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/vance_joy_37940
+            - link "Riptide (ver 2)" [ref=e180] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/vance-joy/riptide-chords-1237247
+            - generic [ref=e189]: 33,392
+            - generic [ref=e190]: 5,262
+            - generic [ref=e191]: Chords
+          - generic [ref=e192]:
+            - link "Elvis Presley" [ref=e195] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/elvis_presley_11125
+            - link "Cant Help Falling In Love" [ref=e200] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/elvis-presley/cant-help-falling-in-love-chords-1086983
+            - generic [ref=e209]: 35,350
+            - generic [ref=e210]: 4,533
+            - generic [ref=e211]: Chords
+          - generic [ref=e212]:
+            - link "Bella Kay" [ref=e215] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/bella_kay_2745764
+            - link "Iloveitiloveitiloveit" [ref=e220] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/bella-kay/iloveitiloveitiloveit-chords-6120296
+            - generic [ref=e229]: "476"
+            - generic [ref=e230]: 4,941
+            - generic [ref=e231]: Chords
+          - generic [ref=e232]:
+            - link "Bruno Mars" [ref=e235] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/bruno_mars_28280
+            - link "Risk It All" [ref=e240] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/bruno-mars/risk-it-all-chords-6179129
+            - generic [ref=e249]: "422"
+            - generic [ref=e250]: 4,104
+            - generic [ref=e251]: Chords
+          - generic [ref=e252]:
+            - link "Coldplay" [ref=e255] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/coldplay_1782
+            - link "Yellow (ver 2)" [ref=e260] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/coldplay/yellow-chords-114080
+            - generic [ref=e269]: 24,177
+            - generic [ref=e270]: 3,783
+            - generic [ref=e271]: Chords
+          - generic [ref=e272]:
+            - link "Gigi Perez" [ref=e275] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/gigi_perez_2009248
+            - link "Sailor Song" [ref=e280] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/gigi-perez/sailor-song-chords-5363001
+            - generic [ref=e289]: 8,988
+            - generic [ref=e290]: 3,633
+            - generic [ref=e291]: Chords
+          - generic [ref=e292]:
+            - link "Passenger" [ref=e295] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/passenger_21762
+            - link "Let Her Go" [ref=e300] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/passenger/let-her-go-chords-1137467
+            - generic [ref=e309]: 25,460
+            - generic [ref=e310]: 3,813
+            - generic [ref=e311]: Chords
+          - generic [ref=e312]:
+            - link "Oasis" [ref=e315] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/oasis_734
+            - link "Dont Look Back In Anger" [ref=e320] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/oasis/dont-look-back-in-anger-chords-6097
+            - generic [ref=e329]: 24,071
+            - generic [ref=e330]: 3,501
+            - generic [ref=e331]: Chords
+          - generic [ref=e332]:
+            - link "John Denver" [ref=e335] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/john_denver_10167
+            - link "Take Me Home Country Roads" [ref=e340] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/john-denver/take-me-home-country-roads-chords-57606
+            - generic [ref=e349]: 25,730
+            - generic [ref=e350]: 3,585
+            - generic [ref=e351]: Chords
+          - generic [ref=e352]:
+            - link "Oasis" [ref=e355] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/oasis_734
+            - link "Wonderwall (ver 2)" [ref=e360] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/oasis/wonderwall-chords-27596
+            - generic [ref=e369]: 10,567
+            - generic [ref=e370]: 3,447
+            - generic [ref=e371]: Chords
+          - generic [ref=e372]:
+            - link "The Animals" [ref=e375] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/the_animals_2019
+            - link "House Of The Rising Sun" [ref=e380] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/the-animals/house-of-the-rising-sun-chords-18688
+            - generic [ref=e389]: 18,458
+            - generic [ref=e390]: 3,198
+            - generic [ref=e391]: Chords
+          - generic [ref=e392]:
+            - link "Jeff Buckley" [ref=e395] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/jeff_buckley_9898
+            - link "Hallelujah (ver 2)" [ref=e400] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/jeff-buckley/hallelujah-chords-198052
+            - generic [ref=e409]: 57,409
+            - generic [ref=e410]: 3,291
+            - generic [ref=e411]: Chords
+          - generic [ref=e412]:
+            - link "The Cranberries" [ref=e415] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/the_cranberries_1779
+            - link "Zombie" [ref=e420] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/the-cranberries/zombie-chords-844902
+            - generic [ref=e429]: 19,113
+            - generic [ref=e430]: 3,186
+            - generic [ref=e431]: Chords
+          - generic [ref=e432]:
+            - link "Creedence Clearwater Revival" [ref=e435] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/creedence_clearwater_revival_1746
+            - link "Have You Ever Seen The Rain" [ref=e440] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/creedence-clearwater-revival/have-you-ever-seen-the-rain-chords-56479
+            - generic [ref=e449]: 25,982
+            - generic [ref=e450]: 3,114
+            - generic [ref=e451]: Chords
+          - generic [ref=e452]:
+            - link "Peter, Paul and Mary" [ref=e455] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/peter_paul_and_mary_3703
+            - link "500 Miles" [ref=e460] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/peter-paul-and-mary/500-miles-chords-1045017
+            - generic [ref=e469]: "907"
+            - generic [ref=e470]: 3,612
+            - generic [ref=e471]: Chords
+          - generic [ref=e472]:
+            - link "Bob Dylan" [ref=e475] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/bob_dylan_10212
+            - link "Knockin On Heavens Door (ver 2)" [ref=e480] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/bob-dylan/knockin-on-heavens-door-chords-66559
+            - generic [ref=e489]: 16,897
+            - generic [ref=e490]: 2,856
+            - generic [ref=e491]: Chords
+          - generic [ref=e492]:
+            - link "Pink Floyd" [ref=e495] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/pink_floyd_684
+            - link "Wish You Were Here" [ref=e500] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/pink-floyd/wish-you-were-here-chords-44555
+            - generic [ref=e509]: 27,921
+            - generic [ref=e510]: 2,721
+            - generic [ref=e511]: Chords
+          - generic [ref=e512]:
+            - link "Ella Langley" [ref=e515] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/ella_langley_1330925
+            - link "Choosin Texas" [ref=e520] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/ella-langley/choosin-texas-chords-5991200
+            - generic [ref=e529]: "483"
+            - generic [ref=e530]: 2,595
+            - generic [ref=e531]: Chords
+          - generic [ref=e532]:
+            - link "John Denver" [ref=e535] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/john_denver_10167
+            - link "Take Me Home Country Roads (ver 5)" [ref=e540] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/john-denver/take-me-home-country-roads-chords-1101747
+            - generic [ref=e549]: 19,966
+            - generic [ref=e550]: 2,697
+            - generic [ref=e551]: Chords
+          - generic [ref=e552]:
+            - generic [ref=e554]:
+              - link "Weezer" [ref=e555] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/artist/weezer_77
+              - text: and
+              - link "Bethany Cosentino" [ref=e556] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/artist/bethany_cosentino_197202
+            - link "Go Away" [ref=e561] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/weezer/go-away-chords-1667761
+            - generic [ref=e570]: "273"
+            - generic [ref=e571]: 2,652
+            - generic [ref=e572]: Chords
+          - generic [ref=e573]:
+            - link "Harry Styles" [ref=e576] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/harry_styles_41228
+            - link "Sign Of The Times" [ref=e581] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/harry-styles/sign-of-the-times-chords-1977189
+            - generic [ref=e590]: 5,243
+            - generic [ref=e591]: 2,763
+            - generic [ref=e592]: Chords
+          - generic [ref=e593]:
+            - link "Justin Bieber" [ref=e596] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/justin_bieber_25667
+            - link "Love Yourself" [ref=e601] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/justin-bieber/love-yourself-chords-1780199
+            - generic [ref=e610]: 16,075
+            - generic [ref=e611]: 3,015
+            - generic [ref=e612]: Chords
+          - generic [ref=e613]:
+            - link "Fleetwood Mac" [ref=e616] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/fleetwood_mac_1442
+            - link "Landslide" [ref=e621] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/fleetwood-mac/landslide-chords-989772
+            - generic [ref=e630]: 7,125
+            - generic [ref=e631]: 2,400
+            - generic [ref=e632]: Chords
+          - generic [ref=e633]:
+            - link "Billie Eilish" [ref=e636] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/billie_eilish_66748
+            - link "Wildflower" [ref=e641] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/billie-eilish/wildflower-chords-5270925
+            - generic [ref=e650]: 4,978
+            - generic [ref=e651]: 2,535
+            - generic [ref=e652]: Chords
+          - generic [ref=e653]:
+            - generic [ref=e655]:
+              - link "Bethel Music" [ref=e656] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/artist/bethel_music_36182
+              - text: /
+              - link "Jenn Johnson" [ref=e657] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/artist/jenn_johnson_75469
+            - link "Goodness Of God" [ref=e662] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/bethel-music/goodness-of-god-chords-2423013
+            - generic [ref=e671]: 5,434
+            - generic [ref=e672]: 1,809
+            - generic [ref=e673]: Chords
+          - generic [ref=e674]:
+            - link "The Neighbourhood" [ref=e677] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/the_neighbourhood_39075
+            - link "Sweater Weather Acoustic" [ref=e682] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/the-neighbourhood/sweater-weather-chords-1237978
+            - generic [ref=e691]: 9,430
+            - generic [ref=e692]: 2,151
+            - generic [ref=e693]: Chords
+          - generic [ref=e694]:
+            - link "John Legend" [ref=e697] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/john_legend_11714
+            - link "All Of Me" [ref=e702] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/john-legend/all-of-me-chords-1248578
+            - generic [ref=e711]: 28,233
+            - generic [ref=e712]: 2,172
+            - generic [ref=e713]: Chords
+          - generic [ref=e714]:
+            - link "Coldplay" [ref=e717] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/coldplay_1782
+            - link "Sparks (ver 2)" [ref=e722] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/coldplay/sparks-chords-394880
+            - generic [ref=e731]: 4,852
+            - generic [ref=e732]: 2,094
+            - generic [ref=e733]: Chords
+          - generic [ref=e734]:
+            - link "The Beatles" [ref=e737] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/the_beatles_1916
+            - link "Yesterday" [ref=e742] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/the-beatles/yesterday-chords-17450
+            - generic [ref=e751]: 12,521
+            - generic [ref=e752]: 1,863
+            - generic [ref=e753]: Chords
+          - generic [ref=e754]:
+            - link "Ed Sheeran" [ref=e757] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/ed_sheeran_30232
+            - link "Photograph" [ref=e762] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/ed-sheeran/photograph-chords-1493446
+            - generic [ref=e771]: 21,174
+            - generic [ref=e772]: 2,265
+            - generic [ref=e773]: Chords
+          - generic [ref=e774]:
+            - link "4 Non Blondes" [ref=e777] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/4_non_blondes_2044
+            - link "Whats Up (ver 2)" [ref=e782] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/4-non-blondes/whats-up-chords-349210
+            - generic [ref=e791]: 18,655
+            - generic [ref=e792]: 1,944
+            - generic [ref=e793]: Chords
+          - generic [ref=e794]:
+            - link "Coldplay" [ref=e797] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/coldplay_1782
+            - link "Viva La Vida (ver 2)" [ref=e802] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/coldplay/viva-la-vida-chords-675427
+            - generic [ref=e811]: 21,227
+            - generic [ref=e812]: 2,220
+            - generic [ref=e813]: Chords
+          - generic [ref=e814]:
+            - link "Djo" [ref=e817] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/djo_419626
+            - link "End Of Beginning" [ref=e822] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/djo/end-of-beginning-chords-4351838
+            - generic [ref=e831]: 3,040
+            - generic [ref=e832]: 2,220
+            - generic [ref=e833]: Chords
+          - generic [ref=e834]:
+            - link "Olivia Dean" [ref=e837] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/olivia_dean_509306
+            - link "So Easy To Fall In Love" [ref=e842] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/olivia-dean/so-easy-to-fall-in-love-chords-5963873
+            - generic [ref=e851]: "464"
+            - generic [ref=e852]: 1,986
+            - generic [ref=e853]: Chords
+          - generic [ref=e854]:
+            - link "Chris Isaak" [ref=e857] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/chris_isaak_10572
+            - link "Wicked Game" [ref=e862] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/chris-isaak/wicked-game-chords-11066
+            - generic [ref=e871]: 14,410
+            - generic [ref=e872]: 1,938
+            - generic [ref=e873]: Chords
+          - generic [ref=e874]:
+            - link "The Beatles" [ref=e877] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/the_beatles_1916
+            - link "Let It Be (ver 2)" [ref=e882] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/the-beatles/let-it-be-chords-60690
+            - generic [ref=e891]: 3,213
+            - generic [ref=e892]: 2,067
+            - generic [ref=e893]: Chords
+          - generic [ref=e894]:
+            - link "Keane" [ref=e897] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/keane_8014
+            - link "Somewhere Only We Know" [ref=e902] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/keane/somewhere-only-we-know-chords-109970
+            - generic [ref=e911]: 9,139
+            - generic [ref=e912]: 1,794
+            - generic [ref=e913]: Chords
+          - generic [ref=e914]:
+            - generic [ref=e916]:
+              - link "Misc Soundtrack" [ref=e917] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/artist/misc_soundtrack_910
+              - text: /
+              - link "Lady Gaga" [ref=e918] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/artist/lady_gaga_21818
+              - text: "&"
+              - link "Bradley Cooper" [ref=e919] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/artist/bradley_cooper_160847
+            - link "A Star Is Born - Shallow (ver 2)" [ref=e924] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/misc-soundtrack/a-star-is-born-shallow-chords-2488086
+            - generic [ref=e933]: 20,935
+            - generic [ref=e934]: 1,911
+            - generic [ref=e935]: Chords
+          - generic [ref=e936]:
+            - link "The Cranberries" [ref=e939] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/the_cranberries_1779
+            - link "Linger Acoustic" [ref=e944] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/the-cranberries/linger-chords-612578
+            - generic [ref=e953]: 6,328
+            - generic [ref=e954]: 1,884
+            - generic [ref=e955]: Chords
+          - generic [ref=e956]:
+            - link "Ben E. King" [ref=e959] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/ben_e_king_10676
+            - link "Stand By Me (ver 7)" [ref=e964] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/ben-e-king/stand-by-me-chords-1724608
+            - generic [ref=e973]: 8,224
+            - generic [ref=e974]: 1,836
+            - generic [ref=e975]: Chords
+          - generic [ref=e976]:
+            - link "Daniel Caesar" [ref=e979] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/daniel_caesar_72935
+            - link "Who Knows" [ref=e984] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/daniel-caesar/who-knows-chords-6001190
+            - generic [ref=e993]: "795"
+            - generic [ref=e994]: 2,133
+            - generic [ref=e995]: Chords
+          - generic [ref=e996]:
+            - link "America" [ref=e999] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/america_2386
+            - link "A Horse With No Name" [ref=e1004] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/america/a-horse-with-no-name-chords-59609
+            - generic [ref=e1013]: 7,856
+            - generic [ref=e1014]: 1,746
+            - generic [ref=e1015]: Chords
+          - generic [ref=e1016]:
+            - link "David Bowie" [ref=e1019] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/david_bowie_9864
+            - link "Space Oddity" [ref=e1024] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/david-bowie/space-oddity-chords-105869
+            - generic [ref=e1033]: 20,837
+            - generic [ref=e1034]: 1,785
+            - generic [ref=e1035]: Chords
+          - generic [ref=e1036]:
+            - link "Bruno Mars" [ref=e1039] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/bruno_mars_28280
+            - link "When I Was Your Man" [ref=e1044] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/bruno-mars/when-i-was-your-man-chords-1198871
+            - generic [ref=e1053]: 25,260
+            - generic [ref=e1054]: 2,208
+            - generic [ref=e1055]: Chords
+          - generic [ref=e1056]:
+            - link "Radiohead" [ref=e1059] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/artist/radiohead_578
+            - link "No Surprises" [ref=e1064] [cursor=pointer]:
+              - /url: https://tabs.ultimate-guitar.com/tab/radiohead/no-surprises-chords-183884
+            - generic [ref=e1073]: 7,974
+            - generic [ref=e1074]: 1,899
+            - generic [ref=e1075]: Chords
+      - generic [ref=e1076]:
+        - generic [ref=e1077]:
+          - link "1" [ref=e1078]:
+            - /url: https://www.ultimate-guitar.com/explore
+          - link "2" [ref=e1079] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?page=2
+          - link "3" [ref=e1080] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?page=3
+          - link "4" [ref=e1081] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?page=4
+          - link "5" [ref=e1082] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?page=5
+          - link "6" [ref=e1083] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?page=6
+          - link "7" [ref=e1084] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?page=7
+          - link "8" [ref=e1085] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?page=8
+          - link "9" [ref=e1086] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?page=9
+          - link "10" [ref=e1087] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?page=10
+          - link "Next >" [ref=e1088] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?page=2
+        - generic [ref=e1089]: Showing 1 - 51 of 10000
+  - generic [ref=e1090]:
+    - generic [ref=e1091]:
+      - generic [ref=e1092]:
+        - link "orpelta85" [ref=e1093] [cursor=pointer]:
+          - /url: https://www.ultimate-guitar.com/u/orpelta85
+          - img "orpelta85" [ref=e1094]
+        - generic [ref=e1095]:
+          - generic [ref=e1097]:
+            - link "orpelta85" [ref=e1098] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/u/orpelta85
+            - text: "[pro]"
+            - link "10" [ref=e1099] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/user/activity/iq?user_id=32621864
+          - generic [ref=e1100]: Joined 2019
+      - list "User navigation" [ref=e1101]:
+        - listitem [ref=e1102]:
+          - link "My tabs 11" [ref=e1103] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/mytabs
+            - generic [ref=e1104]:
+              - generic [ref=e1105]: My tabs
+              - generic [ref=e1106]: "11"
+        - listitem [ref=e1107]:
+          - link "My courses 16" [ref=e1108] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/courses
+            - generic [ref=e1109]:
+              - generic [ref=e1110]: My courses
+              - generic [ref=e1111]: "16"
+        - listitem [ref=e1112]:
+          - link "My books 0" [ref=e1113] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/books
+            - generic [ref=e1114]:
+              - generic [ref=e1115]: My books
+              - generic [ref=e1116]: "0"
+        - listitem [ref=e1119]:
+          - link "Playlists 1" [ref=e1120] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/playlist
+            - generic [ref=e1121]:
+              - generic [ref=e1122]: Playlists
+              - generic [ref=e1123]: "1"
+        - listitem [ref=e1124]:
+          - link "Messages" [ref=e1125] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/profile/messages
+            - generic [ref=e1127]: Messages
+        - listitem [ref=e1128]:
+          - link "Settings" [ref=e1129] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/forum/profile/update-profile
+            - generic [ref=e1131]: Settings
+        - listitem [ref=e1132]:
+          - link "Subscriptions" [ref=e1133] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/user/subscriptions
+            - generic [ref=e1135]: Subscriptions
+    - generic [ref=e1138]:
+      - generic [ref=e1139]:
+        - generic [ref=e1140]: Difficulty
+        - navigation [ref=e1141]:
+          - link "Absolute Beginner 117,229" [ref=e1142] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?difficulty[]=1
+            - generic [ref=e1143]: Absolute Beginner
+            - generic [ref=e1144]: 117,229
+          - link "Beginner 673,757" [ref=e1145] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?difficulty[]=2
+            - generic [ref=e1146]: Beginner
+            - generic [ref=e1147]: 673,757
+          - link "Intermediate 779,811" [ref=e1148] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?difficulty[]=3
+            - generic [ref=e1149]: Intermediate
+            - generic [ref=e1150]: 779,811
+          - link "Advanced 78,937" [ref=e1151] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?difficulty[]=4
+            - generic [ref=e1152]: Advanced
+            - generic [ref=e1153]: 78,937
+      - generic [ref=e1154]:
+        - generic [ref=e1155]: Tuning
+        - navigation [ref=e1156]:
+          - link "Standard 1,990,292" [ref=e1157] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?tuning[]=1
+            - generic [ref=e1158]: Standard
+            - generic [ref=e1159]: 1,990,292
+          - link "Half-Step Down 46,591" [ref=e1160] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?tuning[]=2
+            - generic [ref=e1161]: Half-Step Down
+            - generic [ref=e1162]: 46,591
+          - link "Drop D 44,842" [ref=e1163] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?tuning[]=12
+            - generic [ref=e1164]: Drop D
+            - generic [ref=e1165]: 44,842
+          - link "G C E A 29,484" [ref=e1166] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?tuning[]=21
+            - generic [ref=e1167]: G C E A
+            - generic [ref=e1168]: 29,484
+          - link "Drop C 24,086" [ref=e1169] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?tuning[]=10
+            - generic [ref=e1170]: Drop C
+            - generic [ref=e1171]: 24,086
+        - button "Show All" [ref=e1173] [cursor=pointer]
+      - generic [ref=e1174]:
+        - generic [ref=e1175]: Decade
+        - navigation [ref=e1176]:
+          - link "2020s 81,908" [ref=e1177] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?decade[]=2020
+            - generic [ref=e1178]: 2020s
+            - generic [ref=e1179]: 81,908
+          - link "2010s 348,047" [ref=e1180] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?decade[]=2010
+            - generic [ref=e1181]: 2010s
+            - generic [ref=e1182]: 348,047
+          - link "2000s 412,016" [ref=e1183] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?decade[]=2000
+            - generic [ref=e1184]: 2000s
+            - generic [ref=e1185]: 412,016
+          - link "1990s 207,716" [ref=e1186] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?decade[]=1990
+            - generic [ref=e1187]: 1990s
+            - generic [ref=e1188]: 207,716
+          - link "1980s 112,870" [ref=e1189] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?decade[]=1980
+            - generic [ref=e1190]: 1980s
+            - generic [ref=e1191]: 112,870
+        - button "Show All" [ref=e1193] [cursor=pointer]
+      - generic [ref=e1194]:
+        - generic [ref=e1195]: genre
+        - navigation [ref=e1196]:
+          - link "Rock 1,248,096" [ref=e1197] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?genres[]=4
+            - generic [ref=e1198]: Rock
+            - generic [ref=e1199]: 1,248,096
+          - link "Pop 254,860" [ref=e1200] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?genres[]=14
+            - generic [ref=e1201]: Pop
+            - generic [ref=e1202]: 254,860
+          - link "Metal 251,839" [ref=e1203] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?genres[]=8
+            - generic [ref=e1204]: Metal
+            - generic [ref=e1205]: 251,839
+          - link "Folk 242,474" [ref=e1206] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?genres[]=666
+            - generic [ref=e1207]: Folk
+            - generic [ref=e1208]: 242,474
+          - link "Country 133,351" [ref=e1209] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?genres[]=49
+            - generic [ref=e1210]: Country
+            - generic [ref=e1211]: 133,351
+        - button "Show All" [ref=e1213] [cursor=pointer]
+      - generic [ref=e1214]:
+        - generic [ref=e1215]: Style
+        - navigation [ref=e1216]:
+          - link "Pop Rock 197,267" [ref=e1217] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?subgenres[]=24
+            - generic [ref=e1218]: Pop Rock
+            - generic [ref=e1219]: 197,267
+          - link "Alternative Rock 154,218" [ref=e1220] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?subgenres[]=3
+            - generic [ref=e1221]: Alternative Rock
+            - generic [ref=e1222]: 154,218
+          - link "Singer-songwriter 121,260" [ref=e1223] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?subgenres[]=665
+            - generic [ref=e1224]: Singer-songwriter
+            - generic [ref=e1225]: 121,260
+          - link "Indie Rock 74,302" [ref=e1226] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?subgenres[]=9
+            - generic [ref=e1227]: Indie Rock
+            - generic [ref=e1228]: 74,302
+          - link "Hard Rock 72,211" [ref=e1229] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?subgenres[]=7
+            - generic [ref=e1230]: Hard Rock
+            - generic [ref=e1231]: 72,211
+        - button "Show All" [ref=e1233] [cursor=pointer]
+      - generic [ref=e1234]:
+        - generic [ref=e1235]: Capo
+        - navigation [ref=e1236]:
+          - link "No capo 1,923,298" [ref=e1237] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?capo[]=0
+            - generic [ref=e1238]: No capo
+            - generic [ref=e1239]: 1,923,298
+          - link "With capo 281,937" [ref=e1240] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?capo[]=1
+            - generic [ref=e1241]: With capo
+            - generic [ref=e1242]: 281,937
+      - generic [ref=e1243]:
+        - generic [ref=e1244]: instrument
+        - navigation [ref=e1245]:
+          - link "Drums 120,341" [ref=e1246] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?instruments[]=128
+            - generic [ref=e1247]: Drums
+            - generic [ref=e1248]: 120,341
+          - link "Distortion Guitar 118,478" [ref=e1249] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?instruments[]=30
+            - generic [ref=e1250]: Distortion Guitar
+            - generic [ref=e1251]: 118,478
+          - link "Electric Bass (finger) 84,334" [ref=e1252] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?instruments[]=33
+            - generic [ref=e1253]: Electric Bass (finger)
+            - generic [ref=e1254]: 84,334
+          - link "Overdriven Guitar 64,590" [ref=e1255] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?instruments[]=29
+            - generic [ref=e1256]: Overdriven Guitar
+            - generic [ref=e1257]: 64,590
+          - link "Acoustic Guitar (steel) 49,058" [ref=e1258] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?instruments[]=25
+            - generic [ref=e1259]: Acoustic Guitar (steel)
+            - generic [ref=e1260]: 49,058
+        - button "Show All" [ref=e1262] [cursor=pointer]
+      - generic [ref=e1263]:
+        - generic [ref=e1264]: Acoustic
+        - navigation [ref=e1265]:
+          - link "Non-acoustic 2,174,741" [ref=e1266] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?acoustic[]=0
+            - generic [ref=e1267]: Non-acoustic
+            - generic [ref=e1268]: 2,174,741
+          - link "Acoustic 30,492" [ref=e1269] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?acoustic[]=1
+            - generic [ref=e1270]: Acoustic
+            - generic [ref=e1271]: 30,492
+      - generic [ref=e1272]:
+        - generic [ref=e1273]: Key
+        - navigation [ref=e1274]:
+          - link "C 70,114" [ref=e1275] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?tonality[]=15
+            - generic [ref=e1276]: C
+            - generic [ref=e1277]: 70,114
+          - link "G 63,443" [ref=e1278] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?tonality[]=17
+            - generic [ref=e1279]: G
+            - generic [ref=e1280]: 63,443
+          - link "D 57,049" [ref=e1281] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?tonality[]=19
+            - generic [ref=e1282]: D
+            - generic [ref=e1283]: 57,049
+          - link "E 46,229" [ref=e1284] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?tonality[]=23
+            - generic [ref=e1285]: E
+            - generic [ref=e1286]: 46,229
+          - link "A 46,083" [ref=e1287] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?tonality[]=21
+            - generic [ref=e1288]: A
+            - generic [ref=e1289]: 46,083
+        - button "Show All" [ref=e1291] [cursor=pointer]
+      - generic [ref=e1292]:
+        - generic [ref=e1293]: Part
+        - navigation [ref=e1294]:
+          - link "Whole song 2,088,949" [ref=e1295] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?part[]=
+            - generic [ref=e1296]: Whole song
+            - generic [ref=e1297]: 2,088,949
+          - link "Intro 83,032" [ref=e1298] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?part[]=intro
+            - generic [ref=e1299]: Intro
+            - generic [ref=e1300]: 83,032
+          - link "Solo 28,080" [ref=e1301] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?part[]=solo
+            - generic [ref=e1302]: Solo
+            - generic [ref=e1303]: 28,080
+          - link "Album 5,174" [ref=e1304] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?part[]=album
+            - generic [ref=e1305]: Album
+            - generic [ref=e1306]: 5,174
+      - generic [ref=e1307]:
+        - generic [ref=e1308]: Version
+        - navigation [ref=e1309]:
+          - link "Original 2,188,138" [ref=e1310] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?live[]=0
+            - generic [ref=e1311]: Original
+            - generic [ref=e1312]: 2,188,138
+          - link "Live 17,097" [ref=e1313] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?live[]=1
+            - generic [ref=e1314]: Live
+            - generic [ref=e1315]: 17,097
+  - contentinfo [ref=e1316]:
+    - generic [ref=e1317]:
+      - generic [ref=e1318]:
+        - generic [ref=e1319]:
+          - generic [ref=e1320]: All artists
+          - list "All artists" [ref=e1321]:
+            - listitem [ref=e1322]:
+              - link "#" [ref=e1323] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/0-9.htm
+            - listitem [ref=e1324]:
+              - link "a" [ref=e1325] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/a.htm
+            - listitem [ref=e1326]:
+              - link "b" [ref=e1327] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/b.htm
+            - listitem [ref=e1328]:
+              - link "c" [ref=e1329] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/c.htm
+            - listitem [ref=e1330]:
+              - link "d" [ref=e1331] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/d.htm
+            - listitem [ref=e1332]:
+              - link "e" [ref=e1333] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/e.htm
+            - listitem [ref=e1334]:
+              - link "f" [ref=e1335] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/f.htm
+            - listitem [ref=e1336]:
+              - link "g" [ref=e1337] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/g.htm
+            - listitem [ref=e1338]:
+              - link "h" [ref=e1339] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/h.htm
+            - listitem [ref=e1340]:
+              - link "i" [ref=e1341] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/i.htm
+            - listitem [ref=e1342]:
+              - link "j" [ref=e1343] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/j.htm
+            - listitem [ref=e1344]:
+              - link "k" [ref=e1345] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/k.htm
+            - listitem [ref=e1346]:
+              - link "l" [ref=e1347] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/l.htm
+            - listitem [ref=e1348]:
+              - link "m" [ref=e1349] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/m.htm
+            - listitem [ref=e1350]:
+              - link "n" [ref=e1351] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/n.htm
+            - listitem [ref=e1352]:
+              - link "o" [ref=e1353] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/o.htm
+            - listitem [ref=e1354]:
+              - link "p" [ref=e1355] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/p.htm
+            - listitem [ref=e1356]:
+              - link "q" [ref=e1357] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/q.htm
+            - listitem [ref=e1358]:
+              - link "r" [ref=e1359] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/r.htm
+            - listitem [ref=e1360]:
+              - link "s" [ref=e1361] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/s.htm
+            - listitem [ref=e1362]:
+              - link "t" [ref=e1363] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/t.htm
+            - listitem [ref=e1364]:
+              - link "u" [ref=e1365] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/u.htm
+            - listitem [ref=e1366]:
+              - link "v" [ref=e1367] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/v.htm
+            - listitem [ref=e1368]:
+              - link "w" [ref=e1369] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/w.htm
+            - listitem [ref=e1370]:
+              - link "x" [ref=e1371] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/x.htm
+            - listitem [ref=e1372]:
+              - link "y" [ref=e1373] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/y.htm
+            - listitem [ref=e1374]:
+              - link "z" [ref=e1375] [cursor=pointer]:
+                - /url: https://www.ultimate-guitar.com/bands/z.htm
+        - generic [ref=e1376]:
+          - link "facebook" [ref=e1377] [cursor=pointer]:
+            - /url: https://www.facebook.com/UltimateGuitar/
+            - img
+          - link "twitter" [ref=e1378] [cursor=pointer]:
+            - /url: https://twitter.com/ultimateguitar
+            - img
+          - link "instagram" [ref=e1379] [cursor=pointer]:
+            - /url: https://www.instagram.com/ultimateguitar/
+            - img
+          - link "youtube" [ref=e1380] [cursor=pointer]:
+            - /url: https://www.youtube.com/channel/UCf6prPsXYNYKXH4hX-cuEwQ
+            - img
+          - link "tiktok" [ref=e1381] [cursor=pointer]:
+            - /url: https://www.tiktok.com/@ultimateguitar
+            - img
+          - link "audio.com" [ref=e1382] [cursor=pointer]:
+            - /url: https://audio.com/ultimateguitar
+            - img
+          - link "linkedin" [ref=e1383] [cursor=pointer]:
+            - /url: https://www.linkedin.com/company/1567917
+            - img
+      - separator [ref=e1384]
+      - generic [ref=e1385]:
+        - region "Copyright" [ref=e1386]:
+          - link [ref=e1387] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com
+            - img [ref=e1388]
+          - generic [ref=e1390]: © 2026 Ultimate-Guitar.com All rights reserved
+        - region "Discover" [ref=e1391]:
+          - heading "Discover" [level=4] [ref=e1392]
+          - link "About UG" [ref=e1393] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/
+          - link "Site Rules" [ref=e1394] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/article/blog/site-rules/
+          - link "Advertise" [ref=e1395] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/advertise.htm
+          - link "Support" [ref=e1396] [cursor=pointer]:
+            - /url: https://help.ultimate-guitar.com/en/
+        - region "Legal" [ref=e1397]:
+          - heading "Legal" [level=4] [ref=e1398]
+          - link "Terms of Service" [ref=e1399] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/tos.htm
+          - link "Privacy Policy" [ref=e1400] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/privacy.htm
+          - link "DMCA" [ref=e1401] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/dmca.htm
+          - link "Accessibility Statement" [ref=e1402] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/about/accessibility-statement.htm
+        - region "Other" [ref=e1403]:
+          - heading "Other" [level=4] [ref=e1404]
+          - button "PRO+" [ref=e1405] [cursor=pointer]
+          - link "Articles Staff" [ref=e1406] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/news/editorial/
+          - link "Fresh Tabs" [ref=e1407] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/fresh?order=date
+          - link "MuseHub" [ref=e1408] [cursor=pointer]:
+            - /url: https://www.musehub.com/?utm_source=ug_web&utm_medium=footer&utm_campaign=musehub
+        - region "Language" [ref=e1409]:
+          - heading "Language" [level=4] [ref=e1410]
+          - link "English" [ref=e1411] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore
+          - link "Português (Brasil)" [ref=e1412] [cursor=pointer]:
+            - /url: https://pt.ultimate-guitar.com/explore
+          - link "Español" [ref=e1413] [cursor=pointer]:
+            - /url: https://es.ultimate-guitar.com/explore
+          - link "Italiano" [ref=e1414] [cursor=pointer]:
+            - /url: https://it.ultimate-guitar.com/explore
+          - link "Français" [ref=e1415] [cursor=pointer]:
+            - /url: https://fr.ultimate-guitar.com/explore
+          - link "日本語" [ref=e1416] [cursor=pointer]:
+            - /url: https://ja.ultimate-guitar.com/explore
+        - region "Hot Chords" [ref=e1417]:
+          - heading "Hot Chords" [level=4] [ref=e1418]
+          - link "Indonesia" [ref=e1419] [cursor=pointer]:
+            - /url: https://www.ultimate-guitar.com/explore?country_chart=7
+        - region "Download UG application" [ref=e1420]:
+          - generic [ref=e1421]:
+            - link "apple store" [ref=e1422] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/components/apps/market/redirect?app_name=ug_tabs_chords_ios&source=get_app_footer
+              - img "apple store" [ref=e1423]
+            - link "google play" [ref=e1424] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/components/apps/market/redirect?app_name=ug_tabs_chords_android&source=get_app_footer
+              - img "google play" [ref=e1425]
+            - link "huawei store" [ref=e1426] [cursor=pointer]:
+              - /url: https://www.ultimate-guitar.com/components/apps/market/redirect?app_name=ug_tabs_chords_huawei&source=get_app_footer
+              - img "huawei store" [ref=e1427]
+  - generic [ref=e1433]:
+    - generic [ref=e1434]: Add 2,000+ songbooks to your PRO+ now!
+    - generic [ref=e1435]:
+      - generic [ref=e1436]:
+        - generic [ref=e1437]: "0"
+        - generic [ref=e1439]: days
+      - generic [ref=e1440]: ":"
+      - generic [ref=e1441]:
+        - generic [ref=e1442]: "23"
+        - generic [ref=e1444]: hrs
+      - generic [ref=e1445]: ":"
+      - generic [ref=e1446]:
+        - generic [ref=e1447]: "53"
+        - generic [ref=e1449]: min
+      - generic [ref=e1450]: ":"
+      - generic [ref=e1451]:
+        - generic [ref=e1452]: "36"
+        - generic [ref=e1454]: sec
+    - button "TRY FOR FREE" [ref=e1455] [cursor=pointer]:
+      - generic [ref=e1456]: TRY FOR FREE

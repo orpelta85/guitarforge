@@ -1,0 +1,298 @@
+- generic [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - alert [ref=e3]
+  - generic [ref=e4]:
+    - complementary [ref=e5]:
+      - img "Guitar Practice" [ref=e444]
+      - navigation [ref=e8]:
+        - generic [ref=e9]: Main
+        - button "Home" [ref=e10] [cursor=pointer]:
+          - img [ref=e12]
+          - generic [ref=e14]: Home
+        - button "Practice" [ref=e15] [cursor=pointer]:
+          - img [ref=e17]
+          - generic [ref=e21]: Practice
+        - button "Learn" [ref=e22] [cursor=pointer]:
+          - img [ref=e24]
+          - generic [ref=e27]: Learn
+        - button "Studio" [ref=e28] [cursor=pointer]:
+          - img [ref=e30]
+          - generic [ref=e33]: Studio
+        - button "Jam Mode" [ref=e34] [cursor=pointer]:
+          - img [ref=e36]
+          - generic [ref=e39]: Jam Mode
+        - button "Library" [ref=e40] [cursor=pointer]:
+          - img [ref=e42]
+          - generic [ref=e45]: Library
+        - generic [ref=e46]: Tools
+        - button "AI Coach" [ref=e47] [cursor=pointer]:
+          - img [ref=e49]
+          - generic [ref=e51]: AI Coach
+        - button "Suno AI" [ref=e52] [cursor=pointer]:
+          - img [ref=e54]
+          - generic [ref=e57]: Suno AI
+        - button "Skills" [ref=e58] [cursor=pointer]:
+          - img [ref=e60]
+          - generic [ref=e66]: Skills
+        - button "Tuner" [ref=e67] [cursor=pointer]:
+          - img [ref=e69]
+          - generic [ref=e71]: Tuner
+      - button "Guest Sign in to sync" [ref=e74]:
+        - img [ref=e76]
+        - generic [ref=e79]:
+          - generic [ref=e80]: Guest
+          - generic [ref=e81]: Sign in to sync
+      - button "Sign in to sync" [ref=e83]
+    - generic [ref=e1501]:
+      - generic [ref=e1502]:
+        - generic [ref=e1503]:
+          - generic [ref=e1504]:
+            - spinbutton [ref=e1505]: "120"
+            - generic [ref=e1506]: BPM
+          - button "Metronome (M)" [ref=e1507] [cursor=pointer]:
+            - img [ref=e1508]
+          - generic [ref=e1511]:
+            - img [ref=e1512]
+            - combobox [ref=e1515] [cursor=pointer]:
+              - option "Mic" [selected]
+        - generic [ref=e1516]:
+          - button "Rewind (Enter)" [ref=e1517] [cursor=pointer]:
+            - img [ref=e1518]
+          - button "Play (Space)" [ref=e1520] [cursor=pointer]:
+            - img [ref=e1521]
+          - button "Stop" [ref=e1523] [cursor=pointer]
+          - button "Record (R)" [ref=e1525] [cursor=pointer]
+          - button "Loop (C)" [ref=e1527] [cursor=pointer]:
+            - img [ref=e1528]
+          - generic [ref=e1534]:
+            - generic [ref=e1535]: 88:88.8
+            - generic [ref=e1536]: 00:00.0
+          - generic [ref=e1537]: /
+          - generic [ref=e1538]: 00:00.0
+        - generic [ref=e1539]:
+          - generic [ref=e1540]: 1 trk
+          - generic [ref=e1541]:
+            - img [ref=e1542]
+            - slider [ref=e1545] [cursor=pointer]: "80"
+            - generic [ref=e1546]: 80%
+          - button "Save" [ref=e1547] [cursor=pointer]
+      - generic [ref=e1549]:
+        - generic [ref=e1596]:
+          - generic [ref=e1597]:
+            - generic [ref=e1598]:
+              - generic [ref=e1600]: 🥁
+              - generic [ref=e1601] [cursor=pointer]: Drum Machine
+            - generic [ref=e1602]:
+              - generic [ref=e1603]: VOL
+              - slider [ref=e1604] [cursor=pointer]: "100"
+              - generic [ref=e1605]: 100%
+            - generic [ref=e1606]:
+              - generic [ref=e1607]: PAN
+              - button "S" [ref=e1610] [cursor=pointer]
+              - button "M" [ref=e1611] [cursor=pointer]
+              - button "GRID" [ref=e1612] [cursor=pointer]
+              - button [ref=e1613] [cursor=pointer]:
+                - img [ref=e1614]
+          - button "Close Grid" [ref=e1699] [cursor=pointer]
+        - generic [ref=e1563]:
+          - button "Add Track" [ref=e1564] [cursor=pointer]:
+            - img [ref=e1565]
+            - text: Add Track
+          - button "🎙 Record" [ref=e1567] [cursor=pointer]
+          - button "🥁 Drums" [ref=e1568] [cursor=pointer]
+          - button "🎵 AI Backing" [ref=e1569] [cursor=pointer]
+          - button "📁 Import" [ref=e1570] [cursor=pointer]
+      - generic [ref=e1571]:
+        - generic [ref=e1572]:
+          - button "🥁 Drum Machine" [ref=e1573] [cursor=pointer]:
+            - generic [ref=e1574]: 🥁
+            - generic [ref=e1575]: Drum Machine
+          - button "🔁 Looper" [ref=e1576] [cursor=pointer]:
+            - generic [ref=e1577]: 🔁
+            - generic [ref=e1578]: Looper
+          - button "🎵 AI Backing" [ref=e1579] [cursor=pointer]:
+            - generic [ref=e1580]: 🎵
+            - generic [ref=e1581]: AI Backing
+          - button "🎨 Mixer" [ref=e1582] [cursor=pointer]:
+            - generic [ref=e1583]: 🎨
+            - generic [ref=e1584]: Mixer
+          - button "💾 Recordings" [ref=e1585] [cursor=pointer]:
+            - generic [ref=e1586]: 💾
+            - generic [ref=e1587]: Recordings
+        - generic [ref=e1595]:
+          - generic [ref=e1700]:
+            - button "Play Pattern" [active] [ref=e1869] [cursor=pointer]
+            - generic [ref=e1702]: 120 BPM
+            - button "Clear" [ref=e1703] [cursor=pointer]
+            - combobox "Drum preset" [ref=e1704] [cursor=pointer]:
+              - option "Presets..." [disabled] [selected]
+              - option "Basic Rock"
+              - option "Metal Double Bass"
+              - option "Blast Beat"
+              - option "Half-Time"
+              - option "Shuffle"
+              - option "Punk Fast"
+            - generic [ref=e1705]: Drum Machine
+          - generic [ref=e1706]:
+            - generic [ref=e1707]:
+              - generic [ref=e1708]: "1"
+              - generic [ref=e1709]: "2"
+              - generic [ref=e1710]: "3"
+              - generic [ref=e1711]: "4"
+              - generic [ref=e1712]: "5"
+              - generic [ref=e1713]: "6"
+              - generic [ref=e1714]: "7"
+              - generic [ref=e1715]: "8"
+              - generic [ref=e1716]: "9"
+              - generic [ref=e1717]: "10"
+              - generic [ref=e1718]: "11"
+              - generic [ref=e1719]: "12"
+              - generic [ref=e1720]: "13"
+              - generic [ref=e1721]: "14"
+              - generic [ref=e1722]: "15"
+              - generic [ref=e1723]: "16"
+            - generic [ref=e1724]:
+              - generic [ref=e1725]: Kick
+              - button [ref=e1726] [cursor=pointer]
+              - button [ref=e1727] [cursor=pointer]
+              - button [ref=e1728] [cursor=pointer]
+              - button [ref=e1729] [cursor=pointer]
+              - button [ref=e1730] [cursor=pointer]
+              - button [ref=e1731] [cursor=pointer]
+              - button [ref=e1732] [cursor=pointer]
+              - button [ref=e1733] [cursor=pointer]
+              - button [ref=e1734] [cursor=pointer]
+              - button [ref=e1735] [cursor=pointer]
+              - button [ref=e1736] [cursor=pointer]
+              - button [ref=e1737] [cursor=pointer]
+              - button [ref=e1738] [cursor=pointer]
+              - button [ref=e1739] [cursor=pointer]
+              - button [ref=e1740] [cursor=pointer]
+              - button [ref=e1741] [cursor=pointer]
+            - generic [ref=e1742]:
+              - generic [ref=e1743]: Snare
+              - button [ref=e1744] [cursor=pointer]
+              - button [ref=e1745] [cursor=pointer]
+              - button [ref=e1746] [cursor=pointer]
+              - button [ref=e1747] [cursor=pointer]
+              - button [ref=e1748] [cursor=pointer]
+              - button [ref=e1749] [cursor=pointer]
+              - button [ref=e1750] [cursor=pointer]
+              - button [ref=e1751] [cursor=pointer]
+              - button [ref=e1752] [cursor=pointer]
+              - button [ref=e1753] [cursor=pointer]
+              - button [ref=e1754] [cursor=pointer]
+              - button [ref=e1755] [cursor=pointer]
+              - button [ref=e1756] [cursor=pointer]
+              - button [ref=e1757] [cursor=pointer]
+              - button [ref=e1758] [cursor=pointer]
+              - button [ref=e1759] [cursor=pointer]
+            - generic [ref=e1760]:
+              - generic [ref=e1761]: HiHat Closed
+              - button [ref=e1762] [cursor=pointer]
+              - button [ref=e1763] [cursor=pointer]
+              - button [ref=e1764] [cursor=pointer]
+              - button [ref=e1765] [cursor=pointer]
+              - button [ref=e1766] [cursor=pointer]
+              - button [ref=e1767] [cursor=pointer]
+              - button [ref=e1768] [cursor=pointer]
+              - button [ref=e1769] [cursor=pointer]
+              - button [ref=e1770] [cursor=pointer]
+              - button [ref=e1771] [cursor=pointer]
+              - button [ref=e1772] [cursor=pointer]
+              - button [ref=e1773] [cursor=pointer]
+              - button [ref=e1774] [cursor=pointer]
+              - button [ref=e1775] [cursor=pointer]
+              - button [ref=e1776] [cursor=pointer]
+              - button [ref=e1777] [cursor=pointer]
+            - generic [ref=e1778]:
+              - generic [ref=e1779]: HiHat Open
+              - button [ref=e1780] [cursor=pointer]
+              - button [ref=e1781] [cursor=pointer]
+              - button [ref=e1782] [cursor=pointer]
+              - button [ref=e1783] [cursor=pointer]
+              - button [ref=e1784] [cursor=pointer]
+              - button [ref=e1785] [cursor=pointer]
+              - button [ref=e1786] [cursor=pointer]
+              - button [ref=e1787] [cursor=pointer]
+              - button [ref=e1788] [cursor=pointer]
+              - button [ref=e1789] [cursor=pointer]
+              - button [ref=e1790] [cursor=pointer]
+              - button [ref=e1791] [cursor=pointer]
+              - button [ref=e1792] [cursor=pointer]
+              - button [ref=e1793] [cursor=pointer]
+              - button [ref=e1794] [cursor=pointer]
+              - button [ref=e1795] [cursor=pointer]
+            - generic [ref=e1796]:
+              - generic [ref=e1797]: Clap
+              - button [ref=e1798] [cursor=pointer]
+              - button [ref=e1799] [cursor=pointer]
+              - button [ref=e1800] [cursor=pointer]
+              - button [ref=e1801] [cursor=pointer]
+              - button [ref=e1802] [cursor=pointer]
+              - button [ref=e1803] [cursor=pointer]
+              - button [ref=e1804] [cursor=pointer]
+              - button [ref=e1805] [cursor=pointer]
+              - button [ref=e1806] [cursor=pointer]
+              - button [ref=e1807] [cursor=pointer]
+              - button [ref=e1808] [cursor=pointer]
+              - button [ref=e1809] [cursor=pointer]
+              - button [ref=e1810] [cursor=pointer]
+              - button [ref=e1811] [cursor=pointer]
+              - button [ref=e1812] [cursor=pointer]
+              - button [ref=e1813] [cursor=pointer]
+            - generic [ref=e1814]:
+              - generic [ref=e1815]: Ride
+              - button [ref=e1816] [cursor=pointer]
+              - button [ref=e1817] [cursor=pointer]
+              - button [ref=e1818] [cursor=pointer]
+              - button [ref=e1819] [cursor=pointer]
+              - button [ref=e1820] [cursor=pointer]
+              - button [ref=e1821] [cursor=pointer]
+              - button [ref=e1822] [cursor=pointer]
+              - button [ref=e1823] [cursor=pointer]
+              - button [ref=e1824] [cursor=pointer]
+              - button [ref=e1825] [cursor=pointer]
+              - button [ref=e1826] [cursor=pointer]
+              - button [ref=e1827] [cursor=pointer]
+              - button [ref=e1828] [cursor=pointer]
+              - button [ref=e1829] [cursor=pointer]
+              - button [ref=e1830] [cursor=pointer]
+              - button [ref=e1831] [cursor=pointer]
+            - generic [ref=e1832]:
+              - generic [ref=e1833]: Tom Low
+              - button [ref=e1834] [cursor=pointer]
+              - button [ref=e1835] [cursor=pointer]
+              - button [ref=e1836] [cursor=pointer]
+              - button [ref=e1837] [cursor=pointer]
+              - button [ref=e1838] [cursor=pointer]
+              - button [ref=e1839] [cursor=pointer]
+              - button [ref=e1840] [cursor=pointer]
+              - button [ref=e1841] [cursor=pointer]
+              - button [ref=e1842] [cursor=pointer]
+              - button [ref=e1843] [cursor=pointer]
+              - button [ref=e1844] [cursor=pointer]
+              - button [ref=e1845] [cursor=pointer]
+              - button [ref=e1846] [cursor=pointer]
+              - button [ref=e1847] [cursor=pointer]
+              - button [ref=e1848] [cursor=pointer]
+              - button [ref=e1849] [cursor=pointer]
+            - generic [ref=e1850]:
+              - generic [ref=e1851]: Tom High
+              - button [ref=e1852] [cursor=pointer]
+              - button [ref=e1853] [cursor=pointer]
+              - button [ref=e1854] [cursor=pointer]
+              - button [ref=e1855] [cursor=pointer]
+              - button [ref=e1856] [cursor=pointer]
+              - button [ref=e1857] [cursor=pointer]
+              - button [ref=e1858] [cursor=pointer]
+              - button [ref=e1859] [cursor=pointer]
+              - button [ref=e1860] [cursor=pointer]
+              - button [ref=e1861] [cursor=pointer]
+              - button [ref=e1862] [cursor=pointer]
+              - button [ref=e1863] [cursor=pointer]
+              - button [ref=e1864] [cursor=pointer]
+              - button [ref=e1865] [cursor=pointer]
+              - button [ref=e1866] [cursor=pointer]
+              - button [ref=e1867] [cursor=pointer]
