@@ -825,27 +825,29 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
   }, [applyLoopRange]);
 
   // Block alphaTab's capture-phase mousedown handler from firing when the user
-  // clicks a drag handle (.gf-handle). alphaTab registers its mousedown
-  // listener on mainRef with {capture: true}, so it runs BEFORE React's bubble
-  // phase — if we don't stopPropagation at capture phase, alphaTab hit-tests
-  // the click against its canvas and starts a fresh beat selection that
-  // overwrites the existing one.
+  // clicks a drag handle (.gf-handle). alphaTab registers mousedown on mainRef
+  // with {capture: true}. For capture listeners on the SAME element, they fire
+  // in registration order — alphaTab registered first, so our listener on the
+  // same element would fire AFTER and stopPropagation wouldn't help. We must
+  // register on an ancestor (document) so capture phase reaches us BEFORE it
+  // descends to mainRef where alphaTab is listening.
   useEffect(() => {
-    const el = mainRef.current;
-    if (!el) return;
+    if (!ready) return;
     const block = (e: Event) => {
       const t = e.target as HTMLElement | null;
       if (t && (t.closest?.(".gf-handle") || t.classList?.contains("gf-handle"))) {
         e.stopPropagation();
+        // Also stop same-phase listeners on document from doing anything funny
+        e.stopImmediatePropagation?.();
       }
     };
-    el.addEventListener("mousedown", block, true);
-    el.addEventListener("mouseup", block, true);
-    el.addEventListener("mousemove", block, true);
+    document.addEventListener("mousedown", block, true);
+    document.addEventListener("mouseup", block, true);
+    document.addEventListener("click", block, true);
     return () => {
-      el.removeEventListener("mousedown", block, true);
-      el.removeEventListener("mouseup", block, true);
-      el.removeEventListener("mousemove", block, true);
+      document.removeEventListener("mousedown", block, true);
+      document.removeEventListener("mouseup", block, true);
+      document.removeEventListener("click", block, true);
     };
   }, [ready]);
 
