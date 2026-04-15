@@ -600,6 +600,9 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
         // Selection is beat-level, not bar-level — user can highlight 2 notes in the middle of a bar.
         api.beatMouseDown?.on?.((beat: any) => {
           if (dead || !beat?.voice?.bar) return;
+          // If a handle drag is active, ignore alphaTab's selection start so we don't
+          // overwrite the existing selection with a single-beat click.
+          if (dragStateRef.current.mode === "left" || dragStateRef.current.mode === "right") return;
           const barIdx = beat.voice.bar.index + 1;
           (api as any)._lastClickedBar = barIdx;
           (api as any)._dragDidMove = false;
@@ -617,6 +620,9 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
         api.beatMouseUp?.on?.((beat: any) => {
           if (dead) return;
           const st = dragStateRef.current;
+          // If a handle drag is in progress, let onHandleMouseDown's own mouseup handler
+          // finalize the selection — do NOT reset state or clear selection here.
+          if (st.mode === "left" || st.mode === "right") return;
           const didMove = !!(api as any)._dragDidMove;
           dragStateRef.current = { mode: "none", anchorBeat: null };
 
