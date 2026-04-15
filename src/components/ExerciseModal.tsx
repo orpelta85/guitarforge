@@ -1410,7 +1410,7 @@ export default function ExerciseModal(props: Props) {
   useFocusTrap(modalRef);
 
   return (
-    <div onClick={(e) => { if (e.target === e.currentTarget) props.onClose(); }}
+    <div
       className="exercise-modal-overlay"
       role="dialog"
       aria-modal="true"

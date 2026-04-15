@@ -110,7 +110,7 @@ export default function HomePage(props: HomePageProps) {
   const [jamYtUrl, setJamYtUrl] = useState<string | null>(null);
   const [jamYtLoading, setJamYtLoading] = useState(false);
   const [jamSunoLoading, setJamSunoLoading] = useState(false);
-  const [jamOpen, setJamOpen] = useState(true);
+  const [jamOpen, setJamOpen] = useState(false);
   const [jamStyleDropOpen, setJamStyleDropOpen] = useState(false);
   const jamStyleRef = useRef<HTMLDivElement>(null);
   const [jamFreeQuery, setJamFreeQuery] = useState("");

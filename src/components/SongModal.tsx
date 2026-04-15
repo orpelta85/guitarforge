@@ -386,7 +386,7 @@ export default function SongModal({ song, onClose, targetMinutes, mySongs, onTog
   useFocusTrap(modalRef);
 
   return (
-    <div onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    <div
       className="exercise-modal-overlay"
       role="dialog"
       aria-modal="true"
