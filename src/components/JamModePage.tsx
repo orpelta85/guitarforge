@@ -230,19 +230,20 @@ interface GrooveStyle {
   name: string;
   drum: DrumStyleName;
   bass: BassStyleName;
+  guitar: GuitarStrumStyle;
 }
 
 const GROOVE_STYLES: Record<GrooveStyleName, GrooveStyle> = {
-  rock:    { name: "Rock",          drum: "rock",          bass: "rock" },
-  metal:   { name: "Metal",         drum: "metal",         bass: "metal" },
-  blues:   { name: "Blues",         drum: "blues_shuffle",  bass: "blues" },
-  jazz:    { name: "Jazz",          drum: "jazz",          bass: "jazz" },
-  funk:    { name: "Funk",          drum: "funk",          bass: "funk" },
-  punk:    { name: "Punk",          drum: "punk",          bass: "punk" },
-  ballad:  { name: "Ballad",       drum: "ballad",        bass: "ballad" },
-  latin:   { name: "Latin",        drum: "latin",         bass: "funk" },
-  reggae:  { name: "Reggae",       drum: "reggae",        bass: "reggae" },
-  country: { name: "Country",      drum: "country",       bass: "rock" },
+  rock:    { name: "Rock",          drum: "rock",          bass: "rock",    guitar: "rock" },
+  metal:   { name: "Metal",         drum: "metal",         bass: "metal",   guitar: "metal" },
+  blues:   { name: "Blues",         drum: "blues_shuffle", bass: "blues",   guitar: "blues" },
+  jazz:    { name: "Jazz",          drum: "jazz",          bass: "jazz",    guitar: "jazz" },
+  funk:    { name: "Funk",          drum: "funk",          bass: "funk",    guitar: "funk" },
+  punk:    { name: "Punk",          drum: "punk",          bass: "punk",    guitar: "punk" },
+  ballad:  { name: "Ballad",        drum: "ballad",        bass: "ballad",  guitar: "ballad" },
+  latin:   { name: "Latin",         drum: "latin",         bass: "funk",    guitar: "latin" },
+  reggae:  { name: "Reggae",        drum: "reggae",        bass: "reggae",  guitar: "reggae" },
+  country: { name: "Country",       drum: "country",       bass: "rock",    guitar: "country" },
 };
 
 const GROOVE_STYLE_LIST: GrooveStyleName[] = ["rock", "metal", "blues", "jazz", "funk", "punk", "ballad", "latin", "reggae", "country"];
@@ -252,6 +253,53 @@ const GENRE_GROOVE_MAP: Record<string, GrooveStyleName> = {
   Blues: "blues", Rock: "rock", Jazz: "jazz", Metal: "metal",
   Funk: "funk", Punk: "punk", Ballad: "ballad", "R&B": "funk",
 };
+
+// ── Guitar Accompaniment ──
+// Style-aware strumming patterns. Each pattern lists subdivision indices (0-15) in a bar
+// where a chord should be struck. Works alongside the same Tone.Loop at 16n resolution.
+type GuitarStrumStyle = "rock" | "metal" | "blues" | "jazz" | "funk" | "punk" | "ballad" | "latin" | "reggae" | "country";
+
+interface GuitarPattern {
+  name: string;
+  // Subdivisions in a 16n bar where the chord is strummed
+  hits: number[];
+  // Note length for each strum
+  duration: string;
+}
+
+const GUITAR_PATTERNS: Record<GuitarStrumStyle, GuitarPattern> = {
+  rock:    { name: "Rock",    hits: [0, 4, 8, 12], duration: "4n" },      // quarter notes
+  metal:   { name: "Metal",   hits: [0, 2, 4, 6, 8, 10, 12, 14], duration: "8n" }, // palm-mute 8ths
+  blues:   { name: "Blues",   hits: [0, 8], duration: "2n" },             // 1 and 3
+  jazz:    { name: "Jazz",    hits: [4, 12], duration: "4n" },             // comping on 2 and 4
+  funk:    { name: "Funk",    hits: [2, 6, 10, 14], duration: "16n" },     // 16th off-beats (chicken scratch)
+  punk:    { name: "Punk",    hits: [0, 2, 4, 6, 8, 10, 12, 14], duration: "8n" },
+  ballad:  { name: "Ballad",  hits: [0, 8], duration: "2n" },              // sustained chords
+  latin:   { name: "Latin",   hits: [0, 3, 6, 10, 14], duration: "8n" },
+  reggae:  { name: "Reggae",  hits: [2, 6, 10, 14], duration: "16n" },     // upbeat skank
+  country: { name: "Country", hits: [0, 4, 8, 12], duration: "4n" },       // boom-chick chord
+};
+
+// Build chord voicing (3 notes: root, third, fifth) at octaves 3-4 for guitar register
+function getGuitarChordNotes(chordRoot: string, quality: string): string[] {
+  const rootIdx = NOTE_NAMES.indexOf(chordRoot);
+  if (rootIdx < 0) return [chordRoot + "3"];
+  const isMinor = quality.includes("m") && !quality.includes("maj");
+  const isDim = quality.includes("dim") || quality.includes("m7b5");
+  const thirdInterval = isMinor || isDim ? 3 : 4;
+  const fifthInterval = isDim ? 6 : 7;
+  const third = NOTE_NAMES[(rootIdx + thirdInterval) % 12];
+  const fifth = NOTE_NAMES[(rootIdx + fifthInterval) % 12];
+  // Voice: root in octave 3, third + fifth in octave 4 (guitar-like voicing)
+  const notes = [chordRoot + "3", third + "4", fifth + "4"];
+  // Add seventh for jazz/blues 7-chords
+  if (quality.includes("7")) {
+    const seventhInterval = quality.includes("maj7") ? 11 : 10;
+    const seventh = NOTE_NAMES[(rootIdx + seventhInterval) % 12];
+    notes.push(seventh + "4");
+  }
+  return notes;
+}
 
 // Get bass note for a chord tone
 function getBassNote(chordRoot: string, quality: string, tone: BassEvent["tone"]): string {
@@ -586,8 +634,10 @@ interface JamSettings {
   metronomeVol: number;
   bassVol: number;
   drumVol: number;
+  guitarVol: number;
   bassEnabled: boolean;
   drumEnabled: boolean;
+  guitarEnabled: boolean;
   grooveStyle: GrooveStyleName;
   scaleType: "natural" | "pentatonic" | "blues";
   // Legacy fields kept for backwards compatibility with localStorage
@@ -607,8 +657,10 @@ const DEFAULT_SETTINGS: JamSettings = {
   metronomeVol: 0.9,
   bassVol: 0.4,
   drumVol: 0.3,
+  guitarVol: 0.5,
   bassEnabled: false,
   drumEnabled: false,
+  guitarEnabled: false,
   grooveStyle: "blues",
   scaleType: "pentatonic",
 };
@@ -689,6 +741,9 @@ export default function JamModePage() {
   const snareSynthRef = useRef<InstanceType<typeof import("tone").NoiseSynth> | null>(null);
   const rideSynthRef = useRef<InstanceType<typeof import("tone").MetalSynth> | null>(null);
   const crashSynthRef = useRef<InstanceType<typeof import("tone").MetalSynth> | null>(null);
+  const guitarSynthRef = useRef<InstanceType<typeof import("tone").PolySynth> | null>(null);
+  const guitarDistortionRef = useRef<InstanceType<typeof import("tone").Distortion> | null>(null);
+  const guitarFilterRef = useRef<InstanceType<typeof import("tone").Filter> | null>(null);
   const subCountRef = useRef(0);
   const loopRef = useRef<InstanceType<typeof import("tone").Loop> | null>(null);
   const beatCountRef = useRef(0);
@@ -811,8 +866,43 @@ export default function JamModePage() {
     }).toDestination();
     crashSynthRef.current.volume.value = volToDb(settingsRef.current.drumVol) - 6;
 
+    // ── Guitar accompaniment synth (style-aware) ──
+    // Chain: PolySynth -> Filter (lowpass) -> Distortion -> Destination
+    // Distortion wet + filter cutoff are adjusted per style live via applyGuitarStyle.
+    const groove = GROOVE_STYLES[settingsRef.current.grooveStyle];
+    const isHeavy = ["metal", "rock", "punk"].includes(groove.guitar);
+    guitarSynthRef.current = new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: isHeavy ? "sawtooth" : "triangle" },
+      envelope: { attack: 0.01, decay: 0.25, sustain: 0.35, release: 0.6 },
+    });
+    guitarFilterRef.current = new Tone.Filter({
+      type: "lowpass",
+      frequency: isHeavy ? 2800 : 3500,
+      Q: 0.8,
+    });
+    guitarDistortionRef.current = new Tone.Distortion({
+      distortion: 0.35,
+      wet: isHeavy ? 0.5 : 0,
+    });
+    guitarSynthRef.current.chain(
+      guitarFilterRef.current,
+      guitarDistortionRef.current,
+      Tone.Destination
+    );
+    guitarSynthRef.current.volume.value = volToDb(settingsRef.current.guitarVol);
+
     setToneLoaded(true);
   }, []);
+
+  // Apply guitar style changes (distortion wet + filter cutoff) live when grooveStyle changes
+  useEffect(() => {
+    if (!guitarDistortionRef.current || !guitarFilterRef.current) return;
+    const groove = GROOVE_STYLES[settings.grooveStyle];
+    const isHeavy = ["metal", "rock", "punk"].includes(groove.guitar);
+    const isClean = ["jazz", "ballad", "country"].includes(groove.guitar);
+    guitarDistortionRef.current.wet.value = isHeavy ? 0.5 : 0;
+    guitarFilterRef.current.frequency.value = isClean ? 4200 : isHeavy ? 2800 : 3500;
+  }, [settings.grooveStyle]);
 
   function volToDb(vol: number): number {
     if (vol <= 0) return -Infinity;
@@ -828,7 +918,8 @@ export default function JamModePage() {
     if (snareSynthRef.current) snareSynthRef.current.volume.value = volToDb(settings.drumVol) - 3;
     if (rideSynthRef.current) rideSynthRef.current.volume.value = volToDb(settings.drumVol) - 10;
     if (crashSynthRef.current) crashSynthRef.current.volume.value = volToDb(settings.drumVol) - 6;
-  }, [settings.metronomeVol, settings.bassVol, settings.drumVol]);
+    if (guitarSynthRef.current) guitarSynthRef.current.volume.value = volToDb(settings.guitarVol);
+  }, [settings.metronomeVol, settings.bassVol, settings.drumVol, settings.guitarVol]);
 
   // Update BPM live
   useEffect(() => {
@@ -902,6 +993,17 @@ export default function JamModePage() {
             bassSynthRef.current.triggerAttackRelease(note, ev.duration, time);
             break; // only one bass note per subdivision
           }
+        }
+      }
+
+      // ── Guitar (chord accompaniment) ──
+      if (guitarSynthRef.current && s.guitarEnabled && s.guitarVol > 0) {
+        const grooveG = GROOVE_STYLES[s.grooveStyle];
+        const guitarPattern = GUITAR_PATTERNS[grooveG.guitar];
+        if (guitarPattern.hits.includes(subInBar)) {
+          const chord = cds[chIdx];
+          const notes = getGuitarChordNotes(chord.root, chord.quality);
+          guitarSynthRef.current.triggerAttackRelease(notes, guitarPattern.duration, time);
         }
       }
 
@@ -1013,6 +1115,9 @@ export default function JamModePage() {
       snareSynthRef.current?.dispose();
       rideSynthRef.current?.dispose();
       crashSynthRef.current?.dispose();
+      guitarSynthRef.current?.dispose();
+      guitarFilterRef.current?.dispose();
+      guitarDistortionRef.current?.dispose();
       toneRef.current = null;
     };
   }, []);
@@ -1205,6 +1310,36 @@ export default function JamModePage() {
               />
             </div>
 
+            {/* Guitar */}
+            <div className="min-w-0">
+              <div className="flex items-center justify-between mb-1 min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
+                  <label className="text-[10px] text-[#6b6560] font-label uppercase tracking-wider shrink-0">Guitar</label>
+                  <button
+                    onClick={() => updateSetting("guitarEnabled", !settings.guitarEnabled)}
+                    className="text-[9px] px-1.5 py-1.5 sm:py-0.5 min-h-[36px] sm:min-h-0 rounded font-label transition-colors"
+                    style={{
+                      background: settings.guitarEnabled ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.05)",
+                      color: settings.guitarEnabled ? "#22c55e" : "#555",
+                      border: `1px solid ${settings.guitarEnabled ? "rgba(34,197,94,0.3)" : "rgba(255,255,255,0.08)"}`,
+                    }}
+                  >
+                    {settings.guitarEnabled ? "ON" : "OFF"}
+                  </button>
+                </div>
+                <span className="text-[10px] text-[#9a9590] font-mono shrink-0">{Math.round(settings.guitarVol * 100)}%</span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={Math.round(settings.guitarVol * 100)}
+                onChange={e => updateSetting("guitarVol", Number(e.target.value) / 100)}
+                className="w-full accent-[#f59e0b] h-1"
+                disabled={!settings.guitarEnabled}
+              />
+            </div>
+
             {/* Drums */}
             <div className="min-w-0">
               <div className="flex items-center justify-between mb-1 min-w-0">
@@ -1242,7 +1377,7 @@ export default function JamModePage() {
             <div className="flex gap-1.5 overflow-x-auto scrollbar-hide sm:flex-wrap min-h-[32px]">
               {GROOVE_STYLE_LIST.map(g => {
                 const isActive = settings.grooveStyle === g;
-                const enabled = settings.drumEnabled || settings.bassEnabled;
+                const enabled = settings.drumEnabled || settings.bassEnabled || settings.guitarEnabled;
                 return (
                   <button
                     key={g}
