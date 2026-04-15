@@ -1688,7 +1688,7 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
                     return (
                       <div
                         key={t.index}
-                        onClick={() => focusTrack(t.index)}
+                        onClick={() => changeTrk(t.index)}
                         className="shrink-0 cursor-pointer transition-all"
                         style={{
                           width: 72,
