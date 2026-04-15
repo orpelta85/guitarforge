@@ -1205,12 +1205,18 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
       if (pendingEvent) { process(pendingEvent); pendingEvent = null; }
       // Also process this final event
       process(e);
-      dragStateRef.current = { mode: "none", anchorBeat: null };
       try { handleEl.releasePointerCapture(e.pointerId); } catch { /* ok */ }
       handleEl.removeEventListener("pointermove", onMove);
       handleEl.removeEventListener("pointerup", onUp);
       handleEl.removeEventListener("pointercancel", onUp);
       if (latestA && latestB) applyLoopRangeByBeats(latestA, latestB);
+      // IMPORTANT: keep dragStateRef.mode as "left"/"right" for one tick so that
+      // alphaTab's beatMouseDown / beatMouseUp listeners (which may fire AFTER
+      // pointerup from the bubbled/synthesized mouse event on the canvas) see
+      // the guard and skip clearing the selection. Reset on next microtask.
+      setTimeout(() => {
+        dragStateRef.current = { mode: "none", anchorBeat: null };
+      }, 100);
     }
     handleEl.addEventListener("pointermove", onMove);
     handleEl.addEventListener("pointerup", onUp);
