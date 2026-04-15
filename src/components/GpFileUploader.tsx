@@ -1161,13 +1161,17 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
     const api = apiRef.current;
     if (!main || !api?.renderer?.boundsLookup) return;
     const mainEl: HTMLDivElement = main;
-    const handleEl = ev.currentTarget;
     const anchorBeat = side === "left" ? selEnd : selStart;
     if (!anchorBeat) return;
     dragStateRef.current = { mode: side, anchorBeat };
 
-    // Capture pointer so we keep receiving move events even if pointer leaves the handle.
-    try { handleEl.setPointerCapture(ev.pointerId); } catch { /* ok */ }
+    // NOTE: We intentionally do NOT call setPointerCapture on the handle DOM
+    // node. During drag, React re-renders the overlay (because setSelStart/End
+    // change selRects, which changes where the handle is rendered). If the
+    // handle DOM node is remounted, its pointer capture is lost and subsequent
+    // pointer events fall through to the canvas — alphaTab then clears the
+    // selection. Instead, attach listeners to the `document`, which is stable
+    // across renders.
 
     let latestA: any = selStart;
     let latestB: any = selEnd;
@@ -1192,6 +1196,8 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
     }
 
     function onMove(e: PointerEvent) {
+      // Only respond to the primary pointer (guard against multi-touch)
+      if (dragStateRef.current.mode !== side) return;
       pendingEvent = e;
       if (rafId) return;
       rafId = requestAnimationFrame(() => {
@@ -1203,24 +1209,24 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
       if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
       // Flush any pending event so final position is accurate
       if (pendingEvent) { process(pendingEvent); pendingEvent = null; }
-      // Also process this final event
       process(e);
-      try { handleEl.releasePointerCapture(e.pointerId); } catch { /* ok */ }
-      handleEl.removeEventListener("pointermove", onMove);
-      handleEl.removeEventListener("pointerup", onUp);
-      handleEl.removeEventListener("pointercancel", onUp);
+      document.removeEventListener("pointermove", onMove, true);
+      document.removeEventListener("pointerup", onUp, true);
+      document.removeEventListener("pointercancel", onUp, true);
       if (latestA && latestB) applyLoopRangeByBeats(latestA, latestB);
-      // IMPORTANT: keep dragStateRef.mode as "left"/"right" for one tick so that
-      // alphaTab's beatMouseDown / beatMouseUp listeners (which may fire AFTER
-      // pointerup from the bubbled/synthesized mouse event on the canvas) see
-      // the guard and skip clearing the selection. Reset on next microtask.
+      // Keep dragStateRef.mode as the handle side for a brief window so that
+      // alphaTab's beatMouseDown / beatMouseUp listeners (which may fire from
+      // synthesized mouse events on the canvas) see the guard and skip
+      // clearing the selection.
       setTimeout(() => {
         dragStateRef.current = { mode: "none", anchorBeat: null };
-      }, 100);
+      }, 250);
     }
-    handleEl.addEventListener("pointermove", onMove);
-    handleEl.addEventListener("pointerup", onUp);
-    handleEl.addEventListener("pointercancel", onUp);
+    // Document-level capture-phase listeners: always receive events regardless
+    // of React re-renders or which element the pointer is currently over.
+    document.addEventListener("pointermove", onMove, true);
+    document.addEventListener("pointerup", onUp, true);
+    document.addEventListener("pointercancel", onUp, true);
   }
 
   function onOverlayDoubleClick(ev: React.MouseEvent) {
