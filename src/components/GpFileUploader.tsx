@@ -824,6 +824,31 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
     return () => window.removeEventListener("gf-range-selected", onRangeSelected);
   }, [applyLoopRange]);
 
+  // Block alphaTab's capture-phase mousedown handler from firing when the user
+  // clicks a drag handle (.gf-handle). alphaTab registers its mousedown
+  // listener on mainRef with {capture: true}, so it runs BEFORE React's bubble
+  // phase — if we don't stopPropagation at capture phase, alphaTab hit-tests
+  // the click against its canvas and starts a fresh beat selection that
+  // overwrites the existing one.
+  useEffect(() => {
+    const el = mainRef.current;
+    if (!el) return;
+    const block = (e: Event) => {
+      const t = e.target as HTMLElement | null;
+      if (t && (t.closest?.(".gf-handle") || t.classList?.contains("gf-handle"))) {
+        e.stopPropagation();
+      }
+    };
+    el.addEventListener("mousedown", block, true);
+    el.addEventListener("mouseup", block, true);
+    el.addEventListener("mousemove", block, true);
+    return () => {
+      el.removeEventListener("mousedown", block, true);
+      el.removeEventListener("mouseup", block, true);
+      el.removeEventListener("mousemove", block, true);
+    };
+  }, [ready]);
+
   // ESC clears selection and disables loop; scroll / resize triggers overlay recompute
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -1943,6 +1968,8 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
                         className="gf-handle"
                         style={{ ...handleStyle(first.x, first.y + first.h / 2), touchAction: "none" }}
                         onPointerDown={(e) => onHandlePointerDown("left", e)}
+                        onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                         title="Drag to resize loop start"
                       >
                         <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
@@ -1953,6 +1980,8 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
                         className="gf-handle"
                         style={{ ...handleStyle(last.x + last.w, last.y + last.h / 2), touchAction: "none" }}
                         onPointerDown={(e) => onHandlePointerDown("right", e)}
+                        onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                         title="Drag to resize loop end"
                       >
                         <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
