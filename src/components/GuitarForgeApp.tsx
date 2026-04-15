@@ -589,15 +589,16 @@ export default function GuitarForgeApp() {
   const WIZARD_STYLES = ["Hard Rock", "Metal", "Classic Rock", "Alternative Rock", "Punk Rock", "Grunge", "Blues", "Jazz", "Heavy Metal", "Thrash Metal", "Progressive Metal", "Progressive Rock", "Death Metal", "Acoustic", "Funk", "Fusion", "Flamenco", "Country", "Blues Rock", "Nu Metal", "Stoner Rock", "Neo-Classical"];
 
   if (showWelcome) return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ background: "#121214" }}>
-      <div className="w-full max-w-[500px]">
+    <div className="fixed inset-0 z-[9999] overflow-y-auto" style={{ background: "#121214" }}>
+      <div className="min-h-full flex items-start sm:items-center justify-center px-4 py-6 sm:py-8">
+        <div className="w-full max-w-[500px] my-auto">
         {/* Logo */}
-        <div className="text-center mb-6">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" className="mx-auto mb-3 opacity-60">
+        <div className="text-center mb-4 sm:mb-6">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="mx-auto mb-2 opacity-60 sm:w-10 sm:h-10">
             <path d="M12 2L9 7H4l3 5-3 5h5l3 5 3-5h5l-3-5 3-5h-5L12 2z" fill="#D4A843" opacity="0.3"/>
             <path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" stroke="#D4A843" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-          <img src="/logo.png" alt="Guitar Practice" className="h-28 mx-auto object-contain logo-blend" />
+          <img src="/logo.png" alt="Guitar Practice" className="h-16 sm:h-24 md:h-28 mx-auto object-contain logo-blend" />
         </div>
 
         {/* Step dots */}
@@ -612,7 +613,7 @@ export default function GuitarForgeApp() {
         </div>
 
         {/* Card */}
-        <div className="rounded-lg p-6 sm:p-8" style={{ background: "#1a1a1e", border: "1px solid #2a2a2e" }}>
+        <div className="rounded-lg p-4 sm:p-6 md:p-8" style={{ background: "#1a1a1e", border: "1px solid #2a2a2e" }}>
           {/* Step 1: Level */}
           {wizardStep === 0 && (
             <div className="animate-fade-in">
@@ -706,20 +707,20 @@ export default function GuitarForgeApp() {
           )}
 
           {/* Navigation */}
-          <div className="flex justify-between items-center mt-8">
+          <div className="flex flex-wrap justify-between items-center gap-3 mt-6 sm:mt-8">
             {wizardStep > 0 ? (
-              <button type="button" onClick={() => setWizardStep(s => s - 1)} className="btn-ghost">Back</button>
-            ) : <div />}
+              <button type="button" onClick={() => setWizardStep(s => s - 1)} className="btn-ghost flex-shrink-0">Back</button>
+            ) : <div className="flex-shrink-0" />}
             {wizardStep < 2 ? (
               <button type="button" onClick={() => setWizardStep(s => s + 1)}
                 disabled={(wizardStep === 0 && !wizardLevel) || (wizardStep === 1 && wizardStyles.length === 0)}
-                className="btn-gold disabled:opacity-30 disabled:cursor-not-allowed">
+                className="btn-gold disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0">
                 Next
               </button>
             ) : (
               <button type="button" onClick={finishWizard}
                 disabled={!wizardTime}
-                className="btn-gold disabled:opacity-30 disabled:cursor-not-allowed">
+                className="btn-gold disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0">
                 Start Practicing
               </button>
             )}
@@ -727,11 +728,12 @@ export default function GuitarForgeApp() {
         </div>
 
         {/* Skip */}
-        <div className="text-center mt-4">
+        <div className="text-center mt-3 sm:mt-4 pb-2">
           <button type="button" onClick={() => { localStorage.setItem("gf-onboarded", "true"); setShowWelcome(false); }}
-            className="font-label text-[11px] text-[#555] hover:text-[#888] bg-transparent border-none cursor-pointer transition-colors">
+            className="font-label text-[12px] sm:text-[11px] text-[#777] sm:text-[#555] hover:text-[#aaa] bg-transparent border-none cursor-pointer transition-colors px-3 py-2">
             Skip setup
           </button>
+        </div>
         </div>
       </div>
     </div>
