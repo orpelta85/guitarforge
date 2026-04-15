@@ -1868,7 +1868,7 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
 
             {/* Interactive overlay: hover + selection + drag handles + playing-bar highlight */}
             {ready && !viewerCollapsed && (
-              <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" }}>
+              <div style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 5 }}>
                 {/* Playing-beat highlight (GP-style cream/yellow wash on the current beat) */}
                 {playingBeatRects.map((r, i) => (
                   <div key={`pb-${i}`} style={{
@@ -1941,9 +1941,9 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
                   const last = selRects[selRects.length - 1];
                   const handleStyle = (left: number, top: number): React.CSSProperties => ({
                     position: "absolute",
-                    left: left - 11, top: top - 11,
-                    width: 22, height: 22,
-                    borderRadius: 11,
+                    left: left - 14, top: top - 14,
+                    width: 28, height: 28,
+                    borderRadius: 14,
                     background: "linear-gradient(135deg, rgba(245,158,11,0.95), rgba(212,168,67,0.9))",
                     backdropFilter: "blur(6px)",
                     WebkitBackdropFilter: "blur(6px)",
@@ -1951,6 +1951,7 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
                     boxShadow: "0 2px 10px rgba(245,158,11,0.55), 0 0 0 2px rgba(245,158,11,0.18), inset 0 1px 0 rgba(255,255,255,0.35)",
                     cursor: "ew-resize",
                     pointerEvents: "auto",
+                    zIndex: 1000,
                     display: "flex", alignItems: "center", justifyContent: "center",
                     color: "#0a0a0a",
                     transition: "transform 150ms cubic-bezier(0.34,1.56,0.64,1), box-shadow 150ms ease-out",
