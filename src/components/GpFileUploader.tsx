@@ -1333,7 +1333,7 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
                 <button onClick={togglePlay}
                   title={playing ? "Pause (Space)" : "Play (Space)"}
                   aria-label={playing ? "Pause" : "Play"}
-                  className="w-11 h-11 rounded-full cursor-pointer flex items-center justify-center shrink-0 transition-all duration-150 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-[#D4A843]/60"
+                  className="gf-play-btn gf-tool-btn w-11 h-11 rounded-full cursor-pointer flex items-center justify-center shrink-0 transition-all duration-150 hover:scale-105 focus:outline-none"
                   style={{
                     background: playing
                       ? "radial-gradient(circle at 30% 30%, #44dd44, #22aa22)"
@@ -1410,7 +1410,7 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
                         (e.target as HTMLInputElement).blur();
                       }
                     }}
-                    className="w-16 text-center font-readout text-[12px] bg-[#1a1a1a] border border-[#333] rounded-md px-1.5 py-1 text-[#D4A843] outline-none focus:border-[#D4A843] disabled:opacity-40 disabled:cursor-not-allowed [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    className="gf-tool-input w-16 text-center font-readout text-[12px] bg-[#1a1a1a] border border-[#333] rounded-md px-1.5 py-1 text-[#D4A843] outline-none focus:border-[#D4A843] hover:border-[#D4A843]/50 transition-colors duration-120 disabled:opacity-40 disabled:cursor-not-allowed [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
                   <span className="font-readout text-[9px] text-[#444]">{Math.round(speed * 100)}%</span>
                 </div>
@@ -1419,7 +1419,7 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
               {/* Row 2: Loop, metronome, tools */}
               <div className="flex items-center gap-1.5 flex-wrap">
                 <button onClick={toggleLoop}
-                  className={`font-label text-[9px] px-2 py-1 rounded cursor-pointer border ${isLooping ? "border-[#D4A843] text-[#D4A843] bg-[#D4A843]/10" : "border-[#222] text-[#555]"}`}>
+                  className={`gf-tool-btn font-label text-[9px] px-2 py-1 rounded cursor-pointer border transition-colors duration-120 ${isLooping ? "border-[#D4A843] text-[#D4A843] bg-[#D4A843]/10" : "border-[#222] text-[#555] hover:border-[#D4A843]/40 hover:text-[#D4A843]/70"}`}>
                   Loop {isLooping ? "ON" : "OFF"}
                 </button>
 
@@ -1452,46 +1452,46 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
                 <div className="w-px h-4 bg-[#222]" />
 
                 <button onClick={toggleMetronome}
-                  className={`font-label text-[9px] px-2 py-1 rounded cursor-pointer border ${metronomeOn ? "border-[#33CC33] text-[#33CC33] bg-[#33CC33]/10" : "border-[#222] text-[#555]"}`}>
+                  className={`gf-tool-btn font-label text-[9px] px-2 py-1 rounded cursor-pointer border transition-colors duration-120 ${metronomeOn ? "border-[#33CC33] text-[#33CC33] bg-[#33CC33]/10" : "border-[#222] text-[#555] hover:border-[#33CC33]/40 hover:text-[#33CC33]/70"}`}>
                   Met
                 </button>
                 <input type="range" min="0" max="1" step="0.05" value={metronomeVolume}
                   onChange={e => setMetVol(Number(e.target.value))} className="w-12 h-1 accent-[#33CC33]" />
 
                 <button onClick={() => setCountIn(countInVolume > 0 ? 0 : 1)}
-                  className={`font-label text-[9px] px-2 py-1 rounded cursor-pointer border ${countInVolume > 0 ? "border-[#D4A843] text-[#D4A843] bg-[#D4A843]/10" : "border-[#222] text-[#555]"}`}>
+                  className={`gf-tool-btn font-label text-[9px] px-2 py-1 rounded cursor-pointer border transition-colors duration-120 ${countInVolume > 0 ? "border-[#D4A843] text-[#D4A843] bg-[#D4A843]/10" : "border-[#222] text-[#555] hover:border-[#D4A843]/40 hover:text-[#D4A843]/70"}`}>
                   Count-in
                 </button>
 
                 {tracks.length > 1 && (
-                  <select value={activeTrack} onChange={e => changeTrk(Number(e.target.value))} className="input !w-auto !py-1 !text-[10px]">
+                  <select value={activeTrack} onChange={e => changeTrk(Number(e.target.value))} className="gf-track-select gf-tool-input input !w-auto !py-1 !text-[10px]">
                     {tracks.map(t => <option key={t.index} value={t.index}>{t.name}</option>)}
                   </select>
                 )}
 
                 <div className="flex items-center gap-1">
                   <span className="font-label text-[8px] text-[#555]">Transpose</span>
-                  <button onClick={() => doTranspose(-1)} className="font-readout text-[9px] px-1.5 py-0.5 rounded cursor-pointer border border-[#222] text-[#555] hover:text-[#D4A843]">-</button>
+                  <button onClick={() => doTranspose(-1)} className="gf-spin-btn gf-tool-btn font-readout text-[9px] px-1.5 py-0.5 rounded cursor-pointer border border-[#222] text-[#555] transition-colors duration-120">-</button>
                   <span className={`font-readout text-[9px] min-w-[20px] text-center ${transpose !== 0 ? "text-[#D4A843]" : "text-[#555]"}`}>{transpose > 0 ? `+${transpose}` : transpose}</span>
-                  <button onClick={() => doTranspose(1)} className="font-readout text-[9px] px-1.5 py-0.5 rounded cursor-pointer border border-[#222] text-[#555] hover:text-[#D4A843]">+</button>
+                  <button onClick={() => doTranspose(1)} className="gf-spin-btn gf-tool-btn font-readout text-[9px] px-1.5 py-0.5 rounded cursor-pointer border border-[#222] text-[#555] transition-colors duration-120">+</button>
                   {transpose !== 0 && <button onClick={() => { setTranspose(0); doTranspose(-transpose); }} className="font-label text-[8px] text-[#555] hover:text-[#C41E3A] cursor-pointer">Reset</button>}
                 </div>
 
                 <div className="flex gap-1 ml-auto">
                   <button onClick={() => setShowFretboard(!showFretboard)}
-                    className={`font-label text-[9px] px-2 py-1 rounded cursor-pointer border ${showFretboard ? "border-[#D4A843] text-[#D4A843]" : "border-[#222] text-[#555]"}`}>
+                    className={`gf-mixer-btn gf-tool-btn font-label text-[9px] px-2 py-1 rounded cursor-pointer border transition-colors duration-120 ${showFretboard ? "border-[#D4A843] text-[#D4A843] bg-[#D4A843]/10" : "border-[#222] text-[#555]"}`}>
                     Fretboard
                   </button>
                   <button onClick={() => setShowMixer(!showMixer)}
-                    className={`font-label text-[9px] px-2 py-1 rounded cursor-pointer border ${showMixer ? "border-[#D4A843] text-[#D4A843]" : "border-[#222] text-[#555]"}`}>
+                    className={`gf-mixer-btn gf-tool-btn font-label text-[9px] px-2 py-1 rounded cursor-pointer border transition-colors duration-120 ${showMixer ? "border-[#D4A843] text-[#D4A843] bg-[#D4A843]/10" : "border-[#222] text-[#555]"}`}>
                     Mixer
                   </button>
                   <button onClick={() => setShowBookmarks(!showBookmarks)}
-                    className={`font-label text-[9px] px-2 py-1 rounded cursor-pointer border ${showBookmarks ? "border-[#D4A843] text-[#D4A843]" : "border-[#222] text-[#555]"}`}>
+                    className={`gf-mixer-btn gf-tool-btn font-label text-[9px] px-2 py-1 rounded cursor-pointer border transition-colors duration-120 ${showBookmarks ? "border-[#D4A843] text-[#D4A843] bg-[#D4A843]/10" : "border-[#222] text-[#555]"}`}>
                     Clips
                   </button>
                   <button onClick={() => setShowSettings(!showSettings)}
-                    className={`font-label text-[9px] px-2 py-1 rounded cursor-pointer border ${showSettings ? "border-[#D4A843] text-[#D4A843]" : "border-[#222] text-[#555]"}`}>
+                    className={`gf-mixer-btn gf-tool-btn font-label text-[9px] px-2 py-1 rounded cursor-pointer border transition-colors duration-120 ${showSettings ? "border-[#D4A843] text-[#D4A843] bg-[#D4A843]/10" : "border-[#222] text-[#555]"}`}>
                     Display
                   </button>
                 </div>
@@ -1674,7 +1674,7 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
               </div>
 
               {/* Tracks — vertical channel strips */}
-              <div className="flex-1 overflow-auto px-3 py-3">
+              <div className="gf-mixer-scroll flex-1 overflow-auto px-3 py-3">
                 <div className="font-label text-[9px] tracking-[0.14em] uppercase text-[#888] mb-2">Channels</div>
                 <div className="flex gap-2 overflow-x-auto pb-2">
                   {tracks.map(t => {
@@ -1689,7 +1689,7 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
                       <div
                         key={t.index}
                         onClick={() => changeTrk(t.index)}
-                        className="shrink-0 cursor-pointer transition-all"
+                        className="gf-track-strip shrink-0 cursor-pointer transition-all duration-150"
                         style={{
                           width: 72,
                           padding: "10px 6px",
@@ -1859,12 +1859,27 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
             </div>
           )}
 
-          {!viewerCollapsed && loading && <div className="p-6 text-center font-label text-sm text-[#444]">Loading tab...</div>}
-          {!viewerCollapsed && error && <div className="p-4 text-center font-label text-[11px] text-[#C41E3A]">{error}</div>}
+          {!viewerCollapsed && loading && (
+            <div className="p-6 text-center">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[#D4A843]/25 bg-[#D4A843]/[0.04]" style={{ animation: "gfLoadingPulse 1.5s ease-in-out infinite" }}>
+                <div className="w-3.5 h-3.5 border-2 border-[#D4A843] border-t-transparent rounded-full animate-spin" />
+                <span className="font-label text-[11px] tracking-[0.08em] uppercase text-[#D4A843]">Loading tab</span>
+              </div>
+            </div>
+          )}
+          {!viewerCollapsed && error && (
+            <div className="mx-4 my-3 p-3 rounded-md border border-[#C41E3A]/40 bg-[#C41E3A]/[0.06] flex items-start gap-2">
+              <svg width="14" height="14" viewBox="0 0 14 14" className="mt-px shrink-0" aria-hidden="true">
+                <circle cx="7" cy="7" r="6" stroke="#C41E3A" strokeWidth="1.4" fill="none" />
+                <path d="M7 4 L7 8 M7 10 L7 10.5" stroke="#C41E3A" strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
+              <span className="font-label text-[11px] text-[#ff6b8a] leading-snug">{error}</span>
+            </div>
+          )}
 
           <div ref={overlayWrapRef} style={{ position: "relative" }} onDoubleClick={onOverlayDoubleClick}
             onMouseLeave={() => setHoverBar(null)}>
-            <div ref={mainRef} style={{ minHeight: ready && !viewerCollapsed ? 350 : 0, maxHeight: viewerCollapsed ? 0 : 550, overflow: "auto", overscrollBehavior: "contain", background: viewerCollapsed ? "transparent" : "#fff" }} dir="ltr" />
+            <div ref={mainRef} className="gf-main-scroll" style={{ minHeight: ready && !viewerCollapsed ? 350 : 0, maxHeight: viewerCollapsed ? 0 : 550, overflow: "auto", overscrollBehavior: "contain", background: viewerCollapsed ? "transparent" : "#fff" }} dir="ltr" />
 
             {/* Interactive overlay: hover + selection + drag handles + playing-bar highlight */}
             {ready && !viewerCollapsed && (
@@ -1912,25 +1927,29 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
                   return (
                     <div style={{
                       position: "absolute",
-                      left: cx - 60, top: Math.max(2, first.y - 22),
-                      width: 120,
+                      left: cx - 70, top: Math.max(2, first.y - 24),
+                      width: 140,
                       textAlign: "center",
                       pointerEvents: "none",
+                      animation: "gfLoopLabelIn 180ms cubic-bezier(0.22, 1, 0.36, 1)",
                     }}>
                       <span style={{
                         display: "inline-block",
-                        padding: "2px 8px",
-                        background: "linear-gradient(180deg, #1a1a1a, #0a0a0a)",
-                        border: "1px solid rgba(245,158,11,0.5)",
+                        padding: "3px 10px",
+                        background: "linear-gradient(180deg, rgba(26,26,26,0.95), rgba(10,10,10,0.95))",
+                        backdropFilter: "blur(8px)",
+                        WebkitBackdropFilter: "blur(8px)",
+                        border: "1px solid rgba(245,158,11,0.45)",
                         borderRadius: 10,
                         color: "#D4A843",
-                        fontSize: 9,
+                        fontSize: 10,
                         fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-                        letterSpacing: "0.08em",
+                        letterSpacing: "0.1em",
                         textTransform: "uppercase",
-                        boxShadow: "0 2px 6px rgba(0,0,0,0.5)",
+                        fontWeight: 600,
+                        boxShadow: "0 4px 12px rgba(0,0,0,0.6), 0 0 0 1px rgba(245,158,11,0.08)",
                       }}>
-                        Loop &bull; {barsCount > 0 ? barsCount : 1} bar{barsCount !== 1 ? "s" : ""}
+                        Loop &middot; {barsCount > 0 ? barsCount : 1} bar{barsCount !== 1 ? "s" : ""}
                       </span>
                     </div>
                   );
@@ -1966,8 +1985,8 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                         title="Drag to resize loop start"
                       >
-                        <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
-                          <path d="M6.5 2 L3 5 L6.5 8" stroke="#0a0a0a" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                        <svg width="11" height="11" viewBox="0 0 10 10" aria-hidden="true">
+                          <path d="M6.5 2 L3 5 L6.5 8" stroke="#0a0a0a" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       </div>
                       <div
@@ -1978,8 +1997,8 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                         title="Drag to resize loop end"
                       >
-                        <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
-                          <path d="M3.5 2 L7 5 L3.5 8" stroke="#0a0a0a" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                        <svg width="11" height="11" viewBox="0 0 10 10" aria-hidden="true">
+                          <path d="M3.5 2 L7 5 L3.5 8" stroke="#0a0a0a" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       </div>
                     </>
@@ -1990,8 +2009,8 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
           </div>
           <style jsx>{`
             @keyframes gfSelFadeIn {
-              from { opacity: 0; transform: scale(0.98); }
-              to { opacity: 1; transform: scale(1); }
+              from { opacity: 0; transform: scale(0.98) translateY(-2px); }
+              to { opacity: 1; transform: scale(1) translateY(0); }
             }
             @keyframes gfSelShimmer {
               0%, 100% { box-shadow: 0 0 12px rgba(245,158,11,0.28), inset 0 0 12px rgba(245,158,11,0.08); }
@@ -2001,12 +2020,105 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
               from { transform: translateX(100%); opacity: 0.6; }
               to { transform: translateX(0); opacity: 1; }
             }
+            @keyframes gfLoadingPulse {
+              0%, 100% { opacity: 0.55; transform: scale(1); }
+              50% { opacity: 1; transform: scale(1.02); }
+            }
+            @keyframes gfLoopLabelIn {
+              from { opacity: 0; transform: translateY(4px) scale(0.96); }
+              to { opacity: 1; transform: translateY(0) scale(1); }
+            }
+            /* Drag handles */
+            :global(.gf-handle) {
+              cursor: grab;
+            }
             :global(.gf-handle:hover) {
               transform: scale(1.12);
-              box-shadow: 0 3px 14px rgba(245,158,11,0.75), 0 0 0 3px rgba(245,158,11,0.22), inset 0 1px 0 rgba(255,255,255,0.45) !important;
+              box-shadow: 0 3px 16px rgba(245,158,11,0.8), 0 0 0 3px rgba(245,158,11,0.24), inset 0 1px 0 rgba(255,255,255,0.45) !important;
             }
             :global(.gf-handle:active) {
               transform: scale(1.2);
+              cursor: grabbing;
+              box-shadow: 0 5px 22px rgba(245,158,11,0.9), 0 0 0 4px rgba(245,158,11,0.3), inset 0 2px 0 rgba(255,255,255,0.55) !important;
+            }
+            /* Toolbar buttons — focus-visible amber ring */
+            :global(.gf-tool-btn:focus-visible),
+            :global(.gf-tool-input:focus-visible) {
+              outline: 2px solid rgba(245,158,11,0.55);
+              outline-offset: 2px;
+            }
+            /* Play button micro-bounce on active */
+            :global(.gf-play-btn:active) {
+              transform: scale(0.94) !important;
+              transition: transform 90ms ease-out !important;
+            }
+            /* Mixer launcher — amber tint on hover */
+            :global(.gf-mixer-btn:hover) {
+              background: rgba(245,158,11,0.08) !important;
+              border-color: rgba(245,158,11,0.45) !important;
+              color: #D4A843 !important;
+            }
+            /* Spinbutton +/- */
+            :global(.gf-spin-btn:hover) {
+              background: rgba(245,158,11,0.1);
+              border-color: rgba(245,158,11,0.5) !important;
+              color: #D4A843 !important;
+            }
+            :global(.gf-spin-btn:active) {
+              transform: scale(0.92);
+            }
+            /* Native select polish */
+            :global(.gf-track-select) {
+              transition: border-color 140ms ease-out, background-color 140ms ease-out;
+            }
+            :global(.gf-track-select:hover) {
+              border-color: rgba(245,158,11,0.45) !important;
+            }
+            :global(.gf-track-select:focus) {
+              border-color: rgba(245,158,11,0.8) !important;
+              outline: 2px solid rgba(245,158,11,0.35);
+              outline-offset: 1px;
+            }
+            /* Track strip hover */
+            :global(.gf-track-strip:hover) {
+              background: rgba(255,255,255,0.035) !important;
+            }
+            /* Custom scrollbar on the alphaTab viewport */
+            :global(.gf-main-scroll) {
+              scrollbar-width: thin;
+              scrollbar-color: rgba(245,158,11,0.25) transparent;
+            }
+            :global(.gf-main-scroll::-webkit-scrollbar) {
+              width: 6px;
+              height: 6px;
+            }
+            :global(.gf-main-scroll::-webkit-scrollbar-track) {
+              background: transparent;
+            }
+            :global(.gf-main-scroll::-webkit-scrollbar-thumb) {
+              background: rgba(245,158,11,0.25);
+              border-radius: 3px;
+              transition: background-color 160ms ease-out;
+            }
+            :global(.gf-main-scroll::-webkit-scrollbar-thumb:hover) {
+              background: rgba(245,158,11,0.55);
+            }
+            /* Mixer drawer scrollbar */
+            :global(.gf-mixer-scroll) {
+              scrollbar-width: thin;
+              scrollbar-color: rgba(245,158,11,0.22) transparent;
+            }
+            :global(.gf-mixer-scroll::-webkit-scrollbar) {
+              width: 6px;
+              height: 6px;
+            }
+            :global(.gf-mixer-scroll::-webkit-scrollbar-track) { background: transparent; }
+            :global(.gf-mixer-scroll::-webkit-scrollbar-thumb) {
+              background: rgba(245,158,11,0.22);
+              border-radius: 3px;
+            }
+            :global(.gf-mixer-scroll::-webkit-scrollbar-thumb:hover) {
+              background: rgba(245,158,11,0.5);
             }
           `}</style>
         </div>
