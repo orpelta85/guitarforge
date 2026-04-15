@@ -818,12 +818,29 @@ export default function LearningCenterPage() {
     o.start(c.currentTime + delay); o.stop(c.currentTime + delay + 0.6);
   }
   function playChordByName(name: string, delay = 0) {
-    const r = name.replace(/[m7b5#addimaugsuj9]+.*$/, "");
-    const rIdx = NOTES.indexOf(r);
+    // Parse root: letter + optional accidental (#, b)
+    const m = name.match(/^([A-G])([#b]?)(.*)$/);
+    if (!m) return;
+    const [, letter, acc, suffix] = m;
+    // Normalize flat → sharp (Bb → A#, Eb → D#, etc.)
+    const flatToSharp: Record<string, string> = { Db: "C#", Eb: "D#", Gb: "F#", Ab: "G#", Bb: "A#", Cb: "B", Fb: "E" };
+    const noteName = acc === "b" ? (flatToSharp[letter + acc] || letter) : letter + acc;
+    const rIdx = NOTES.indexOf(noteName);
     if (rIdx < 0) return;
-    const isMinor = name.includes("m") && !name.includes("maj");
-    const third = isMinor ? 3 : 4;
-    [0, third, 7].forEach(s => playNote(48 + rIdx + s, delay));
+    // Quality detection from suffix only (not full name)
+    const s = suffix.toLowerCase();
+    const isDim = s.startsWith("dim") || s.startsWith("°");
+    const isAug = s.startsWith("aug") || s.startsWith("+");
+    const isMinor = !isDim && !isAug && s.startsWith("m") && !s.startsWith("maj");
+    const isDom7 = /^7/.test(s);
+    const isMaj7 = s.startsWith("maj7") || s.startsWith("M7");
+    const third = isMinor || isDim ? 3 : 4;
+    const fifth = isDim ? 6 : isAug ? 8 : 7;
+    const notes = [0, third, fifth];
+    if (isDom7) notes.push(10);
+    else if (isMaj7) notes.push(11);
+    else if (isMinor && /m7/.test(s)) notes.push(10);
+    notes.forEach(st => playNote(48 + rIdx + st, delay));
   }
   function playLessonAudio(demo: Lesson["audioDemo"]) {
     if (!demo) return;
