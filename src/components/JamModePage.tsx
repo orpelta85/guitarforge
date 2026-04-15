@@ -1,6 +1,14 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import JamLooper from "@/components/JamLooper";
+import {
+  PROGRESSIONS_BY_STYLE,
+  JAM_STYLE_LIST,
+  JAM_STYLE_LABELS,
+  JAM_STYLE_TO_GROOVE,
+  type JamStyleKey,
+  type Progression,
+} from "@/lib/constants";
 
 // ── Music Theory Data ──
 
@@ -261,15 +269,118 @@ function getBassNote(chordRoot: string, quality: string, tone: BassEvent["tone"]
 
 // Legacy genre maps kept for reference (replaced by GENRE_GROOVE_MAP)
 
+// ── Nashville Numeral → Chord translator ──
+// Parses tokens like "I", "vi", "bVII", "iim7b5", "V7b9", "IM7", "I7-VI7"
+// Returns chord root (note name) + quality suffix for display.
+
+// Scale degree semitones relative to tonic for major vs minor key context
+const MAJOR_DEG_SEMI: Record<string, number> = { I: 0, II: 2, III: 4, IV: 5, V: 7, VI: 9, VII: 11 };
+const MINOR_DEG_SEMI: Record<string, number> = { I: 0, II: 2, III: 3, IV: 5, V: 7, VI: 8, VII: 10 };
+
+interface ParsedNumeral {
+  root: string;      // note name like "A", "F#", "Bb"
+  quality: string;   // chord quality suffix like "", "m", "7", "maj7", "m7", "m7b5", "7b9", "dim"
+  display: string;   // root + quality for display
+  numeral: string;   // raw input token
+}
+
+function parseNashvilleToken(token: string, keyRoot: string, isMinorKey: boolean): ParsedNumeral {
+  const original = token;
+  let cursor = 0;
+
+  // Leading accidental
+  let accidental = 0;
+  if (token[cursor] === "b") { accidental = -1; cursor++; }
+  else if (token[cursor] === "#") { accidental = 1; cursor++; }
+
+  // Roman numeral (greedy match I, II, III, IV, V, VI, VII in upper or lower)
+  let romanRaw = "";
+  while (cursor < token.length && /[IViv]/.test(token[cursor])) {
+    romanRaw += token[cursor];
+    cursor++;
+  }
+  if (!romanRaw) {
+    return { root: keyRoot, quality: "", display: keyRoot, numeral: original };
+  }
+  const isLower = romanRaw === romanRaw.toLowerCase();
+  const romanUpper = romanRaw.toUpperCase();
+
+  // Remainder is quality modifier
+  const mod = token.slice(cursor);
+
+  // Degree semitones: use major or minor scale degrees based on KEY context.
+  // In minor-key context, III/VI/VII are already the flat (minor-scale) degrees (3/8/10),
+  // so an explicit `b` prefix on III/VI/VII is redundant and should be ignored —
+  // otherwise "bVII" (common in minor progressions like Am-G-F-E) would incorrectly drop to F#.
+  const degMap = isMinorKey ? MINOR_DEG_SEMI : MAJOR_DEG_SEMI;
+  const baseSemi = degMap[romanUpper];
+  if (baseSemi === undefined) {
+    return { root: keyRoot, quality: "", display: keyRoot, numeral: original };
+  }
+  const redundantFlat = isMinorKey && accidental === -1 && (romanUpper === "III" || romanUpper === "VI" || romanUpper === "VII");
+  const semitones = baseSemi + (redundantFlat ? 0 : accidental);
+
+  // Compute chord root note
+  const keyRootIdx = noteIndex(keyRoot);
+  const useFlats = ["F", "Bb", "Eb", "Ab", "Db"].includes(keyRoot) || isMinorKey;
+  const chordRoot = noteName(keyRootIdx + semitones, useFlats);
+
+  // Determine chord quality suffix
+  // Start from roman-case default
+  let quality = "";
+  if (isLower) quality = "m";
+
+  // Apply modifier — modifier overrides or extends
+  if (mod) {
+    // Explicit qualities
+    if (mod === "M7" || mod === "maj7") quality = "maj7";
+    else if (mod === "m7b5" || mod === "ø" || mod === "m7b5") quality = "m7b5";
+    else if (mod === "dim" || mod === "o") quality = "dim";
+    else if (mod === "7b9") quality = "7b9";
+    else if (mod === "m7") quality = "m7";
+    else if (mod === "m9") quality = "m9";
+    else if (mod === "m") quality = "m";
+    else if (mod === "7") quality = isLower ? "m7" : "7";
+    else if (mod === "9") quality = isLower ? "m9" : "9";
+    else if (mod === "sus4") quality = "sus4";
+    else if (mod === "sus2") quality = "sus2";
+    else if (mod === "5") quality = "5"; // power chord
+    else if (/^M7/.test(mod)) quality = "maj7";
+    else quality = mod; // fallback: pass through
+  }
+
+  const display = chordRoot + quality;
+  return { root: chordRoot, quality, display, numeral: original };
+}
+
+// Expand a Nashville array (with possible "X-Y" split entries) into chord cells
+function buildChordsFromNashville(
+  nashville: string[],
+  keyRaw: string,
+): ChordDef[] {
+  const isMinorKey = keyRaw.endsWith("m");
+  const keyRoot = keyRaw.replace("m", "");
+  const out: ChordDef[] = [];
+  for (const entry of nashville) {
+    const tokens = entry.split("-").map(t => t.trim()).filter(Boolean);
+    for (const t of tokens) {
+      const p = parseNashvilleToken(t, keyRoot, isMinorKey);
+      out.push({ root: p.root, quality: p.quality, numeral: p.numeral, display: p.display });
+    }
+  }
+  return out;
+}
+
+// Legacy JamProgression interface kept for backwards reference (unused now)
 interface JamProgression {
   name: string;
   genre: string;
   numerals: string[];
-  // Degree offsets from key root and qualities
   degrees: { semitones: number; quality: string; numeral: string }[];
 }
 
-const PROGRESSIONS: JamProgression[] = [
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const LEGACY_PROGRESSIONS_UNUSED: JamProgression[] = [
   {
     name: "12-Bar Blues", genre: "Blues",
     numerals: ["I", "I", "IV", "I", "IV", "IV", "I", "I", "V", "IV", "I", "V"],
@@ -418,21 +529,7 @@ const PROGRESSIONS: JamProgression[] = [
   },
 ];
 
-const GENRES = [...new Set(PROGRESSIONS.map(p => p.genre))];
-
-function buildChords(prog: JamProgression, key: string): ChordDef[] {
-  const root = noteIndex(key);
-  const useFlats = ["F", "Bb", "Eb", "Ab", "Db"].includes(key);
-  return prog.degrees.map(d => {
-    const chordRoot = noteName(root + d.semitones, useFlats);
-    return {
-      root: chordRoot,
-      quality: d.quality,
-      numeral: d.numeral,
-      display: chordRoot + d.quality,
-    };
-  });
-}
+// (Genres now come from JAM_STYLE_LIST imported from constants)
 
 // Scale notes for a given key (natural minor if key ends with 'm', else major)
 function getScaleNotes(key: string): { name: string; notes: string[] } {
@@ -480,7 +577,7 @@ function getBluesNotes(key: string): { name: string; notes: string[] } {
 
 interface JamSettings {
   key: string;
-  genre: string;
+  style: JamStyleKey;
   progressionIndex: number;
   bpm: number;
   barsPerChord: number;
@@ -496,11 +593,12 @@ interface JamSettings {
   // Legacy fields kept for backwards compatibility with localStorage
   drumStyle?: DrumStyleName;
   bassStyle?: BassStyleName;
+  genre?: string;
 }
 
 const DEFAULT_SETTINGS: JamSettings = {
   key: "Am",
-  genre: "Blues",
+  style: "blues",
   progressionIndex: 0,
   bpm: 100,
   barsPerChord: 2,
@@ -525,8 +623,31 @@ function loadSettings(): JamSettings {
         const match = GROOVE_STYLE_LIST.find(g => GROOVE_STYLES[g].drum === parsed.drumStyle);
         parsed.grooveStyle = match || DEFAULT_SETTINGS.grooveStyle;
       }
+      // Migrate legacy genre (capitalized string) to style (lowercase JamStyleKey)
+      if (!parsed.style && parsed.genre) {
+        const legacy = String(parsed.genre).toLowerCase();
+        const map: Record<string, JamStyleKey> = {
+          blues: "blues", rock: "rock", metal: "metal", jazz: "jazz",
+          funk: "funk", punk: "punk", ballad: "pop", "r&b": "rnb", rnb: "rnb",
+          pop: "pop", country: "country", reggae: "reggae", latin: "latin", indie: "indie",
+        };
+        parsed.style = map[legacy] || DEFAULT_SETTINGS.style;
+        // Reset progressionIndex as progressions changed structurally
+        parsed.progressionIndex = 0;
+      }
       delete parsed.drumStyle;
       delete parsed.bassStyle;
+      delete parsed.genre;
+      // Guard: ensure style is a valid key
+      if (!parsed.style || !JAM_STYLE_LIST.includes(parsed.style)) {
+        parsed.style = DEFAULT_SETTINGS.style;
+        parsed.progressionIndex = 0;
+      }
+      // Clamp progressionIndex to valid range
+      const maxIdx = PROGRESSIONS_BY_STYLE[parsed.style as JamStyleKey].length - 1;
+      if (typeof parsed.progressionIndex !== "number" || parsed.progressionIndex > maxIdx || parsed.progressionIndex < 0) {
+        parsed.progressionIndex = 0;
+      }
       return { ...DEFAULT_SETTINGS, ...parsed };
     }
   } catch {}
@@ -596,9 +717,9 @@ export default function JamModePage() {
   }, []);
 
   // Derived data
-  const filteredProgressions = PROGRESSIONS.filter(p => p.genre === settings.genre);
+  const filteredProgressions: Progression[] = PROGRESSIONS_BY_STYLE[settings.style] || [];
   const currentProgression = filteredProgressions[settings.progressionIndex] || filteredProgressions[0];
-  const chords = currentProgression ? buildChords(currentProgression, settings.key) : [];
+  const chords = currentProgression ? buildChordsFromNashville(currentProgression.nashville, settings.key) : [];
   chordsRef.current = chords;
 
   const scaleInfo = settings.scaleType === "pentatonic"
@@ -607,13 +728,13 @@ export default function JamModePage() {
       ? getBluesNotes(settings.key)
       : getScaleNotes(settings.key);
 
-  // Ensure progression index is valid when genre changes
+  // Ensure progression index is valid when style changes
   useEffect(() => {
-    const filtered = PROGRESSIONS.filter(p => p.genre === settings.genre);
+    const filtered = PROGRESSIONS_BY_STYLE[settings.style] || [];
     if (settings.progressionIndex >= filtered.length) {
       updateSetting("progressionIndex", 0);
     }
-  }, [settings.genre, settings.progressionIndex, updateSetting]);
+  }, [settings.style, settings.progressionIndex, updateSetting]);
 
   // Reset playback position when progression or key changes to prevent stale chord refs
   useEffect(() => {
@@ -824,9 +945,9 @@ export default function JamModePage() {
         if (s.loop) {
           subCountRef.current = 0;
           chordIdxRef.current = 0;
-          // Random mode: pick a new random progression in same genre
+          // Random mode: pick a new random progression in same style
           if (s.randomMode) {
-            const filtered = PROGRESSIONS.filter(p => p.genre === s.genre);
+            const filtered = PROGRESSIONS_BY_STYLE[s.style] || [];
             if (filtered.length > 1) {
               let newIdx: number;
               do { newIdx = Math.floor(Math.random() * filtered.length); } while (newIdx === s.progressionIndex && filtered.length > 1);
@@ -948,20 +1069,20 @@ export default function JamModePage() {
               </select>
             </div>
 
-            {/* Genre */}
+            {/* Style */}
             <div>
-              <label className="block text-[10px] text-[#6b6560] font-label mb-1 uppercase tracking-wider">Genre</label>
+              <label className="block text-[10px] text-[#6b6560] font-label mb-1 uppercase tracking-wider">Style</label>
               <select
-                value={settings.genre}
+                value={settings.style}
                 onChange={e => {
-                  const newGenre = e.target.value;
+                  const newStyle = e.target.value as JamStyleKey;
                   const wasPlaying = playing;
-                  // Stop playback when genre changes to prevent stale progression
+                  // Stop playback when style changes to prevent stale progression
                   if (playing || paused) handleStop();
-                  updateSetting("genre", newGenre);
+                  updateSetting("style", newStyle);
                   updateSetting("progressionIndex", 0);
-                  // Auto-select matching groove style
-                  const matchedGroove = GENRE_GROOVE_MAP[newGenre];
+                  // Auto-select matching groove
+                  const matchedGroove = JAM_STYLE_TO_GROOVE[newStyle] as GrooveStyleName | undefined;
                   if (matchedGroove) updateSetting("grooveStyle", matchedGroove);
                   // Auto-restart playback after a tick so new chords are picked up
                   if (wasPlaying) {
@@ -970,7 +1091,7 @@ export default function JamModePage() {
                 }}
                 className="input w-full !rounded !px-2 !py-1.5 !text-xs font-label"
               >
-                {GENRES.map(g => <option key={g} value={g}>{g}</option>)}
+                {JAM_STYLE_LIST.map(s => <option key={s} value={s}>{JAM_STYLE_LABELS[s]}</option>)}
               </select>
             </div>
 
@@ -1182,8 +1303,8 @@ export default function JamModePage() {
           />
         </div>
 
-        {/* Chord progression strip */}
-        <div className="flex items-center gap-1 px-3 py-2 overflow-x-auto scrollbar-hide" style={{ background: "rgba(255,255,255,0.02)" }}>
+        {/* Chord progression strip - fixed height prevents layout shift on style change */}
+        <div className="flex items-center gap-1 px-3 py-2 overflow-x-auto scrollbar-hide min-h-[44px]" style={{ background: "rgba(255,255,255,0.02)" }}>
           {chords.map((c, i) => (
             <div
               key={i}
@@ -1374,7 +1495,7 @@ export default function JamModePage() {
 
       {/* ── Progression Info ── */}
       {currentProgression && (
-        <div className="panel-secondary mt-4 sm:mt-6 rounded-lg p-3 sm:p-4 overflow-hidden">
+        <div className="panel-secondary mt-4 sm:mt-6 rounded-lg p-3 sm:p-4 overflow-hidden min-h-[180px] sm:min-h-[160px]">
           <h2 className="text-sm font-bold text-[#e8e4dc] font-heading mb-2">Progression Details</h2>
           <div className="flex flex-wrap gap-x-6 gap-y-1 text-[11px] min-w-0 overflow-hidden">
             <div className="shrink-0">
@@ -1382,8 +1503,16 @@ export default function JamModePage() {
               <span className="text-[#9a9590]">{currentProgression.name}</span>
             </div>
             <div className="shrink-0">
-              <span className="text-[#6b6560] font-label">Genre: </span>
-              <span className="text-[#9a9590]">{currentProgression.genre}</span>
+              <span className="text-[#6b6560] font-label">Style: </span>
+              <span className="text-[#9a9590]">{JAM_STYLE_LABELS[settings.style]}</span>
+            </div>
+            <div className="shrink-0">
+              <span className="text-[#6b6560] font-label">Time: </span>
+              <span className="text-[#9a9590] font-mono">{currentProgression.timeSignature}</span>
+            </div>
+            <div className="shrink-0">
+              <span className="text-[#6b6560] font-label">Bars: </span>
+              <span className="text-[#9a9590] font-mono">{currentProgression.bars}</span>
             </div>
             <div className="min-w-0 max-w-full">
               <span className="text-[#6b6560] font-label">Chords: </span>
@@ -1391,7 +1520,15 @@ export default function JamModePage() {
             </div>
             <div className="min-w-0 max-w-full">
               <span className="text-[#6b6560] font-label">Numerals: </span>
-              <span className="text-[#9a9590] font-mono break-all">{currentProgression.degrees.map(d => d.numeral).join(" - ")}</span>
+              <span className="text-[#9a9590] font-mono break-all">{currentProgression.nashville.join(" - ")}</span>
+            </div>
+            <div className="min-w-0 max-w-full">
+              <span className="text-[#6b6560] font-label">Mood: </span>
+              <span className="text-[#9a9590]">{currentProgression.mood}</span>
+            </div>
+            <div className="min-w-0 max-w-full">
+              <span className="text-[#6b6560] font-label">Example: </span>
+              <span className="text-[#9a9590]">{currentProgression.famousExample}</span>
             </div>
           </div>
         </div>
