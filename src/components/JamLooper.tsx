@@ -527,13 +527,20 @@ export default function JamLooper({ bpm, jamPlaying }: Props) {
   const isActive = state !== "idle";
 
   return (
-    <div className="mt-4 sm:mt-6 rounded-lg overflow-hidden" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+    <div
+      className="mt-4 sm:mt-6 rounded-xl overflow-hidden"
+      style={{
+        background: "linear-gradient(180deg, #1a1a1e 0%, #141418 100%)",
+        border: "1px solid #2a2a2e",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
+      }}
+    >
       {/* Collapsible header */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between px-3 sm:px-4 py-3 sm:py-4 transition-colors hover:bg-[rgba(255,255,255,0.03)]"
+        className="w-full flex items-center justify-between px-4 py-3.5 transition-colors hover:bg-[rgba(255,255,255,0.02)]"
         style={{
-          borderBottom: expanded ? "1px solid rgba(255,255,255,0.06)" : "none",
+          borderBottom: expanded ? "1px solid #2a2a2e" : "none",
           borderLeft: `3px solid ${state === "recording" ? "#C41E3A" : state === "playing" || state === "countIn" ? "#D4A843" : "#333"}`,
         }}
       >
@@ -550,7 +557,7 @@ export default function JamLooper({ bpm, jamPlaying }: Props) {
                 : "none",
             }}
           />
-          <span className="text-sm font-bold text-[#e8e4dc] font-heading tracking-wide">LOOPER</span>
+          <span className="text-sm font-bold text-[#e8e4dc] font-heading tracking-[0.12em]">LOOPER</span>
           {state === "recording" && (
             <span className="text-[10px] text-[#C41E3A] font-label animate-pulse">REC</span>
           )}
@@ -743,13 +750,27 @@ export default function JamLooper({ bpm, jamPlaying }: Props) {
             {/* Empty state */}
             {layers.length === 0 && state === "idle" && (
               <div
-                className="rounded-lg p-6 text-center"
-                style={{ border: "1px dashed rgba(255,255,255,0.08)" }}
+                className="rounded-lg p-6 text-center flex flex-col items-center gap-2"
+                style={{
+                  border: "1px dashed rgba(255,255,255,0.1)",
+                  background: "rgba(255,255,255,0.015)",
+                }}
               >
-                <div className="text-[11px] text-[#555] font-label mb-1">No layers yet</div>
-                <div className="text-[9px] text-[#444] font-label">
-                  Press Record to start your first loop
-                  {jamPlaying && " - synced to Jam Mode BPM"}
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center"
+                  style={{
+                    background: "rgba(196,30,58,0.1)",
+                    border: "1px solid rgba(196,30,58,0.25)",
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#C41E3A">
+                    <circle cx="12" cy="12" r="8" />
+                  </svg>
+                </div>
+                <div className="text-[12px] text-[#9a9590] font-label font-semibold mt-1">No layers yet</div>
+                <div className="text-[10px] text-[#6b6560] font-label">
+                  Press <span className="text-[#ef4b63]">Record</span> to capture your first loop
+                  {jamPlaying && " — synced to Jam BPM"}
                 </div>
               </div>
             )}
@@ -767,19 +788,23 @@ export default function JamLooper({ bpm, jamPlaying }: Props) {
 
           {/* Main controls */}
           <div className="flex gap-2 mb-2">
-            {/* Record / Overdub */}
+            {/* Record / Overdub - prominent red gradient */}
             <button
               onClick={canRecord ? startRecording : state === "recording" ? stopAll : undefined}
               disabled={state === "countIn" || state === "playing"}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-[11px] font-label transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-[12px] font-semibold font-label transition-all duration-150 active:scale-[0.98] hover:brightness-110 disabled:opacity-30 disabled:cursor-not-allowed"
               style={{
-                background: state === "recording" ? "#C41E3A"
-                  : "rgba(196,30,58,0.1)",
-                color: state === "recording" ? "#fff" : "#C41E3A",
-                border: `1px solid ${state === "recording" ? "#C41E3A" : "rgba(196,30,58,0.3)"}`,
+                background: state === "recording"
+                  ? "linear-gradient(135deg, #dc2f4a, #9f152d)"
+                  : "linear-gradient(135deg, rgba(196,30,58,0.18), rgba(196,30,58,0.08))",
+                color: state === "recording" ? "#fff" : "#ef4b63",
+                border: `1px solid ${state === "recording" ? "#dc2f4a" : "rgba(196,30,58,0.35)"}`,
+                boxShadow: state === "recording"
+                  ? "0 4px 18px rgba(196,30,58,0.4), inset 0 1px 0 rgba(255,255,255,0.2)"
+                  : "inset 0 1px 0 rgba(255,255,255,0.04)",
               }}
             >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
                 {state === "recording" ? (
                   <rect x="6" y="6" width="12" height="12" rx="2" />
                 ) : (
@@ -797,14 +822,15 @@ export default function JamLooper({ bpm, jamPlaying }: Props) {
               <button
                 onClick={canPlay ? startPlaying : undefined}
                 disabled={!canPlay}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-[11px] font-label transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-[12px] font-semibold font-label transition-all duration-150 active:scale-[0.98] hover:brightness-110 disabled:opacity-30 disabled:cursor-not-allowed"
                 style={{
-                  background: "rgba(212,168,67,0.1)",
+                  background: "linear-gradient(135deg, rgba(212,168,67,0.18), rgba(212,168,67,0.08))",
                   color: "#D4A843",
-                  border: "1px solid rgba(212,168,67,0.3)",
+                  border: "1px solid rgba(212,168,67,0.35)",
+                  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
                 }}
               >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
                   <polygon points="6,4 20,12 6,20" />
                 </svg>
                 Play
@@ -812,14 +838,15 @@ export default function JamLooper({ bpm, jamPlaying }: Props) {
             ) : (
               <button
                 onClick={stopPlaying}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-[11px] font-label transition-all"
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-[12px] font-semibold font-label transition-all duration-150 active:scale-[0.98] hover:brightness-110"
                 style={{
-                  background: "rgba(212,168,67,0.2)",
+                  background: "linear-gradient(135deg, rgba(212,168,67,0.25), rgba(212,168,67,0.12))",
                   color: "#D4A843",
-                  border: "1px solid rgba(212,168,67,0.4)",
+                  border: "1px solid rgba(212,168,67,0.45)",
+                  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)",
                 }}
               >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
                   <rect x="6" y="6" width="12" height="12" rx="1" />
                 </svg>
                 Stop

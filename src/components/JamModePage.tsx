@@ -720,17 +720,8 @@ export default function JamModePage() {
   const [currentBeat, setCurrentBeat] = useState(0);
   const [chordFlash, setChordFlash] = useState(false);
   const [toneLoaded, setToneLoaded] = useState(false);
-  const [showSettings, setShowSettings] = useState(() => {
-    if (typeof window !== "undefined") return window.innerWidth >= 640;
-    return true;
-  });
-
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 640px)");
-    const handler = (e: MediaQueryListEvent) => setShowSettings(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
+  // Settings are always visible at top of page. State kept for future collapse UX but defaults true.
+  const [showSettings, setShowSettings] = useState(true);
 
   // Tone.js refs
   const toneRef = useRef<typeof import("tone") | null>(null);
@@ -1133,29 +1124,38 @@ export default function JamModePage() {
   const nextChord = chords[nextChordIdx] || { display: "-", root: "A", quality: "", numeral: "" };
 
   return (
-    <div className="max-w-[960px] lg:max-w-[1100px] xl:max-w-[1280px] mx-auto px-2 sm:px-5 py-3 sm:py-5 pb-28 sm:pb-5 overflow-hidden">
+    <div className="max-w-[960px] lg:max-w-[1100px] xl:max-w-[1280px] mx-auto px-2 sm:px-5 py-3 sm:py-5 pb-6 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4 sm:mb-6">
+      <div className="flex items-end justify-between mb-3 sm:mb-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-[#e8e4dc] font-heading">Jam Mode</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-[#e8e4dc] font-heading tracking-tight">Jam Mode</h1>
           <p className="hidden sm:block text-[11px] sm:text-xs text-[#6b6560] mt-0.5">Play along to chord progressions with real-time cues</p>
         </div>
         <button
           onClick={() => setShowSettings(!showSettings)}
-          className="text-[11px] px-3 py-2.5 sm:py-1.5 rounded font-label transition-colors"
+          className="text-[10px] px-2.5 py-1.5 rounded-md font-label transition-all duration-150"
           style={{
-            background: showSettings ? "rgba(212,168,67,0.15)" : "rgba(255,255,255,0.05)",
-            color: showSettings ? "#D4A843" : "#9a9590",
-            border: `1px solid ${showSettings ? "rgba(212,168,67,0.3)" : "rgba(255,255,255,0.08)"}`,
+            background: "rgba(255,255,255,0.04)",
+            color: "#6b6560",
+            border: "1px solid rgba(255,255,255,0.06)",
           }}
+          title={showSettings ? "Hide Settings" : "Show Settings"}
         >
-          {showSettings ? "Hide Settings" : "Settings"}
+          {showSettings ? "Hide" : "Settings"}
         </button>
       </div>
 
-      {/* Settings Panel */}
+      {/* Settings Panel - always visible by default */}
       {showSettings && (
-        <div className="panel-secondary rounded-lg p-2 sm:p-3 mb-2 sm:mb-4 overflow-hidden">
+        <div
+          className="rounded-xl p-3 sm:p-4 mb-3 sm:mb-4 overflow-hidden"
+          style={{
+            background: "linear-gradient(180deg, #1a1a1e 0%, #141418 100%)",
+            border: "1px solid #2a2a2e",
+          }}
+        >
+          {/* Section: Progression */}
+          <div className="text-[9px] font-label uppercase tracking-[0.15em] text-[#D4A843]/70 mb-2">Progression</div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 min-h-[64px]">
             {/* Key */}
             <div>
@@ -1242,10 +1242,14 @@ export default function JamModePage() {
             </div>
           </div>
 
+          {/* Section: Tempo */}
+          <div className="h-px bg-[#2a2a2e] my-3 sm:my-4" />
+          <div className="text-[9px] font-label uppercase tracking-[0.15em] text-[#D4A843]/70 mb-2">Tempo</div>
+
           {/* BPM Slider */}
-          <div className="mt-2 sm:mt-3">
+          <div className="mt-1">
             <div className="flex items-center justify-between mb-1">
-              <label className="text-[10px] text-[#6b6560] font-label uppercase tracking-wider">Tempo</label>
+              <label className="text-[10px] text-[#6b6560] font-label uppercase tracking-wider">BPM</label>
               <span className="text-xs text-[#D4A843] font-mono font-bold truncate ml-2">{settings.bpm} BPM</span>
             </div>
             <input
@@ -1262,8 +1266,12 @@ export default function JamModePage() {
             </div>
           </div>
 
-          {/* Audio controls row */}
-          <div className="mt-2 sm:mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 min-w-0">
+          {/* Section: Mixer */}
+          <div className="h-px bg-[#2a2a2e] my-3 sm:my-4" />
+          <div className="text-[9px] font-label uppercase tracking-[0.15em] text-[#D4A843]/70 mb-2">Mixer</div>
+
+          {/* Audio controls row - 4-col grid on desktop */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 min-w-0">
             {/* Metronome volume */}
             <div className="min-w-0">
               <div className="flex items-center justify-between mb-1 min-w-0">
@@ -1371,9 +1379,12 @@ export default function JamModePage() {
             </div>
           </div>
 
+          {/* Section: Groove */}
+          <div className="h-px bg-[#2a2a2e] my-3 sm:my-4" />
+          <div className="text-[9px] font-label uppercase tracking-[0.15em] text-[#D4A843]/70 mb-2">Groove Style</div>
+
           {/* Groove style selector (unified drum + bass) */}
-          <div className="mt-2 sm:mt-3 min-h-[56px]">
-            <label className="block text-[10px] text-[#6b6560] font-label mb-1 uppercase tracking-wider">Groove Style</label>
+          <div className="min-h-[56px]">
             <div className="flex gap-1.5 overflow-x-auto scrollbar-hide sm:flex-wrap min-h-[32px]">
               {GROOVE_STYLE_LIST.map(g => {
                 const isActive = settings.grooveStyle === g;
@@ -1398,7 +1409,8 @@ export default function JamModePage() {
           </div>
 
           {/* Toggles row */}
-          <div className="mt-2 sm:mt-3 flex flex-wrap gap-2">
+          <div className="h-px bg-[#2a2a2e] my-3 sm:my-4" />
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => updateSetting("loop", !settings.loop)}
               className="text-[10px] px-3 py-2 sm:py-1 rounded font-label transition-colors"
@@ -1425,8 +1437,15 @@ export default function JamModePage() {
         </div>
       )}
 
-      {/* ── Main Display ── */}
-      <div className="rounded-lg overflow-hidden" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+      {/* ── Play Area ── distinct, premium card */}
+      <div
+        className="rounded-xl overflow-hidden relative"
+        style={{
+          background: "radial-gradient(ellipse at top, rgba(212,168,67,0.06) 0%, rgba(10,10,10,0.0) 60%), linear-gradient(180deg, #121214 0%, #0d0d10 100%)",
+          border: "1px solid #2a2a2e",
+          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 30px rgba(0,0,0,0.25)",
+        }}
+      >
         {/* Progress bar */}
         <div className="h-1.5 w-full" style={{ background: "rgba(255,255,255,0.05)" }}>
           <div
@@ -1518,25 +1537,55 @@ export default function JamModePage() {
             ))}
           </div>
 
-          {/* Bar indicator */}
-          <div className="mt-2 text-[9px] sm:text-[10px] text-[#555] font-mono truncate max-w-full px-2">
-            Bar {Math.floor(currentBeat / 4) + 1} of {settings.barsPerChord}
-            {" | "}
-            Chord {currentChordIdx + 1} of {chords.length}
+          {/* Bar indicator - LED-style pill */}
+          <div className="mt-3 flex items-center gap-2 text-[10px] font-mono">
+            <span
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+              style={{
+                background: "rgba(212,168,67,0.08)",
+                border: "1px solid rgba(212,168,67,0.2)",
+                color: "#D4A843",
+              }}
+            >
+              <span
+                className="inline-block w-1.5 h-1.5 rounded-full"
+                style={{
+                  background: playing ? "#D4A843" : "#555",
+                  boxShadow: playing ? "0 0 6px rgba(212,168,67,0.8)" : "none",
+                }}
+              />
+              Bar {Math.floor(currentBeat / 4) + 1}/{settings.barsPerChord}
+            </span>
+            <span
+              className="px-2.5 py-1 rounded-full text-[#9a9590]"
+              style={{
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.06)",
+              }}
+            >
+              Chord {currentChordIdx + 1}/{chords.length}
+            </span>
           </div>
         </div>
 
-        {/* Transport controls - fixed bottom bar on mobile, inline on desktop */}
-        <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center gap-3 px-4 py-4 bg-[#0a0a0a] border-t border-[#1a1a1a] sm:relative sm:bottom-auto sm:left-auto sm:right-auto sm:z-auto sm:border-[rgba(255,255,255,0.05)] sm:bg-[rgba(255,255,255,0.02)]">
+        {/* Transport controls - always inline, prominent, dedicated area */}
+        <div
+          className="flex items-center justify-center gap-4 px-4 py-5 sm:py-6"
+          style={{
+            background: "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, rgba(0,0,0,0.25) 100%)",
+            borderTop: "1px solid rgba(255,255,255,0.06)",
+          }}
+        >
           <button
             onClick={handleStop}
             disabled={!playing && !paused}
-            className="w-11 h-11 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all"
+            className="w-12 h-12 rounded-full flex items-center justify-center transition-all duration-150 active:scale-95 hover:brightness-110"
             style={{
-              background: playing || paused ? "rgba(239,68,68,0.15)" : "rgba(255,255,255,0.05)",
-              border: `1px solid ${playing || paused ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.08)"}`,
+              background: playing || paused ? "rgba(239,68,68,0.15)" : "rgba(255,255,255,0.04)",
+              border: `1px solid ${playing || paused ? "rgba(239,68,68,0.35)" : "rgba(255,255,255,0.08)"}`,
               color: playing || paused ? "#ef4444" : "#555",
             }}
+            title="Stop"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
               <rect x="3" y="3" width="10" height="10" rx="1" />
@@ -1545,29 +1594,34 @@ export default function JamModePage() {
 
           <button
             onClick={playing ? handlePause : handlePlay}
-            className="w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center transition-all"
+            className="w-[72px] h-[72px] sm:w-[80px] sm:h-[80px] rounded-full flex items-center justify-center transition-all duration-150 active:scale-95 hover:brightness-110"
             style={{
               background: playing
-                ? "rgba(212,168,67,0.2)"
+                ? "linear-gradient(135deg, #22c55e, #16a34a)"
                 : "linear-gradient(135deg, #D4A843, #b8902e)",
               border: playing
-                ? "2px solid rgba(212,168,67,0.4)"
-                : "2px solid rgba(212,168,67,0.6)",
-              color: playing ? "#D4A843" : "#121214",
-              boxShadow: !playing ? "0 4px 20px rgba(212,168,67,0.3)" : "none",
+                ? "2px solid rgba(34,197,94,0.7)"
+                : "2px solid rgba(212,168,67,0.7)",
+              color: "#121214",
+              boxShadow: playing
+                ? "0 6px 28px rgba(34,197,94,0.45), inset 0 1px 0 rgba(255,255,255,0.25)"
+                : "0 6px 28px rgba(212,168,67,0.4), inset 0 1px 0 rgba(255,255,255,0.25)",
             }}
+            title={playing ? "Pause" : "Play"}
           >
             {playing ? (
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <svg width="24" height="24" viewBox="0 0 20 20" fill="currentColor">
                 <rect x="5" y="4" width="3.5" height="12" rx="1" />
                 <rect x="11.5" y="4" width="3.5" height="12" rx="1" />
               </svg>
             ) : (
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <svg width="26" height="26" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M6 4l10 6-10 6V4z" />
               </svg>
             )}
           </button>
+
+          <div className="w-12 h-12" />
         </div>
       </div>
 
