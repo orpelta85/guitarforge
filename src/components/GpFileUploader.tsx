@@ -507,6 +507,23 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
         s.display.layoutMode = 0;
         s.display.staveProfile = 4;
 
+        // CRITICAL: Register a capture-phase mousedown blocker on mainRef
+        // BEFORE alphaTab does. Same-element capture listeners fire in
+        // registration order, so by registering first we guarantee our check
+        // runs before alphaTab's — if the event target is a drag handle we
+        // stopImmediatePropagation so alphaTab never sees the click and never
+        // overwrites the existing loop selection with a new single-beat one.
+        const handleBlocker = (e: Event) => {
+          const t = e.target as HTMLElement | null;
+          if (t && (t.closest?.(".gf-handle") || t.classList?.contains("gf-handle"))) {
+            e.stopImmediatePropagation();
+          }
+        };
+        mainRef.current.addEventListener("mousedown", handleBlocker, true);
+        mainRef.current.addEventListener("mouseup", handleBlocker, true);
+        mainRef.current.addEventListener("click", handleBlocker, true);
+        (mainRef.current as any)._gfHandleBlocker = handleBlocker;
+
         const api = new at.AlphaTabApi(mainRef.current, s);
         apiRef.current = api;
 
@@ -824,32 +841,6 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
     return () => window.removeEventListener("gf-range-selected", onRangeSelected);
   }, [applyLoopRange]);
 
-  // Block alphaTab's capture-phase mousedown handler from firing when the user
-  // clicks a drag handle (.gf-handle). alphaTab registers mousedown on mainRef
-  // with {capture: true}. For capture listeners on the SAME element, they fire
-  // in registration order — alphaTab registered first, so our listener on the
-  // same element would fire AFTER and stopPropagation wouldn't help. We must
-  // register on an ancestor (document) so capture phase reaches us BEFORE it
-  // descends to mainRef where alphaTab is listening.
-  useEffect(() => {
-    if (!ready) return;
-    const block = (e: Event) => {
-      const t = e.target as HTMLElement | null;
-      if (t && (t.closest?.(".gf-handle") || t.classList?.contains("gf-handle"))) {
-        e.stopPropagation();
-        // Also stop same-phase listeners on document from doing anything funny
-        e.stopImmediatePropagation?.();
-      }
-    };
-    document.addEventListener("mousedown", block, true);
-    document.addEventListener("mouseup", block, true);
-    document.addEventListener("click", block, true);
-    return () => {
-      document.removeEventListener("mousedown", block, true);
-      document.removeEventListener("mouseup", block, true);
-      document.removeEventListener("click", block, true);
-    };
-  }, [ready]);
 
   // ESC clears selection and disables loop; scroll / resize triggers overlay recompute
   useEffect(() => {
