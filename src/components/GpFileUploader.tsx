@@ -107,6 +107,12 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
   const dragStateRef = useRef<{ mode: "none" | "new" | "left" | "right"; anchorBeat: any | null }>({ mode: "none", anchorBeat: null });
   const scrollTickRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const applyLoopRangeByBeatsRef = useRef<((a: any, b: any) => void) | null>(null);
+  // RAF-throttle for playing-beat updates (alphaTab fires many times/sec during playback).
+  const pendingBeatRef = useRef<any | null>(null);
+  const beatRafRef = useRef<number>(0);
+  // Smooth autoscroll bookkeeping.
+  const lastScrolledRowYRef = useRef<number>(-1);
+  const lastScrollAtRef = useRef<number>(0);
   const audioNodesRef = useRef<{
     ctx: AudioContext;
     highpass: BiquadFilterNode;
@@ -491,8 +497,13 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
         // sonivox.sf3 — 977KB compressed, fast to load, reliable playback.
         // GeneralUser-GS.sf2 (32MB) caused long loads + silent Play regressions.
         s.player.soundFont = base + "/alphatab/soundfont/sonivox.sf3";
-        s.player.scrollElement = mainRef.current;
-        s.player.scrollOffsetY = -10;
+        // We manage autoscroll manually inside playedBeatChanged so the
+        // line-change transition is a smooth native scrollTo({behavior:'smooth'})
+        // instead of alphaTab's instant jump. Setting scrollElement to null
+        // disables alphaTab's internal scroll controller.
+        s.player.scrollElement = null as any;
+        s.player.scrollOffsetY = 0;
+        s.player.scrollMode = 0 as any; // ScrollMode.Off
         s.display.layoutMode = 0;
         s.display.staveProfile = 4;
 
@@ -570,23 +581,70 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
         }, 500);
         readyCheckRef.current = readyCheck;
 
-        api.playerStateChanged.on((e: any) => { if (!dead) setPlaying(e.state === 1); });
+        api.playerStateChanged.on((e: any) => {
+          if (dead) return;
+          setPlaying(e.state === 1);
+          // Reset autoscroll memory on stop so next playback can scroll again
+          // from the top even if cursor returns to the same row.
+          if (e.state !== 1) {
+            lastScrolledRowYRef.current = -1;
+            lastScrollAtRef.current = 0;
+          }
+        });
 
-        // Position tracking
+        // Position tracking — RAF-throttled so React state only updates once per frame.
+        // alphaTab fires playedBeatChanged at ~60fps during playback; doing setState in
+        // the listener triggers a re-render of the whole GpFileUploader tree on every
+        // tick, which manifests as visible "lag" in the playing-beat highlight and the
+        // fretboard overlay. Coalescing into one RAF flush keeps visuals smooth.
         api.playedBeatChanged?.on?.((beat: any) => {
           if (dead || !beat) return;
-          const bar = beat.voice?.bar;
-          if (bar?.index !== undefined) setCurrentBar(bar.index + 1);
-          setPlayingBeat(beat);
-          // Extract note info for fretboard
-          const notes = beat.notes || [];
-          const noteData = notes.map((n: any) => ({ fret: n.fret, string: n.string })).filter((n: any) => n.fret >= 0);
-          setActiveNotes(noteData);
-          // Beat info
-          if (notes.length > 0) {
-            const info = notes.map((n: any) => `S${n.string}F${n.fret}`).join(" ");
-            setCurrentBeatInfo(info);
-          }
+          pendingBeatRef.current = beat;
+          if (beatRafRef.current) return;
+          beatRafRef.current = requestAnimationFrame(() => {
+            beatRafRef.current = 0;
+            const b = pendingBeatRef.current;
+            if (!b || dead) return;
+            pendingBeatRef.current = null;
+            const bar = b.voice?.bar;
+            if (bar?.index !== undefined) setCurrentBar(bar.index + 1);
+            setPlayingBeat(b);
+            const notes = b.notes || [];
+            const noteData = notes.map((n: any) => ({ fret: n.fret, string: n.string })).filter((n: any) => n.fret >= 0);
+            setActiveNotes(noteData);
+            if (notes.length > 0) {
+              const info = notes.map((n: any) => `S${n.string}F${n.fret}`).join(" ");
+              setCurrentBeatInfo(info);
+            }
+            // Smooth line-change autoscroll: only scroll when the beat's row leaves
+            // the comfort zone (middle 60% of viewport). We track the last row-y
+            // we already scrolled to so we never re-fire scrollTo for the same row.
+            try {
+              const main = mainRef.current;
+              const lookup = apiRef.current?.renderer?.boundsLookup;
+              if (!main || !lookup) return;
+              const bb: any = lookup.findBeat?.(b);
+              const barB: any = bb?.barBounds;
+              const beatY = barB?.realBounds?.y ?? bb?.realBounds?.y;
+              const beatH = barB?.realBounds?.h ?? bb?.realBounds?.h ?? 0;
+              if (typeof beatY !== "number") return;
+              const viewH = main.clientHeight;
+              const scrollTop = main.scrollTop;
+              const comfortTop = scrollTop + viewH * 0.2;
+              const comfortBot = scrollTop + viewH * 0.8 - beatH;
+              const outOfView = beatY < comfortTop || beatY > comfortBot;
+              // Debounce: don't re-scroll for the exact same row, and wait at least
+              // 400ms between smooth scrolls so the browser animation can settle.
+              const sameRow = Math.abs(beatY - lastScrolledRowYRef.current) < 4;
+              const now = performance.now();
+              if (outOfView && !sameRow && now - lastScrollAtRef.current > 400) {
+                const target = Math.max(0, beatY - viewH * 0.3);
+                main.scrollTo({ top: target, behavior: "smooth" });
+                lastScrolledRowYRef.current = beatY;
+                lastScrollAtRef.current = now;
+              }
+            } catch { /* ignore scroll errors */ }
+          });
         });
 
         // Time tracking
@@ -680,6 +738,9 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
     return () => {
       dead = true;
       if (readyCheckRef.current) { clearInterval(readyCheckRef.current); readyCheckRef.current = null; }
+      if (beatRafRef.current) { cancelAnimationFrame(beatRafRef.current); beatRafRef.current = 0; }
+      pendingBeatRef.current = null;
+      lastScrolledRowYRef.current = -1;
       if (apiRef.current?.destroy) {
         try { apiRef.current.destroy(); } catch {}
       }
@@ -846,6 +907,11 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
     const api = apiRef.current;
     if (api?.score?.tracks?.[i]) { api.renderTracks([api.score.tracks[i]]); setActiveTrack(i); }
   }
+  // Mixer: select "active" track visually (for focus/transpose) WITHOUT limiting playback
+  // to a single track — otherwise Mute/Solo/Volume on other tracks do nothing audible.
+  function focusTrack(i: number) {
+    setActiveTrack(i);
+  }
   function doTranspose(delta: number) {
     const api = apiRef.current;
     if (!api?.score) return;
@@ -869,7 +935,17 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
   function toggleMetronome() {
     const next = !metronomeOn;
     setMetronomeOn(next);
-    if (apiRef.current) apiRef.current.metronomeVolume = next ? metronomeVolume : 0;
+    // If turning on with zero/undefined volume, bring it up to an audible default
+    // so the user actually hears clicks.
+    let vol = metronomeVolume;
+    if (next && (!vol || vol <= 0.01)) {
+      vol = DEFAULT_METRONOME_VOLUME;
+      setMetronomeVolume(vol);
+      saveMetronomeVolume(vol);
+    }
+    if (apiRef.current) {
+      try { apiRef.current.metronomeVolume = next ? vol : 0; } catch { /* ok */ }
+    }
   }
   function setCountIn(v: number) { if (apiRef.current) apiRef.current.countInVolume = v; setCountInVolume(v); }
 
@@ -941,8 +1017,11 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
   function setTrackVolume(i: number, v: number) {
     const api = apiRef.current;
     if (!api?.score?.tracks?.[i]) return;
-    api.changeTrackVolume([api.score.tracks[i]], v);
-    setTracks(prev => prev.map((t, idx) => idx === i ? { ...t, volume: v } : t));
+    // alphaTab expects a gain multiplier (1.0 = normal, 0 = silent).
+    // Slider is 0-1 → pass through directly; at 0 the track is essentially silent.
+    const clamped = Math.max(0, Math.min(1, v));
+    try { api.changeTrackVolume([api.score.tracks[i]], clamped); } catch { /* ok */ }
+    setTracks(prev => prev.map((t, idx) => idx === i ? { ...t, volume: clamped } : t));
   }
 
   // --- Display ---
@@ -1071,35 +1150,48 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
   void overlayTick;
 
   // --- Drag handle logic (beat-level) ---
-  function onHandleMouseDown(side: "left" | "right", ev: React.MouseEvent) {
+  // Pointer-events based: setPointerCapture on the handle so movement is tracked even
+  // when the pointer leaves the tab area or the browser window. RAF-throttled beat
+  // resolution; selection state updates only when the resolved beat actually changes
+  // (prevents re-render spam). Final commit (applyLoopRangeByBeats) runs on pointerup.
+  function onHandlePointerDown(side: "left" | "right", ev: React.PointerEvent<HTMLDivElement>) {
     ev.preventDefault();
     ev.stopPropagation();
     const main: HTMLDivElement | null = mainRef.current;
     const api = apiRef.current;
     if (!main || !api?.renderer?.boundsLookup) return;
     const mainEl: HTMLDivElement = main;
+    const handleEl = ev.currentTarget;
     const anchorBeat = side === "left" ? selEnd : selStart;
+    if (!anchorBeat) return;
     dragStateRef.current = { mode: side, anchorBeat };
+
+    // Capture pointer so we keep receiving move events even if pointer leaves the handle.
+    try { handleEl.setPointerCapture(ev.pointerId); } catch { /* ok */ }
 
     let latestA: any = selStart;
     let latestB: any = selEnd;
+    let lastBeat: any = null;
     let rafId = 0;
-    let pendingEvent: MouseEvent | null = null;
+    let pendingEvent: PointerEvent | null = null;
 
-    function process(e: MouseEvent) {
+    function process(e: PointerEvent) {
       const rect = mainEl.getBoundingClientRect();
       const clampedClientX = Math.max(rect.left, Math.min(rect.right, e.clientX));
       const clampedClientY = Math.max(rect.top, Math.min(rect.bottom, e.clientY));
       const x = clampedClientX - rect.left + mainEl.scrollLeft;
       const y = clampedClientY - rect.top + mainEl.scrollTop;
       const beat = api.renderer.boundsLookup.getBeatAtPos?.(x, y);
-      if (!beat || !dragStateRef.current.anchorBeat) return;
-      const [a, b] = orderBeats(dragStateRef.current.anchorBeat, beat);
+      if (!beat || beat === lastBeat) return;
+      lastBeat = beat;
+      const anchor = dragStateRef.current.anchorBeat;
+      if (!anchor) return;
+      const [a, b] = orderBeats(anchor, beat);
       latestA = a; latestB = b;
       setSelStart(a); setSelEnd(b);
     }
 
-    function onMove(e: MouseEvent) {
+    function onMove(e: PointerEvent) {
       pendingEvent = e;
       if (rafId) return;
       rafId = requestAnimationFrame(() => {
@@ -1107,15 +1199,22 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
         if (pendingEvent) { process(pendingEvent); pendingEvent = null; }
       });
     }
-    function onUp() {
+    function onUp(e: PointerEvent) {
       if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+      // Flush any pending event so final position is accurate
+      if (pendingEvent) { process(pendingEvent); pendingEvent = null; }
+      // Also process this final event
+      process(e);
       dragStateRef.current = { mode: "none", anchorBeat: null };
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
+      try { handleEl.releasePointerCapture(e.pointerId); } catch { /* ok */ }
+      handleEl.removeEventListener("pointermove", onMove);
+      handleEl.removeEventListener("pointerup", onUp);
+      handleEl.removeEventListener("pointercancel", onUp);
       if (latestA && latestB) applyLoopRangeByBeats(latestA, latestB);
     }
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
+    handleEl.addEventListener("pointermove", onMove);
+    handleEl.addEventListener("pointerup", onUp);
+    handleEl.addEventListener("pointercancel", onUp);
   }
 
   function onOverlayDoubleClick(ev: React.MouseEvent) {
@@ -1559,7 +1658,7 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
                     return (
                       <div
                         key={t.index}
-                        onClick={() => changeTrk(t.index)}
+                        onClick={() => focusTrack(t.index)}
                         className="shrink-0 cursor-pointer transition-all"
                         style={{
                           width: 72,
@@ -1746,7 +1845,8 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
                     position: "absolute", left: r.x - 2, top: r.y, width: r.w + 4, height: r.h,
                     background: "rgba(255, 235, 120, 0.35)",
                     borderRadius: 2,
-                    transition: "left 80ms linear, top 80ms linear, width 80ms linear",
+                    transition: "left 120ms cubic-bezier(0.4, 0, 0.2, 1), top 180ms cubic-bezier(0.4, 0, 0.2, 1), width 120ms cubic-bezier(0.4, 0, 0.2, 1)",
+                    willChange: "left, top, width",
                     pointerEvents: "none",
                   }} />
                 ))}
@@ -1829,8 +1929,8 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
                     <>
                       <div
                         className="gf-handle"
-                        style={handleStyle(first.x, first.y + first.h / 2)}
-                        onMouseDown={(e) => onHandleMouseDown("left", e)}
+                        style={{ ...handleStyle(first.x, first.y + first.h / 2), touchAction: "none" }}
+                        onPointerDown={(e) => onHandlePointerDown("left", e)}
                         title="Drag to resize loop start"
                       >
                         <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
@@ -1839,8 +1939,8 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
                       </div>
                       <div
                         className="gf-handle"
-                        style={handleStyle(last.x + last.w, last.y + last.h / 2)}
-                        onMouseDown={(e) => onHandleMouseDown("right", e)}
+                        style={{ ...handleStyle(last.x + last.w, last.y + last.h / 2), touchAction: "none" }}
+                        onPointerDown={(e) => onHandlePointerDown("right", e)}
                         title="Drag to resize loop end"
                       >
                         <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
