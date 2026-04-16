@@ -1379,7 +1379,11 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
           </div>
         </div>
       ) : (
-        <div className="panel p-0 overflow-hidden">
+        <div className="panel p-0">
+          {/* Header + Transport stick to the top of the modal scroll area so
+              the player stays reachable when the tab sheet grows tall or
+              alphaTab auto-scrolls during playback. */}
+          <div className="sticky top-0 z-30 bg-[#0d0d0d]">
           {/* ── Header ── */}
           <div className="px-4 py-2 border-b border-[#1a1a1a] bg-[#0d0d0d]">
             <div className="flex items-center justify-between">
@@ -1964,6 +1968,7 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
               </div>
             </div>
           )}
+          </div>{/* end sticky header+transport wrapper */}
 
           {!viewerCollapsed && loading && (
             <div className="p-6 text-center">
