@@ -1124,7 +1124,7 @@ export default function JamModePage() {
   const nextChord = chords[nextChordIdx] || { display: "-", root: "A", quality: "", numeral: "" };
 
   return (
-    <div className="max-w-[960px] lg:max-w-[1100px] xl:max-w-[1280px] mx-auto px-2 sm:px-5 py-3 sm:py-5 pb-6 overflow-hidden">
+    <div className="w-full min-w-0 max-w-[960px] lg:max-w-[1100px] xl:max-w-[1280px] mx-auto px-2 sm:px-5 py-3 sm:py-5 pb-[72px] md:pb-6">
       {/* Header */}
       <div className="flex items-end justify-between mb-3 sm:mb-4">
         <div>
@@ -1158,12 +1158,12 @@ export default function JamModePage() {
           <div className="text-[9px] font-label uppercase tracking-[0.15em] text-[#D4A843]/70 mb-2">Progression</div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 min-h-[64px]">
             {/* Key */}
-            <div>
+            <div className="min-w-0">
               <label className="block text-[10px] text-[#6b6560] font-label mb-1 uppercase tracking-wider">Key</label>
               <select
                 value={settings.key}
                 onChange={e => updateSetting("key", e.target.value)}
-                className="input w-full !rounded !px-2 !py-1.5 !text-xs font-label"
+                className="input w-full min-w-0 !rounded !px-2 !py-1.5 !text-xs font-label"
               >
                 {KEYS.map(k => (
                   <optgroup key={k} label={k}>
@@ -1175,7 +1175,7 @@ export default function JamModePage() {
             </div>
 
             {/* Style */}
-            <div>
+            <div className="min-w-0">
               <label className="block text-[10px] text-[#6b6560] font-label mb-1 uppercase tracking-wider">Style</label>
               <select
                 value={settings.style}
@@ -1194,14 +1194,14 @@ export default function JamModePage() {
                     setTimeout(() => handlePlay(), 50);
                   }
                 }}
-                className="input w-full !rounded !px-2 !py-1.5 !text-xs font-label"
+                className="input w-full min-w-0 !rounded !px-2 !py-1.5 !text-xs font-label"
               >
                 {JAM_STYLE_LIST.map(s => <option key={s} value={s}>{JAM_STYLE_LABELS[s]}</option>)}
               </select>
             </div>
 
             {/* Progression */}
-            <div className="min-h-[52px]">
+            <div className="min-h-[52px] min-w-0">
               <label className="block text-[10px] text-[#6b6560] font-label mb-1 uppercase tracking-wider">Progression</label>
               <select
                 value={settings.progressionIndex}
@@ -1214,7 +1214,7 @@ export default function JamModePage() {
                     setTimeout(() => handlePlay(), 50);
                   }
                 }}
-                className="input w-full !rounded !px-2 !py-1.5 !text-xs font-label"
+                className="input w-full min-w-0 !rounded !px-2 !py-1.5 !text-xs font-label"
               >
                 {filteredProgressions.map((p, i) => (
                   <option key={i} value={i}>{p.name}</option>
@@ -1223,7 +1223,7 @@ export default function JamModePage() {
             </div>
 
             {/* Bars per chord */}
-            <div>
+            <div className="min-w-0">
               <label className="block text-[10px] text-[#6b6560] font-label mb-1 uppercase tracking-wider">Bars / Chord</label>
               <div className="flex gap-1">
                 {[1, 2, 4].map(b => (

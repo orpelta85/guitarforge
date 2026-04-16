@@ -228,7 +228,7 @@ export default function AddSongModal({ onClose, onSave, editSong }: AddSongModal
           </button>
         </div>
 
-        <div className="px-6 py-5 space-y-5 max-h-[calc(100vh-12rem)] overflow-y-auto">
+        <div className="px-6 py-5 space-y-5 max-h-[calc(100dvh-12rem)] overflow-y-auto">
 
           {/* Section 1: YouTube Search */}
           <div>

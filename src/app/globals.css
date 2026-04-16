@@ -1237,4 +1237,8 @@ input[type="number"] { -moz-appearance: textfield; }
   body {
     padding-bottom: 0;
   }
+  /* Compensate for fixed bottom mobile tab bar (56px) */
+  #main-content {
+    padding-bottom: 56px;
+  }
 }

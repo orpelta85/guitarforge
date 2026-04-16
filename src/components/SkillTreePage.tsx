@@ -399,7 +399,7 @@ export default function SkillTreePage() {
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerUp}
       >
-        <div className="overflow-auto" style={{ maxHeight: "calc(100vh - 320px)", minHeight: 400 }}>
+        <div className="overflow-auto" style={{ maxHeight: "calc(100dvh - 240px)", minHeight: 360 }}>
           <svg
             ref={svgRef}
             width={svgW}

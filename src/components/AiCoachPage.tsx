@@ -645,7 +645,7 @@ export default function AiCoachPage({ onNavigate }: AiCoachPageProps) {
   const showQuickActions = messages.length <= 2 && !isTyping;
 
   return (
-    <div className="flex flex-col" style={{ height: "calc(100vh - 120px)", minHeight: 400 }}>
+    <div className="flex flex-col" style={{ height: "calc(100dvh - 140px)", minHeight: 400 }}>
 
       {/* ── Coach Header ── */}
       <div className="flex-shrink-0 mb-3">

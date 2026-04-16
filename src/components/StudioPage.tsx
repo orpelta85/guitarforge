@@ -1639,10 +1639,10 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
 
   // ═══════════════════ RENDER ═══════════════════
   return (
-    <div className="flex flex-col overflow-hidden select-none" style={{ background: "#0a0a0a", fontFamily: "'Inter', system-ui, sans-serif", height: "calc(100vh - 90px)" }} dir="ltr">
+    <div className="flex flex-col overflow-hidden select-none flex-1 min-h-0 h-full" style={{ background: "#0a0a0a", fontFamily: "'Inter', system-ui, sans-serif" }} dir="ltr">
 
       {/* ═══════════ TOP BAR: Transport + Toolbar (DAW style) ═══════════ */}
-      <div className="flex items-center h-14 px-2 sm:px-4 gap-1 sm:gap-2 border-b flex-shrink-0" style={{ background: "linear-gradient(180deg, #151515 0%, #111111 100%)", borderColor: "#1e1e1e" }}>
+      <div className="flex items-center h-14 px-2 sm:px-4 gap-1 sm:gap-2 border-b flex-shrink-0 overflow-x-auto scrollbar-hide" style={{ background: "linear-gradient(180deg, #151515 0%, #111111 100%)", borderColor: "#1e1e1e" }}>
 
         {/* LEFT: BPM + Metronome + Mic */}
         <div className="flex items-center gap-1.5 sm:gap-2">

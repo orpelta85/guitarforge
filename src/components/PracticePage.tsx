@@ -252,9 +252,9 @@ export default function PracticePage(props: PracticePageProps) {
 
           {/* Unified Exercise Picker */}
           {exPickerOpen && (
-            <div className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh]" onClick={() => setExPickerOpen(false)}>
+            <div className="fixed inset-0 z-50 flex items-start justify-center pt-[6dvh] sm:pt-[10dvh] px-2 pb-4" onClick={() => setExPickerOpen(false)}>
               <div className="absolute inset-0 bg-black/60" />
-              <div className="relative w-full max-w-[520px] mx-2 rounded-lg overflow-hidden" style={{ background: "var(--bg-panel)", border: "1px solid var(--border-panel)", maxHeight: "70vh", display: "flex", flexDirection: "column" }} onClick={e => e.stopPropagation()}>
+              <div className="relative w-full max-w-[520px] rounded-lg overflow-hidden" style={{ background: "var(--bg-panel)", border: "1px solid var(--border-panel)", maxHeight: "calc(100dvh - 8rem)", display: "flex", flexDirection: "column" }} onClick={e => e.stopPropagation()}>
                 <div className="p-3 border-b border-[#222]">
                   <div className="font-label text-[11px] text-[#D4A843] mb-2">Add Exercise</div>
                   <input type="text" placeholder="Search exercises..." className="input w-full mb-2" autoFocus
@@ -269,7 +269,7 @@ export default function PracticePage(props: PracticePageProps) {
                     ))}
                   </div>
                 </div>
-                <div className="overflow-y-auto flex-1" style={{ maxHeight: "50vh" }}>
+                <div className="overflow-y-auto flex-1 min-h-0">
                   {[...EXERCISES, ...customExercises].filter(e => {
                     if (exPickerCat !== "All" && e.c !== exPickerCat) return false;
                     if (exPickerSearch.trim()) {
@@ -299,9 +299,9 @@ export default function PracticePage(props: PracticePageProps) {
 
           {/* Unified Song Picker - searches full library */}
           {songPickerOpen && (
-            <div className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh]" onClick={() => { setSongPickerOpen(false); setSongPickerSearch(""); }}>
+            <div className="fixed inset-0 z-50 flex items-start justify-center pt-[6dvh] sm:pt-[10dvh] px-2 pb-4" onClick={() => { setSongPickerOpen(false); setSongPickerSearch(""); }}>
               <div className="absolute inset-0 bg-black/60" />
-              <div className="relative w-full max-w-[560px] mx-2 rounded-lg overflow-hidden" style={{ background: "var(--bg-panel)", border: "1px solid var(--border-panel)", maxHeight: "70vh", display: "flex", flexDirection: "column" }} onClick={e => e.stopPropagation()}>
+              <div className="relative w-full max-w-[560px] rounded-lg overflow-hidden" style={{ background: "var(--bg-panel)", border: "1px solid var(--border-panel)", maxHeight: "calc(100dvh - 8rem)", display: "flex", flexDirection: "column" }} onClick={e => e.stopPropagation()}>
                 <div className="p-3 border-b border-[#222]">
                   <div className="font-label text-[11px] text-[#f59e0b] mb-2">Add Song from Library</div>
                   <input type="text" placeholder="Search by title or artist..." className="input w-full" autoFocus
@@ -312,7 +312,7 @@ export default function PracticePage(props: PracticePageProps) {
                       : `${SONG_LIBRARY.length} songs in library \u00B7 showing first 20`}
                   </div>
                 </div>
-                <div className="overflow-y-auto flex-1" style={{ maxHeight: "55vh" }}>
+                <div className="overflow-y-auto flex-1 min-h-0">
                   {librarySearchResults.map(entry => (
                     <button type="button" key={entry.id}
                       onClick={() => addSongFromLibraryToPractice(entry)}

@@ -539,7 +539,7 @@ export default function GuitarForgeApp() {
 
   // ── Loading state ──
   if (!ready || authLoading) return (
-    <div className="h-screen flex flex-col items-center justify-center gap-3" style={{ background: "#121214" }}>
+    <div className="min-h-[100dvh] flex flex-col items-center justify-center gap-3" style={{ background: "#121214" }}>
       <img src="/logo.png" alt="Guitar Practice" className="h-28 object-contain logo-blend" />
       <div className="font-label text-[10px] text-[#555]">Loading...</div>
     </div>
@@ -745,12 +745,12 @@ export default function GuitarForgeApp() {
 
   return (
     <ErrorBoundary>
-    <div className="flex h-screen text-white" style={{ background: "#121214" }} dir="ltr">
+    <div className="flex h-[100dvh] text-white" style={{ background: "#121214" }} dir="ltr">
       <Navbar view={view} onViewChange={setView} onShowAuth={() => setShowAuthPage(true)} onOpenTuner={openTuner} onOpenSuno={openSuno} lastSynced={lastSynced} syncing={syncing} />
-      <div id="main-content" className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden">
+      <div id="main-content" className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden min-h-0 min-w-0">
       {view === "studio" && <StudioPage channelScale={scale} channelMode={mode} channelStyle={style} pendingSuno={pendingSuno} setPendingSuno={setPendingSuno} />}
       {view === "jam" && <JamModePage />}
-      <div key={viewKey} className="view-transition px-2 sm:px-5 py-3 sm:py-5 pb-16 md:pb-5 max-w-[960px] lg:max-w-[1100px] xl:max-w-[1280px] mx-auto w-full">
+      <div key={viewKey} className={`view-transition px-2 sm:px-5 py-3 sm:py-5 pb-[72px] md:pb-5 max-w-[960px] lg:max-w-[1100px] xl:max-w-[1280px] mx-auto w-full ${view === "studio" || view === "jam" ? "hidden" : ""}`}>
 
         {view === "learn" && <LearningCenterPage />}
         {view === "profile" && <ProfilePage />}

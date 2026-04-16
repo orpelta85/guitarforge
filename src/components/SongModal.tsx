@@ -703,7 +703,7 @@ export default function SongModal({ song, onClose, targetMinutes, mySongs, onTog
               </div>
 
               {tabMode === "chords" && (
-                <div className="-mx-4 sm:-mx-6 -mb-4 sm:-mb-6 h-[calc(100vh-280px)]">
+                <div className="-mx-4 sm:-mx-6 -mb-4 sm:-mb-6 h-[calc(100dvh-280px)]">
                   <ChordsTab songId={song.id} title={song.title} artist={song.artist} />
                 </div>
               )}

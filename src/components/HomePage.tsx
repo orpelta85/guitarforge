@@ -579,20 +579,20 @@ export default function HomePage(props: HomePageProps) {
             )}
             {jamYtLoading && (
               <div className="w-full rounded-xl overflow-hidden bg-[#0e0e10] mb-3 flex items-center justify-center"
-                style={{ minHeight: 480, aspectRatio: "16 / 9", maxWidth: 960 }}>
+                style={{ aspectRatio: "16 / 9", maxWidth: 960 }}>
                 <div className="font-label text-[12px] text-[#555] animate-pulse">Searching YouTube...</div>
               </div>
             )}
             {jamCountInPending && (
               <div className="w-full rounded-xl overflow-hidden bg-[#0e0e10] mb-3 flex items-center justify-center"
-                style={{ aspectRatio: "16 / 9", minHeight: 640, border: "1px solid rgba(245,158,11,0.15)" }}>
+                style={{ aspectRatio: "16 / 9", maxWidth: 960, border: "1px solid rgba(245,158,11,0.15)" }}>
                 <div className="font-label text-[14px] text-[#f59e0b] animate-pulse">Count-in...</div>
               </div>
             )}
             {jamVideoId && !jamYtLoading && !jamCountInPending && (
               <div className="mb-3">
                 <div className="w-full rounded-xl overflow-hidden bg-black shadow-xl"
-                  style={{ aspectRatio: "16 / 9", minHeight: 640, border: "1px solid rgba(245,158,11,0.15)" }}>
+                  style={{ aspectRatio: "16 / 9", maxWidth: 960, border: "1px solid rgba(245,158,11,0.15)" }}>
                   <iframe
                     key={jamVideoId}
                     src={`https://www.youtube.com/embed/${jamVideoId}?modestbranding=1&rel=0${jamAutoPlay ? "&autoplay=1" : ""}`}
