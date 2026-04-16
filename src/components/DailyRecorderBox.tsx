@@ -65,14 +65,15 @@ export default function DailyRecorderBox({ storageKey, onStateChange, controlRef
     setAudioBlob(null);
     setSaved(false);
 
+    // Force instrument-recording constraints: mono, 48kHz, all processing OFF
+    // (echoCancellation/noiseSuppression/autoGainControl destroy guitar tone).
     navigator.mediaDevices.getUserMedia({
       audio: {
+        sampleRate: 48000,
+        channelCount: 1,
         echoCancellation: false,
         noiseSuppression: false,
         autoGainControl: false,
-        channelCount: 2,
-        sampleRate: 48000,
-        sampleSize: 24,
       }
     }).then((stream) => {
       streamRef.current = stream;
@@ -82,9 +83,10 @@ export default function DailyRecorderBox({ storageKey, onStateChange, controlRef
                        MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" :
                        MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" :
                        MediaRecorder.isTypeSupported("audio/mp4") ? "audio/mp4" : "";
+      // PCM is lossless; Opus fallback @ 256 kbps
       const mrOpts: MediaRecorderOptions = {
         ...(mimeType ? { mimeType } : {}),
-        ...(pcmSupported ? {} : { audioBitsPerSecond: 320000 }),
+        ...(pcmSupported ? {} : { audioBitsPerSecond: 256000 }),
       };
       const mr = new MediaRecorder(stream, mrOpts);
 

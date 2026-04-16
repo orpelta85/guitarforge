@@ -321,9 +321,17 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
     isDualRef.current = false;
 
     try {
-      const micStream = await navigator.mediaDevices.getUserMedia(
-        buildAudioConstraints(selectedDeviceId || undefined)
-      );
+      // Force instrument-recording constraints: mono, 48kHz, all processing OFF
+      // (echoCancellation/noiseSuppression/autoGainControl destroy guitar tone).
+      const audioConstraints: MediaTrackConstraints = {
+        sampleRate: 48000,
+        channelCount: 1,
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false,
+      };
+      if (selectedDeviceId) audioConstraints.deviceId = { exact: selectedDeviceId };
+      const micStream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints });
       micStreamRef.current = micStream;
 
       // Force-disable all processing on the mic track
@@ -368,7 +376,7 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
       };
       levelAnimRef.current = requestAnimationFrame(updateLevel);
 
-      // Prefer PCM (lossless) for pristine quality; fall back to Opus
+      // Prefer PCM (lossless) for pristine quality; fall back to Opus @ 256 kbps
       const pcmSupported = MediaRecorder.isTypeSupported("audio/webm;codecs=pcm");
       const mimeType = pcmSupported ? "audio/webm;codecs=pcm" :
                        MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" :
@@ -376,7 +384,7 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
                        MediaRecorder.isTypeSupported("audio/mp4") ? "audio/mp4" : "";
       const mrOpts: MediaRecorderOptions = {
         ...(mimeType ? { mimeType } : {}),
-        ...(pcmSupported ? {} : { audioBitsPerSecond: 320000 }),
+        ...(pcmSupported ? {} : { audioBitsPerSecond: 256000 }),
       };
 
       const effectiveMode = (mode === "dual" && !navigator.mediaDevices.getDisplayMedia) ? "guitar-only" : mode;

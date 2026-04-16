@@ -431,6 +431,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
   // ── Refs ──
   const toneRef = useRef<ToneModule | null>(null);
   const masterGainRef = useRef<InstanceType<ToneModule["Gain"]> | null>(null);
+  const masterLimiterRef = useRef<InstanceType<ToneModule["Limiter"]> | null>(null);
   const toneNodesRef = useRef<Record<number, SimpleToneNodes>>({});
   const wsRef = useRef<Record<number, WaveSurferInstance>>({});
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -455,6 +456,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
   const drumTimerRef = useRef<number | null>(null);
   const drumGainRef = useRef<GainNode | null>(null);
   const drumMasterGainRef = useRef<GainNode | null>(null);
+  const drumLimiterRef = useRef<DynamicsCompressorNode | null>(null);
   const drumNextNoteTimeRef = useRef(0);
   const drumCurrentStepRef = useRef(0);
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -473,8 +475,11 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
     const Tone = await import("tone");
     await Tone.start();
     toneRef.current = Tone;
-    const gain = new Tone.Gain(masterVol / 100).toDestination();
+    // Brick-wall limiter on master out to prevent inter-sample clipping
+    const limiter = new Tone.Limiter(-1).toDestination();
+    const gain = new Tone.Gain(masterVol / 100).connect(limiter);
     masterGainRef.current = gain;
+    masterLimiterRef.current = limiter;
     return Tone;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -698,14 +703,25 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
   const DRUM_SCHEDULE_AHEAD_S = 0.1;
 
   const startDrumPlayback = useCallback((pattern: boolean[][], trackId?: number) => {
-    if (!drumAudioCtxRef.current) drumAudioCtxRef.current = new AudioContext();
+    if (!drumAudioCtxRef.current) {
+      drumAudioCtxRef.current = new AudioContext({ sampleRate: 44100, latencyHint: "interactive" });
+    }
     const ctx = drumAudioCtxRef.current;
 
     // Create a master gain node for drums that respects master volume
     const drumMasterGain = ctx.createGain();
     drumMasterGain.gain.value = masterVol / 100;
-    drumMasterGain.connect(ctx.destination);
+    // Brick-wall limiter before destination to prevent clipping
+    const drumLimiter = ctx.createDynamicsCompressor();
+    drumLimiter.threshold.value = -1;
+    drumLimiter.knee.value = 0;
+    drumLimiter.ratio.value = 20;
+    drumLimiter.attack.value = 0.003;
+    drumLimiter.release.value = 0.01;
+    drumMasterGain.connect(drumLimiter);
+    drumLimiter.connect(ctx.destination);
     drumMasterGainRef.current = drumMasterGain;
+    drumLimiterRef.current = drumLimiter;
 
     // Per-track gain sits before the master gain
     const gainNode = ctx.createGain();
@@ -744,6 +760,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
     if (drumTimerRef.current !== null) { clearTimeout(drumTimerRef.current); drumTimerRef.current = null; }
     if (drumGainRef.current) { drumGainRef.current.disconnect(); drumGainRef.current = null; }
     if (drumMasterGainRef.current) { drumMasterGainRef.current.disconnect(); drumMasterGainRef.current = null; }
+    if (drumLimiterRef.current) { drumLimiterRef.current.disconnect(); drumLimiterRef.current = null; }
     setDrumPlaying(false);
     setDrumStep(-1);
   }, []);
@@ -790,10 +807,12 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
   const startRec = useCallback(async () => {
     if (!navigator.mediaDevices) { alert("Microphone not available"); return; }
     try {
+      // Force instrument-recording constraints: mono, 48kHz, all processing OFF
+      // (echoCancellation/noiseSuppression/autoGainControl destroy guitar tone).
       const constraints: MediaStreamConstraints = {
         audio: selectedInputDevice
-          ? { deviceId: { exact: selectedInputDevice }, echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 2, sampleRate: 48000, sampleSize: 24 }
-          : { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 2, sampleRate: 48000, sampleSize: 24 },
+          ? { deviceId: { exact: selectedInputDevice }, sampleRate: 48000, channelCount: 1, echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+          : { sampleRate: 48000, channelCount: 1, echoCancellation: false, noiseSuppression: false, autoGainControl: false },
       };
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       mediaStreamRef.current = stream;
@@ -826,9 +845,10 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
       const mimeType = pcmSupported ? "audio/webm;codecs=pcm" :
                        MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" :
                        MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "";
+      // PCM is lossless; Opus fallback @ 256 kbps
       const mediaRecorder = new MediaRecorder(stream, {
         ...(mimeType ? { mimeType } : {}),
-        ...(pcmSupported ? {} : { audioBitsPerSecond: 320000 }),
+        ...(pcmSupported ? {} : { audioBitsPerSecond: 256000 }),
       });
       mediaRecorderRef.current = mediaRecorder;
       recChunksRef.current = [];
@@ -1208,7 +1228,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
         const decodedBuffers: { buffer: AudioBuffer; volume: number }[] = [];
         for (const t of audioTracks) {
           const arrayBuf = await t.audioBlob!.arrayBuffer();
-          const tempCtx = new AudioContext({ sampleRate });
+          const tempCtx = new AudioContext({ sampleRate, latencyHint: "interactive" });
           const decoded = await tempCtx.decodeAudioData(arrayBuf);
           decodedBuffers.push({ buffer: decoded, volume: t.volume / 100 });
           await tempCtx.close();
@@ -1347,6 +1367,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
         try { metronomeRef.current.gain.dispose(); } catch { /* ok */ }
       }
       if (masterGainRef.current) { try { masterGainRef.current.dispose(); } catch { /* ok */ } }
+      if (masterLimiterRef.current) { try { masterLimiterRef.current.dispose(); } catch { /* ok */ } }
       if (mediaStreamRef.current) mediaStreamRef.current.getTracks().forEach((t) => t.stop());
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") { try { mediaRecorderRef.current.stop(); } catch { /* ok */ } }
       if (recLevelAnimRef.current) cancelAnimationFrame(recLevelAnimRef.current);

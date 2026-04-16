@@ -65,7 +65,8 @@ export default function LooperBox({ startBpm, standalone }: Props) {
 
   function getOrCreateCtx(): AudioContext {
     if (!ctxRef.current) {
-      ctxRef.current = new AudioContext();
+      const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      ctxRef.current = new Ctx({ sampleRate: 44100, latencyHint: "interactive" });
     }
     return ctxRef.current;
   }
@@ -145,17 +146,17 @@ export default function LooperBox({ startBpm, standalone }: Props) {
     const ctx = getOrCreateCtx();
     if (ctx.state === "suspended") await ctx.resume();
 
-    // Request microphone
+    // Request microphone — force mono 48kHz, all processing OFF
+    // (echoCancellation/noiseSuppression/autoGainControl destroy guitar tone).
     if (!mediaStreamRef.current) {
       try {
         mediaStreamRef.current = await navigator.mediaDevices.getUserMedia({
           audio: {
+            sampleRate: 48000,
+            channelCount: 1,
             echoCancellation: false,
             noiseSuppression: false,
             autoGainControl: false,
-            channelCount: 2,
-            sampleRate: 48000,
-            sampleSize: 24,
           },
         });
       } catch {
@@ -182,11 +183,12 @@ export default function LooperBox({ startBpm, standalone }: Props) {
 
       if (!mediaStreamRef.current) return;
 
+      // PCM is lossless; Opus fallback @ 256 kbps
       const pcmOk = MediaRecorder.isTypeSupported("audio/webm;codecs=pcm");
       const recorder = new MediaRecorder(mediaStreamRef.current, {
         mimeType: pcmOk ? "audio/webm;codecs=pcm" :
           MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "audio/webm",
-        ...(pcmOk ? {} : { audioBitsPerSecond: 320000 }),
+        ...(pcmOk ? {} : { audioBitsPerSecond: 256000 }),
       });
       chunksRef.current = [];
       recorder.ondataavailable = (e) => {

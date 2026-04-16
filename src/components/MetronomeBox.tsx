@@ -155,7 +155,9 @@ export default function MetronomeBox({ startBpm: propBpm, standalone }: Props) {
   /* ───── audio helpers ───── */
   function getOrCreateCtx(): AudioContext {
     if (!ctxRef.current) {
-      ctxRef.current = new AudioContext();
+      // 44.1kHz + interactive hint for low-latency metronome scheduling
+      const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      ctxRef.current = new Ctx({ sampleRate: 44100, latencyHint: "interactive" });
     }
     return ctxRef.current;
   }
