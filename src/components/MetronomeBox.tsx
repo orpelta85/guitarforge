@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { loadMetronomeVolume, saveMetronomeVolume, clickGain } from "@/lib/metronomeAudio";
+import { buildMetronomeClicks, type MetronomeClickBuffers } from "@/lib/metronomeSynth";
 
 /* ───── types ───── */
 interface Props {
@@ -113,6 +114,7 @@ function Stepper({
 export default function MetronomeBox({ startBpm: propBpm, standalone }: Props) {
   /* audio context — created once on first play */
   const ctxRef = useRef<AudioContext | null>(null);
+  const clickBuffersRef = useRef<MetronomeClickBuffers | null>(null);
   const schedulerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const nextNoteTimeRef = useRef(0);
   const currentSubRef = useRef(0); // which subdivision tick within the beat
@@ -159,35 +161,44 @@ export default function MetronomeBox({ startBpm: propBpm, standalone }: Props) {
       const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       ctxRef.current = new Ctx({ sampleRate: 44100, latencyHint: "interactive" });
     }
+    // Pre-build click buffers once per context so ticks don't allocate.
+    if (!clickBuffersRef.current) {
+      clickBuffersRef.current = buildMetronomeClicks(ctxRef.current);
+    }
     return ctxRef.current;
   }
 
-  /** Schedule a single click on the audio timeline */
+  /** Schedule a single click on the audio timeline (FM cowbell/woodblock — §5) */
   const scheduleClick = useCallback(
     (time: number, accent: boolean, subTick: boolean) => {
       const ctx = ctxRef.current;
-      if (!ctx) return;
+      const buffers = clickBuffersRef.current;
+      if (!ctx || !buffers) return;
 
-      const osc = ctx.createOscillator();
+      const source = ctx.createBufferSource();
+      source.buffer = accent
+        ? buffers.accent
+        : subTick
+          ? buffers.subdivision
+          : buffers.normal;
+
       const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
       const userVol = volumeRef.current;
-      if (accent) {
-        osc.frequency.value = 1200;
-        gain.gain.setValueAtTime(clickGain("accent", userVol), time);
-      } else if (subTick) {
-        osc.frequency.value = 700;
-        gain.gain.setValueAtTime(clickGain("sub", userVol), time);
-      } else {
-        osc.frequency.value = 900;
-        gain.gain.setValueAtTime(clickGain("normal", userVol), time);
-      }
-      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
-      osc.start(time);
-      osc.stop(time + 0.05);
-      osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+      const kind: "accent" | "normal" | "sub" = accent
+        ? "accent"
+        : subTick
+          ? "sub"
+          : "normal";
+      // Envelope is baked into the buffer; clickGain() scales to user volume
+      // with the same historical curve so overall loudness stays the same.
+      gain.gain.setValueAtTime(clickGain(kind, userVol), time);
+
+      source.connect(gain).connect(ctx.destination);
+      source.start(time);
+      source.onended = () => {
+        source.disconnect();
+        gain.disconnect();
+      };
     },
     []
   );
@@ -306,6 +317,7 @@ export default function MetronomeBox({ startBpm: propBpm, standalone }: Props) {
         ctxRef.current.close().catch(() => {});
       }
       ctxRef.current = null;
+      clickBuffersRef.current = null;
     };
   }, []);
 

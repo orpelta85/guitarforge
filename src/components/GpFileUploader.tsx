@@ -1,6 +1,26 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { loadMetronomeVolume, saveMetronomeVolume, METRONOME_VOL_KEY, DEFAULT_METRONOME_VOLUME } from "@/lib/metronomeAudio";
+import { buildCabinetIR, getCabinetPreset } from "@/lib/audioIr";
+import {
+  TAB_PLAYER_PRESETS,
+  TAB_PLAYER_PRESET_LIST,
+  buildShaperCurve,
+  type TabPlayerPresetId,
+  type TabPlayerPreset,
+} from "@/lib/audioPresets";
+
+const TAB_PLAYER_PRESET_KEY = "gf.tabplayer.preset";
+const DEFAULT_TAB_PLAYER_PRESET: TabPlayerPresetId = "rock";
+
+function loadTabPlayerPreset(): TabPlayerPresetId {
+  if (typeof window === "undefined") return DEFAULT_TAB_PLAYER_PRESET;
+  try {
+    const v = window.localStorage.getItem(TAB_PLAYER_PRESET_KEY);
+    if (v === "metal" || v === "rock" || v === "clean") return v;
+  } catch { /* ignore */ }
+  return DEFAULT_TAB_PLAYER_PRESET;
+}
 
 interface TrackInfo { index: number; name: string; volume: number; isMuted: boolean; isSolo: boolean }
 interface Bookmark { name: string; startBar: number; endBar: number }
@@ -88,6 +108,11 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
   // Audio enhancement state
   const [reverbEnabled, setReverbEnabled] = useState(false);
   const [reverbMix, setReverbMix] = useState(0.1);
+  const [tonePreset, setTonePreset] = useState<TabPlayerPresetId>(() => loadTabPlayerPreset());
+
+  useEffect(() => {
+    try { window.localStorage.setItem(TAB_PLAYER_PRESET_KEY, tonePreset); } catch { /* ignore */ }
+  }, [tonePreset]);
 
   const mainRef = useRef<HTMLDivElement>(null);
   const overlayWrapRef = useRef<HTMLDivElement>(null);
@@ -115,15 +140,17 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
   const lastScrollAtRef = useRef<number>(0);
   const audioNodesRef = useRef<{
     ctx: AudioContext;
+    sourceNode: AudioNode;
     highpass: BiquadFilterNode;
-    saturation: WaveShaperNode;
+    shaper: WaveShaperNode;
     cabinetConvolver: ConvolverNode;
-    lowpass: BiquadFilterNode;
+    postCabGain: GainNode;
     compressor: DynamicsCompressorNode;
     roomConvolver: ConvolverNode;
     roomDry: GainNode;
     roomWet: GainNode;
     limiter: DynamicsCompressorNode;
+    presetId: TabPlayerPresetId;
   } | null>(null);
 
   const MAX_SAVE_SIZE = 2 * 1024 * 1024; // 2MB
@@ -273,76 +300,19 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
     reader.readAsArrayBuffer(file);
   }
 
-  // Synthesized cabinet impulse response - simulates 4x12 guitar cabinet resonances
-  function createCabinetIR(ctx: AudioContext): AudioBuffer {
-    const sampleRate = ctx.sampleRate;
-    const length = Math.floor(sampleRate * 0.15); // 150ms - cabinet IRs are short
-    const buffer = ctx.createBuffer(2, length, sampleRate);
-    for (let ch = 0; ch < 2; ch++) {
-      const data = buffer.getChannelData(ch);
-      for (let i = 0; i < length; i++) {
-        const t = i / sampleRate;
-        // Cabinet resonance - multiple resonant frequencies typical of a 4x12 cab
-        const resonance1 = Math.sin(2 * Math.PI * 120 * t) * Math.exp(-t * 40); // low thump
-        const resonance2 = Math.sin(2 * Math.PI * 400 * t) * Math.exp(-t * 60); // mid body
-        const resonance3 = Math.sin(2 * Math.PI * 1200 * t) * Math.exp(-t * 80); // presence
-        const resonance4 = Math.sin(2 * Math.PI * 2500 * t) * Math.exp(-t * 120); // brightness
-        // Early reflections (box resonance)
-        const earlyRef = (Math.random() * 2 - 1) * Math.exp(-t * 100) * 0.15;
-        // Combine with natural decay
-        data[i] = (resonance1 * 0.4 + resonance2 * 0.3 + resonance3 * 0.2 + resonance4 * 0.1 + earlyRef)
-                  * Math.exp(-t * 25);
-        // Slight stereo variation
-        if (ch === 1) {
-          data[i] *= 0.95;
-          if (i > 3) data[i] += data[i - 3] * 0.1;
-        }
-      }
-    }
-    return buffer;
+  // Compute room wet/dry levels from preset + user reverb override.
+  // Matches AUDIO_SPEC §2.5: when the user toggles reverb ON, slider drives wet
+  // (scaled x1.5, capped at 0.9); when OFF, use preset default wet.
+  function computeRoomLevels(preset: TabPlayerPreset, enabled: boolean, mix: number): { wet: number; dry: number } {
+    const wetRaw = enabled ? mix * 1.5 : preset.roomWetDefault;
+    const wet = Math.min(0.9, Math.max(0, wetRaw));
+    const dry = 1.0 - wet * 0.5;
+    return { wet, dry };
   }
 
-  // Mild soft-clipping saturation for warmth and harmonics
-  function createWarmSaturation(ctx: AudioContext): WaveShaperNode {
-    const shaper = ctx.createWaveShaper();
-    const samples = 44100;
-    const curve = new Float32Array(samples);
-    for (let i = 0; i < samples; i++) {
-      const x = (i * 2) / samples - 1;
-      curve[i] = Math.tanh(x * 1.5) * 0.9;
-    }
-    shaper.curve = curve;
-    shaper.oversample = '2x';
-    return shaper;
-  }
-
-  // Small room reverb IR for subtle spatial feel (separate from cabinet)
-  function createRoomReverbIR(ctx: AudioContext): AudioBuffer {
-    const sampleRate = ctx.sampleRate;
-    const length = Math.floor(sampleRate * 0.8); // 800ms room
-    const buffer = ctx.createBuffer(2, length, sampleRate);
-    for (let ch = 0; ch < 2; ch++) {
-      const data = buffer.getChannelData(ch);
-      for (let i = 0; i < length; i++) {
-        const t = i / sampleRate;
-        let sample = 0;
-        // Early reflections at specific delays (simulating wall bounces)
-        if (i === Math.floor(sampleRate * 0.012)) sample += 0.4 * (ch === 0 ? 1 : 0.8);
-        if (i === Math.floor(sampleRate * 0.025)) sample += 0.3 * (ch === 0 ? 0.7 : 1);
-        if (i === Math.floor(sampleRate * 0.038)) sample += 0.2;
-        // Late diffuse reverb
-        if (t > 0.04) {
-          sample += (Math.random() * 2 - 1) * Math.exp(-t * 4) * 0.15;
-        }
-        data[i] = sample;
-      }
-    }
-    return buffer;
-  }
-
-  // Hook into alphaTab's audio output to add effects chain
-  // Chain: source -> highpass 80Hz -> saturation -> cabinet IR -> lowpass 6kHz ->
-  //        compressor -> dry/wet room reverb -> master limiter -> output
+  // Hook into alphaTab's audio output to wire the tone chain:
+  // source -> HighPass -> WaveShaper -> CabinetIR -> PostCabGain -> Compressor
+  //        -> (dry + Room IR wet) -> Master Limiter -> ctx.destination
   function enhanceAudioOutput(api: any) {
     try {
       const output = (api as any).player?.output;
@@ -353,61 +323,64 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
         if (!ctx) return;
         if (audioNodesRef.current?.ctx === ctx) return;
 
-        // 1. High-pass at 80Hz to remove low-end mud
+        const preset = TAB_PLAYER_PRESETS[tonePreset];
+
+        // 1. High-pass (remove sub-bass rumble below the preset cutoff).
         const highpass = ctx.createBiquadFilter();
         highpass.type = "highpass";
-        highpass.frequency.value = 80;
-        highpass.Q.value = 0.7;
+        highpass.frequency.value = preset.highPassHz;
+        highpass.Q.value = preset.highPassQ;
 
-        // 2. Warm saturation (mild soft clipping for harmonics)
-        const saturation = createWarmSaturation(ctx);
+        // 2. WaveShaper (tanh-based soft saturation — preset-tuned drive).
+        const shaper = ctx.createWaveShaper();
+        shaper.curve = buildShaperCurve(preset);
+        shaper.oversample = preset.shaperOversample;
 
-        // 3. Cabinet IR convolver (100% wet - this is processing, not an effect)
+        // 3. Cabinet IR (replaces synthetic lowpass + fake reverb).
         const cabinetConvolver = ctx.createConvolver();
-        cabinetConvolver.buffer = createCabinetIR(ctx);
+        cabinetConvolver.buffer = buildCabinetIR(ctx, getCabinetPreset(preset.cabinet));
 
-        // 4. Lowpass at 6kHz to smooth cabinet output
-        const lowpass = ctx.createBiquadFilter();
-        lowpass.type = "lowpass";
-        lowpass.frequency.value = 6000;
-        lowpass.Q.value = 0.7;
+        // 4. Post-cab trim (convolution changes level).
+        const postCabGain = ctx.createGain();
+        postCabGain.gain.value = preset.postCabGain;
 
-        // 5. Gentle compressor
+        // 5. Tone compressor (per-preset threshold / ratio / attack / release).
         const compressor = ctx.createDynamicsCompressor();
-        compressor.threshold.value = -6;
-        compressor.knee.value = 10;
-        compressor.ratio.value = 3;
-        compressor.attack.value = 0.01;
-        compressor.release.value = 0.2;
+        compressor.threshold.value = preset.compThresholdDb;
+        compressor.ratio.value = preset.compRatio;
+        compressor.attack.value = preset.compAttackSec;
+        compressor.release.value = preset.compReleaseSec;
+        compressor.knee.value = preset.compKneeDb;
 
-        // 6. Room reverb (dry/wet mix, subtle spatial feel)
+        // 6. Room IR (stereo studio ambience) — parallel wet/dry send.
         const roomConvolver = ctx.createConvolver();
-        roomConvolver.buffer = createRoomReverbIR(ctx);
+        roomConvolver.buffer = buildCabinetIR(ctx, getCabinetPreset(preset.room));
+        const levels = computeRoomLevels(preset, reverbEnabled, reverbMix);
         const roomDry = ctx.createGain();
-        roomDry.gain.value = reverbEnabled ? 1 - reverbMix : 1;
+        roomDry.gain.value = levels.dry;
         const roomWet = ctx.createGain();
-        roomWet.gain.value = reverbEnabled ? reverbMix : 0;
+        roomWet.gain.value = levels.wet;
 
-        // 7. Master limiter (prevents clipping)
+        // 7. Master brick-wall limiter (output safety — Phase 1 kept as-is).
         const limiter = ctx.createDynamicsCompressor();
-        limiter.threshold.value = -1;
-        limiter.knee.value = 0;
-        limiter.ratio.value = 20;
-        limiter.attack.value = 0.003;
-        limiter.release.value = 0.01;
+        limiter.threshold.value = preset.limiterThresholdDb;
+        limiter.ratio.value = preset.limiterRatio;
+        limiter.attack.value = preset.limiterAttackSec;
+        limiter.release.value = preset.limiterReleaseSec;
+        limiter.knee.value = preset.limiterKneeDb;
 
         const sourceNode = output._gainNode ?? output.gainNode ?? output._masterGain;
         if (sourceNode) {
-          try { sourceNode.disconnect(); } catch {}
+          try { sourceNode.disconnect(); } catch { /* ok */ }
 
-          // Wire: source -> highpass -> saturation -> cabinet -> lowpass -> compressor
+          // Serial: source -> HP -> shaper -> cabinet -> postGain -> compressor.
           sourceNode.connect(highpass);
-          highpass.connect(saturation);
-          saturation.connect(cabinetConvolver);
-          cabinetConvolver.connect(lowpass);
-          lowpass.connect(compressor);
+          highpass.connect(shaper);
+          shaper.connect(cabinetConvolver);
+          cabinetConvolver.connect(postCabGain);
+          postCabGain.connect(compressor);
 
-          // Split for room reverb dry/wet
+          // Parallel: dry to limiter + room wet to limiter.
           compressor.connect(roomDry);
           roomDry.connect(limiter);
           compressor.connect(roomConvolver);
@@ -417,8 +390,18 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
           limiter.connect(ctx.destination);
 
           audioNodesRef.current = {
-            ctx, highpass, saturation, cabinetConvolver, lowpass,
-            compressor, roomConvolver, roomDry, roomWet, limiter,
+            ctx,
+            sourceNode,
+            highpass,
+            shaper,
+            cabinetConvolver,
+            postCabGain,
+            compressor,
+            roomConvolver,
+            roomDry,
+            roomWet,
+            limiter,
+            presetId: preset.id,
           };
         }
       };
@@ -432,16 +415,76 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
     }
   }
 
-  // Update room reverb mix when settings change
+  // Update room send levels when user toggles reverb or drags the mix slider.
   useEffect(() => {
     const nodes = audioNodesRef.current;
     if (!nodes) return;
+    const preset = TAB_PLAYER_PRESETS[nodes.presetId];
+    const { wet, dry } = computeRoomLevels(preset, reverbEnabled, reverbMix);
     const now = nodes.ctx.currentTime;
     nodes.roomWet.gain.cancelScheduledValues(now);
     nodes.roomDry.gain.cancelScheduledValues(now);
-    nodes.roomWet.gain.linearRampToValueAtTime(reverbEnabled ? reverbMix : 0, now + 0.05);
-    nodes.roomDry.gain.linearRampToValueAtTime(reverbEnabled ? 1 - reverbMix : 1, now + 0.05);
+    nodes.roomWet.gain.linearRampToValueAtTime(wet, now + 0.05);
+    nodes.roomDry.gain.linearRampToValueAtTime(dry, now + 0.05);
   }, [reverbEnabled, reverbMix]);
+
+  // Swap tone preset at runtime: crossfade numeric params over 50 ms, rebuild
+  // the cabinet convolver instantly. (<1 ms audio seam is inaudible.)
+  useEffect(() => {
+    const nodes = audioNodesRef.current;
+    if (!nodes) return;
+    if (nodes.presetId === tonePreset) return;
+    const preset = TAB_PLAYER_PRESETS[tonePreset];
+    const ctx = nodes.ctx;
+    const now = ctx.currentTime;
+    const end = now + 0.050;
+
+    nodes.highpass.frequency.cancelScheduledValues(now);
+    nodes.highpass.Q.cancelScheduledValues(now);
+    nodes.highpass.frequency.linearRampToValueAtTime(preset.highPassHz, end);
+    nodes.highpass.Q.linearRampToValueAtTime(preset.highPassQ, end);
+
+    // WaveShaper curve swap: assignment is sample-accurate enough at audio rate.
+    nodes.shaper.curve = buildShaperCurve(preset);
+    nodes.shaper.oversample = preset.shaperOversample;
+
+    // Rebuild cabinet IR (new preset = different cab).
+    nodes.cabinetConvolver.buffer = buildCabinetIR(ctx, getCabinetPreset(preset.cabinet));
+
+    nodes.postCabGain.gain.cancelScheduledValues(now);
+    nodes.postCabGain.gain.linearRampToValueAtTime(preset.postCabGain, end);
+
+    nodes.compressor.threshold.cancelScheduledValues(now);
+    nodes.compressor.ratio.cancelScheduledValues(now);
+    nodes.compressor.attack.cancelScheduledValues(now);
+    nodes.compressor.release.cancelScheduledValues(now);
+    nodes.compressor.knee.cancelScheduledValues(now);
+    nodes.compressor.threshold.linearRampToValueAtTime(preset.compThresholdDb, end);
+    nodes.compressor.ratio.linearRampToValueAtTime(preset.compRatio, end);
+    nodes.compressor.attack.linearRampToValueAtTime(preset.compAttackSec, end);
+    nodes.compressor.release.linearRampToValueAtTime(preset.compReleaseSec, end);
+    nodes.compressor.knee.linearRampToValueAtTime(preset.compKneeDb, end);
+
+    nodes.roomConvolver.buffer = buildCabinetIR(ctx, getCabinetPreset(preset.room));
+    const { wet, dry } = computeRoomLevels(preset, reverbEnabled, reverbMix);
+    nodes.roomWet.gain.cancelScheduledValues(now);
+    nodes.roomDry.gain.cancelScheduledValues(now);
+    nodes.roomWet.gain.linearRampToValueAtTime(wet, end);
+    nodes.roomDry.gain.linearRampToValueAtTime(dry, end);
+
+    nodes.limiter.threshold.cancelScheduledValues(now);
+    nodes.limiter.ratio.cancelScheduledValues(now);
+    nodes.limiter.attack.cancelScheduledValues(now);
+    nodes.limiter.release.cancelScheduledValues(now);
+    nodes.limiter.knee.cancelScheduledValues(now);
+    nodes.limiter.threshold.linearRampToValueAtTime(preset.limiterThresholdDb, end);
+    nodes.limiter.ratio.linearRampToValueAtTime(preset.limiterRatio, end);
+    nodes.limiter.attack.linearRampToValueAtTime(preset.limiterAttackSec, end);
+    nodes.limiter.release.linearRampToValueAtTime(preset.limiterReleaseSec, end);
+    nodes.limiter.knee.linearRampToValueAtTime(preset.limiterKneeDb, end);
+
+    nodes.presetId = preset.id;
+  }, [tonePreset, reverbEnabled, reverbMix]);
 
   useEffect(() => {
     if ((!fileData && !texLoaded) || !mainRef.current) return;
@@ -460,15 +503,15 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
         if (audioNodesRef.current) {
           try {
             audioNodesRef.current.highpass.disconnect();
-            audioNodesRef.current.saturation.disconnect();
+            audioNodesRef.current.shaper.disconnect();
             audioNodesRef.current.cabinetConvolver.disconnect();
-            audioNodesRef.current.lowpass.disconnect();
+            audioNodesRef.current.postCabGain.disconnect();
             audioNodesRef.current.compressor.disconnect();
             audioNodesRef.current.roomConvolver.disconnect();
             audioNodesRef.current.roomDry.disconnect();
             audioNodesRef.current.roomWet.disconnect();
             audioNodesRef.current.limiter.disconnect();
-          } catch {}
+          } catch { /* ok */ }
           audioNodesRef.current = null;
         }
         const base = window.location.origin;
@@ -1508,6 +1551,28 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
               {/* Audio Enhancement */}
               <div className="mt-2 pt-2 border-t border-[#1a1a1a]">
                 <div className="font-label text-[9px] text-[#888] mb-1">Audio Enhancement</div>
+
+                {/* Tone preset selector (Metal / Rock / Clean) */}
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="font-label text-[8px] text-[#555] w-10">Tone</span>
+                  <div className="flex gap-1 flex-1">
+                    {TAB_PLAYER_PRESET_LIST.map(p => (
+                      <button
+                        key={p.id}
+                        onClick={() => setTonePreset(p.id)}
+                        title={`${p.label} tone`}
+                        className={`font-label text-[9px] px-2 py-1 rounded cursor-pointer border transition-colors duration-120 ${
+                          tonePreset === p.id
+                            ? "border-[#f59e0b] text-[#f59e0b] bg-[#f59e0b]/10"
+                            : "border-[#222] text-[#555] hover:border-[#333] hover:text-[#888]"
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="flex items-center gap-2">
                   <button onClick={() => setReverbEnabled(!reverbEnabled)}
                     className={`font-label text-[9px] px-2 py-1 rounded cursor-pointer border ${reverbEnabled ? "border-[#8B5CF6] text-[#8B5CF6] bg-[#8B5CF6]/10" : "border-[#222] text-[#555]"}`}>

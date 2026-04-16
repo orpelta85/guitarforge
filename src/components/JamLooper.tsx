@@ -3,6 +3,15 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { idbSaveRecording, idbLoadRecordings } from "@/lib/recorderIdb";
 import type { SavedRecording } from "@/lib/types";
 import { loadMetronomeVolume, saveMetronomeVolume, clickGain } from "@/lib/metronomeAudio";
+import { buildCabinetIR, getCabinetPreset } from "@/lib/audioIr";
+import {
+  TAB_PLAYER_PRESETS,
+  TAB_PLAYER_PRESET_LIST,
+  buildShaperCurve,
+  type TabPlayerPreset,
+  type TabPlayerPresetId,
+} from "@/lib/audioPresets";
+import { sliderToGain, smoothParam } from "@/lib/audioMixHelpers";
 
 interface Props {
   bpm: number;
@@ -26,7 +35,128 @@ const COUNT_IN_BEATS = 4;
 const LOOKAHEAD_MS = 25;
 const SCHEDULE_AHEAD_S = 0.1;
 
-// Merge all unmuted layers into a single mono WAV blob
+// Encode a rendered AudioBuffer (mono or stereo) as 16-bit PCM WAV.
+function audioBufferToWav(buffer: AudioBuffer): Blob {
+  const numCh = Math.min(buffer.numberOfChannels, 2);
+  const sr = buffer.sampleRate;
+  const length = buffer.length;
+  const bytesPerSample = 2;
+  const blockAlign = numCh * bytesPerSample;
+  const dataSize = length * blockAlign;
+  const ab = new ArrayBuffer(44 + dataSize);
+  const view = new DataView(ab);
+  const writeStr = (offset: number, str: string) => {
+    for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+  };
+  writeStr(0, "RIFF");
+  view.setUint32(4, 36 + dataSize, true);
+  writeStr(8, "WAVE");
+  writeStr(12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, numCh, true);
+  view.setUint32(24, sr, true);
+  view.setUint32(28, sr * blockAlign, true);
+  view.setUint16(32, blockAlign, true);
+  view.setUint16(34, 16, true);
+  writeStr(36, "data");
+  view.setUint32(40, dataSize, true);
+
+  const channels: Float32Array[] = [];
+  for (let ch = 0; ch < numCh; ch++) channels.push(buffer.getChannelData(ch));
+
+  let offset = 44;
+  for (let i = 0; i < length; i++) {
+    for (let ch = 0; ch < numCh; ch++) {
+      const s = Math.max(-1, Math.min(1, channels[ch][i]));
+      view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+      offset += 2;
+    }
+  }
+  return new Blob([ab], { type: "audio/wav" });
+}
+
+// Offline-render all audible layers through the playback-time effect chain
+// (§4.6).  Result is stereo because the cabinet IR is stereo.  The dry layer
+// buffers remain unchanged in state so live preset switching still works.
+async function renderLayersWithChainOffline(
+  layers: LoopLayer[],
+  preset: TabPlayerPreset,
+): Promise<AudioBuffer> {
+  const audible = layers.filter(l => !l.muted);
+  const src = audible.length > 0 ? audible : layers;
+  if (src.length === 0) throw new Error("no layers");
+
+  const sampleRate = src[0].buffer.sampleRate;
+  const length = src[0].buffer.length;
+  // Stereo output so the cabinet IR width survives.
+  const offline = new OfflineAudioContext(2, length, sampleRate);
+
+  // Rebuild the FX chain inside the offline context (IR cache keys by sample
+  // rate so this is cheap even if the graph is reconstructed).
+  const chainEntry = offline.createGain();
+  const cabinet = offline.createConvolver();
+  cabinet.normalize = false;
+  cabinet.buffer = buildCabinetIR(offline as unknown as AudioContext, getCabinetPreset(preset.cabinet));
+  const postCabGain = offline.createGain();
+  postCabGain.gain.value = preset.postCabGain;
+  const compressor = offline.createDynamicsCompressor();
+  compressor.threshold.value = preset.compThresholdDb;
+  compressor.ratio.value = preset.compRatio;
+  compressor.attack.value = preset.compAttackSec;
+  compressor.release.value = preset.compReleaseSec;
+  compressor.knee.value = preset.compKneeDb;
+  const drySum = offline.createGain();
+  drySum.gain.value = 1.0 - (preset.roomWetDefault * 0.5);
+  const roomSend = offline.createGain();
+  roomSend.gain.value = preset.roomWetDefault;
+  const room = offline.createConvolver();
+  room.normalize = false;
+  room.buffer = buildCabinetIR(offline as unknown as AudioContext, getCabinetPreset(preset.room));
+  const wetSum = offline.createGain();
+  const limiter = offline.createDynamicsCompressor();
+  limiter.threshold.value = preset.limiterThresholdDb;
+  limiter.ratio.value = preset.limiterRatio;
+  limiter.attack.value = preset.limiterAttackSec;
+  limiter.release.value = preset.limiterReleaseSec;
+  limiter.knee.value = preset.limiterKneeDb;
+
+  chainEntry.connect(cabinet);
+  cabinet.connect(postCabGain);
+  postCabGain.connect(compressor);
+  compressor.connect(drySum);
+  compressor.connect(roomSend);
+  roomSend.connect(room);
+  drySum.connect(wetSum);
+  room.connect(wetSum);
+  wetSum.connect(limiter);
+  limiter.connect(offline.destination);
+
+  // Feed each layer through its own HP + WaveShaper into the chain entry.
+  for (const layer of src) {
+    const source = offline.createBufferSource();
+    source.buffer = layer.buffer;
+    const gain = offline.createGain();
+    gain.gain.value = sliderToGain(layer.volume);
+    const hp = offline.createBiquadFilter();
+    hp.type = "highpass";
+    hp.frequency.value = preset.highPassHz;
+    hp.Q.value = preset.highPassQ;
+    const shaper = offline.createWaveShaper();
+    shaper.curve = buildShaperCurve(preset);
+    shaper.oversample = preset.shaperOversample;
+    source.connect(gain);
+    gain.connect(hp);
+    hp.connect(shaper);
+    shaper.connect(chainEntry);
+    source.start(0);
+  }
+
+  return offline.startRendering();
+}
+
+// Merge all unmuted layers into a single mono WAV blob (dry, unprocessed).
+// Kept for backwards compatibility with existing callers.
 function mergeLayersToWav(layers: LoopLayer[], sampleRate: number): Blob {
   const active = layers.filter(l => !l.muted);
   if (active.length === 0) return new Blob();
@@ -86,6 +216,36 @@ function mergeLayersToWav(layers: LoopLayer[], sampleRate: number): Blob {
   return new Blob([buffer], { type: "audio/wav" });
 }
 
+// Default Jam preset per AUDIO_SPEC §4.3 — Rock (broader mids are more
+// forgiving of varied loop content: riffs, leads, chords, vocals).
+const JAM_PRESET_STORAGE_KEY = "gf.jam.preset";
+const DEFAULT_JAM_PRESET: TabPlayerPresetId = "rock";
+
+function loadJamPreset(): TabPlayerPresetId {
+  if (typeof window === "undefined") return DEFAULT_JAM_PRESET;
+  const raw = localStorage.getItem(JAM_PRESET_STORAGE_KEY);
+  if (raw && raw in TAB_PLAYER_PRESETS) return raw as TabPlayerPresetId;
+  return DEFAULT_JAM_PRESET;
+}
+
+/** Nodes that make up the shared playback-time effect chain (AUDIO_SPEC §4.2). */
+interface JamFxChain {
+  // Input sink — per-layer sources connect here; each layer owns its own
+  // highpass + waveshaper (cheap) and feeds this entry gain.
+  chainEntry: GainNode;
+  // Shared (post-per-layer) nodes.
+  cabinet: ConvolverNode;
+  postCabGain: GainNode;
+  compressor: DynamicsCompressorNode;
+  drySum: GainNode;
+  roomSend: GainNode;
+  room: ConvolverNode;
+  wetSum: GainNode;
+  limiter: DynamicsCompressorNode;
+  // Name this chain was built for, so we can rebuild on preset swap.
+  presetId: TabPlayerPresetId;
+}
+
 export default function JamLooper({ bpm, jamPlaying }: Props) {
   const [expanded, setExpanded] = useState(true);
   const [bars, setBars] = useState<1 | 2 | 4 | 8>(2);
@@ -96,8 +256,15 @@ export default function JamLooper({ bpm, jamPlaying }: Props) {
   const [saving, setSaving] = useState(false);
   const [savedMsg, setSavedMsg] = useState("");
   const [metVolume, setMetVolume] = useState(1);
+  const [presetId, setPresetId] = useState<TabPlayerPresetId>(DEFAULT_JAM_PRESET);
   useEffect(() => { setMetVolume(loadMetronomeVolume()); }, []);
+  useEffect(() => { setPresetId(loadJamPreset()); }, []);
   useEffect(() => { metVolumeRef.current = metVolume; }, [metVolume]);
+  useEffect(() => { presetIdRef.current = presetId; }, [presetId]);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try { localStorage.setItem(JAM_PRESET_STORAGE_KEY, presetId); } catch { /* ignore */ }
+  }, [presetId]);
 
   // Refs - audio objects must live in refs to avoid stale closures
   const ctxRef = useRef<AudioContext | null>(null);
@@ -108,12 +275,22 @@ export default function JamLooper({ bpm, jamPlaying }: Props) {
   const nextClickTimeRef = useRef(0);
   const currentBeatRef = useRef(0);
   const layerIdRef = useRef(0);
-  const loopSourcesRef = useRef<{ layerId: number; source: AudioBufferSourceNode; gain: GainNode }[]>([]);
+  // Per playing layer: the BufferSource, its own volume gain, and the HP/shaper
+  // nodes that sit before the shared cabinet chain.  All disposed together.
+  const loopSourcesRef = useRef<{
+    layerId: number;
+    source: AudioBufferSourceNode;
+    gain: GainNode;
+    highpass: BiquadFilterNode;
+    shaper: WaveShaperNode;
+  }[]>([]);
   const stateRef = useRef<LooperState>("idle");
   const layersRef = useRef(layers);
   const bpmRef = useRef(bpm);
   const barsRef = useRef(bars);
   const recordStartRef = useRef(0);
+  const presetIdRef = useRef<TabPlayerPresetId>(DEFAULT_JAM_PRESET);
+  const fxChainRef = useRef<JamFxChain | null>(null);
 
   // Keep refs in sync with state
   useEffect(() => { layersRef.current = layers; }, [layers]);
@@ -125,9 +302,97 @@ export default function JamLooper({ bpm, jamPlaying }: Props) {
 
   function getOrCreateCtx(): AudioContext {
     if (!ctxRef.current || ctxRef.current.state === "closed") {
-      ctxRef.current = new AudioContext();
+      const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      ctxRef.current = new Ctx({ sampleRate: 44100, latencyHint: "interactive" });
     }
     return ctxRef.current;
+  }
+
+  // Build (or reuse) the shared playback-time FX chain.  Layers all feed the
+  // single cabinet convolver — this saves CPU vs one convolver per layer,
+  // which is the correct architecture for a Jam session where every layer
+  // shares the same tone.  See AUDIO_SPEC §4.2 "CPU note".
+  function disposeFxChain(chain: JamFxChain) {
+    try { chain.chainEntry.disconnect(); } catch { /* ok */ }
+    try { chain.cabinet.disconnect(); } catch { /* ok */ }
+    try { chain.postCabGain.disconnect(); } catch { /* ok */ }
+    try { chain.compressor.disconnect(); } catch { /* ok */ }
+    try { chain.drySum.disconnect(); } catch { /* ok */ }
+    try { chain.roomSend.disconnect(); } catch { /* ok */ }
+    try { chain.room.disconnect(); } catch { /* ok */ }
+    try { chain.wetSum.disconnect(); } catch { /* ok */ }
+    try { chain.limiter.disconnect(); } catch { /* ok */ }
+  }
+
+  function buildFxChain(ctx: AudioContext, preset: TabPlayerPreset): JamFxChain {
+    const chainEntry = ctx.createGain();
+    chainEntry.gain.value = 1;
+
+    // Cabinet convolver — generated once per preset via math IR (§1).
+    const cabinet = ctx.createConvolver();
+    cabinet.normalize = false;
+    cabinet.buffer = buildCabinetIR(ctx, getCabinetPreset(preset.cabinet));
+
+    const postCabGain = ctx.createGain();
+    postCabGain.gain.value = preset.postCabGain;
+
+    const compressor = ctx.createDynamicsCompressor();
+    compressor.threshold.value = preset.compThresholdDb;
+    compressor.ratio.value = preset.compRatio;
+    compressor.attack.value = preset.compAttackSec;
+    compressor.release.value = preset.compReleaseSec;
+    compressor.knee.value = preset.compKneeDb;
+
+    const drySum = ctx.createGain();
+    drySum.gain.value = 1.0 - (preset.roomWetDefault * 0.5);
+
+    const roomSend = ctx.createGain();
+    roomSend.gain.value = preset.roomWetDefault;
+
+    const room = ctx.createConvolver();
+    room.normalize = false;
+    room.buffer = buildCabinetIR(ctx, getCabinetPreset(preset.room));
+
+    const wetSum = ctx.createGain();
+    wetSum.gain.value = 1;
+
+    const limiter = ctx.createDynamicsCompressor();
+    limiter.threshold.value = preset.limiterThresholdDb;
+    limiter.ratio.value = preset.limiterRatio;
+    limiter.attack.value = preset.limiterAttackSec;
+    limiter.release.value = preset.limiterReleaseSec;
+    limiter.knee.value = preset.limiterKneeDb;
+
+    // Wire: chainEntry -> cabinet -> postCabGain -> compressor
+    //       compressor -> drySum ---------------\
+    //                                             wetSum -> limiter -> destination
+    //       compressor -> roomSend -> room ----/
+    chainEntry.connect(cabinet);
+    cabinet.connect(postCabGain);
+    postCabGain.connect(compressor);
+    compressor.connect(drySum);
+    compressor.connect(roomSend);
+    roomSend.connect(room);
+    drySum.connect(wetSum);
+    room.connect(wetSum);
+    wetSum.connect(limiter);
+    limiter.connect(ctx.destination);
+
+    return {
+      chainEntry, cabinet, postCabGain, compressor,
+      drySum, roomSend, room, wetSum, limiter,
+      presetId: preset.id,
+    };
+  }
+
+  function getOrBuildFxChain(ctx: AudioContext): JamFxChain {
+    const preset = TAB_PLAYER_PRESETS[presetIdRef.current];
+    const existing = fxChainRef.current;
+    if (existing && existing.presetId === preset.id) return existing;
+    if (existing) disposeFxChain(existing);
+    const next = buildFxChain(ctx, preset);
+    fxChainRef.current = next;
+    return next;
   }
 
   // Check if any layer is soloed
@@ -183,34 +448,65 @@ export default function JamLooper({ bpm, jamPlaying }: Props) {
     schedulerRef.current = setTimeout(metronomeScheduler, LOOKAHEAD_MS);
   }, [scheduleClick]);
 
-  // Stop loop playback - disconnect all playing sources
+  // Stop loop playback - disconnect all playing sources + per-layer FX nodes.
   const stopLoopPlayback = useCallback(() => {
-    loopSourcesRef.current.forEach(({ source }) => {
+    loopSourcesRef.current.forEach(({ source, gain, highpass, shaper }) => {
       try { source.stop(); } catch { /* already stopped */ }
+      try { source.disconnect(); } catch { /* ok */ }
+      try { gain.disconnect(); } catch { /* ok */ }
+      try { highpass.disconnect(); } catch { /* ok */ }
+      try { shaper.disconnect(); } catch { /* ok */ }
     });
     loopSourcesRef.current = [];
   }, []);
 
-  // Start loop playback of layers (reads from layersRef for freshness)
+  // Start loop playback routed through the playback-time FX chain.
+  // Per AUDIO_SPEC §4.2:
+  //   BufferSource -> layer Gain -> layer HighPass -> layer WaveShaper
+  //     -> SHARED cabinet -> postCabGain -> compressor -> split (dry/wet)
+  //     -> limiter -> destination.
+  // The recorded AudioBuffer is never modified — effects are playback-time
+  // only, so preset swaps are retroactive and Save-to-Library can decide
+  // whether to export dry or processed.
   const startLoopPlayback = useCallback((ctx: AudioContext, startTime: number) => {
     stopLoopPlayback();
 
     const current = layersRef.current;
     const anySolo = current.some(l => l.solo);
+    const preset = TAB_PLAYER_PRESETS[presetIdRef.current];
+    const chain = getOrBuildFxChain(ctx);
 
     current.forEach((layer) => {
       const audible = !layer.muted && (!anySolo || layer.solo);
       if (!audible) return;
 
       const source = ctx.createBufferSource();
-      const gain = ctx.createGain();
       source.buffer = layer.buffer;
       source.loop = true;
-      gain.gain.value = layer.volume;
+
+      const gain = ctx.createGain();
+      // Layer volume uses log slider curve (AUDIO_SPEC §7.1).
+      gain.gain.value = sliderToGain(layer.volume);
+
+      const highpass = ctx.createBiquadFilter();
+      highpass.type = "highpass";
+      highpass.frequency.value = preset.highPassHz;
+      highpass.Q.value = preset.highPassQ;
+
+      const shaper = ctx.createWaveShaper();
+      shaper.curve = buildShaperCurve(preset);
+      shaper.oversample = preset.shaperOversample;
+
+      // Wire: source -> gain -> HP -> shaper -> shared chain entry.
       source.connect(gain);
-      gain.connect(ctx.destination);
+      gain.connect(highpass);
+      highpass.connect(shaper);
+      shaper.connect(chain.chainEntry);
       source.start(startTime);
-      loopSourcesRef.current.push({ layerId: layer.id, source, gain });
+
+      loopSourcesRef.current.push({
+        layerId: layer.id, source, gain, highpass, shaper,
+      });
     });
   }, [stopLoopPlayback]);
 
@@ -242,17 +538,17 @@ export default function JamLooper({ bpm, jamPlaying }: Props) {
     const ctx = getOrCreateCtx();
     if (ctx.state === "suspended") await ctx.resume();
 
-    // Request mic access
+    // Request mic access — force mono 48kHz, all processing OFF
+    // (echoCancellation/noiseSuppression/autoGainControl destroy guitar tone).
     if (!mediaStreamRef.current) {
       try {
         mediaStreamRef.current = await navigator.mediaDevices.getUserMedia({
           audio: {
+            sampleRate: 48000,
+            channelCount: 1,
             echoCancellation: false,
             noiseSuppression: false,
             autoGainControl: false,
-            channelCount: 2,
-            sampleRate: 48000,
-            sampleSize: 24,
           },
         });
       } catch (err) {
@@ -291,9 +587,10 @@ export default function JamLooper({ bpm, jamPlaying }: Props) {
       const mimeType = pcmOk ? "audio/webm;codecs=pcm" :
         MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "audio/webm";
 
+      // PCM is lossless; Opus fallback @ 256 kbps
       const recorder = new MediaRecorder(mediaStreamRef.current, {
         mimeType,
-        ...(pcmOk ? {} : { audioBitsPerSecond: 320000 }),
+        ...(pcmOk ? {} : { audioBitsPerSecond: 256000 }),
       });
       chunksRef.current = [];
       recorder.ondataavailable = (e) => {
@@ -403,13 +700,14 @@ export default function JamLooper({ bpm, jamPlaying }: Props) {
     setLayers([]);
   }, [stopAll]);
 
-  // Layer controls - uses layerId to find the correct playing source
+  // Layer controls - uses layerId to find the correct playing source.
+  // Volume slider uses log curve (AUDIO_SPEC §7.1) and 15 ms smoothing (§7.3).
   const setLayerVolume = useCallback((layerId: number, vol: number) => {
     setLayers(prev => prev.map(l => l.id === layerId ? { ...l, volume: vol } : l));
-    // Update the live gain node directly for instant feedback
     const entry = loopSourcesRef.current.find(s => s.layerId === layerId);
-    if (entry) {
-      entry.gain.gain.value = vol;
+    const ctx = ctxRef.current;
+    if (entry && ctx) {
+      smoothParam(entry.gain.gain, sliderToGain(vol), ctx.currentTime);
     }
   }, []);
 
@@ -463,14 +761,25 @@ export default function JamLooper({ bpm, jamPlaying }: Props) {
     });
   }, [stopLoopPlayback, startLoopPlayback]);
 
-  // Save to Library
+  // Save to Library — offline-renders layers through the active effect chain
+  // (AUDIO_SPEC §4.6) so the exported WAV matches what the user heard during
+  // playback.  Dry layer buffers remain in state for live preset switching.
   const saveToLibrary = useCallback(async () => {
     const currentLayers = layersRef.current;
     if (currentLayers.length === 0) return;
     setSaving(true);
     try {
       const ctx = getOrCreateCtx();
-      const blob = mergeLayersToWav(currentLayers, ctx.sampleRate);
+      const preset = TAB_PLAYER_PRESETS[presetIdRef.current];
+      let blob: Blob;
+      try {
+        const rendered = await renderLayersWithChainOffline(currentLayers, preset);
+        blob = audioBufferToWav(rendered);
+      } catch {
+        // Fallback: dry merge (old behaviour) if offline rendering fails
+        // (e.g. browser lacks OfflineAudioContext.convolver support).
+        blob = mergeLayersToWav(currentLayers, ctx.sampleRate);
+      }
       if (blob.size === 0) {
         setSaving(false);
         return;
@@ -501,6 +810,37 @@ export default function JamLooper({ bpm, jamPlaying }: Props) {
     setSaving(false);
   }, []);
 
+  // Swap effect preset live.  Per AUDIO_SPEC §4.4: the <5 ms seam is masked
+  // by fading layer gains down 20 ms, swapping, then fading back up.
+  useEffect(() => {
+    const ctx = ctxRef.current;
+    if (!ctx) return;
+    if (stateRef.current !== "playing") {
+      // Not playing — drop the old chain so the next play picks up the new preset.
+      if (fxChainRef.current) {
+        disposeFxChain(fxChainRef.current);
+        fxChainRef.current = null;
+      }
+      return;
+    }
+    const now = ctx.currentTime;
+    // Fade down.
+    loopSourcesRef.current.forEach(({ gain }) => {
+      gain.gain.cancelScheduledValues(now);
+      gain.gain.setValueAtTime(gain.gain.value, now);
+      gain.gain.linearRampToValueAtTime(0, now + 0.020);
+    });
+    // After fade, rebuild chain + restart sources (smoother than per-node swap).
+    window.setTimeout(() => {
+      if (!ctxRef.current || stateRef.current !== "playing") return;
+      if (fxChainRef.current) {
+        disposeFxChain(fxChainRef.current);
+        fxChainRef.current = null;
+      }
+      startLoopPlayback(ctxRef.current, ctxRef.current.currentTime);
+    }, 25);
+  }, [presetId, startLoopPlayback]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -510,6 +850,10 @@ export default function JamLooper({ bpm, jamPlaying }: Props) {
         try { source.stop(); } catch { /* noop */ }
       });
       loopSourcesRef.current = [];
+      if (fxChainRef.current) {
+        disposeFxChain(fxChainRef.current);
+        fxChainRef.current = null;
+      }
       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach(t => t.stop());
       }
@@ -616,6 +960,29 @@ export default function JamLooper({ bpm, jamPlaying }: Props) {
                   className="w-[60px] accent-[#D4A843]"
                 />
               </div>
+            </div>
+          </div>
+
+          {/* Tone preset selector — Metal / Rock / Clean.  Applied at playback
+              time to every layer (AUDIO_SPEC §4.4); dry buffers stay in memory. */}
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-[10px] text-[#6b6560] font-label uppercase tracking-wider">Tone</span>
+            <div className="flex gap-1">
+              {TAB_PLAYER_PRESET_LIST.map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => setPresetId(p.id)}
+                  className="text-[10px] px-2 py-1 rounded font-label transition-all"
+                  style={{
+                    background: presetId === p.id ? "rgba(212,168,67,0.2)" : "rgba(255,255,255,0.05)",
+                    color: presetId === p.id ? "#D4A843" : "#6b6560",
+                    border: `1px solid ${presetId === p.id ? "rgba(212,168,67,0.4)" : "rgba(255,255,255,0.08)"}`,
+                  }}
+                  title={`${p.label} cabinet + saturation preset`}
+                >
+                  {p.label}
+                </button>
+              ))}
             </div>
           </div>
 

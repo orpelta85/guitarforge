@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import FretboardChallenge from "./FretboardChallenge";
 import ChromaticTuner from "./ChromaticTuner";
+import { playNote as playVoiceNote } from "@/lib/intervalSynth";
 
 /* ═══════════════════════════════════════════════════════════
    DATA
@@ -520,10 +521,9 @@ function LCFretboard({ highlightNotes, rootNote, showIntervals, onClick, maxFret
   const ctxRef = useRef<AudioContext | null>(null);
   function play(midi: number) {
     if (!ctxRef.current) ctxRef.current = new AudioContext();
-    const c = ctxRef.current, o = c.createOscillator(), g = c.createGain();
-    o.connect(g); g.connect(c.destination); o.type = "triangle"; o.frequency.value = freq(midi);
-    g.gain.setValueAtTime(0.2, c.currentTime); g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.5);
-    o.start(c.currentTime); o.stop(c.currentTime + 0.6);
+    const c = ctxRef.current;
+    // Warm 3-oscillator voice with ADSR and room reverb (§6).
+    playVoiceNote(c, c.destination, freq(midi), 500);
   }
   return (
     <div className="overflow-x-auto" dir="ltr">
@@ -794,12 +794,22 @@ export default function LearningCenterPage() {
      AUDIO
      ═══════════════════════════════════════════════════════════ */
   function ctx() { if (!ctxRef.current) ctxRef.current = new AudioContext(); return ctxRef.current; }
-  function tone(midi: number, dur = 0.6, delay = 0, type: OscillatorType = "triangle") {
-    const c = ctx(), o = c.createOscillator(), g = c.createGain();
-    o.connect(g); g.connect(c.destination); o.type = type; o.frequency.value = freq(midi);
-    g.gain.setValueAtTime(0.22, c.currentTime + delay);
-    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + delay + dur);
-    o.start(c.currentTime + delay); o.stop(c.currentTime + delay + dur + 0.1);
+  function tone(midi: number, dur = 0.6, delay = 0, _type: OscillatorType = "triangle") {
+    // `_type` retained for backwards-compat with all existing callers; the warm
+    // 3-oscillator voice (§6) now produces the tone regardless of requested type.
+    const c = ctx();
+    const frequencyHz = freq(midi);
+    const holdMs = Math.max(80, dur * 1000);
+    if (delay <= 0) {
+      playVoiceNote(c, c.destination, frequencyHz, holdMs);
+      return;
+    }
+    // Defer scheduling until the requested delay to preserve timing of chord
+    // and scale playback loops that pass a non-zero `delay`.
+    setTimeout(() => {
+      if (c.state === "closed") return;
+      playVoiceNote(c, c.destination, frequencyHz, holdMs);
+    }, delay * 1000);
   }
   function playIv(st: number, dir: Direction, forceRoot?: number) {
     const r = forceRoot ?? 55 + Math.floor(Math.random() * 12);
@@ -812,10 +822,16 @@ export default function LearningCenterPage() {
   function playScaleNotes(ns: number[], forceRoot?: number) { const r = forceRoot ?? 55 + Math.floor(Math.random() * 12); setLastPlayRoot(r); ns.forEach((n, i) => tone(r + n, 0.35, i * 0.2)); }
   function playProg(chords: number[][]) { chords.forEach((ch, i) => { const r = 48; ch.forEach(n => tone(r + n, 0.8, i * 1.0)); }); }
   function playNote(midi: number, delay = 0) {
-    const c = ctx(), o = c.createOscillator(), g = c.createGain();
-    o.connect(g); g.connect(c.destination); o.type = "triangle"; o.frequency.value = freq(midi);
-    g.gain.setValueAtTime(0.2, c.currentTime + delay); g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + delay + 0.5);
-    o.start(c.currentTime + delay); o.stop(c.currentTime + delay + 0.6);
+    const c = ctx();
+    const frequencyHz = freq(midi);
+    if (delay <= 0) {
+      playVoiceNote(c, c.destination, frequencyHz, 500);
+      return;
+    }
+    setTimeout(() => {
+      if (c.state === "closed") return;
+      playVoiceNote(c, c.destination, frequencyHz, 500);
+    }, delay * 1000);
   }
   function playChordByName(name: string, delay = 0) {
     // Parse root: letter + optional accidental (#, b)

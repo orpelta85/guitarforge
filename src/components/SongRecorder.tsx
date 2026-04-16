@@ -4,7 +4,7 @@ import type { SavedRecording } from "@/lib/types";
 import { idbSaveRecording, idbLoadRecordings } from "@/lib/recorderIdb";
 import { saveToLibrary } from "@/lib/recordingsLibrary";
 import { decodeBlobToBuffer, mixAudioBlobs } from "@/lib/audioMix";
-import { useAudioDevices, buildAudioConstraints } from "@/lib/useAudioDevices";
+import { useAudioDevices } from "@/lib/useAudioDevices";
 import DarkAudioPlayer from "./DarkAudioPlayer";
 
 interface SongRecorderProps {

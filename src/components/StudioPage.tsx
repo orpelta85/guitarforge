@@ -6,6 +6,18 @@ import type { LibraryTrack } from "@/lib/suno";
 import LooperBox from "./LooperBox";
 import { ensureYT, parseYouTubeId, type YTPlayerInstance } from "@/lib/youtubeApi";
 import { loadMetronomeVolume, saveMetronomeVolume, clickGain, DEFAULT_METRONOME_VOLUME } from "@/lib/metronomeAudio";
+import {
+  STUDIO_PRESETS,
+  STUDIO_PRESET_LIST,
+  buildStudioShaperCurve,
+  type StudioPreset,
+  type StudioPresetId,
+} from "@/lib/studioPresets";
+import {
+  sliderToGain,
+  equalPowerPan,
+  smoothParam,
+} from "@/lib/audioMixHelpers";
 
 // ── Types ──
 interface StudioTrack {
@@ -16,6 +28,8 @@ interface StudioTrack {
   audioUrl: string | null;
   volume: number;
   muted: boolean;
+  /** Pan in [-1, +1].  Driven by the active Studio preset's role defaults. */
+  pan: number;
   type: "recording" | "import" | "suno" | "drum" | "youtube";
   drumPattern?: boolean[][];
   videoId?: string;
@@ -25,10 +39,23 @@ interface StudioTrack {
 
 type ToneModule = typeof import("tone");
 
+// Per-track Tone.js channel strip: EQ3 -> Compressor -> Saturation (WaveShaper)
+// -> Panner (equal-power via two gains) -> Gain (volume).  See AUDIO_SPEC §3.1.
 interface SimpleToneNodes {
   player: InstanceType<ToneModule["Player"]>;
-  gain: InstanceType<ToneModule["Gain"]>;
+  eq: InstanceType<ToneModule["EQ3"]>;
+  compressor: InstanceType<ToneModule["Compressor"]>;
+  reverb: InstanceType<ToneModule["Reverb"]>;
+  shaper: InstanceType<ToneModule["WaveShaper"]>;
+  splitPan: InstanceType<ToneModule["Gain"]>; // mono -> pan split point
+  panLeftGain: InstanceType<ToneModule["Gain"]>;
+  panRightGain: InstanceType<ToneModule["Gain"]>;
+  merger: InstanceType<ToneModule["Gain"]>; // stereo re-merge before volume
+  gain: InstanceType<ToneModule["Gain"]>;    // track volume (post-pan)
 }
+
+/** Role used to drive per-preset panning — inferred from track order and type. */
+type TrackRole = "guitarL" | "guitarR" | "bass" | "drumsL" | "drumsR" | "center";
 
 interface WaveSurferInstance {
   destroy: () => void;
@@ -394,6 +421,19 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
   const [duration, setDuration] = useState(0);
   const [inputDevices, setInputDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedInputDevice, setSelectedInputDevice] = useState("");
+  // ── Studio preset (Clean/Rock/Metal/Ambient/Lofi) — persisted in localStorage ──
+  const [studioPresetId, setStudioPresetId] = useState<StudioPresetId>(() => {
+    if (typeof window === "undefined") return "rock";
+    const raw = localStorage.getItem("gf.studio.preset");
+    if (raw && raw in STUDIO_PRESETS) return raw as StudioPresetId;
+    return "rock";
+  });
+  const studioPreset = STUDIO_PRESETS[studioPresetId];
+  const studioPresetRef = useRef<StudioPreset>(studioPreset);
+  useEffect(() => { studioPresetRef.current = studioPreset; }, [studioPreset]);
+  useEffect(() => {
+    try { localStorage.setItem("gf.studio.preset", studioPresetId); } catch { /* ignore */ }
+  }, [studioPresetId]);
   const [savedRecordings, setSavedRecordings] = useState<SavedRecording[]>([]);
   const [recSearchQuery, setRecSearchQuery] = useState("");
   const [editingRecId, setEditingRecId] = useState<string | null>(null);
@@ -477,7 +517,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
     toneRef.current = Tone;
     // Brick-wall limiter on master out to prevent inter-sample clipping
     const limiter = new Tone.Limiter(-1).toDestination();
-    const gain = new Tone.Gain(masterVol / 100).connect(limiter);
+    const gain = new Tone.Gain(sliderToGain(masterVol / 100)).connect(limiter);
     masterGainRef.current = gain;
     masterLimiterRef.current = limiter;
     return Tone;
@@ -485,15 +525,19 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
   }, []);
 
   // ── Master volume sync (smooth ramp to avoid clicks) ──
+  // Slider uses log curve (AUDIO_SPEC §7.1); both Tone master and raw-WebAudio
+  // drum bus use 15 ms smoothing (§7.3).
   useEffect(() => {
+    const targetLinear = sliderToGain(masterVol / 100);
     if (masterGainRef.current) {
-      // Tone.js Gain — direct assignment is fine since Tone smooths internally
-      masterGainRef.current.gain.value = masterVol / 100;
+      masterGainRef.current.gain.rampTo(targetLinear, 0.015);
     }
-    if (drumMasterGainRef.current) {
-      const now = drumAudioCtxRef.current?.currentTime ?? 0;
-      drumMasterGainRef.current.gain.cancelScheduledValues(now);
-      drumMasterGainRef.current.gain.setTargetAtTime(masterVol / 100, now, 0.015);
+    if (drumMasterGainRef.current && drumAudioCtxRef.current) {
+      smoothParam(
+        drumMasterGainRef.current.gain,
+        targetLinear,
+        drumAudioCtxRef.current.currentTime,
+      );
     }
   }, [masterVol]);
 
@@ -525,18 +569,80 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
     else metronomeRef.current.loop.stop();
   }, [metronomeOn]);
 
-  // ── Create simplified Tone nodes (Player + Gain only) ──
+  // ── Create per-track effects chain (AUDIO_SPEC §3.1) ──
+  // Graph: Player -> EQ3 -> Compressor -> WaveShaper -> [splitPan -> L/R gains -> merger]
+  //        -> trackGain -> master (-> Tone.Limiter -> destination).
+  // Reverb node is built but kept inactive by default (wet=0) per §3.1 spec:
+  // the per-preset reverb settings are stored for future "send" UI but not wired
+  // in-line to avoid double-verbing the master bus.  Decay + wet still update
+  // so a future send-bus implementation can reuse the node.
   const createToneNodes = useCallback(async (track: StudioTrack): Promise<SimpleToneNodes | null> => {
     if (!track.audioUrl) return null;
     const Tone = await ensureTone();
     const master = masterGainRef.current;
     if (!master) return null;
+    const preset = studioPresetRef.current;
+
     const player = new Tone.Player({ url: track.audioUrl, loop: false });
-    const gain = new Tone.Gain(track.volume / 100);
-    player.chain(gain, master);
-    if (track.muted) gain.gain.value = 0;
-    toneNodesRef.current[track.id] = { player, gain };
-    return { player, gain };
+
+    // 3-band EQ with per-preset split frequencies.
+    const eq = new Tone.EQ3(
+      preset.eq.lowGainDb,
+      preset.eq.midGainDb,
+      preset.eq.highGainDb,
+    );
+    eq.lowFrequency.value = preset.eq.lowFreqHz;
+    eq.highFrequency.value = preset.eq.highFreqHz;
+
+    // Dynamics compressor (main tone compressor — separate from the master limiter).
+    const compressor = new Tone.Compressor({
+      threshold: preset.compressor.thresholdDb,
+      ratio: preset.compressor.ratio,
+      attack: preset.compressor.attackSec,
+      release: preset.compressor.releaseSec,
+      knee: preset.compressor.kneeDb,
+    });
+
+    // Saturation — identical tanh curve model as the tab player.
+    const shaper = new Tone.WaveShaper(buildStudioShaperCurve(preset));
+    shaper.oversample = "4x";
+
+    // Reverb node: built but fully dry by default (master bus handles ambience
+    // when a send architecture lands).  Decay is clamped >= 0.1 per Tone.js.
+    const reverb = new Tone.Reverb(Math.max(0.1, preset.reverb.decaySec));
+    reverb.wet.value = 0;
+
+    // Equal-power pan: split the mono signal into two scaled gains, then merge.
+    // We use a pair of Gain nodes because Tone's StereoPannerNode applies a
+    // linear-ish law that dips -3 dB at centre.  See AUDIO_SPEC §7.2.
+    const splitPan = new Tone.Gain(1);
+    const { left, right } = equalPowerPan(track.pan);
+    const panLeftGain = new Tone.Gain(left);
+    const panRightGain = new Tone.Gain(right);
+    const merger = new Tone.Gain(1);
+
+    // Track volume (post-pan, pre-master).  Log curve via sliderToGain.
+    const volumeLinear = sliderToGain(track.volume / 100);
+    const gain = new Tone.Gain(track.muted ? 0 : volumeLinear);
+
+    // Wire: player -> eq -> compressor -> shaper -> reverb -> splitPan
+    //       splitPan -> panLeftGain -> merger
+    //       splitPan -> panRightGain -> merger
+    //       merger -> gain -> master
+    player.chain(eq, compressor, shaper, reverb, splitPan);
+    splitPan.connect(panLeftGain);
+    splitPan.connect(panRightGain);
+    panLeftGain.connect(merger);
+    panRightGain.connect(merger);
+    merger.connect(gain);
+    gain.connect(master);
+
+    const nodes: SimpleToneNodes = {
+      player, eq, compressor, reverb, shaper,
+      splitPan, panLeftGain, panRightGain, merger, gain,
+    };
+    toneNodesRef.current[track.id] = nodes;
+    return nodes;
   }, [ensureTone]);
 
   // ── Create wavesurfer for a track ──
@@ -593,6 +699,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
       audioUrl: url,
       volume: 100,
       muted: false,
+      pan: 0,
       type,
     };
     setTracks((p) => [...p, newTrack]);
@@ -614,6 +721,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
       id, name: drumCount === 0 ? "Drum Machine" : `Drum Machine ${drumCount + 1}`, color,
       audioBlob: null, audioUrl: null,
       volume: 100, muted: false,
+      pan: 0,
       type: "drum",
       drumPattern: createEmptyDrumPattern(),
     };
@@ -636,6 +744,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
       audioUrl: null,
       volume: 100,
       muted: false,
+      pan: 0,
       type: "youtube",
       videoId,
       videoTitle: title,
@@ -709,8 +818,9 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
     const ctx = drumAudioCtxRef.current;
 
     // Create a master gain node for drums that respects master volume
+    // (log-curve slider via sliderToGain — AUDIO_SPEC §7.1).
     const drumMasterGain = ctx.createGain();
-    drumMasterGain.gain.value = masterVol / 100;
+    drumMasterGain.gain.value = sliderToGain(masterVol / 100);
     // Brick-wall limiter before destination to prevent clipping
     const drumLimiter = ctx.createDynamicsCompressor();
     drumLimiter.threshold.value = -1;
@@ -730,7 +840,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
 
     if (trackId !== undefined) {
       const track = tracks.find(t => t.id === trackId);
-      if (track) gainNode.gain.value = track.muted ? 0 : track.volume / 100;
+      if (track) gainNode.gain.value = track.muted ? 0 : sliderToGain(track.volume / 100);
     }
 
     const stepDuration = (60 / bpm) / 4;
@@ -765,15 +875,92 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
     setDrumStep(-1);
   }, []);
 
-  // Keep drum gain in sync with track controls
+  // Keep drum gain in sync with track controls (log curve + smoothed).
   useEffect(() => {
-    if (!drumPlaying || !drumGainRef.current) return;
+    if (!drumPlaying || !drumGainRef.current || !drumAudioCtxRef.current) return;
     const drumTrack = tracks.find(t => t.type === "drum" && t.id === expandedDrumTrackId);
     if (!drumTrack) return;
-    const now = drumAudioCtxRef.current?.currentTime ?? 0;
-    drumGainRef.current.gain.cancelScheduledValues(now);
-    drumGainRef.current.gain.setTargetAtTime(drumTrack.muted ? 0 : drumTrack.volume / 100, now, 0.015);
+    const target = drumTrack.muted ? 0 : sliderToGain(drumTrack.volume / 100);
+    smoothParam(drumGainRef.current.gain, target, drumAudioCtxRef.current.currentTime);
   }, [tracks, drumPlaying, expandedDrumTrackId]);
+
+  // ── Assign per-preset pan by role ──
+  // Audible roles are inferred from track type and ordering:
+  //   • first audio-like track   -> guitarL
+  //   • second audio-like track  -> guitarR
+  //   • third+                   -> alternating L/R
+  //   • drum tracks              -> drum overheads (first left, second right)
+  //   • youtube tracks           -> centre (bass-like)
+  // This keeps the mix sensibly wide without a full mixing UI.
+  const computePanForTrack = useCallback((track: StudioTrack, allTracks: StudioTrack[], preset: StudioPreset): number => {
+    if (track.type === "youtube") return preset.pans.bass;
+    if (track.type === "drum") {
+      const drumIdx = allTracks.filter(t => t.type === "drum").findIndex(t => t.id === track.id);
+      if (drumIdx < 0) return 0;
+      return drumIdx % 2 === 0 ? preset.pans.drumsOverheadL : preset.pans.drumsOverheadR;
+    }
+    // Audio tracks (recording, import, suno).
+    const audioLikes = allTracks.filter(t => t.type === "recording" || t.type === "import" || t.type === "suno");
+    const audioIdx = audioLikes.findIndex(t => t.id === track.id);
+    if (audioIdx < 0) return 0;
+    return audioIdx % 2 === 0 ? preset.pans.guitarL : preset.pans.guitarR;
+  }, []);
+
+  // Apply the active Studio preset to every existing Tone channel strip
+  // whenever the preset changes.  Parameters crossfade over 50 ms per §2.4.
+  useEffect(() => {
+    const Tone = toneRef.current;
+    if (!Tone) return;
+    const preset = studioPreset;
+    const now = Tone.now();
+
+    // Rebuild the shaper curve once — WaveShaper.curve can be swapped in place.
+    const curve = buildStudioShaperCurve(preset);
+
+    // Update pan-role assignments on the track array.
+    setTracks(prev => prev.map(t => ({ ...t, pan: computePanForTrack(t, prev, preset) })));
+
+    Object.entries(toneNodesRef.current).forEach(([, nodes]) => {
+      try {
+        // EQ3 gains + crossovers.
+        nodes.eq.low.rampTo(preset.eq.lowGainDb, 0.05);
+        nodes.eq.mid.rampTo(preset.eq.midGainDb, 0.05);
+        nodes.eq.high.rampTo(preset.eq.highGainDb, 0.05);
+        nodes.eq.lowFrequency.rampTo(preset.eq.lowFreqHz, 0.05);
+        nodes.eq.highFrequency.rampTo(preset.eq.highFreqHz, 0.05);
+
+        // Compressor — most params are non-audio-rate, OK to assign directly.
+        nodes.compressor.threshold.rampTo(preset.compressor.thresholdDb, 0.05);
+        nodes.compressor.ratio.rampTo(preset.compressor.ratio, 0.05);
+        nodes.compressor.attack.rampTo(preset.compressor.attackSec, 0.05);
+        nodes.compressor.release.rampTo(preset.compressor.releaseSec, 0.05);
+        nodes.compressor.knee.rampTo(preset.compressor.kneeDb, 0.05);
+
+        // Saturation curve — instant swap; <1 ms dropout at worst.
+        nodes.shaper.curve = curve;
+
+        // Reverb: decay is non-ramping; skip runtime changes for now.  Keep
+        // wet=0 — see createToneNodes comment for rationale.
+      } catch { /* disposed mid-swap — ignore */ }
+    });
+    // mark `now` as used (helps TS's noUnusedLocals if ever enabled)
+    void now;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [studioPresetId]);
+
+  // When pan changes (from preset swap), push to the per-track channel strip
+  // with equal-power gains.  15 ms smoothing avoids clicks.
+  useEffect(() => {
+    const Tone = toneRef.current;
+    if (!Tone) return;
+    tracks.forEach(track => {
+      const nodes = toneNodesRef.current[track.id];
+      if (!nodes) return;
+      const { left, right } = equalPowerPan(track.pan);
+      nodes.panLeftGain.gain.rampTo(left, 0.015);
+      nodes.panRightGain.gain.rampTo(right, 0.015);
+    });
+  }, [tracks]);
 
   // Save drum patterns to localStorage
   useEffect(() => {
@@ -796,6 +983,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
           id: s.id, name: s.name, color: TRACK_COLORS[(s.id - 1) % TRACK_COLORS.length],
           audioBlob: null, audioUrl: null, volume: 100,
           muted: false,
+          pan: 0,
           type: "drum" as const,
           drumPattern: s.pattern,
         }))];
@@ -897,10 +1085,12 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
     const Tone = await ensureTone();
     await setupMetronome();
 
-    // Apply mute state at start
+    // Apply mute state at start (log-curve volume per AUDIO_SPEC §7.1).
     tracks.forEach((t) => {
       const nodes = toneNodesRef.current[t.id];
-      if (nodes) nodes.gain.gain.value = t.muted ? 0 : t.volume / 100;
+      if (nodes) {
+        nodes.gain.gain.value = t.muted ? 0 : sliderToGain(t.volume / 100);
+      }
     });
 
     const startOffset = currentTime;
@@ -1021,16 +1211,21 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
   }, [playing]);
 
   // ── Track controls ──
+  // Volume uses a logarithmic slider curve (sliderToGain, AUDIO_SPEC §7.1)
+  // so a 0-100 UI slider maps to linear gain as `(vol/100)^2.5`.  Tone's
+  // built-in `rampTo` provides zipper-free smoothing (AUDIO_SPEC §7.3).
   const updateTrackVol = useCallback((id: number, vol: number) => {
     setTracks((p) => p.map((t) => t.id === id ? { ...t, volume: vol } : t));
     const nodes = toneNodesRef.current[id];
     if (nodes) {
-      // Tone.js rampTo provides smooth value change without clicks
-      nodes.gain.gain.rampTo(vol / 100, 0.02);
+      const target = sliderToGain(vol / 100);
+      nodes.gain.gain.rampTo(target, 0.015);
     }
     const yp = ytPlayersRef.current[id];
     if (yp) {
-      try { yp.setVolume(vol); } catch { /* ok */ }
+      // YouTube IFrame API expects 0-100 linear; apply the same perceptual
+      // curve so the YT slider behaves like the native track sliders.
+      try { yp.setVolume(Math.round(sliderToGain(vol / 100) * 100)); } catch { /* ok */ }
     }
   }, []);
 
@@ -1039,10 +1234,15 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
       const next = prev.map((t) => t.id === id ? { ...t, muted: !t.muted } : t);
       next.forEach((t) => {
         const nodes = toneNodesRef.current[t.id];
-        if (nodes) nodes.gain.gain.rampTo(t.muted ? 0 : t.volume / 100, 0.02);
+        if (nodes) {
+          const target = t.muted ? 0 : sliderToGain(t.volume / 100);
+          nodes.gain.gain.rampTo(target, 0.015);
+        }
         const yp = ytPlayersRef.current[t.id];
         if (yp) {
-          try { yp.setVolume(t.muted ? 0 : t.volume); } catch { /* ok */ }
+          try {
+            yp.setVolume(t.muted ? 0 : Math.round(sliderToGain(t.volume / 100) * 100));
+          } catch { /* ok */ }
         }
       });
       return next;
@@ -1056,6 +1256,14 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
     if (nodes) {
       try { nodes.player.stop(); } catch { /* ok */ }
       try { nodes.player.dispose(); } catch { /* ok */ }
+      try { nodes.eq.dispose(); } catch { /* ok */ }
+      try { nodes.compressor.dispose(); } catch { /* ok */ }
+      try { nodes.reverb.dispose(); } catch { /* ok */ }
+      try { nodes.shaper.dispose(); } catch { /* ok */ }
+      try { nodes.splitPan.dispose(); } catch { /* ok */ }
+      try { nodes.panLeftGain.dispose(); } catch { /* ok */ }
+      try { nodes.panRightGain.dispose(); } catch { /* ok */ }
+      try { nodes.merger.dispose(); } catch { /* ok */ }
       try { nodes.gain.dispose(); } catch { /* ok */ }
       delete toneNodesRef.current[id];
     }
@@ -1359,6 +1567,14 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
       Object.values(toneNodesRef.current).forEach((nodes) => {
         try { nodes.player.stop(); } catch { /* ok */ }
         try { nodes.player.dispose(); } catch { /* ok */ }
+        try { nodes.eq.dispose(); } catch { /* ok */ }
+        try { nodes.compressor.dispose(); } catch { /* ok */ }
+        try { nodes.reverb.dispose(); } catch { /* ok */ }
+        try { nodes.shaper.dispose(); } catch { /* ok */ }
+        try { nodes.splitPan.dispose(); } catch { /* ok */ }
+        try { nodes.panLeftGain.dispose(); } catch { /* ok */ }
+        try { nodes.panRightGain.dispose(); } catch { /* ok */ }
+        try { nodes.merger.dispose(); } catch { /* ok */ }
         try { nodes.gain.dispose(); } catch { /* ok */ }
       });
       if (metronomeRef.current) {
@@ -1462,6 +1678,27 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
               ))}
               {inputDevices.length === 0 && <option value="">No devices</option>}
             </select>
+          </div>
+
+          {/* Preset selector — 5 buttons: Clean / Rock / Metal / Ambient / Lofi.
+              Drives every track's EQ3 / Compressor / Saturation / Pan per AUDIO_SPEC §3. */}
+          <div className="hidden md:flex items-center gap-0.5 rounded-md p-0.5"
+            style={{ background: "#0a0a0a", border: "1px solid #1e1e1e" }}
+            title="Studio preset (per-track EQ, compression, saturation, pan)">
+            <span className="text-[7px] text-[#444] font-medium tracking-wider px-1">PRESET</span>
+            {STUDIO_PRESET_LIST.map(p => (
+              <button key={p.id}
+                onClick={() => setStudioPresetId(p.id)}
+                className="text-[9px] px-1.5 py-[3px] rounded font-semibold transition-all cursor-pointer"
+                style={{
+                  background: studioPresetId === p.id ? "#D4A843" : "transparent",
+                  color: studioPresetId === p.id ? "#111" : "#666",
+                  border: studioPresetId === p.id ? "none" : "1px solid transparent",
+                }}
+                title={`${p.label} preset`}>
+                {p.label}
+              </button>
+            ))}
           </div>
         </div>
 
