@@ -487,14 +487,27 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
   }, [tonePreset, reverbEnabled, reverbMix]);
 
   useEffect(() => {
-    if ((!fileData && !texLoaded) || !mainRef.current) return;
+    if (!fileData && !texLoaded) return;
     let dead = false;
+    let rafId = 0;
     setLoading(true); setError(null); setReady(false);
     setSongInfo(null); setPlayerReady(false); setCurrentBar(0); setTotalBars(0);
     setActiveNotes([]); setCurrentBeatInfo("");
 
+    // Wait for mainRef to be attached. The panel DOM mounts on the same
+    // commit that flips fileData, but rare render races can leave the ref
+    // null for one frame — retry via RAF until it's available (or unmounts).
+    const waitForRef = (attempts: number): Promise<HTMLDivElement | null> => new Promise(resolve => {
+      if (dead) return resolve(null);
+      if (mainRef.current) return resolve(mainRef.current);
+      if (attempts <= 0) return resolve(null);
+      rafId = requestAnimationFrame(() => resolve(waitForRef(attempts - 1)));
+    });
+
     (async () => {
       try {
+        const el = await waitForRef(30);
+        if (dead || !el) { setLoading(false); return; }
         const at = await import("@coderline/alphatab");
         if (dead || !mainRef.current) return;
         if (apiRef.current?.destroy) try { apiRef.current.destroy(); } catch {}
@@ -758,8 +771,15 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
             // Auto-activate loop on drag selection (beat-level)
             applyLoopRangeByBeatsRef.current?.(a, b);
           } else {
-            // Pure click (no drag) — legacy behavior for A/B pick modes, else jump
-            window.dispatchEvent(new CustomEvent("gf-bar-click", { detail: { bar: barIdx } }));
+            // Pure click (no drag) — legacy behavior for A/B pick modes, else jump.
+            // Include the beat's absolutePlaybackStart so the seek lands on the EXACT
+            // clicked beat, not the start of the bar. (Previously only `bar` was passed
+            // and the handler used masterBars[bar-1].start — snapping to bar start.)
+            const beatTick: number | null =
+              typeof beat.absolutePlaybackStart === "number" && Number.isFinite(beat.absolutePlaybackStart)
+                ? beat.absolutePlaybackStart
+                : null;
+            window.dispatchEvent(new CustomEvent("gf-bar-click", { detail: { bar: barIdx, beatTick } }));
             // Clear any existing selection when clicking on a beat without drag
             setSelStart(null); setSelEnd(null);
           }
@@ -817,8 +837,17 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
     const startBar = api.score.masterBars[s - 1];
     const endBar = api.score.masterBars[e - 1];
     if (!startBar || !endBar) return;
-    api.playbackRange = { startTick: startBar.start, endTick: endBar.start + endBar.calculateDuration() };
+    const startTick = startBar.start;
+    const endTick = endBar.start + endBar.calculateDuration();
+    api.playbackRange = { startTick, endTick };
     api.isLooping = true;
+    // Pull the cursor into the loop range if it's currently outside — otherwise
+    // playback continues forward from the pre-loop position and the loop never
+    // takes effect (the user sees "plays through the whole tab").
+    const cur = Number(api.tickPosition ?? 0);
+    if (!(cur >= startTick && cur < endTick)) {
+      try { api.tickPosition = startTick; } catch { /* ok */ }
+    }
     setIsLooping(true); setLoopStart(s); setLoopEnd(e);
   }, [totalBars]);
 
@@ -832,6 +861,14 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
     if (!Number.isFinite(startTick) || !Number.isFinite(endTick) || endTick <= startTick) return;
     api.playbackRange = { startTick, endTick };
     api.isLooping = true;
+    // Same rationale as applyLoopRange: if cursor is outside the range, yank it
+    // in so the very next playback frame is already inside the loop. Without
+    // this, clicking Play after drag-selecting bars 4-6 while the cursor sat
+    // at bar 1 would play bars 1-3 first and never honor the loop.
+    const cur = Number(api.tickPosition ?? 0);
+    if (!(cur >= startTick && cur < endTick)) {
+      try { api.tickPosition = startTick; } catch { /* ok */ }
+    }
     setIsLooping(true);
     const aBar = (a.voice?.bar?.index ?? 0) + 1;
     const bBar = (b.voice?.bar?.index ?? 0) + 1;
@@ -844,7 +881,9 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
   // Handle bar clicks from tab notation
   useEffect(() => {
     function onBarClick(e: Event) {
-      const bar = (e as CustomEvent).detail?.bar;
+      const detail = (e as CustomEvent).detail;
+      const bar = detail?.bar;
+      const beatTick: number | null = typeof detail?.beatTick === "number" ? detail.beatTick : null;
       if (!bar) return;
 
       if (selectMode === "pickA") {
@@ -859,10 +898,12 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
         // A was set, this click sets B
         applyLoopRange(loopStart, bar);
       } else {
-        // Normal click → jump to bar
+        // Normal click → jump to exact clicked beat (fall back to bar start if tick missing)
         setCurrentBar(bar);
         const api = apiRef.current;
-        if (api?.score?.masterBars?.[bar - 1]) {
+        if (beatTick !== null && Number.isFinite(beatTick)) {
+          try { api.tickPosition = beatTick; } catch { /* ok */ }
+        } else if (api?.score?.masterBars?.[bar - 1]) {
           api.tickPosition = api.score.masterBars[bar - 1].start;
         }
       }
@@ -1944,7 +1985,26 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
 
           <div ref={overlayWrapRef} style={{ position: "relative" }} onDoubleClick={onOverlayDoubleClick}
             onMouseLeave={() => setHoverBar(null)}>
-            <div ref={mainRef} className="gf-main-scroll" style={{ minHeight: ready && !viewerCollapsed ? 350 : 0, maxHeight: viewerCollapsed ? 0 : 550, overflow: "auto", overscrollBehavior: "contain", background: viewerCollapsed ? "transparent" : "#fff" }} dir="ltr" />
+            <div
+              ref={mainRef}
+              className="gf-main-scroll"
+              style={{
+                minHeight: ready && !viewerCollapsed ? 350 : 0,
+                maxHeight: viewerCollapsed ? 0 : 550,
+                overflow: "auto",
+                // overscrollBehavior blocks wheel/touch scroll chaining AND also
+                // guards against programmatic scroll-chaining where any focus-based
+                // scroll (alphaTab highlightElements, scrollIntoView-like calls) can
+                // end up scrolling the modal body and pushing the toolbar off-screen.
+                overscrollBehavior: "contain",
+                // CSS containment: limits layout / paint / style side-effects of the
+                // heavy alphaTab canvas subtree to this box so autoscroll here cannot
+                // trigger layout-induced scrolling on ancestors.
+                contain: "layout paint",
+                background: viewerCollapsed ? "transparent" : "#fff",
+              }}
+              dir="ltr"
+            />
 
             {/* Interactive overlay: hover + selection + drag handles + playing-bar highlight */}
             {ready && !viewerCollapsed && (
