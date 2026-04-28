@@ -18,7 +18,16 @@ import {
   equalPowerPan,
   smoothParam,
 } from "@/lib/audioMixHelpers";
-import { playDrumSample, type DrumIndex } from "@/lib/drumSamples";
+import { playDrumSample, preloadDrumSamples, type DrumIndex } from "@/lib/drumSamples";
+import { audioBufferToWav } from "@/lib/wavEncoder";
+import { audioBufferToMp3 } from "@/lib/mp3Encoder";
+import {
+  saveProject as saveProjectToIDB,
+  loadProject as loadProjectFromIDB,
+  CURRENT_PROJECT_ID,
+  type StudioProject,
+  type SerializedTrack,
+} from "@/lib/projectStorage";
 
 // ── Types ──
 interface StudioTrack {
@@ -456,6 +465,24 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
   const [expandedDrumTrackId, setExpandedDrumTrackId] = useState<number | null>(null);
   const [showSunoPanel, setShowSunoPanel] = useState(false);
   const [savingToLibrary, setSavingToLibrary] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [exportMenuPos, setExportMenuPos] = useState<{ top: number; right: number }>({ top: 0, right: 0 });
+  const [exporting, setExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
+  const exportMenuRef = useRef<HTMLDivElement | null>(null);
+  const exportButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  // ── Project persistence (Phase 3a) ──
+  // The Studio session auto-saves to IndexedDB so a refresh restores tracks,
+  // mixer state, drum patterns, and recorded blobs.  Single "current-project"
+  // slot for now; named project list is Phase 4.
+  const [projectName, setProjectName] = useState<string>("Untitled");
+  const [projectCreatedAt, setProjectCreatedAt] = useState<number>(() => Date.now());
+  const [editingProjectName, setEditingProjectName] = useState(false);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
+  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+  const projectRestoredRef = useRef(false);
+  const projectAutoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Suno state
   const [sunoScale, setSunoScale] = useState(channelScale || "Am");
@@ -1536,6 +1563,211 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
     setSavingToLibrary(false);
   }, [tracks]);
 
+  // ── Export mix to WAV/MP3 (offline render of full preset chain) ──
+  // Renders the entire signal graph through Tone.Offline, replicating the live
+  // chain per track:  Player -> EQ3 -> Compressor -> WaveShaper -> equal-power
+  // pan -> channel gain -> master gain -> master limiter.  This is the audit
+  // P1-8 fix: WAV output now matches what the user hears (preset EQ/Comp/Sat
+  // are baked into the bounce, not lost like in saveToRecordings).
+  const exportMix = useCallback(async (format: "wav" | "mp3") => {
+    if (tracks.length === 0 || exporting) return;
+    setExporting(true);
+    setExportProgress(5);
+    try {
+      const Tone = await ensureTone();
+      const preset = studioPresetRef.current;
+
+      // Determine total render duration: max of audio track durations and the
+      // longest live wavesurfer reading (covers drum-only / Suno-only mixes).
+      const audioDurations = await Promise.all(
+        tracks
+          .filter((t) => t.audioBlob)
+          .map(async (t) => {
+            const ws = wsRef.current[t.id];
+            if (ws && ws.getDuration() > 0) return ws.getDuration();
+            // Fallback: probe blob via temp context (no playback side effects).
+            try {
+              const ab = await t.audioBlob!.arrayBuffer();
+              const probe = new AudioContext({ sampleRate: 44100 });
+              const dec = await probe.decodeAudioData(ab);
+              const d = dec.duration;
+              await probe.close();
+              return d;
+            } catch {
+              return 0;
+            }
+          }),
+      );
+      const wsBased = tracks
+        .map((t) => wsRef.current[t.id])
+        .filter((ws): ws is WaveSurferInstance => Boolean(ws))
+        .map((ws) => ws.getDuration())
+        .filter((d) => d > 0);
+      const hasAudio = audioDurations.some((d) => d > 0) || wsBased.length > 0;
+      const hasDrums = tracks.some((t) => t.type === "drum" && t.drumPattern);
+      // For drum-only sessions, default to 8 bars at the current BPM.
+      const drumOnlyFallback = (8 * 60 / Math.max(40, bpm)) * 4;
+      const maxDur = Math.max(
+        ...audioDurations,
+        ...wsBased,
+        hasDrums && !hasAudio ? drumOnlyFallback : 0,
+        1,
+      );
+
+      const hasSolo = tracks.some((t) => t.solo);
+
+      setExportProgress(15);
+      const buffer = await Tone.Offline(async (context) => {
+        const offlineCtx = context.rawContext as unknown as OfflineAudioContext;
+
+        // Master bus: master gain -> Tone.Limiter -> destination.
+        const limiter = new Tone.Limiter(-1).toDestination();
+        const masterGain = new Tone.Gain(sliderToGain(masterVol / 100)).connect(limiter);
+
+        // Preload drum samples into the offline context's cache so that the
+        // first hits use real WAV samples (not the synth fallback).
+        if (hasDrums) {
+          try { await preloadDrumSamples(offlineCtx); } catch { /* fall back to synth */ }
+        }
+
+        for (const track of tracks) {
+          const audible = hasSolo ? track.solo : !track.muted;
+          if (!audible) continue;
+
+          // ── Drum track: schedule synthDrumHit on the offline raw context ──
+          if (track.type === "drum" && track.drumPattern) {
+            // Per-track gain (linear from log slider) + pan via Tone.
+            const trackGain = new Tone.Gain(sliderToGain(track.volume / 100));
+            const { left, right } = equalPowerPan(track.pan);
+            const splitPan = new Tone.Gain(1);
+            const panL = new Tone.Gain(left);
+            const panR = new Tone.Gain(right);
+            const merger = new Tone.Gain(1);
+            splitPan.connect(panL); splitPan.connect(panR);
+            panL.connect(merger); panR.connect(merger);
+            merger.connect(trackGain);
+            trackGain.connect(masterGain);
+
+            // Wire raw drum hits into the Tone splitPan node via its input.
+            // splitPan.input is the underlying GainNode in the offline graph.
+            const drumOut = (splitPan as unknown as { input: AudioNode }).input;
+
+            const stepDuration = (60 / Math.max(40, bpm)) / 4;
+            const totalSteps = Math.ceil(maxDur / stepDuration);
+            for (let s = 0; s < totalSteps; s++) {
+              const stepIdx = s % DRUM_STEPS;
+              const time = s * stepDuration;
+              for (let i = 0; i < DRUM_INSTRUMENTS.length; i++) {
+                if (track.drumPattern[i] && track.drumPattern[i][stepIdx]) {
+                  // synthDrumHit accepts any AudioContext-shaped object;
+                  // OfflineAudioContext satisfies the same surface.
+                  synthDrumHit(offlineCtx as unknown as AudioContext, i, time, drumOut);
+                }
+              }
+            }
+            continue;
+          }
+
+          // ── Audio track: replicate the live per-track FX chain ──
+          if (!track.audioUrl) continue;
+
+          const player = new Tone.Player({ url: track.audioUrl, loop: false });
+          const eq = new Tone.EQ3(
+            preset.eq.lowGainDb,
+            preset.eq.midGainDb,
+            preset.eq.highGainDb,
+          );
+          eq.lowFrequency.value = preset.eq.lowFreqHz;
+          eq.highFrequency.value = preset.eq.highFreqHz;
+
+          const compressor = new Tone.Compressor({
+            threshold: preset.compressor.thresholdDb,
+            ratio: preset.compressor.ratio,
+            attack: preset.compressor.attackSec,
+            release: preset.compressor.releaseSec,
+            knee: preset.compressor.kneeDb,
+          });
+
+          const shaper = new Tone.WaveShaper(buildStudioShaperCurve(preset));
+          shaper.oversample = "4x";
+
+          const splitPan = new Tone.Gain(1);
+          const { left, right } = equalPowerPan(track.pan);
+          const panL = new Tone.Gain(left);
+          const panR = new Tone.Gain(right);
+          const merger = new Tone.Gain(1);
+          const trackGain = new Tone.Gain(sliderToGain(track.volume / 100));
+
+          player.chain(eq, compressor, shaper, splitPan);
+          splitPan.connect(panL); splitPan.connect(panR);
+          panL.connect(merger); panR.connect(merger);
+          merger.connect(trackGain);
+          trackGain.connect(masterGain);
+
+          await Tone.loaded();
+          player.start(0);
+        }
+      }, maxDur, 2, 44100);
+      setExportProgress(75);
+
+      // Tone returns a ToneAudioBuffer wrapper; .get() gives the AudioBuffer.
+      const audioBuf = (buffer as unknown as { get: () => AudioBuffer }).get();
+
+      let blob: Blob;
+      let ext: string;
+      if (format === "mp3") {
+        const mp3Data = await audioBufferToMp3(audioBuf, { kbps: 192 });
+        blob = new Blob([mp3Data], { type: "audio/mpeg" });
+        ext = "mp3";
+      } else {
+        const wavData = audioBufferToWav(audioBuf);
+        blob = new Blob([wavData], { type: "audio/wav" });
+        ext = "wav";
+      }
+      setExportProgress(95);
+
+      // Filename: ProjectName - YYYY-MM-DD HH-mm.{wav|mp3}
+      const now = new Date();
+      const pad = (n: number) => String(n).padStart(2, "0");
+      const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}-${pad(now.getMinutes())}`;
+      const safeName = (projectName || "GuitarForge-Recording").replace(/[\\/:*?"<>|]+/g, "_").trim() || "GuitarForge-Recording";
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${safeName} - ${stamp}.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+      setExportProgress(100);
+    } catch (err) {
+      alert(`Export ${format.toUpperCase()} failed: ` + (err instanceof Error ? err.message : String(err)));
+    }
+    setExporting(false);
+    setShowExportMenu(false);
+    setTimeout(() => setExportProgress(0), 800);
+  }, [tracks, exporting, ensureTone, masterVol, bpm, projectName]);
+
+  // Click-outside / Escape to close export menu.
+  useEffect(() => {
+    if (!showExportMenu) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(e.target as Node)) {
+        setShowExportMenu(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowExportMenu(false);
+    };
+    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [showExportMenu]);
+
   // ── Load saved recordings on mount ──
   useEffect(() => {
     idbLoadRecordings().then(setSavedRecordings).catch(() => {});
@@ -1634,6 +1866,169 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
       if (drumAudioCtxRef.current) { try { drumAudioCtxRef.current.close(); } catch { /* ok */ } }
     };
   }, []);
+
+  // ── Project: Restore current-project on mount (Phase 3a) ──
+  // Reads the saved StudioProject from IndexedDB, regenerates object URLs
+  // from stored blobs, and rebuilds the wavesurfer + Tone.js graph for each
+  // recorded track.  Bails gracefully if nothing is saved.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const loaded = await loadProjectFromIDB(CURRENT_PROJECT_ID);
+        if (cancelled || !loaded) {
+          projectRestoredRef.current = true;
+          return;
+        }
+        // Restore project meta + transport state.
+        setProjectName(loaded.name || "Untitled");
+        setProjectCreatedAt(loaded.createdAt || Date.now());
+        setBpm(loaded.bpm);
+        setMasterVol(loaded.masterVol);
+        setMetronomeOn(loaded.metronomeOn);
+        setMetronomeVolume(loaded.metronomeVolume);
+        if (loaded.studioPresetId in STUDIO_PRESETS) {
+          setStudioPresetId(loaded.studioPresetId as StudioPresetId);
+        }
+
+        // Rebuild StudioTrack list from serialized data.  Recreate object URLs
+        // from blobs; YouTube/drum/Suno tracks have no blob and that's expected.
+        const restoredTracks: StudioTrack[] = loaded.tracks.map((t: SerializedTrack) => {
+          const blob = loaded.blobs.get(t.id) ?? null;
+          const url = blob ? URL.createObjectURL(blob) : null;
+          return {
+            id: t.id,
+            name: t.name,
+            color: t.color,
+            audioBlob: blob,
+            audioUrl: url,
+            volume: t.volume,
+            muted: t.muted,
+            solo: t.solo,
+            pan: t.pan,
+            type: t.type,
+            drumPattern: t.drumPattern,
+            videoId: t.videoId,
+            videoTitle: t.videoTitle,
+            videoThumbnail: t.videoThumbnail,
+          };
+        });
+        // Bump the id counter past the highest restored id so newly-added
+        // tracks don't collide with restored ones.
+        const maxId = restoredTracks.reduce((m, t) => Math.max(m, t.id), 0);
+        ctr.current = Math.max(ctr.current, maxId);
+        setTracks(restoredTracks);
+        setLastSavedAt(loaded.updatedAt);
+
+        // Wait one tick for refs (track containers, YT containers) to bind,
+        // then rebuild wavesurfer + Tone graph for each audio track and YT
+        // players for each YouTube track.
+        setTimeout(async () => {
+          if (cancelled || !mountedRef.current) return;
+          for (const tr of restoredTracks) {
+            if (tr.audioUrl) {
+              const container = trackContainersRef.current[tr.id];
+              if (container) {
+                try { await createWavesurfer(tr, container); } catch { /* ok */ }
+              }
+              try { await createToneNodes(tr); } catch { /* ok */ }
+            } else if (tr.type === "youtube" && tr.videoId) {
+              try {
+                await ensureYT();
+                const container = ytContainersRef.current[tr.id];
+                if (!container || !window.YT?.Player) continue;
+                const player = new window.YT.Player(container, {
+                  height: "100%",
+                  width: "100%",
+                  videoId: tr.videoId,
+                  playerVars: { controls: 0, disablekb: 1, modestbranding: 1, rel: 0, playsinline: 1 },
+                  events: {
+                    onReady: (e: { target: YTPlayerInstance }) => {
+                      try {
+                        e.target.setVolume(tr.muted ? 0 : tr.volume);
+                        ytPlayersRef.current[tr.id] = e.target;
+                      } catch { /* ok */ }
+                    },
+                  },
+                });
+                ytPlayersRef.current[tr.id] = player;
+              } catch { /* ok */ }
+            }
+          }
+          projectRestoredRef.current = true;
+        }, 150);
+      } catch {
+        projectRestoredRef.current = true;
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Project: Auto-save on state change (debounced 2s) ──
+  // Watches every persisted field and writes the current StudioProject + audio
+  // blobs to IndexedDB after the user pauses for 2 seconds.  Skipped while the
+  // initial restore is still running so we don't overwrite a fresh load with
+  // an empty pre-restore state.
+  useEffect(() => {
+    if (!projectRestoredRef.current) return;
+    if (tracks.length === 0 && lastSavedAt === null) return; // skip empty initial state
+
+    if (projectAutoSaveTimerRef.current) {
+      clearTimeout(projectAutoSaveTimerRef.current);
+    }
+    setSaveState("saving");
+    projectAutoSaveTimerRef.current = setTimeout(async () => {
+      try {
+        const serializedTracks: SerializedTrack[] = tracks.map((t) => ({
+          id: t.id,
+          name: t.name,
+          color: t.color,
+          type: t.type,
+          volume: t.volume,
+          muted: t.muted,
+          solo: t.solo,
+          pan: t.pan,
+          drumPattern: t.drumPattern,
+          videoId: t.videoId,
+          videoTitle: t.videoTitle,
+          videoThumbnail: t.videoThumbnail,
+          hasBlob: !!t.audioBlob,
+        }));
+        const blobs = new Map<number, Blob>();
+        for (const t of tracks) {
+          if (t.audioBlob) blobs.set(t.id, t.audioBlob);
+        }
+        const now = Date.now();
+        const project: StudioProject = {
+          id: CURRENT_PROJECT_ID,
+          name: projectName,
+          createdAt: projectCreatedAt,
+          updatedAt: now,
+          bpm,
+          masterVol,
+          studioPresetId,
+          metronomeOn,
+          metronomeVolume,
+          tracks: serializedTracks,
+        };
+        await saveProjectToIDB(project, blobs);
+        if (!mountedRef.current) return;
+        setLastSavedAt(now);
+        setSaveState("saved");
+      } catch {
+        if (!mountedRef.current) return;
+        setSaveState("idle");
+      }
+    }, 2000);
+
+    return () => {
+      if (projectAutoSaveTimerRef.current) {
+        clearTimeout(projectAutoSaveTimerRef.current);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tracks, bpm, masterVol, studioPresetId, metronomeOn, metronomeVolume, projectName, projectCreatedAt]);
 
   // ── Keyboard shortcuts ──
   useEffect(() => {
@@ -1836,6 +2231,36 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
 
         {/* RIGHT: Master volume + Save + Track count */}
         <div className="flex items-center gap-2">
+          {/* Project name + auto-save status (Phase 3a) */}
+          <div className="hidden md:flex items-center gap-1.5 rounded-md px-2 py-1" style={{ background: "#0a0a0a", border: "1px solid #1e1e1e" }} title="Project name (auto-saves)">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            {editingProjectName ? (
+              <input
+                type="text"
+                value={projectName}
+                autoFocus
+                onChange={(e) => setProjectName(e.target.value)}
+                onBlur={() => setEditingProjectName(false)}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === "Escape") { e.preventDefault(); setEditingProjectName(false); } }}
+                maxLength={48}
+                className="w-28 bg-transparent text-[10px] text-[#D4A843] focus:outline-none"
+              />
+            ) : (
+              <button
+                onClick={() => setEditingProjectName(true)}
+                className="text-[10px] text-[#D4A843] hover:text-[#e8c66a] cursor-text max-w-[140px] truncate"
+                title="Click to rename project">
+                {projectName || "Untitled"}
+              </button>
+            )}
+            <span
+              className="text-[7px] font-mono tracking-wider"
+              style={{ color: saveState === "saving" ? "#D4A843" : saveState === "saved" ? "#22c55e" : "#444" }}
+              title={lastSavedAt ? `Last saved ${new Date(lastSavedAt).toLocaleTimeString()}` : "Not saved yet"}>
+              {saveState === "saving" ? "SAVING…" : lastSavedAt ? "SAVED" : ""}
+            </span>
+          </div>
+
           <span className="text-[8px] text-[#333] font-mono hidden sm:inline">{tracks.length} trk</span>
           {looping && <span className="text-[7px] text-[#D4A843] bg-[#D4A84315] px-1 py-0.5 rounded font-bold tracking-wider">LOOP</span>}
 
@@ -1849,15 +2274,71 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
             <span className="text-[8px] text-[#444] font-mono w-6">{masterVol}%</span>
           </div>
 
-          <button onClick={saveToRecordings} disabled={tracks.length === 0 || savingToLibrary}
-            className="text-[9px] font-semibold px-2.5 py-1.5 rounded transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
-            style={{
-              background: tracks.length > 0 ? "linear-gradient(180deg, #D4A843 0%, #B8922E 100%)" : "#1a1a1a",
-              color: tracks.length > 0 ? "#111" : "#555",
-              border: tracks.length > 0 ? "none" : "1px solid #252525",
-            }}>
-            {savingToLibrary ? "..." : "Save"}
-          </button>
+          <div ref={exportMenuRef} className="relative">
+            <button
+              ref={exportButtonRef}
+              onClick={() => {
+                const btn = exportButtonRef.current;
+                if (btn) {
+                  const r = btn.getBoundingClientRect();
+                  setExportMenuPos({ top: r.bottom + 4, right: Math.max(8, window.innerWidth - r.right) });
+                }
+                setShowExportMenu((v) => !v);
+              }}
+              disabled={tracks.length === 0 || savingToLibrary || exporting}
+              className="text-[9px] font-semibold px-2.5 py-1.5 rounded transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
+              style={{
+                background: tracks.length > 0 ? "linear-gradient(180deg, #D4A843 0%, #B8922E 100%)" : "#1a1a1a",
+                color: tracks.length > 0 ? "#111" : "#555",
+                border: tracks.length > 0 ? "none" : "1px solid #252525",
+              }}
+              title="Save / Export"
+              aria-haspopup="menu"
+              aria-expanded={showExportMenu}>
+              {exporting ? `Export ${exportProgress}%` : savingToLibrary ? "..." : "Save"}
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            {showExportMenu && (
+              <div
+                role="menu"
+                className="fixed w-44 rounded-md shadow-lg z-[100] overflow-hidden"
+                style={{
+                  background: "#0e0e0e",
+                  border: "1px solid #2a2a2a",
+                  top: exportMenuPos.top,
+                  right: exportMenuPos.right,
+                }}>
+                <button
+                  role="menuitem"
+                  onClick={() => { setShowExportMenu(false); saveToRecordings(); }}
+                  disabled={tracks.length === 0 || savingToLibrary}
+                  className="w-full text-left text-[10px] px-3 py-2 hover:bg-[#1a1a1a] transition-colors flex items-center gap-2 disabled:opacity-40"
+                  style={{ color: "#ccc" }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                  Save to Recordings
+                </button>
+                <div style={{ borderTop: "1px solid #1e1e1e" }} />
+                <button
+                  role="menuitem"
+                  onClick={() => exportMix("wav")}
+                  disabled={tracks.length === 0 || exporting}
+                  className="w-full text-left text-[10px] px-3 py-2 hover:bg-[#1a1a1a] transition-colors flex items-center gap-2 disabled:opacity-40"
+                  style={{ color: "#ccc" }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Download WAV
+                </button>
+                <button
+                  role="menuitem"
+                  onClick={() => exportMix("mp3")}
+                  disabled={tracks.length === 0 || exporting}
+                  className="w-full text-left text-[10px] px-3 py-2 hover:bg-[#1a1a1a] transition-colors flex items-center gap-2 disabled:opacity-40"
+                  style={{ color: "#ccc" }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Download MP3
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
