@@ -475,8 +475,8 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
         };
 
         // Start both recorders at the same time for sync
-        micRec.start();
-        browserRec.start();
+        micRec.start(1000);
+        browserRec.start(1000);
 
       } else {
         // ── GUITAR ONLY ──
@@ -505,7 +505,7 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
           });
           setExpanded(true);
         };
-        mr.start();
+        mr.start(1000);
         mediaRecorderRef.current = mr;
       }
 

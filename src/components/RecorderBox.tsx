@@ -585,8 +585,8 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
           if (timerRef.current) clearInterval(timerRef.current);
         };
 
-        micRec.start();
-        browserRec.start();
+        micRec.start(1000);
+        browserRec.start(1000);
 
       } else {
         // ── GUITAR ONLY ──
@@ -621,7 +621,7 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
             return next;
           });
         };
-        mr.start();
+        mr.start(1000);
         mediaRef.current = mr;
       }
 

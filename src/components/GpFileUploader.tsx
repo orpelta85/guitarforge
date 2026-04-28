@@ -280,6 +280,17 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
   }, [tex, fileData]);
 
   function handleFile(file: File) {
+    const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+    if (file.size > MAX_FILE_SIZE) {
+      setError(`File too large (${Math.round(file.size / 1024 / 1024)}MB). Maximum 20MB.`);
+      return;
+    }
+    const lowerName = file.name.toLowerCase();
+    const validExt = [".gp", ".gp3", ".gp4", ".gp5", ".gpx", ".gpif"].some(ext => lowerName.endsWith(ext));
+    if (!validExt) {
+      setError("Invalid file type. Supported: .gp, .gp3, .gp4, .gp5, .gpx, .gpif");
+      return;
+    }
     setTexLoaded(false);
     setFileName(file.name);
     setError(null); setReady(false); setLoading(true);
@@ -1131,7 +1142,7 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
     const api = apiRef.current;
     if (!api) return;
     api.settings.display.layoutMode = l === "horizontal" ? 1 : 0;
-    api.settings.display.staveProfile = s === "tab" ? 1 : s === "score" ? 2 : 4;
+    api.settings.display.staveProfile = s === "tab" ? 2 : s === "score" ? 4 : 3;
     api.settings.display.scale = z;
     api.updateSettings(); api.render();
   }

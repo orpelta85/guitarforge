@@ -435,7 +435,7 @@ body::after {
     0 0 0 2px rgba(212,168,67,0.15),
     0 0 12px rgba(212,168,67,0.08);
 }
-.input::placeholder { color: #3a3a3a; }
+.input::placeholder { color: #6a6a6a; opacity: 1; }
 .input-gold { color: var(--gold); font-family: 'JetBrains Mono', monospace; }
 
 /* ── Select ── */
@@ -1078,7 +1078,7 @@ input[type="number"] { -moz-appearance: textfield; }
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: #555;
+  color: #888888;
   padding: 0 12px;
   margin-bottom: 4px;
 }

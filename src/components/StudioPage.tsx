@@ -28,6 +28,7 @@ interface StudioTrack {
   audioUrl: string | null;
   volume: number;
   muted: boolean;
+  solo: boolean;
   /** Pan in [-1, +1].  Driven by the active Studio preset's role defaults. */
   pan: number;
   type: "recording" | "import" | "suno" | "drum" | "youtube";
@@ -699,6 +700,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
       audioUrl: url,
       volume: 100,
       muted: false,
+      solo: false,
       pan: 0,
       type,
     };
@@ -721,6 +723,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
       id, name: drumCount === 0 ? "Drum Machine" : `Drum Machine ${drumCount + 1}`, color,
       audioBlob: null, audioUrl: null,
       volume: 100, muted: false,
+      solo: false,
       pan: 0,
       type: "drum",
       drumPattern: createEmptyDrumPattern(),
@@ -744,6 +747,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
       audioUrl: null,
       volume: 100,
       muted: false,
+      solo: false,
       pan: 0,
       type: "youtube",
       videoId,
@@ -962,6 +966,23 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
     });
   }, [tracks]);
 
+  // Solo/mute logic: if any track is solo'd, only solo'd tracks play.
+  // Otherwise, mute is independent per track.
+  useEffect(() => {
+    const hasSolo = tracks.some(t => t.solo);
+    tracks.forEach(t => {
+      const nodes = toneNodesRef.current[t.id];
+      if (!nodes) return;
+      const audible = hasSolo ? t.solo : !t.muted;
+      const target = audible ? sliderToGain(t.volume / 100) : 0;
+      nodes.gain.gain.rampTo(target, 0.015);
+      const yp = ytPlayersRef.current[t.id];
+      if (yp) {
+        try { yp.setVolume(audible ? Math.round(sliderToGain(t.volume / 100) * 100) : 0); } catch { /* ok */ }
+      }
+    });
+  }, [tracks]);
+
   // Save drum patterns to localStorage
   useEffect(() => {
     const drumTracks = tracks.filter(t => t.type === "drum" && t.drumPattern);
@@ -983,6 +1004,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
           id: s.id, name: s.name, color: TRACK_COLORS[(s.id - 1) % TRACK_COLORS.length],
           audioBlob: null, audioUrl: null, volume: 100,
           muted: false,
+          solo: false,
           pan: 0,
           type: "drum" as const,
           drumPattern: s.pattern,
@@ -1065,7 +1087,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
         mediaRecorderRef.current = null;
       };
 
-      mediaRecorder.start();
+      mediaRecorder.start(1000);
       setIsRec(true);
       setRecTime(0);
       timerRef.current = setInterval(() => setRecTime((t) => t + 1), 1000);
@@ -1226,6 +1248,17 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
       // YouTube IFrame API expects 0-100 linear; apply the same perceptual
       // curve so the YT slider behaves like the native track sliders.
       try { yp.setVolume(Math.round(sliderToGain(vol / 100) * 100)); } catch { /* ok */ }
+    }
+  }, []);
+
+  const updateTrackPan = useCallback((id: number, pan: number) => {
+    const clamped = Math.max(-1, Math.min(1, pan));
+    setTracks((p) => p.map((t) => t.id === id ? { ...t, pan: clamped } : t));
+    const nodes = toneNodesRef.current[id];
+    if (nodes) {
+      const { left, right } = equalPowerPan(clamped);
+      nodes.panLeftGain.gain.rampTo(left, 0.015);
+      nodes.panRightGain.gain.rampTo(right, 0.015);
     }
   }, []);
 
@@ -1855,31 +1888,30 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
                   <span className="text-[8px] text-[#555] font-mono w-7 text-right">{tr.volume}%</span>
                 </div>
 
-                {/* Pan placeholder + S/M buttons + delete */}
+                {/* Pan slider + S/M buttons + delete */}
                 <div className="flex items-center gap-1">
                   <span className="text-[7px] text-[#444] w-5 font-mono">PAN</span>
-                  <div className="flex-1 h-[2px] rounded-full" style={{ background: "#1e1e1e" }}>
-                    <div className="w-1/2 h-full rounded-full" style={{ background: "#333" }} />
-                  </div>
+                  <input
+                    type="range"
+                    min={-100}
+                    max={100}
+                    step={1}
+                    value={Math.round(tr.pan * 100)}
+                    onChange={(e) => updateTrackPan(tr.id, parseInt(e.target.value) / 100)}
+                    className="flex-1 h-[6px] accent-[#D4A843] cursor-pointer"
+                    aria-label={`Pan ${tr.name}`}
+                  />
 
-                  {/* Solo (S) button - amber when active (placeholder, toggles mute on others) */}
+                  {/* Solo (S) button - amber when active */}
                   <button onClick={() => {
-                    // Solo: mute all other tracks
-                    setTracks(prev => {
-                      const allOthersMuted = prev.filter(t => t.id !== tr.id).every(t => t.muted);
-                      if (allOthersMuted) {
-                        return prev.map(t => ({ ...t, muted: false }));
-                      }
-                      return prev.map(t => t.id === tr.id ? { ...t, muted: false } : { ...t, muted: true });
-                    });
+                    setTracks(prev => prev.map(t => t.id === tr.id ? { ...t, solo: !t.solo } : t));
                   }}
                     className={`text-[8px] font-bold w-5 h-5 rounded cursor-pointer flex items-center justify-center transition-all ${
-                      !tr.muted && tracks.filter(t => t.id !== tr.id).every(t => t.muted) && tracks.length > 1
+                      tr.solo
                         ? "text-[#111] border-none" : "border border-[#2a2a2a] text-[#555] hover:border-[#D4A843] hover:text-[#D4A843]"
                     }`}
                     style={{
-                      background: !tr.muted && tracks.filter(t => t.id !== tr.id).every(t => t.muted) && tracks.length > 1
-                        ? "#D4A843" : "transparent"
+                      background: tr.solo ? "#D4A843" : "transparent"
                     }}>
                     S
                   </button>
