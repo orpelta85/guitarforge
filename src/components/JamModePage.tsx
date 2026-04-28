@@ -9,6 +9,7 @@ import {
   type JamStyleKey,
   type Progression,
 } from "@/lib/constants";
+import { recordUsage, saveToLibrary, type LibraryTrack } from "@/lib/suno";
 
 // ── Music Theory Data ──
 
@@ -26,6 +27,44 @@ function noteIndex(name: string): number {
 function noteName(idx: number, preferFlat = false): string {
   const i = ((idx % 12) + 12) % 12;
   return preferFlat ? FLAT_NAMES[i] : NOTE_NAMES[i];
+}
+
+// ── Time Signature Helpers ──
+// Translate a progression's `timeSignature` string (e.g. "4/4", "3/4", "6/8")
+// into a beat layout used by the 16th-note Tone.Loop scheduler.
+//
+// `subsPerBar`     — total subdivisions per bar that the loop steps through
+// `beatsPerBar`    — how many "beats" we display in the bar indicator
+// `subsPerBeat`    — subdivisions between successive beats
+// `accentPattern`  — for each beat in the bar, the metronome click kind
+//                    ("accent" | "normal" | "mid" | "none")
+//
+//   4/4 → 16 subs, 4 beats × 4 sub each, accent on 1, normal on 2-3-4
+//   3/4 → 12 subs, 3 beats × 4 sub each, accent on 1, normal on 2-3
+//   6/8 → 12 subs, 6 pulses × 2 sub each, accent on 1, mid on 4 (others silent)
+//   5/4 → 20 subs, 5 beats × 4 sub each, accent on 1, normal on 2-5
+//   7/8 → 14 subs, 7 pulses × 2 sub each, accent on 1, mid on 4
+type ClickKind = "accent" | "normal" | "mid" | "none";
+interface TimeSigLayout {
+  subsPerBar: number;
+  beatsPerBar: number;
+  subsPerBeat: number;
+  accentPattern: ClickKind[];
+}
+function getTimeSigLayout(ts: string | undefined): TimeSigLayout {
+  switch (ts) {
+    case "3/4":
+      return { subsPerBar: 12, beatsPerBar: 3, subsPerBeat: 4, accentPattern: ["accent", "normal", "normal"] };
+    case "6/8":
+      return { subsPerBar: 12, beatsPerBar: 6, subsPerBeat: 2, accentPattern: ["accent", "none", "none", "mid", "none", "none"] };
+    case "5/4":
+      return { subsPerBar: 20, beatsPerBar: 5, subsPerBeat: 4, accentPattern: ["accent", "normal", "normal", "normal", "normal"] };
+    case "7/8":
+      return { subsPerBar: 14, beatsPerBar: 7, subsPerBeat: 2, accentPattern: ["accent", "none", "none", "mid", "none", "normal", "none"] };
+    case "4/4":
+    default:
+      return { subsPerBar: 16, beatsPerBar: 4, subsPerBeat: 4, accentPattern: ["accent", "normal", "normal", "normal"] };
+  }
 }
 
 // Intervals from root for each scale degree in major scale: W W H W W W H
@@ -635,9 +674,11 @@ interface JamSettings {
   bassVol: number;
   drumVol: number;
   guitarVol: number;
+  aiTrackVol: number;
   bassEnabled: boolean;
   drumEnabled: boolean;
   guitarEnabled: boolean;
+  aiTrackEnabled: boolean;
   grooveStyle: GrooveStyleName;
   scaleType: "natural" | "pentatonic" | "blues";
   // Legacy fields kept for backwards compatibility with localStorage
@@ -658,9 +699,11 @@ const DEFAULT_SETTINGS: JamSettings = {
   bassVol: 0.4,
   drumVol: 0.3,
   guitarVol: 0.5,
+  aiTrackVol: 0.6,
   bassEnabled: false,
   drumEnabled: false,
   guitarEnabled: false,
+  aiTrackEnabled: false,
   grooveStyle: "blues",
   scaleType: "pentatonic",
 };
@@ -722,6 +765,15 @@ export default function JamModePage() {
   const [toneLoaded, setToneLoaded] = useState(false);
   // Settings are always visible at top of page. State kept for future collapse UX but defaults true.
   const [showSettings, setShowSettings] = useState(true);
+
+  // ── AI backing track (Suno) state ──
+  const [aiPanelOpen, setAiPanelOpen] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiTrackUrl, setAiTrackUrl] = useState<string | null>(null);
+  const [aiTrackTitle, setAiTrackTitle] = useState<string>("");
+  const [aiError, setAiError] = useState<string>("");
+  const [aiPlaying, setAiPlaying] = useState(false);
+  const aiAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Tone.js refs
   const toneRef = useRef<typeof import("tone") | null>(null);
@@ -919,6 +971,92 @@ export default function JamModePage() {
     }
   }, [settings.bpm]);
 
+  // Sync AI backing-track volume to slider (separate audio element)
+  useEffect(() => {
+    if (aiAudioRef.current) {
+      aiAudioRef.current.volume = settings.aiTrackEnabled ? settings.aiTrackVol : 0;
+    }
+  }, [settings.aiTrackVol, settings.aiTrackEnabled]);
+
+  // ── AI backing-track generation (Suno) ──
+  // Uses the existing /api/suno endpoint that AiCoachPage relies on.
+  // Maps Jam settings → Suno params: scale = current key letter, mode =
+  // "minor"/"major" inferred from key suffix, style = JAM_STYLE label, bpm.
+  const generateAiTrack = useCallback(async () => {
+    if (aiLoading) return;
+    setAiError("");
+    setAiLoading(true);
+
+    const isMinor = settings.key.endsWith("m");
+    const scale = settings.key.replace(/m$/, "");
+    const mode = isMinor ? "minor" : "major";
+    const style = JAM_STYLE_LABELS[settings.style];
+    const title = `Jam ${scale} ${mode} ${style} ${settings.bpm}bpm`;
+
+    try {
+      const res = await fetch("/api/suno", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scale, mode, style, bpm: settings.bpm, title }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: `API ${res.status}` }));
+        throw new Error(err.error || `API error ${res.status}`);
+      }
+      const data = await res.json();
+      const track = data.tracks?.[0];
+      if (!track) throw new Error("No track returned from Suno");
+
+      const audioUrl = track.audioUrl || track.streamAudioUrl;
+      if (!audioUrl) throw new Error("Suno returned no audio URL");
+
+      setAiTrackUrl(audioUrl);
+      setAiTrackTitle(track.title || title);
+      // Auto-enable AI track so user hears it after generate
+      updateSetting("aiTrackEnabled", true);
+      recordUsage(10);
+
+      // Persist to the same library AiCoach uses (best-effort).
+      try {
+        let audioBlob = new Blob();
+        try {
+          const audioRes = await fetch(audioUrl);
+          if (audioRes.ok) audioBlob = await audioRes.blob();
+        } catch { /* offline / CORS — skip blob, keep streaming URL */ }
+        const libTrack: LibraryTrack = {
+          id: track.id || `jam-${Date.now()}`,
+          audioBlob,
+          audioUrl,
+          title: track.title || title,
+          style,
+          params: { scale, mode, style, bpm: settings.bpm },
+          duration: track.duration || 0,
+          createdAt: Date.now(),
+          source: "generate",
+          favorite: false,
+        };
+        await saveToLibrary(libTrack);
+      } catch { /* library save is non-critical */ }
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : "Generation failed");
+    } finally {
+      setAiLoading(false);
+    }
+  }, [settings.key, settings.style, settings.bpm, aiLoading, updateSetting]);
+
+  // Toggle AI track playback (separate from the Tone.js transport so users can
+  // jam over the AI track without the synthesised drums/bass running).
+  const handleAiPlayPause = useCallback(() => {
+    const el = aiAudioRef.current;
+    if (!el || !aiTrackUrl) return;
+    if (el.paused) {
+      void el.play().then(() => setAiPlaying(true)).catch(() => {/* autoplay blocked */});
+    } else {
+      el.pause();
+      setAiPlaying(false);
+    }
+  }, [aiTrackUrl]);
+
   // ── Transport controls ──
 
   const handlePlay = useCallback(async () => {
@@ -948,8 +1086,12 @@ export default function JamModePage() {
       loopRef.current.dispose();
     }
 
-    // 16th note resolution: 16 subdivisions per bar
-    const subsPerBar = 16;
+    // 16th-note resolution scheduler.  Bar length depends on the progression's
+    // time signature (4/4 → 16, 3/4 → 12, 6/8 → 12, …).  Drum/bass/guitar
+    // sub-patterns below are 4/4-shaped (indices 0-15) so they implicitly
+    // truncate when subsPerBar < 16, which is acceptable for the MVP.
+    const layout0 = getTimeSigLayout(currentProgression?.timeSignature);
+    const subsPerBar = layout0.subsPerBar;
     const subsPerChord = settingsRef.current.barsPerChord * subsPerBar;
     const totalSubs = chordsRef.current.length * subsPerChord;
     subCountRef.current = 0;
@@ -965,12 +1107,18 @@ export default function JamModePage() {
       const subInChord = globalSub % spc;
       const subInBar = subInChord % subsPerBar;
       const chIdx = Math.floor(globalSub / spc) % cds.length;
-      const beatInChord = Math.floor(subInChord / 4); // quarter-note beat index
+      const beatInChord = Math.floor(subInChord / layout0.subsPerBeat); // beat index within the chord
 
-      // Metronome - on quarter notes (every 4 subdivisions)
-      if (subInBar % 4 === 0 && metronomeSynthRef.current && s.metronomeVol > 0) {
-        const pitch = subInBar === 0 ? "C5" : "C4";
-        metronomeSynthRef.current.triggerAttackRelease(pitch, "16n", time);
+      // Metronome - one click per beat, accent pattern from time signature.
+      // For compound meters (6/8, 7/8) some beats are silent so the click
+      // emphasises the felt pulse.  Pitches: C5=accent, C4=normal, A4=mid.
+      if (subInBar % layout0.subsPerBeat === 0 && metronomeSynthRef.current && s.metronomeVol > 0) {
+        const beatInBar = subInBar / layout0.subsPerBeat;
+        const kind = layout0.accentPattern[beatInBar] || "normal";
+        if (kind !== "none") {
+          const pitch = kind === "accent" ? "C5" : kind === "mid" ? "A4" : "C4";
+          metronomeSynthRef.current.triggerAttackRelease(pitch, "16n", time);
+        }
       }
 
       // ── Bass ──
@@ -1020,8 +1168,8 @@ export default function JamModePage() {
         }
       }
 
-      // Update UI state (only on quarter notes to avoid excessive renders)
-      if (subInBar % 4 === 0) {
+      // Update UI state (only on beat boundaries to avoid excessive renders)
+      if (subInBar % layout0.subsPerBeat === 0) {
         setCurrentBeat(beatInChord);
       }
       if (chIdx !== chordIdxRef.current) {
@@ -1114,7 +1262,11 @@ export default function JamModePage() {
   }, []);
 
   // ── Progress calculation ──
-  const beatsPerChord = settings.barsPerChord * 4;
+  // Beats-per-bar derives from the progression's time signature so the
+  // progress strip + Bar X/Y indicator stay accurate for 3/4, 6/8, etc.
+  const tsLayout = getTimeSigLayout(currentProgression?.timeSignature);
+  const beatsPerBar = tsLayout.beatsPerBar;
+  const beatsPerChord = settings.barsPerChord * beatsPerBar;
   const totalBeats = chords.length * beatsPerChord;
   const globalBeat = currentChordIdx * beatsPerChord + currentBeat;
   const progressPct = totalBeats > 0 ? (globalBeat / totalBeats) * 100 : 0;
@@ -1379,6 +1531,128 @@ export default function JamModePage() {
             </div>
           </div>
 
+          {/* Section: AI Backing Track (Suno) */}
+          <div className="h-px bg-[#2a2a2e] my-3 sm:my-4" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-[9px] font-label uppercase tracking-[0.15em] text-[#D4A843]/70">AI Backing Track</div>
+            <button
+              onClick={() => setAiPanelOpen(o => !o)}
+              className="text-[9px] px-2 py-1 rounded font-label transition-colors"
+              style={{
+                background: aiPanelOpen ? "rgba(212,168,67,0.15)" : "rgba(255,255,255,0.05)",
+                color: aiPanelOpen ? "#D4A843" : "#9a9590",
+                border: `1px solid ${aiPanelOpen ? "rgba(212,168,67,0.3)" : "rgba(255,255,255,0.08)"}`,
+              }}
+            >
+              {aiPanelOpen ? "Hide" : "Show"}
+            </button>
+          </div>
+
+          {aiPanelOpen && (
+            <div
+              className="rounded-lg p-3 space-y-2"
+              style={{
+                background: "rgba(255,255,255,0.02)",
+                border: "1px solid rgba(255,255,255,0.06)",
+              }}
+            >
+              {/* Prompt preview row */}
+              <div className="text-[10px] text-[#9a9590] font-label leading-snug">
+                <span className="text-[#6b6560] uppercase tracking-wider">Prompt: </span>
+                <span className="font-mono text-[#D4A843]">
+                  {settings.key.replace(/m$/, "")} {settings.key.endsWith("m") ? "minor" : "major"}
+                </span>
+                <span className="text-[#6b6560]"> · </span>
+                <span className="font-mono text-[#D4A843]">{JAM_STYLE_LABELS[settings.style]}</span>
+                <span className="text-[#6b6560]"> · </span>
+                <span className="font-mono text-[#D4A843]">{settings.bpm} BPM</span>
+              </div>
+
+              {/* Generate + Play/Pause + Volume */}
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={generateAiTrack}
+                  disabled={aiLoading}
+                  className="text-[10px] px-3 py-2 sm:py-1.5 min-h-[36px] sm:min-h-0 rounded font-label font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{
+                    background: aiLoading ? "rgba(212,168,67,0.1)" : "rgba(212,168,67,0.18)",
+                    color: "#D4A843",
+                    border: "1px solid rgba(212,168,67,0.35)",
+                  }}
+                >
+                  {aiLoading ? "Generating… (up to 2 min)" : aiTrackUrl ? "Regenerate" : "Generate"}
+                </button>
+
+                {aiTrackUrl && (
+                  <button
+                    onClick={handleAiPlayPause}
+                    className="text-[10px] px-3 py-2 sm:py-1.5 min-h-[36px] sm:min-h-0 rounded font-label transition-colors"
+                    style={{
+                      background: aiPlaying ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.05)",
+                      color: aiPlaying ? "#22c55e" : "#9a9590",
+                      border: `1px solid ${aiPlaying ? "rgba(34,197,94,0.3)" : "rgba(255,255,255,0.1)"}`,
+                    }}
+                  >
+                    {aiPlaying ? "Pause" : "Play"}
+                  </button>
+                )}
+
+                <div className="flex items-center gap-2 ml-auto min-w-[140px]">
+                  <button
+                    onClick={() => updateSetting("aiTrackEnabled", !settings.aiTrackEnabled)}
+                    disabled={!aiTrackUrl}
+                    className="text-[9px] px-1.5 py-1 rounded font-label transition-colors disabled:opacity-30"
+                    style={{
+                      background: settings.aiTrackEnabled ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.05)",
+                      color: settings.aiTrackEnabled ? "#22c55e" : "#555",
+                      border: `1px solid ${settings.aiTrackEnabled ? "rgba(34,197,94,0.3)" : "rgba(255,255,255,0.08)"}`,
+                    }}
+                  >
+                    {settings.aiTrackEnabled ? "ON" : "OFF"}
+                  </button>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={Math.round(settings.aiTrackVol * 100)}
+                    onChange={e => updateSetting("aiTrackVol", Number(e.target.value) / 100)}
+                    disabled={!aiTrackUrl || !settings.aiTrackEnabled}
+                    className="flex-1 accent-[#D4A843] h-1"
+                    title={`AI track volume: ${Math.round(settings.aiTrackVol * 100)}%`}
+                  />
+                  <span className="text-[10px] text-[#9a9590] font-mono shrink-0 w-9 text-right">
+                    {Math.round(settings.aiTrackVol * 100)}%
+                  </span>
+                </div>
+              </div>
+
+              {/* Status line */}
+              {aiTrackTitle && !aiError && (
+                <div className="text-[10px] text-[#22c55e] font-label truncate">
+                  Loaded: {aiTrackTitle}
+                </div>
+              )}
+              {aiError && (
+                <div className="text-[10px] text-[#ef4444] font-label">
+                  {aiError}
+                </div>
+              )}
+
+              {/* Hidden audio element — actual playback */}
+              {aiTrackUrl && (
+                <audio
+                  ref={aiAudioRef}
+                  src={aiTrackUrl}
+                  loop
+                  preload="auto"
+                  onPlay={() => setAiPlaying(true)}
+                  onPause={() => setAiPlaying(false)}
+                  onEnded={() => setAiPlaying(false)}
+                />
+              )}
+            </div>
+          )}
+
           {/* Section: Groove */}
           <div className="h-px bg-[#2a2a2e] my-3 sm:my-4" />
           <div className="text-[9px] font-label uppercase tracking-[0.15em] text-[#D4A843]/70 mb-2">Groove Style</div>
@@ -1513,9 +1787,9 @@ export default function JamModePage() {
             </span>
           </div>
 
-          {/* Beat indicators */}
+          {/* Beat indicators - one dot per beat in the bar (varies by time sig) */}
           <div className="mt-6 flex items-center gap-3">
-            {Array.from({ length: 4 }).map((_, i) => (
+            {Array.from({ length: beatsPerBar }).map((_, i) => (
               <div
                 key={i}
                 className="transition-all duration-100"
@@ -1523,12 +1797,12 @@ export default function JamModePage() {
                   width: i === 0 ? 16 : 12,
                   height: i === 0 ? 16 : 12,
                   borderRadius: "50%",
-                  background: (currentBeat % 4) === i && (playing || paused)
+                  background: (currentBeat % beatsPerBar) === i && (playing || paused)
                     ? i === 0
                       ? "#D4A843"
                       : "rgba(212,168,67,0.6)"
                     : "rgba(255,255,255,0.08)",
-                  boxShadow: (currentBeat % 4) === i && (playing || paused)
+                  boxShadow: (currentBeat % beatsPerBar) === i && (playing || paused)
                     ? `0 0 12px ${i === 0 ? "rgba(212,168,67,0.6)" : "rgba(212,168,67,0.3)"}`
                     : "none",
                   border: i === 0 ? "2px solid rgba(212,168,67,0.3)" : "1px solid rgba(255,255,255,0.1)",
@@ -1554,7 +1828,7 @@ export default function JamModePage() {
                   boxShadow: playing ? "0 0 6px rgba(212,168,67,0.8)" : "none",
                 }}
               />
-              Bar {Math.floor(currentBeat / 4) + 1}/{settings.barsPerChord}
+              Bar {Math.floor(currentBeat / beatsPerBar) + 1}/{settings.barsPerChord}
             </span>
             <span
               className="px-2.5 py-1 rounded-full text-[#9a9590]"
