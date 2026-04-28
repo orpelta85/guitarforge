@@ -210,7 +210,7 @@ function applyPeakingEQ(
 
 // ─── Core IR builder ─────────────────────────────────────────────────────────
 
-function buildIRBuffer(ctx: AudioContext, p: CabinetPreset): AudioBuffer {
+function buildIRBuffer(ctx: BaseAudioContext, p: CabinetPreset): AudioBuffer {
   const sr = ctx.sampleRate;
   const len = Math.floor(sr * p.lengthSec);
   const buf = ctx.createBuffer(2, len, sr);
@@ -306,14 +306,59 @@ function cacheKey(name: CabinetPresetName, sr: number): string {
   return `${name}@${sr}`;
 }
 
+// Map preset names to expected real-IR file paths. Files are kept under
+// /public/audio/cabs/ — each ~10-50 KB stereo WAV at 48 kHz.
+// If a file is missing or the fetch fails, we fall back to the math-based IR
+// in buildIRBuffer() so the player keeps working without manual setup.
+const IR_FILE_PATHS: Record<CabinetPresetName, string> = {
+  mesa_v30_highgain: "/audio/cabs/mesa_v30.wav",
+  marshall_1960_rock: "/audio/cabs/marshall_1960.wav",
+  fender_twin_clean: "/audio/cabs/fender_twin.wav",
+  room_studio_medium: "/audio/cabs/room_studio.wav",
+};
+
+// Track which presets we've already tried to fetch — we only attempt each
+// remote URL once per page load, regardless of failure cause.
+const fetchAttempted = new Set<string>();
+
 /**
  * Build (or return cached) cabinet/room IR for the given preset.
- * Total CPU per preset: ~5-15 ms. Safe to call during mount.
+ *
+ * On first call per preset+sampleRate: tries to fetch the real WAV from
+ * /public/audio/cabs/. If that 404s, errors, or decodeAudioData rejects, falls
+ * back to the math-based synthetic IR (buildIRBuffer) — keeps the player working
+ * even without manually downloaded IR files.
+ *
+ * Cached after first build per preset+sampleRate, so this is cheap on repeat
+ * calls. Total CPU on synth path: ~5-15 ms; total wall-time on fetch path:
+ * dominated by network (typically <50 ms for a local <50 KB WAV).
  */
-export function buildCabinetIR(ctx: AudioContext, preset: CabinetPreset): AudioBuffer {
+export async function buildCabinetIR(
+  ctx: BaseAudioContext,
+  preset: CabinetPreset,
+): Promise<AudioBuffer> {
   const key = cacheKey(preset.name, ctx.sampleRate);
   const existing = irCache.get(key);
   if (existing) return existing;
+
+  // Only try fetching once per preset URL — avoid hammering on repeat misses.
+  const url = IR_FILE_PATHS[preset.name];
+  if (url && !fetchAttempted.has(url)) {
+    fetchAttempted.add(url);
+    try {
+      const response = await fetch(url);
+      if (response.ok) {
+        const arrayBuffer = await response.arrayBuffer();
+        const decoded = await ctx.decodeAudioData(arrayBuffer.slice(0));
+        irCache.set(key, decoded);
+        return decoded;
+      }
+    } catch {
+      /* fall through to synthetic fallback */
+    }
+  }
+
+  // Fallback: math-based synthetic IR.
   const buf = buildIRBuffer(ctx, preset);
   irCache.set(key, buf);
   return buf;

@@ -1124,6 +1124,16 @@ input[type="number"] { -moz-appearance: textfield; }
   box-shadow: 0 0 8px rgba(212,168,67,0.3);
 }
 
+/* Prevent :active (mousedown) styling from flashing the gold treatment
+   on items that aren't the current view (audit P0-4). */
+.sidebar-item:active:not(.sidebar-item--active) {
+  background: transparent !important;
+  color: var(--gf-text-muted, #888) !important;
+}
+.sidebar-item:active:not(.sidebar-item--active)::before {
+  display: none !important;
+}
+
 .sidebar-item-icon {
   display: flex;
   align-items: center;

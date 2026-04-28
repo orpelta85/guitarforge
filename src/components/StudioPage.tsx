@@ -18,6 +18,7 @@ import {
   equalPowerPan,
   smoothParam,
 } from "@/lib/audioMixHelpers";
+import { playDrumSample, type DrumIndex } from "@/lib/drumSamples";
 
 // ── Types ──
 interface StudioTrack {
@@ -249,6 +250,14 @@ function createEmptyDrumPattern(): boolean[][] {
 function synthDrumHit(ctx: AudioContext, instrument: number, time: number, output?: AudioNode) {
   const t = time;
   const dest = output || ctx.destination;
+
+  // Sample-first: if a real WAV is loaded for this instrument, play it back
+  // and skip the synth path. The sampler returns false on cache miss so the
+  // synth fallback below runs immediately — no perceptible latency.
+  if (instrument >= 0 && instrument <= 7) {
+    if (playDrumSample(ctx, instrument as DrumIndex, t, dest)) return;
+  }
+
   switch (instrument) {
     case 0: { // Kick
       const osc = ctx.createOscillator();
@@ -1675,7 +1684,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
     <div className="flex flex-col overflow-hidden select-none flex-1 min-h-0 h-full" style={{ background: "#0a0a0a", fontFamily: "'Inter', system-ui, sans-serif" }} dir="ltr">
 
       {/* ═══════════ TOP BAR: Transport + Toolbar (DAW style) ═══════════ */}
-      <div className="flex items-center h-14 px-2 sm:px-4 gap-1 sm:gap-2 border-b flex-shrink-0 overflow-x-auto scrollbar-hide" style={{ background: "linear-gradient(180deg, #151515 0%, #111111 100%)", borderColor: "#1e1e1e" }}>
+      <div className="flex flex-wrap items-center min-h-14 px-2 sm:px-4 py-1 sm:py-0 gap-1 sm:gap-2 border-b flex-shrink-0 sm:flex-nowrap sm:overflow-x-auto scrollbar-hide" style={{ background: "linear-gradient(180deg, #151515 0%, #111111 100%)", borderColor: "#1e1e1e" }}>
 
         {/* LEFT: BPM + Metronome + Mic */}
         <div className="flex items-center gap-1.5 sm:gap-2">
@@ -1705,10 +1714,16 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
             </svg>
             <select value={selectedInputDevice}
               onChange={(e) => setSelectedInputDevice(e.target.value)}
+              dir="ltr"
               className="bg-[#0e0e0e] border border-[#1e1e1e] rounded px-1.5 py-0.5 text-[9px] text-[#666] outline-none focus:border-[#D4A843] cursor-pointer max-w-[120px] truncate">
-              {inputDevices.map((d) => (
-                <option key={d.deviceId} value={d.deviceId}>{d.label || `Mic ${d.deviceId.slice(0, 6)}`}</option>
-              ))}
+              {inputDevices.map((d) => {
+                const raw = d.label || `Mic ${d.deviceId.slice(0, 6)}`;
+                // Replace OS-locale "default" labels with English
+                const label = /^(default|ברירת|standard)/i.test(raw)
+                  ? "Default Mic"
+                  : (raw.length > 30 ? raw.slice(0, 30) + "..." : raw);
+                return <option key={d.deviceId} value={d.deviceId}>{label}</option>;
+              })}
               {inputDevices.length === 0 && <option value="">No devices</option>}
             </select>
           </div>

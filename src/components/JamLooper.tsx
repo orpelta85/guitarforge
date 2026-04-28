@@ -97,7 +97,7 @@ async function renderLayersWithChainOffline(
   const chainEntry = offline.createGain();
   const cabinet = offline.createConvolver();
   cabinet.normalize = false;
-  cabinet.buffer = buildCabinetIR(offline as unknown as AudioContext, getCabinetPreset(preset.cabinet));
+  cabinet.buffer = await buildCabinetIR(offline, getCabinetPreset(preset.cabinet));
   const postCabGain = offline.createGain();
   postCabGain.gain.value = preset.postCabGain;
   const compressor = offline.createDynamicsCompressor();
@@ -112,7 +112,7 @@ async function renderLayersWithChainOffline(
   roomSend.gain.value = preset.roomWetDefault;
   const room = offline.createConvolver();
   room.normalize = false;
-  room.buffer = buildCabinetIR(offline as unknown as AudioContext, getCabinetPreset(preset.room));
+  room.buffer = await buildCabinetIR(offline, getCabinetPreset(preset.room));
   const wetSum = offline.createGain();
   const limiter = offline.createDynamicsCompressor();
   limiter.threshold.value = preset.limiterThresholdDb;
@@ -329,9 +329,12 @@ export default function JamLooper({ bpm, jamPlaying }: Props) {
     chainEntry.gain.value = 1;
 
     // Cabinet convolver — generated once per preset via math IR (§1).
+    // Async build (real WAV w/ synth fallback) — assign buffer on resolve.
     const cabinet = ctx.createConvolver();
     cabinet.normalize = false;
-    cabinet.buffer = buildCabinetIR(ctx, getCabinetPreset(preset.cabinet));
+    void buildCabinetIR(ctx, getCabinetPreset(preset.cabinet)).then((buf) => {
+      try { cabinet.buffer = buf; } catch { /* ctx closed */ }
+    });
 
     const postCabGain = ctx.createGain();
     postCabGain.gain.value = preset.postCabGain;
@@ -351,7 +354,9 @@ export default function JamLooper({ bpm, jamPlaying }: Props) {
 
     const room = ctx.createConvolver();
     room.normalize = false;
-    room.buffer = buildCabinetIR(ctx, getCabinetPreset(preset.room));
+    void buildCabinetIR(ctx, getCabinetPreset(preset.room)).then((buf) => {
+      try { room.buffer = buf; } catch { /* ctx closed */ }
+    });
 
     const wetSum = ctx.createGain();
     wetSum.gain.value = 1;

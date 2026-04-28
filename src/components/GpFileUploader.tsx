@@ -142,7 +142,9 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
     ctx: AudioContext;
     sourceNode: AudioNode;
     highpass: BiquadFilterNode;
+    preEmphasis: BiquadFilterNode;
     shaper: WaveShaperNode;
+    deEmphasis: BiquadFilterNode;
     cabinetConvolver: ConvolverNode;
     postCabGain: GainNode;
     compressor: DynamicsCompressorNode;
@@ -342,14 +344,33 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
         highpass.frequency.value = preset.highPassHz;
         highpass.Q.value = preset.highPassQ;
 
-        // 2. WaveShaper (tanh-based soft saturation — preset-tuned drive).
+        // 2a. Pre-emphasis EQ (mimics real amp modeling — pushes mids into the
+        //     distortion stage for "warm bite"). +3 dB peaking @ 1 kHz, Q=0.7.
+        const preEmphasis = ctx.createBiquadFilter();
+        preEmphasis.type = "peaking";
+        preEmphasis.frequency.value = 1000;
+        preEmphasis.gain.value = 3;
+        preEmphasis.Q.value = 0.7;
+
+        // 2b. WaveShaper (tanh-based soft saturation — preset-tuned drive).
         const shaper = ctx.createWaveShaper();
         shaper.curve = buildShaperCurve(preset);
         shaper.oversample = preset.shaperOversample;
 
+        // 2c. De-emphasis EQ (counterbalances the pre-emphasis after distortion
+        //     so the response stays balanced). -2 dB peaking @ 1.5 kHz, Q=0.7.
+        const deEmphasis = ctx.createBiquadFilter();
+        deEmphasis.type = "peaking";
+        deEmphasis.frequency.value = 1500;
+        deEmphasis.gain.value = -2;
+        deEmphasis.Q.value = 0.7;
+
         // 3. Cabinet IR (replaces synthetic lowpass + fake reverb).
+        // Build is async (real WAV fetch w/ synth fallback) — assign on resolve.
         const cabinetConvolver = ctx.createConvolver();
-        cabinetConvolver.buffer = buildCabinetIR(ctx, getCabinetPreset(preset.cabinet));
+        void buildCabinetIR(ctx, getCabinetPreset(preset.cabinet)).then((buf) => {
+          try { cabinetConvolver.buffer = buf; } catch { /* ctx closed */ }
+        });
 
         // 4. Post-cab trim (convolution changes level).
         const postCabGain = ctx.createGain();
@@ -365,7 +386,9 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
 
         // 6. Room IR (stereo studio ambience) — parallel wet/dry send.
         const roomConvolver = ctx.createConvolver();
-        roomConvolver.buffer = buildCabinetIR(ctx, getCabinetPreset(preset.room));
+        void buildCabinetIR(ctx, getCabinetPreset(preset.room)).then((buf) => {
+          try { roomConvolver.buffer = buf; } catch { /* ctx closed */ }
+        });
         const levels = computeRoomLevels(preset, reverbEnabled, reverbMix);
         const roomDry = ctx.createGain();
         roomDry.gain.value = levels.dry;
@@ -384,10 +407,13 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
         if (sourceNode) {
           try { sourceNode.disconnect(); } catch { /* ok */ }
 
-          // Serial: source -> HP -> shaper -> cabinet -> postGain -> compressor.
+          // Serial: source -> HP -> preEmphasis -> shaper -> deEmphasis
+          //                 -> cabinet -> postGain -> compressor.
           sourceNode.connect(highpass);
-          highpass.connect(shaper);
-          shaper.connect(cabinetConvolver);
+          highpass.connect(preEmphasis);
+          preEmphasis.connect(shaper);
+          shaper.connect(deEmphasis);
+          deEmphasis.connect(cabinetConvolver);
           cabinetConvolver.connect(postCabGain);
           postCabGain.connect(compressor);
 
@@ -404,7 +430,9 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
             ctx,
             sourceNode,
             highpass,
+            preEmphasis,
             shaper,
+            deEmphasis,
             cabinetConvolver,
             postCabGain,
             compressor,
@@ -460,7 +488,9 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
     nodes.shaper.oversample = preset.shaperOversample;
 
     // Rebuild cabinet IR (new preset = different cab).
-    nodes.cabinetConvolver.buffer = buildCabinetIR(ctx, getCabinetPreset(preset.cabinet));
+    void buildCabinetIR(ctx, getCabinetPreset(preset.cabinet)).then((buf) => {
+      try { nodes.cabinetConvolver.buffer = buf; } catch { /* ctx closed */ }
+    });
 
     nodes.postCabGain.gain.cancelScheduledValues(now);
     nodes.postCabGain.gain.linearRampToValueAtTime(preset.postCabGain, end);
@@ -476,7 +506,9 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
     nodes.compressor.release.linearRampToValueAtTime(preset.compReleaseSec, end);
     nodes.compressor.knee.linearRampToValueAtTime(preset.compKneeDb, end);
 
-    nodes.roomConvolver.buffer = buildCabinetIR(ctx, getCabinetPreset(preset.room));
+    void buildCabinetIR(ctx, getCabinetPreset(preset.room)).then((buf) => {
+      try { nodes.roomConvolver.buffer = buf; } catch { /* ctx closed */ }
+    });
     const { wet, dry } = computeRoomLevels(preset, reverbEnabled, reverbMix);
     nodes.roomWet.gain.cancelScheduledValues(now);
     nodes.roomDry.gain.cancelScheduledValues(now);
@@ -527,7 +559,9 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
         if (audioNodesRef.current) {
           try {
             audioNodesRef.current.highpass.disconnect();
+            audioNodesRef.current.preEmphasis.disconnect();
             audioNodesRef.current.shaper.disconnect();
+            audioNodesRef.current.deEmphasis.disconnect();
             audioNodesRef.current.cabinetConvolver.disconnect();
             audioNodesRef.current.postCabGain.disconnect();
             audioNodesRef.current.compressor.disconnect();
@@ -832,6 +866,26 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
       if (beatRafRef.current) { cancelAnimationFrame(beatRafRef.current); beatRafRef.current = 0; }
       pendingBeatRef.current = null;
       lastScrolledRowYRef.current = -1;
+
+      // Disconnect audio chain to prevent memory leak (audit P0-1)
+      if (audioNodesRef.current) {
+        try {
+          const n = audioNodesRef.current as unknown as Record<string, AudioNode | undefined>;
+          n.highpass?.disconnect();
+          n.preEmphasis?.disconnect();
+          n.shaper?.disconnect();
+          n.deEmphasis?.disconnect();
+          n.cabinetConvolver?.disconnect();
+          n.postCabGain?.disconnect();
+          n.compressor?.disconnect();
+          n.roomConvolver?.disconnect();
+          n.roomDry?.disconnect();
+          n.roomWet?.disconnect();
+          n.limiter?.disconnect();
+        } catch { /* ok */ }
+        audioNodesRef.current = null;
+      }
+
       if (apiRef.current?.destroy) {
         try { apiRef.current.destroy(); } catch {}
       }
@@ -1003,12 +1057,26 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
     const api = apiRef.current;
     if (!api) return;
     if (!api.isReadyForPlayback) {
-      console.warn("[alphaTab] Play requested but player not ready yet", { sfProgress, sfError });
+      setError("Player still loading - try again in a moment");
       return;
     }
-    if ((api as any).player?.output?.audioContext?.state === "suspended")
-      (api as any).player.output.audioContext.resume();
-    // Try to enhance audio on first play (audio context may only exist now)
+    // Type-safe access to audioContext (alphaTab internals)
+    const ctx = (api as unknown as { player?: { output?: { audioContext?: AudioContext } } }).player?.output?.audioContext;
+    if (ctx?.state === "suspended") {
+      try {
+        ctx.resume().then(() => {
+          if (!audioNodesRef.current) enhanceAudioOutput(api);
+          api.playPause();
+        }).catch((err: Error) => {
+          setError("Browser blocked audio. Tap the screen and try Play again.");
+          console.error("[alphaTab] AudioContext resume failed", err);
+        });
+        return;  // wait for resume promise
+      } catch {
+        setError("Browser blocked audio. Tap the screen and try Play again.");
+        return;
+      }
+    }
     if (!audioNodesRef.current) enhanceAudioOutput(api);
     api.playPause();
   }
