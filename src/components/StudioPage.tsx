@@ -27,7 +27,10 @@ import {
   CURRENT_PROJECT_ID,
   type StudioProject,
   type SerializedTrack,
+  type SerializedRegion,
 } from "@/lib/projectStorage";
+import ClipRegion, { type TrackRegion } from "./studio/ClipRegion";
+import TrackTimeline from "./studio/TrackTimeline";
 
 // ── Types ──
 interface StudioTrack {
@@ -505,6 +508,19 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
   const [sunoDailyUsage, setSunoDailyUsage] = useState({ date: "", used: 0, generations: 0 });
   const sunoAudioRef = useRef<HTMLAudioElement | null>(null);
 
+  // ── Clip-region editing state (Phase 3c) ──
+  // Each track has zero or more regions; a freshly-recorded track gets one
+  // implicit region covering the entire buffer so the clip editor immediately
+  // surfaces it to the user.  Drum / YouTube tracks have no regions.
+  const [regions, setRegions] = useState<TrackRegion[]>([]);
+  const [zoom, setZoom] = useState<number>(40); // 0-100, maps to 20-320 px/sec
+  const [snapToGrid, setSnapToGrid] = useState<boolean>(true);
+  const [timeSigIdx, setTimeSigIdx] = useState<number>(0);
+  const TIME_SIGS: [number, number][] = [[4, 4], [3, 4], [6, 8], [2, 4], [5, 4], [7, 8]];
+  const timeSig = TIME_SIGS[timeSigIdx];
+  // Lazy-decoded AudioBuffers per track id, used to compute peaks on demand.
+  const audioBuffersRef = useRef<Record<number, AudioBuffer>>({});
+
   // ── Refs ──
   const toneRef = useRef<ToneModule | null>(null);
   const masterGainRef = useRef<InstanceType<ToneModule["Gain"]> | null>(null);
@@ -725,6 +741,116 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
     return ws;
   }, []);
 
+  // ── Region helpers (Phase 3c) ──
+  // Compute a Float32Array of `width` peaks across the whole buffer; used by
+  // ClipRegion to paint waveforms and to produce sub-arrays when splitting.
+  const computePeaks = useCallback((buffer: AudioBuffer, width = 2000): Float32Array => {
+    const data = buffer.getChannelData(0);
+    const step = Math.max(1, Math.floor(data.length / width));
+    const peaks = new Float32Array(width);
+    for (let i = 0; i < width; i++) {
+      let max = 0;
+      const start = i * step;
+      const end = Math.min(data.length, start + step);
+      for (let j = start; j < end; j++) {
+        const abs = Math.abs(data[j] || 0);
+        if (abs > max) max = abs;
+      }
+      peaks[i] = max;
+    }
+    return peaks;
+  }, []);
+
+  // Decode a track's blob and create an initial full-length region.  Idempotent:
+  // if peaks already exist for the track's region, we skip decoding.
+  const ensureRegionForTrack = useCallback(async (trackId: number, blob: Blob) => {
+    try {
+      // If we already have a region with peaks, nothing to do.
+      const existing = (await new Promise<TrackRegion | null>((resolve) => {
+        // Read latest regions via setState callback (avoid stale closure).
+        setRegions((cur) => {
+          resolve(cur.find((r) => r.id.startsWith(`r-${trackId}-`) && r.peaks) || null);
+          return cur;
+        });
+      }));
+      if (existing) return;
+      const arrayBuffer = await blob.arrayBuffer();
+      // Reuse a shared decode context (one per call — closed immediately after).
+      const AC: typeof AudioContext = (window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext);
+      const ctx = new AC();
+      let audioBuffer: AudioBuffer;
+      try {
+        audioBuffer = await ctx.decodeAudioData(arrayBuffer.slice(0));
+      } finally {
+        try { await ctx.close(); } catch { /* ok */ }
+      }
+      audioBuffersRef.current[trackId] = audioBuffer;
+      const peaks = computePeaks(audioBuffer, 2000);
+      setRegions((prev) => {
+        const others = prev.filter((r) => !r.id.startsWith(`r-${trackId}-`) || r.peaks);
+        // If this track already has regions (e.g. restored from save), only attach peaks.
+        const trackRegions = prev.filter((r) => r.id.startsWith(`r-${trackId}-`));
+        if (trackRegions.length > 0) {
+          return others.concat(
+            trackRegions.map((r) => ({
+              ...r,
+              peaks,
+              bufferDuration: audioBuffer.duration,
+            })),
+          );
+        }
+        // Brand-new track: one full-length region.
+        const region: TrackRegion = {
+          id: `r-${trackId}-${Date.now()}`,
+          startTime: 0,
+          duration: audioBuffer.duration,
+          offset: 0,
+          peaks,
+          bufferDuration: audioBuffer.duration,
+        };
+        return [...others, region];
+      });
+      setDuration((prev) => Math.max(prev, audioBuffer.duration));
+    } catch {
+      /* decode failed — region UI will hide silently */
+    }
+  }, [computePeaks]);
+
+  const updateRegion = useCallback((regionId: string, patch: Partial<TrackRegion>) => {
+    setRegions((prev) => prev.map((r) => (r.id === regionId ? { ...r, ...patch } : r)));
+  }, []);
+
+  const splitRegion = useCallback((regionId: string, splitTime: number) => {
+    setRegions((prev) => {
+      const region = prev.find((r) => r.id === regionId);
+      if (!region) return prev;
+      const relTime = splitTime - region.startTime;
+      if (relTime <= 0.05 || relTime >= region.duration - 0.05) return prev;
+      const left: TrackRegion = {
+        ...region,
+        id: `${region.id}-L${Date.now()}`,
+        duration: relTime,
+      };
+      const right: TrackRegion = {
+        ...region,
+        id: `${region.id}-R${Date.now()}`,
+        startTime: region.startTime + relTime,
+        duration: region.duration - relTime,
+        offset: region.offset + relTime,
+      };
+      return [...prev.filter((r) => r.id !== regionId), left, right];
+    });
+  }, []);
+
+  const deleteRegion = useCallback((regionId: string) => {
+    setRegions((prev) => prev.filter((r) => r.id !== regionId));
+  }, []);
+
+  // Snap step in seconds (1/16th note grid).
+  const snapBeatSec = useMemo(() => 60 / bpm / 4, [bpm]);
+  const pxPerSec = useMemo(() => 20 + (zoom / 100) * 300, [zoom]);
+
   // ── Add track helper ──
   const addTrack = useCallback(async (name: string, url: string, type: StudioTrack["type"], blob?: Blob) => {
     ctr.current++;
@@ -746,8 +872,12 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
       const container = trackContainersRef.current[id];
       if (container) await createWavesurfer(newTrack, container);
       await createToneNodes(newTrack);
+      // Phase 3c: decode the blob so the clip editor can render + edit it.
+      if (blob && (type === "recording" || type === "import" || type === "suno")) {
+        await ensureRegionForTrack(id, blob);
+      }
     }, 100);
-  }, [createWavesurfer, createToneNodes]);
+  }, [createWavesurfer, createToneNodes, ensureRegionForTrack]);
 
   // ── Add Drum Machine track ──
   const addDrumTrack = useCallback(() => {
@@ -1348,6 +1478,9 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
       if (track?.audioUrl) URL.revokeObjectURL(track.audioUrl);
       return prev.filter((t) => t.id !== id);
     });
+    // Phase 3c: drop any clip regions tied to this track.
+    setRegions((prev) => prev.filter((r) => !r.id.startsWith(`r-${id}-`)));
+    delete audioBuffersRef.current[id];
     if (expandedDrumTrackId === id) setExpandedDrumTrackId(null);
   }, [expandedDrumTrackId]);
 
@@ -1920,6 +2053,22 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
         setTracks(restoredTracks);
         setLastSavedAt(loaded.updatedAt);
 
+        // Phase 3c: restore regions (without peaks — those decode lazily).
+        const restoredRegions: TrackRegion[] = [];
+        for (const t of loaded.tracks) {
+          if (!t.regions || t.regions.length === 0) continue;
+          for (const r of t.regions) {
+            restoredRegions.push({
+              id: r.id,
+              startTime: r.startTime,
+              duration: r.duration,
+              offset: r.offset,
+              bufferDuration: r.duration + r.offset, // upper bound until decode
+            });
+          }
+        }
+        if (restoredRegions.length > 0) setRegions(restoredRegions);
+
         // Wait one tick for refs (track containers, YT containers) to bind,
         // then rebuild wavesurfer + Tone graph for each audio track and YT
         // players for each YouTube track.
@@ -1932,6 +2081,10 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
                 try { await createWavesurfer(tr, container); } catch { /* ok */ }
               }
               try { await createToneNodes(tr); } catch { /* ok */ }
+              // Phase 3c: re-decode peaks for the clip editor on restore.
+              if (tr.audioBlob) {
+                try { await ensureRegionForTrack(tr.id, tr.audioBlob); } catch { /* ok */ }
+              }
             } else if (tr.type === "youtube" && tr.videoId) {
               try {
                 await ensureYT();
@@ -1980,21 +2133,32 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
     setSaveState("saving");
     projectAutoSaveTimerRef.current = setTimeout(async () => {
       try {
-        const serializedTracks: SerializedTrack[] = tracks.map((t) => ({
-          id: t.id,
-          name: t.name,
-          color: t.color,
-          type: t.type,
-          volume: t.volume,
-          muted: t.muted,
-          solo: t.solo,
-          pan: t.pan,
-          drumPattern: t.drumPattern,
-          videoId: t.videoId,
-          videoTitle: t.videoTitle,
-          videoThumbnail: t.videoThumbnail,
-          hasBlob: !!t.audioBlob,
-        }));
+        const serializedTracks: SerializedTrack[] = tracks.map((t) => {
+          const trackRegions: SerializedRegion[] = regions
+            .filter((r) => r.id.startsWith(`r-${t.id}-`))
+            .map((r) => ({
+              id: r.id,
+              startTime: r.startTime,
+              duration: r.duration,
+              offset: r.offset,
+            }));
+          return {
+            id: t.id,
+            name: t.name,
+            color: t.color,
+            type: t.type,
+            volume: t.volume,
+            muted: t.muted,
+            solo: t.solo,
+            pan: t.pan,
+            drumPattern: t.drumPattern,
+            videoId: t.videoId,
+            videoTitle: t.videoTitle,
+            videoThumbnail: t.videoThumbnail,
+            hasBlob: !!t.audioBlob,
+            regions: trackRegions.length > 0 ? trackRegions : undefined,
+          };
+        });
         const blobs = new Map<number, Blob>();
         for (const t of tracks) {
           if (t.audioBlob) blobs.set(t.id, t.audioBlob);
@@ -2028,7 +2192,7 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tracks, bpm, masterVol, studioPresetId, metronomeOn, metronomeVolume, projectName, projectCreatedAt]);
+  }, [tracks, regions, bpm, masterVol, studioPresetId, metronomeOn, metronomeVolume, projectName, projectCreatedAt]);
 
   // ── Keyboard shortcuts ──
   useEffect(() => {
@@ -2264,6 +2428,33 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
           <span className="text-[8px] text-[#333] font-mono hidden sm:inline">{tracks.length} trk</span>
           {looping && <span className="text-[7px] text-[#D4A843] bg-[#D4A84315] px-1 py-0.5 rounded font-bold tracking-wider">LOOP</span>}
 
+          {/* Phase 3c: Snap-to-grid toggle */}
+          <button
+            onClick={() => setSnapToGrid((v) => !v)}
+            title="Snap to Grid (G)"
+            className={`hidden sm:flex items-center gap-1 px-2 py-1 rounded text-[9px] font-mono transition-all cursor-pointer ${snapToGrid ? "text-[#D4A843]" : "text-[#555] hover:text-[#888]"}`}
+            style={{ background: snapToGrid ? "#2a2418" : "#0e0e0e", border: snapToGrid ? "1px solid #D4A84355" : "1px solid #1e1e1e" }}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+            </svg>
+            <span>SNAP</span>
+          </button>
+
+          {/* Phase 3c: Zoom slider */}
+          <div className="hidden md:flex items-center gap-1" title={`Zoom ${zoom}% (${Math.round(pxPerSec)} px/sec)`}>
+            <span className="text-[7px] text-[#444] font-mono">ZOOM</span>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={zoom}
+              onChange={(e) => setZoom(Number(e.target.value))}
+              className="w-16 accent-[#D4A843] h-[2px] cursor-pointer"
+            />
+            <span className="text-[8px] text-[#444] font-mono w-7 text-right">{zoom}%</span>
+          </div>
+
           <div className="hidden sm:flex items-center gap-1">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" className="flex-shrink-0">
               <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 010 7.07"/>
@@ -2343,9 +2534,24 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
       </div>
 
       {/* ═══════════ CENTER: TRACK AREA (full width timeline) ═══════════ */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden"
+      <div className="flex-1 overflow-y-auto overflow-x-auto"
         onDragOver={(e) => e.preventDefault()} onDrop={handleDrop}
         style={{ scrollbarWidth: "thin", scrollbarColor: "#333 transparent" }}>
+
+        {/* Phase 3c: Bar/beat ruler aligned to the track waveform area
+            (offset by the channel-strip width on the left). */}
+        {tracks.length > 0 && (
+          <div className="flex sticky top-0 z-20" style={{ background: "#0e0e0e" }}>
+            <div className="w-[180px] sm:w-[220px] flex-shrink-0" style={{ background: "#0e0e0e", borderRight: "1px solid #1e1e1e", height: 28 }} />
+            <TrackTimeline
+              bpm={bpm}
+              pxPerSec={pxPerSec}
+              totalSeconds={Math.max(duration, 32)}
+              timeSignature={timeSig}
+              height={28}
+            />
+          </div>
+        )}
 
         {/* Track list */}
         <div className="min-h-0">
@@ -2460,8 +2666,41 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
                     </div>
                   </div>
                 ) : tr.type !== "drum" ? (
-                  <div ref={(el) => { if (el) trackContainersRef.current[tr.id] = el; }}
-                    className="h-[90px]" style={{ opacity: tr.muted ? 0.3 : 1 }} />
+                  (() => {
+                    const trackRegions = regions.filter((r) => r.id.startsWith(`r-${tr.id}-`));
+                    const hasRegions = trackRegions.length > 0;
+                    const hasSolo = tracks.some((t) => t.solo);
+                    const isMuted = hasSolo ? !tr.solo : tr.muted;
+                    return (
+                      <div className="relative h-[90px]" style={{ opacity: tr.muted ? 0.3 : 1 }}>
+                        {/* Wavesurfer container — used for the underlying audio
+                            engine + interaction.  Hidden when the clip editor
+                            is showing regions on top. */}
+                        <div
+                          ref={(el) => { if (el) trackContainersRef.current[tr.id] = el; }}
+                          className="absolute inset-0"
+                          style={{ visibility: hasRegions ? "hidden" : "visible" }}
+                        />
+                        {hasRegions && trackRegions.map((region) => (
+                          <ClipRegion
+                            key={region.id}
+                            region={region}
+                            trackId={tr.id}
+                            trackColor={tr.color}
+                            trackName={tr.name}
+                            pxPerSec={pxPerSec}
+                            snapBeatSec={snapBeatSec}
+                            snap={snapToGrid}
+                            height={90}
+                            isMuted={isMuted}
+                            onUpdate={updateRegion}
+                            onSplit={splitRegion}
+                            onDelete={deleteRegion}
+                          />
+                        ))}
+                      </div>
+                    );
+                  })()
                 ) : (
                   <div className="h-[90px] flex items-center px-3" style={{ opacity: tr.muted ? 0.3 : 1 }}>
                     {/* Mini pattern preview for drum tracks */}

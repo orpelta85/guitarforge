@@ -10,6 +10,15 @@ const STORE_BLOBS = "blobs";       // recorded audio blobs, keyed by `${projectI
 
 export const CURRENT_PROJECT_ID = "current-project";
 
+// Serialized region — peaks and audio buffers are recomputed from the blob on
+// load (they are derived data, not source-of-truth) so we omit them here.
+export interface SerializedRegion {
+  id: string;
+  startTime: number;
+  duration: number;
+  offset: number;
+}
+
 // Serializable subset of StudioTrack — strips Tone refs, audioUrl, and live blobs
 // (blobs are stored separately in the BLOBS store and re-attached on load).
 export interface SerializedTrack {
@@ -26,6 +35,7 @@ export interface SerializedTrack {
   videoTitle?: string;
   videoThumbnail?: string;
   hasBlob: boolean;
+  regions?: SerializedRegion[];
 }
 
 export interface StudioProject {
