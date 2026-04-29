@@ -31,6 +31,7 @@ import {
 } from "@/lib/projectStorage";
 import ClipRegion, { type TrackRegion } from "./studio/ClipRegion";
 import TrackTimeline from "./studio/TrackTimeline";
+import TrackRow from "./studio/TrackRow";
 import { createRegionScheduler, type RegionScheduler } from "@/lib/regionScheduler";
 
 // ── Types ──
@@ -192,6 +193,10 @@ const DRUM_INSTRUMENTS = [
   { name: "Tom High", short: "TMH" },
 ] as const;
 const DRUM_STEPS = 16;
+
+// Stable empty array reference for tracks with no regions — kept module-level
+// so React.memo on TrackRow doesn't bust on a fresh `[]` literal each render.
+const EMPTY_REGION_LIST: TrackRegion[] = [];
 
 const DRUM_PRESETS: { name: string; pattern: boolean[][] }[] = [
   { name: "Basic Rock", pattern: [
@@ -1639,6 +1644,22 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
     setTracks((p) => p.map((t) => t.id === id ? { ...t, name } : t));
   }, []);
 
+  // ── Track solo (extracted from inline handler so memoized rows can use it) ──
+  const toggleSolo = useCallback((id: number) => {
+    setTracks((prev) => prev.map((t) => t.id === id ? { ...t, solo: !t.solo } : t));
+  }, []);
+
+  // ── Stable ref-attachment callbacks for TrackRow ──
+  // These wrap the `xxxRef.current[id] = el` pattern so the ref callback
+  // identity is stable across renders (otherwise React.memo on TrackRow
+  // would be busted by an inline arrow function on every parent render).
+  const attachWaveformContainer = useCallback((id: number, el: HTMLDivElement | null) => {
+    if (el) trackContainersRef.current[id] = el;
+  }, []);
+  const attachYTContainer = useCallback((id: number, el: HTMLDivElement | null) => {
+    if (el) ytContainersRef.current[id] = el;
+  }, []);
+
   // ── Suno ──
   const fetchSunoCredits = useCallback(async () => {
     setSunoCreditsLoading(true);
@@ -2376,6 +2397,24 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
     }
   }, [expandedDrumTrackId, dockPanel]);
 
+  // ── Pre-compute per-row data so the memoized TrackRow only re-renders when
+  // its specific slice of state changes (Step 6: track-list optimization). ──
+  const regionsByTrack = useMemo(() => {
+    const map = new Map<number, TrackRegion[]>();
+    for (const r of regions) {
+      // Region ids are formatted "r-<trackId>-<idx>".
+      const m = /^r-(\d+)-/.exec(r.id);
+      if (!m) continue;
+      const tid = Number(m[1]);
+      const arr = map.get(tid);
+      if (arr) arr.push(r);
+      else map.set(tid, [r]);
+    }
+    return map;
+  }, [regions]);
+  const hasSolo = useMemo(() => tracks.some((t) => t.solo), [tracks]);
+  const dockPanelIsDrums = dockPanel === "drums";
+
   // ═══════════════════ RENDER ═══════════════════
   return (
     <div className="flex flex-col overflow-hidden select-none flex-1 min-h-0 h-full" style={{ background: "#0a0a0a", fontFamily: "'Inter', system-ui, sans-serif" }} dir="ltr">
@@ -2694,183 +2733,32 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
         {/* Track list */}
         <div className="min-h-0">
           {tracks.map((tr) => (
-            <div key={tr.id} className="flex border-b" style={{ borderColor: "#1a1a1a" }}>
-
-              {/* ─── Track Header (channel strip) ─── */}
-              <div className="w-[180px] sm:w-[220px] flex-shrink-0 flex flex-col justify-center px-3 py-2 gap-1.5"
-                style={{ background: "#0e0e0e", borderRight: `2px solid ${tr.color}44` }}>
-
-                {/* Track name + type icon */}
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: tr.color }} />
-                  <span className="text-[9px] text-[#444] flex-shrink-0">
-                    {tr.type === "drum" ? "\uD83E\uDD41" : tr.type === "suno" ? "\uD83C\uDFB5" : tr.type === "recording" ? "\uD83C\uDF99" : tr.type === "youtube" ? "\uD83C\uDFAC" : "\uD83D\uDCC1"}
-                  </span>
-                  {editingTrackName === tr.id ? (
-                    <input autoFocus defaultValue={tr.name}
-                      onBlur={(e) => { renameTrack(tr.id, e.target.value || tr.name); setEditingTrackName(null); }}
-                      onKeyDown={(e) => { if (e.key === "Enter") { renameTrack(tr.id, (e.target as HTMLInputElement).value || tr.name); setEditingTrackName(null); } }}
-                      className="flex-1 bg-[#0a0a0a] border border-[#D4A843] rounded px-1.5 py-0.5 text-[10px] text-[#ccc] outline-none min-w-0" />
-                  ) : (
-                    <span className="flex-1 text-[11px] text-[#ccc] font-medium truncate min-w-0 cursor-pointer hover:text-[#D4A843] transition-colors"
-                      onDoubleClick={() => setEditingTrackName(tr.id)}>
-                      {tr.name}
-                    </span>
-                  )}
-                </div>
-
-                {/* Volume fader */}
-                <div className="flex items-center gap-1">
-                  <span className="text-[7px] text-[#444] w-5 font-mono">VOL</span>
-                  <input type="range" min={0} max={100} value={tr.volume}
-                    onChange={(e) => updateTrackVol(tr.id, Number(e.target.value))}
-                    className="flex-1 h-[2px] cursor-pointer" style={{ accentColor: tr.color }} />
-                  <span className="text-[8px] text-[#555] font-mono w-7 text-right">{tr.volume}%</span>
-                </div>
-
-                {/* Pan slider + S/M buttons + delete */}
-                <div className="flex items-center gap-1">
-                  <span className="text-[7px] text-[#444] w-5 font-mono">PAN</span>
-                  <input
-                    type="range"
-                    min={-100}
-                    max={100}
-                    step={1}
-                    value={Math.round(tr.pan * 100)}
-                    onChange={(e) => updateTrackPan(tr.id, parseInt(e.target.value) / 100)}
-                    className="flex-1 h-[6px] accent-[#D4A843] cursor-pointer"
-                    aria-label={`Pan ${tr.name}`}
-                  />
-
-                  {/* Solo (S) button - amber when active */}
-                  <button onClick={() => {
-                    setTracks(prev => prev.map(t => t.id === tr.id ? { ...t, solo: !t.solo } : t));
-                  }}
-                    className={`text-[8px] font-bold w-5 h-5 rounded cursor-pointer flex items-center justify-center transition-all ${
-                      tr.solo
-                        ? "text-[#111] border-none" : "border border-[#2a2a2a] text-[#555] hover:border-[#D4A843] hover:text-[#D4A843]"
-                    }`}
-                    style={{
-                      background: tr.solo ? "#D4A843" : "transparent"
-                    }}>
-                    S
-                  </button>
-
-                  {/* Mute (M) button - red when active */}
-                  <button onClick={() => toggleMute(tr.id)}
-                    className={`text-[8px] font-bold w-5 h-5 rounded cursor-pointer flex items-center justify-center transition-all ${tr.muted ? "text-white border-none" : "border border-[#2a2a2a] text-[#555] hover:border-[#ef4444] hover:text-[#ef4444]"}`}
-                    style={{ background: tr.muted ? "#ef4444" : "transparent" }}>
-                    M
-                  </button>
-
-                  {/* Drum grid toggle */}
-                  {tr.type === "drum" && (
-                    <button onClick={() => handleDrumGridToggle(tr.id)}
-                      className={`text-[7px] px-1.5 h-5 rounded cursor-pointer transition-all ${expandedDrumTrackId === tr.id && dockPanel === "drums" ? "bg-[#D4A84330] text-[#D4A843] border border-[#D4A84340]" : "border border-[#2a2a2a] text-[#555] hover:border-[#444]"}`}>
-                      GRID
-                    </button>
-                  )}
-
-                  {/* Delete */}
-                  <button onClick={() => deleteTrack(tr.id)}
-                    className="w-5 h-5 rounded flex items-center justify-center text-[#333] hover:text-[#ef4444] hover:bg-[#ef444410] transition-all cursor-pointer">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              {/* ─── Waveform / Pattern area (fills remaining width) ─── */}
-              <div className="flex-1 min-w-0" style={{ background: "#0c0c0c" }}>
-                {tr.type === "youtube" ? (
-                  <div className="h-[90px] flex items-center gap-3 px-3" style={{ opacity: tr.muted ? 0.3 : 1 }}>
-                    {/* Thumbnail */}
-                    {tr.videoThumbnail && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={tr.videoThumbnail} alt="" className="h-[72px] w-[128px] object-cover rounded flex-shrink-0" style={{ border: "1px solid #222" }} />
-                    )}
-                    {/* Hidden-ish iframe container (must be in DOM for YT API) */}
-                    <div
-                      ref={(el) => { if (el) ytContainersRef.current[tr.id] = el; }}
-                      className="flex-shrink-0"
-                      style={{ width: 140, height: 80, overflow: "hidden", borderRadius: 4, border: "1px solid #222" }}
-                    />
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[11px] text-[#ccc] font-medium truncate">{tr.videoTitle || tr.name}</div>
-                      <div className="text-[9px] text-[#666] truncate">youtube.com/watch?v={tr.videoId}</div>
-                      <div className="text-[8px] mt-1" style={{ color: "#D4A843" }}>Plays live only - not included in WAV export</div>
-                    </div>
-                  </div>
-                ) : tr.type !== "drum" ? (
-                  (() => {
-                    const trackRegions = regions.filter((r) => r.id.startsWith(`r-${tr.id}-`));
-                    const hasRegions = trackRegions.length > 0;
-                    const hasSolo = tracks.some((t) => t.solo);
-                    const isMuted = hasSolo ? !tr.solo : tr.muted;
-                    return (
-                      <div className="relative h-[90px]" style={{ opacity: tr.muted ? 0.3 : 1 }}>
-                        {/* Wavesurfer container — used for the underlying audio
-                            engine + interaction.  Hidden when the clip editor
-                            is showing regions on top. */}
-                        <div
-                          ref={(el) => { if (el) trackContainersRef.current[tr.id] = el; }}
-                          className="absolute inset-0"
-                          style={{ visibility: hasRegions ? "hidden" : "visible" }}
-                        />
-                        {hasRegions && trackRegions.map((region) => (
-                          <ClipRegion
-                            key={region.id}
-                            region={region}
-                            trackId={tr.id}
-                            trackColor={tr.color}
-                            trackName={tr.name}
-                            pxPerSec={pxPerSec}
-                            snapBeatSec={snapBeatSec}
-                            snap={snapToGrid}
-                            height={90}
-                            isMuted={isMuted}
-                            onUpdate={updateRegion}
-                            onSplit={splitRegion}
-                            onDelete={deleteRegion}
-                          />
-                        ))}
-                      </div>
-                    );
-                  })()
-                ) : (
-                  <div className="h-[90px] flex items-center px-3" style={{ opacity: tr.muted ? 0.3 : 1 }}>
-                    {/* Mini pattern preview for drum tracks */}
-                    {tr.drumPattern && (
-                      <div className="flex gap-[1px]">
-                        {Array.from({ length: DRUM_STEPS }, (_, stepIdx) => {
-                          const activeCount = tr.drumPattern!.reduce((cnt, row) => cnt + (row[stepIdx] ? 1 : 0), 0);
-                          return (
-                            <div key={stepIdx} className="flex flex-col gap-[1px]"
-                              style={{ marginRight: stepIdx % 4 === 3 && stepIdx < DRUM_STEPS - 1 ? "4px" : "0" }}>
-                              {Array.from({ length: 4 }, (_, rowGroup) => (
-                                <div key={rowGroup}
-                                  className="w-[6px] h-[6px] rounded-[1px]"
-                                  style={{
-                                    background: activeCount > rowGroup
-                                      ? drumStep === stepIdx ? "#D4A843" : `${tr.color}99`
-                                      : drumStep === stepIdx ? "#222" : "#181818",
-                                  }} />
-                              ))}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                    <button onClick={() => handleDrumGridToggle(tr.id)}
-                      className="ml-auto text-[9px] text-[#555] hover:text-[#D4A843] cursor-pointer transition-colors">
-                      {expandedDrumTrackId === tr.id && dockPanel === "drums" ? "Close Grid" : "Open Grid"}
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
+            <TrackRow
+              key={tr.id}
+              track={tr}
+              trackRegions={regionsByTrack.get(tr.id) ?? EMPTY_REGION_LIST}
+              hasSolo={hasSolo}
+              isEditingName={editingTrackName === tr.id}
+              isExpandedDrum={expandedDrumTrackId === tr.id}
+              dockPanelIsDrums={dockPanelIsDrums}
+              drumStep={drumStep}
+              pxPerSec={pxPerSec}
+              snapBeatSec={snapBeatSec}
+              snapToGrid={snapToGrid}
+              updateTrackVol={updateTrackVol}
+              updateTrackPan={updateTrackPan}
+              toggleMute={toggleMute}
+              toggleSolo={toggleSolo}
+              deleteTrack={deleteTrack}
+              renameTrack={renameTrack}
+              handleDrumGridToggle={handleDrumGridToggle}
+              setEditingTrackName={setEditingTrackName}
+              updateRegion={updateRegion}
+              splitRegion={splitRegion}
+              deleteRegion={deleteRegion}
+              attachYTContainer={attachYTContainer}
+              attachWaveformContainer={attachWaveformContainer}
+            />
           ))}
 
           {/* ─── EMPTY STATE / ADD TRACK ─── */}
