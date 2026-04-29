@@ -11,6 +11,9 @@ import {
   type Progression,
 } from "@/lib/constants";
 import { recordUsage, saveToLibrary, type LibraryTrack } from "@/lib/suno";
+import { createJamRecorder, type JamRecorder } from "@/lib/jamRecorder";
+import { audioBufferToWav } from "@/lib/wavEncoder";
+import { audioBufferToMp3 } from "@/lib/mp3Encoder";
 
 // ── Music Theory Data ──
 
@@ -776,6 +779,21 @@ export default function JamModePage() {
   const [aiPlaying, setAiPlaying] = useState(false);
   const aiAudioRef = useRef<HTMLAudioElement | null>(null);
 
+  // ── Full-jam recorder state ──
+  // Captures the live mix of every Tone.js source (metronome, drums, bass,
+  // guitar AI) plus the Suno backing track (when present) into a single audio
+  // file.  JamLooper runs on its own AudioContext so it is NOT included — the
+  // user is informed in the UI.
+  const [isRecordingJam, setIsRecordingJam] = useState(false);
+  const [recordElapsed, setRecordElapsed] = useState(0); // seconds since record started
+  const [showJamSaveDialog, setShowJamSaveDialog] = useState(false);
+  const [jamSaveResult, setJamSaveResult] = useState<{ buffer: AudioBuffer; durationSec: number } | null>(null);
+  const [jamSaveBusy, setJamSaveBusy] = useState<"" | "wav" | "mp3">("");
+  const [jamRecordError, setJamRecordError] = useState<string>("");
+  const recorderRef = useRef<JamRecorder | null>(null);
+  const recordTimerRef = useRef<number | null>(null);
+  const recordStartedAtRef = useRef<number>(0);
+
   // Tone.js refs
   const toneRef = useRef<typeof import("tone") | null>(null);
   const metronomeSynthRef = useRef<InstanceType<typeof import("tone").MembraneSynth> | null>(null);
@@ -1240,6 +1258,110 @@ export default function JamModePage() {
     chordIdxRef.current = 0;
   }, []);
 
+  // ── Jam recorder controls ──
+
+  const handleStartJamRecord = useCallback(async () => {
+    if (isRecordingJam) return;
+    setJamRecordError("");
+    try {
+      // Make sure Tone is initialised (so a context exists to record from).
+      await initTone();
+      const Tone = toneRef.current;
+      if (!Tone) throw new Error("Tone.js not ready");
+
+      const rec = createJamRecorder(Tone);
+      // Tap the Suno backing track if it's currently mounted.
+      if (aiAudioRef.current) {
+        rec.attachAudioElement(aiAudioRef.current);
+      }
+      await rec.start();
+      recorderRef.current = rec;
+      recordStartedAtRef.current = performance.now();
+      setRecordElapsed(0);
+      setIsRecordingJam(true);
+
+      // Tick elapsed seconds for the UI timer.
+      recordTimerRef.current = window.setInterval(() => {
+        setRecordElapsed(Math.floor((performance.now() - recordStartedAtRef.current) / 1000));
+      }, 250);
+    } catch (e) {
+      setJamRecordError(e instanceof Error ? e.message : "Recording failed to start");
+      recorderRef.current?.dispose();
+      recorderRef.current = null;
+    }
+  }, [isRecordingJam, initTone]);
+
+  const handleStopJamRecord = useCallback(async () => {
+    const rec = recorderRef.current;
+    if (!rec || !isRecordingJam) return;
+
+    if (recordTimerRef.current !== null) {
+      window.clearInterval(recordTimerRef.current);
+      recordTimerRef.current = null;
+    }
+    setIsRecordingJam(false);
+
+    try {
+      const result = await rec.stop();
+      setJamSaveResult({ buffer: result.audioBuffer, durationSec: result.durationSec });
+      setShowJamSaveDialog(true);
+    } catch (e) {
+      setJamRecordError(e instanceof Error ? e.message : "Failed to finalise recording");
+    } finally {
+      rec.dispose();
+      recorderRef.current = null;
+    }
+  }, [isRecordingJam]);
+
+  const downloadBlob = useCallback((blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }, []);
+
+  const buildJamFilename = useCallback((ext: "wav" | "mp3") => {
+    const d = new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const stamp = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}-${pad(d.getMinutes())}`;
+    return `Jam Session - ${stamp}.${ext}`;
+  }, []);
+
+  const handleSaveJamWav = useCallback(async () => {
+    if (!jamSaveResult || jamSaveBusy) return;
+    setJamSaveBusy("wav");
+    try {
+      const wav = audioBufferToWav(jamSaveResult.buffer);
+      downloadBlob(new Blob([wav], { type: "audio/wav" }), buildJamFilename("wav"));
+    } catch (e) {
+      setJamRecordError(e instanceof Error ? e.message : "WAV export failed");
+    } finally {
+      setJamSaveBusy("");
+    }
+  }, [jamSaveResult, jamSaveBusy, buildJamFilename, downloadBlob]);
+
+  const handleSaveJamMp3 = useCallback(async () => {
+    if (!jamSaveResult || jamSaveBusy) return;
+    setJamSaveBusy("mp3");
+    try {
+      const mp3 = await audioBufferToMp3(jamSaveResult.buffer, { kbps: 192 });
+      downloadBlob(new Blob([mp3], { type: "audio/mpeg" }), buildJamFilename("mp3"));
+    } catch (e) {
+      setJamRecordError(e instanceof Error ? e.message : "MP3 export failed");
+    } finally {
+      setJamSaveBusy("");
+    }
+  }, [jamSaveResult, jamSaveBusy, buildJamFilename, downloadBlob]);
+
+  const closeJamSaveDialog = useCallback(() => {
+    setShowJamSaveDialog(false);
+    setJamSaveResult(null);
+  }, []);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -1259,6 +1381,13 @@ export default function JamModePage() {
       guitarFilterRef.current?.dispose();
       guitarDistortionRef.current?.dispose();
       toneRef.current = null;
+      // Recorder cleanup
+      if (recordTimerRef.current !== null) {
+        window.clearInterval(recordTimerRef.current);
+        recordTimerRef.current = null;
+      }
+      recorderRef.current?.dispose();
+      recorderRef.current = null;
     };
   }, []);
 
@@ -1896,9 +2025,119 @@ export default function JamModePage() {
             )}
           </button>
 
-          <div className="w-12 h-12" />
+          {/* Record Full Jam button */}
+          <button
+            onClick={isRecordingJam ? handleStopJamRecord : handleStartJamRecord}
+            className="relative w-12 h-12 rounded-full flex items-center justify-center transition-all duration-150 active:scale-95 hover:brightness-110"
+            style={{
+              background: isRecordingJam
+                ? "rgba(239,68,68,0.85)"
+                : "rgba(239,68,68,0.12)",
+              border: `1px solid ${isRecordingJam ? "rgba(239,68,68,0.95)" : "rgba(239,68,68,0.45)"}`,
+              color: isRecordingJam ? "#fff" : "#ef4444",
+              boxShadow: isRecordingJam ? "0 0 18px rgba(239,68,68,0.55)" : undefined,
+              animation: isRecordingJam ? "pulse 1.6s ease-in-out infinite" : undefined,
+            }}
+            title={isRecordingJam ? `Recording: ${recordElapsed}s — click to stop & save` : "Record Full Jam"}
+            data-testid="jam-record-btn"
+          >
+            {isRecordingJam ? (
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                <rect x="3" y="3" width="10" height="10" rx="1" />
+              </svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <circle cx="8" cy="8" r="5" />
+              </svg>
+            )}
+            {isRecordingJam && (
+              <span
+                className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-mono text-[#ef4444] whitespace-nowrap"
+                aria-live="polite"
+              >
+                ● {Math.floor(recordElapsed / 60)}:{String(recordElapsed % 60).padStart(2, "0")}
+              </span>
+            )}
+          </button>
         </div>
+        {jamRecordError && (
+          <div className="px-4 pb-3 -mt-1 text-[11px] text-[#ef4444] text-center font-label">
+            {jamRecordError}
+          </div>
+        )}
       </div>
+
+      {/* ── Save Jam Recording dialog ── */}
+      {showJamSaveDialog && jamSaveResult && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-4"
+          style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(6px)" }}
+          onClick={closeJamSaveDialog}
+        >
+          <div
+            className="rounded-xl p-5 sm:p-6 w-full max-w-md"
+            style={{
+              background: "linear-gradient(180deg, #1a1a1e 0%, #141418 100%)",
+              border: "1px solid rgba(212,168,67,0.25)",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.55)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <h3 className="text-base font-bold text-[#e8e4dc] font-heading">Save Jam Recording</h3>
+                <p className="text-[11px] text-[#9a9590] mt-1 font-label">
+                  Duration: {jamSaveResult.durationSec.toFixed(1)}s — choose a format
+                </p>
+              </div>
+              <button
+                onClick={closeJamSaveDialog}
+                className="text-[#6b6560] hover:text-[#e8e4dc] transition-colors text-lg leading-none"
+                title="Close"
+              >
+                ×
+              </button>
+            </div>
+            <div className="text-[10px] text-[#6b6560] font-label mb-4 leading-relaxed">
+              Captures backing tracks (drums, bass, guitar AI, metronome, Suno).
+              Looper recordings are saved separately in the Looper panel.
+            </div>
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              <button
+                onClick={handleSaveJamWav}
+                disabled={!!jamSaveBusy}
+                className="px-3 py-2.5 rounded-md text-xs font-label transition-colors disabled:opacity-50"
+                style={{
+                  background: "rgba(212,168,67,0.18)",
+                  border: "1px solid rgba(212,168,67,0.45)",
+                  color: "#D4A843",
+                }}
+              >
+                {jamSaveBusy === "wav" ? "Encoding…" : "Download WAV"}
+              </button>
+              <button
+                onClick={handleSaveJamMp3}
+                disabled={!!jamSaveBusy}
+                className="px-3 py-2.5 rounded-md text-xs font-label transition-colors disabled:opacity-50"
+                style={{
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  color: "#e8e4dc",
+                }}
+              >
+                {jamSaveBusy === "mp3" ? "Encoding…" : "Download MP3"}
+              </button>
+            </div>
+            <button
+              onClick={closeJamSaveDialog}
+              className="w-full px-3 py-2 rounded-md text-[11px] font-label text-[#9a9590] hover:text-[#e8e4dc] transition-colors"
+              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Scale Guide ── */}
       <div className="panel-secondary mt-4 sm:mt-6 rounded-lg p-3 sm:p-4">
