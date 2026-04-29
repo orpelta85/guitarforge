@@ -33,25 +33,11 @@ import ClipRegion, { type TrackRegion } from "./studio/ClipRegion";
 import TrackTimeline from "./studio/TrackTimeline";
 import TrackRow from "./studio/TrackRow";
 import { createRegionScheduler, type RegionScheduler } from "@/lib/regionScheduler";
+import { useStudioStore, type StudioTrack } from "@/stores/studioStore";
 
 // ── Types ──
-interface StudioTrack {
-  id: number;
-  name: string;
-  color: string;
-  audioBlob: Blob | null;
-  audioUrl: string | null;
-  volume: number;
-  muted: boolean;
-  solo: boolean;
-  /** Pan in [-1, +1].  Driven by the active Studio preset's role defaults. */
-  pan: number;
-  type: "recording" | "import" | "suno" | "drum" | "youtube";
-  drumPattern?: boolean[][];
-  videoId?: string;
-  videoTitle?: string;
-  videoThumbnail?: string;
-}
+// StudioTrack interface lives in @/stores/studioStore.ts (Phase 7) — re-exported
+// here so the rest of this module keeps the same name without churn.
 
 type ToneModule = typeof import("tone");
 
@@ -424,19 +410,49 @@ interface StudioPageProps {
 }
 
 export default function StudioPage({ channelScale, channelMode, channelStyle, pendingSuno, setPendingSuno }: StudioPageProps = {}) {
-  // ── State ──
-  const [tracks, setTracks] = useState<StudioTrack[]>([]);
+  // ── State (Phase 7: persistent business state lives in Zustand) ──
+  // The store mirrors React's useState API so the rest of the component (refs,
+  // closures, effects, callbacks) keeps working with identical signatures.
+  const tracks = useStudioStore((s) => s.tracks);
+  const setTracks = useStudioStore((s) => s.setTracks);
+  const playing = useStudioStore((s) => s.playing);
+  const setPlaying = useStudioStore((s) => s.setPlaying);
+  const looping = useStudioStore((s) => s.looping);
+  const setLooping = useStudioStore((s) => s.setLooping);
+  const masterVol = useStudioStore((s) => s.masterVol);
+  const setMasterVol = useStudioStore((s) => s.setMasterVol);
+  const bpm = useStudioStore((s) => s.bpm);
+  const setBpm = useStudioStore((s) => s.setBpm);
+  const metronomeOn = useStudioStore((s) => s.metronomeOn);
+  const setMetronomeOn = useStudioStore((s) => s.setMetronomeOn);
+  const metronomeVolume = useStudioStore((s) => s.metronomeVolume);
+  const setMetronomeVolume = useStudioStore((s) => s.setMetronomeVolume);
+  const currentTime = useStudioStore((s) => s.currentTime);
+  const setCurrentTime = useStudioStore((s) => s.setCurrentTime);
+  const duration = useStudioStore((s) => s.duration);
+  const setDuration = useStudioStore((s) => s.setDuration);
+  const studioPresetId = useStudioStore((s) => s.studioPresetId);
+  const setStudioPresetId = useStudioStore((s) => s.setStudioPresetId);
+
+  // Hydrate metronomeVolume + studioPresetId from browser storage once on mount
+  // (Zustand defaults are SSR-safe; localStorage is read client-side only).
+  const storeHydratedRef = useRef(false);
+  useEffect(() => {
+    if (storeHydratedRef.current) return;
+    storeHydratedRef.current = true;
+    try {
+      setMetronomeVolume(loadMetronomeVolume());
+      const raw = localStorage.getItem("gf.studio.preset");
+      if (raw && raw in STUDIO_PRESETS) {
+        setStudioPresetId(raw as StudioPresetId);
+      }
+    } catch { /* ok */ }
+  }, [setMetronomeVolume, setStudioPresetId]);
+
+  // ── Transient UI / recording state (stays as local useState) ──
   const [isRec, setIsRec] = useState(false);
   const [recTime, setRecTime] = useState(0);
   const [recLevel, setRecLevel] = useState(0);
-  const [playing, setPlaying] = useState(false);
-  const [looping, setLooping] = useState(false);
-  const [masterVol, setMasterVol] = useState(80);
-  const [bpm, setBpm] = useState(120);
-  const [metronomeOn, setMetronomeOn] = useState(false);
-  const [metronomeVolume, setMetronomeVolume] = useState<number>(() =>
-    typeof window !== "undefined" ? loadMetronomeVolume() : DEFAULT_METRONOME_VOLUME
-  );
   const metronomeVolumeInitRef = useRef(true);
   useEffect(() => {
     if (metronomeRef.current) {
@@ -445,17 +461,8 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
     if (metronomeVolumeInitRef.current) { metronomeVolumeInitRef.current = false; return; }
     saveMetronomeVolume(metronomeVolume);
   }, [metronomeVolume]);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
   const [inputDevices, setInputDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedInputDevice, setSelectedInputDevice] = useState("");
-  // ── Studio preset (Clean/Rock/Metal/Ambient/Lofi) — persisted in localStorage ──
-  const [studioPresetId, setStudioPresetId] = useState<StudioPresetId>(() => {
-    if (typeof window === "undefined") return "rock";
-    const raw = localStorage.getItem("gf.studio.preset");
-    if (raw && raw in STUDIO_PRESETS) return raw as StudioPresetId;
-    return "rock";
-  });
   const studioPreset = STUDIO_PRESETS[studioPresetId];
   const studioPresetRef = useRef<StudioPreset>(studioPreset);
   useEffect(() => { studioPresetRef.current = studioPreset; }, [studioPreset]);
@@ -481,12 +488,14 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
   const exportMenuRef = useRef<HTMLDivElement | null>(null);
   const exportButtonRef = useRef<HTMLButtonElement | null>(null);
 
-  // ── Project persistence (Phase 3a) ──
+  // ── Project persistence (Phase 3a, Phase 7 Zustand) ──
   // The Studio session auto-saves to IndexedDB so a refresh restores tracks,
   // mixer state, drum patterns, and recorded blobs.  Single "current-project"
   // slot for now; named project list is Phase 4.
-  const [projectName, setProjectName] = useState<string>("Untitled");
-  const [projectCreatedAt, setProjectCreatedAt] = useState<number>(() => Date.now());
+  const projectName = useStudioStore((s) => s.projectName);
+  const setProjectName = useStudioStore((s) => s.setProjectName);
+  const projectCreatedAt = useStudioStore((s) => s.projectCreatedAt);
+  const setProjectCreatedAt = useStudioStore((s) => s.setProjectCreatedAt);
   const [editingProjectName, setEditingProjectName] = useState(false);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
@@ -514,11 +523,12 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
   const [sunoDailyUsage, setSunoDailyUsage] = useState({ date: "", used: 0, generations: 0 });
   const sunoAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  // ── Clip-region editing state (Phase 3c) ──
+  // ── Clip-region editing state (Phase 3c, Phase 7 Zustand) ──
   // Each track has zero or more regions; a freshly-recorded track gets one
   // implicit region covering the entire buffer so the clip editor immediately
   // surfaces it to the user.  Drum / YouTube tracks have no regions.
-  const [regions, setRegions] = useState<TrackRegion[]>([]);
+  const regions = useStudioStore((s) => s.regions);
+  const setRegions = useStudioStore((s) => s.setRegions);
   const [zoom, setZoom] = useState<number>(40); // 0-100, maps to 20-320 px/sec
   const [snapToGrid, setSnapToGrid] = useState<boolean>(true);
   const [timeSigIdx, setTimeSigIdx] = useState<number>(0);
