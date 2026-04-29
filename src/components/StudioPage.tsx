@@ -31,6 +31,7 @@ import {
 } from "@/lib/projectStorage";
 import ClipRegion, { type TrackRegion } from "./studio/ClipRegion";
 import TrackTimeline from "./studio/TrackTimeline";
+import { createRegionScheduler, type RegionScheduler } from "@/lib/regionScheduler";
 
 // ── Types ──
 interface StudioTrack {
@@ -526,6 +527,12 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
   const masterGainRef = useRef<InstanceType<ToneModule["Gain"]> | null>(null);
   const masterLimiterRef = useRef<InstanceType<ToneModule["Limiter"]> | null>(null);
   const toneNodesRef = useRef<Record<number, SimpleToneNodes>>({});
+  // Phase 3c — per-track region scheduler.  Created lazily once the track's
+  // buffer is loaded; cleaned up when the track is deleted.  Tracks without
+  // any user-edited regions never get a scheduler — they fall back to the
+  // legacy single-`Tone.Player.start()` playback path so existing behaviour
+  // for freshly-recorded / untouched clips is preserved.
+  const regionSchedulersRef = useRef<Record<number, RegionScheduler>>({});
   const wsRef = useRef<Record<number, WaveSurferInstance>>({});
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -850,6 +857,55 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
   // Snap step in seconds (1/16th note grid).
   const snapBeatSec = useMemo(() => 60 / bpm / 4, [bpm]);
   const pxPerSec = useMemo(() => 20 + (zoom / 100) * 300, [zoom]);
+
+  // Phase 3c — re-schedule region sources whenever the regions array changes
+  // *while* the transport is already playing.  Without this, the user could
+  // trim or split a clip mid-playback and the audio would keep playing the
+  // pre-edit schedule until the next play/stop.  We deliberately track only
+  // `regions` (not `playing`) and read `playing` from the closure: when the
+  // user hits Play, `playAll` already does the initial schedule, so we don't
+  // want this effect to also fire for that transition (which would cause a
+  // wasteful double-schedule).
+  const playingRef = useRef(playing);
+  useEffect(() => { playingRef.current = playing; }, [playing]);
+  const initialRegionsMountRef = useRef(true);
+  useEffect(() => {
+    // Skip the very first run (initial mount + any region restore) so the
+    // restore effect doesn't trigger a phantom schedule before play starts.
+    if (initialRegionsMountRef.current) {
+      initialRegionsMountRef.current = false;
+      return;
+    }
+    if (!playingRef.current) return;
+    const Tone = toneRef.current;
+    if (!Tone) return;
+    const transportOffset = playStartRef.current
+      ? playStartRef.current.offset +
+        (performance.now() - playStartRef.current.wallTime) / 1000
+      : 0;
+    Object.entries(toneNodesRef.current).forEach(([idStr, nodes]) => {
+      if (!nodes.player.loaded) return;
+      const trackId = Number(idStr);
+      const trackRegions = regions.filter((r) => r.id.startsWith(`r-${trackId}-`));
+      const hasUserEdits =
+        trackRegions.length > 1 ||
+        (trackRegions.length === 1 &&
+          (trackRegions[0].startTime > 0.001 ||
+            trackRegions[0].offset > 0.001 ||
+            (trackRegions[0].bufferDuration > 0 &&
+              trackRegions[0].duration < trackRegions[0].bufferDuration - 0.005)));
+      if (!hasUserEdits) return;
+      let scheduler = regionSchedulersRef.current[trackId];
+      if (!scheduler) {
+        scheduler = createRegionScheduler(Tone, nodes.player.buffer, nodes.eq);
+        regionSchedulersRef.current[trackId] = scheduler;
+      }
+      // Stop the legacy player so it doesn't fight the scheduler if this
+      // track was previously playing through the legacy path.
+      try { nodes.player.stop(); } catch { /* ok */ }
+      scheduler.scheduleRegions(trackRegions, transportOffset);
+    });
+  }, [regions]);
 
   // ── Add track helper ──
   const addTrack = useCallback(async (name: string, url: string, type: StudioTrack["type"], blob?: Blob) => {
@@ -1282,8 +1338,36 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
     });
 
     const startOffset = currentTime;
-    Object.entries(toneNodesRef.current).forEach(([, nodes]) => {
-      if (nodes.player.loaded) {
+    // Phase 3c — region-aware playback.  For each track with audio:
+    //   * if the user has carved regions (trim/split/move), drive playback
+    //     through the per-track RegionScheduler so trims actually skip audio
+    //     and moves shift the start time;
+    //   * otherwise fall back to the legacy single-`Player.start()` path so
+    //     freshly-recorded / untouched tracks behave identically to before.
+    Object.entries(toneNodesRef.current).forEach(([idStr, nodes]) => {
+      if (!nodes.player.loaded) return;
+      const trackId = Number(idStr);
+      const trackRegions = regions.filter((r) => r.id.startsWith(`r-${trackId}-`));
+      // A single full-buffer region is the implicit default created by
+      // `ensureRegionForTrack` for a brand-new track — playing that through
+      // the scheduler is equivalent to the legacy path, but using the legacy
+      // path avoids an extra ToneBufferSource alloc for the common case.
+      const hasUserEdits =
+        trackRegions.length > 1 ||
+        (trackRegions.length === 1 &&
+          (trackRegions[0].startTime > 0.001 ||
+            trackRegions[0].offset > 0.001 ||
+            (trackRegions[0].bufferDuration > 0 &&
+              trackRegions[0].duration < trackRegions[0].bufferDuration - 0.005)));
+
+      if (hasUserEdits) {
+        let scheduler = regionSchedulersRef.current[trackId];
+        if (!scheduler) {
+          scheduler = createRegionScheduler(Tone, nodes.player.buffer, nodes.eq);
+          regionSchedulersRef.current[trackId] = scheduler;
+        }
+        scheduler.scheduleRegions(trackRegions, startOffset);
+      } else {
         try { nodes.player.start(Tone.now(), startOffset); } catch { /* already started */ }
       }
     });
@@ -1328,8 +1412,24 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
 
       if (ct >= duration && duration > 0) {
         if (looping) {
-          Object.values(toneNodesRef.current).forEach((nodes) => {
-            try { nodes.player.stop(); nodes.player.start(undefined, 0); } catch { /* ok */ }
+          // Restart audio at offset 0.  Tracks with regions go through the
+          // scheduler so trims/splits stay accurate after a loop wrap.
+          Object.entries(toneNodesRef.current).forEach(([idStr, nodes]) => {
+            const trackId = Number(idStr);
+            const sched = regionSchedulersRef.current[trackId];
+            const trackRegions = regions.filter((r) => r.id.startsWith(`r-${trackId}-`));
+            const hasUserEdits =
+              trackRegions.length > 1 ||
+              (trackRegions.length === 1 &&
+                (trackRegions[0].startTime > 0.001 ||
+                  trackRegions[0].offset > 0.001 ||
+                  (trackRegions[0].bufferDuration > 0 &&
+                    trackRegions[0].duration < trackRegions[0].bufferDuration - 0.005)));
+            if (hasUserEdits && sched) {
+              sched.scheduleRegions(trackRegions, 0);
+            } else {
+              try { nodes.player.stop(); nodes.player.start(undefined, 0); } catch { /* ok */ }
+            }
           });
           Object.values(wsRef.current).forEach((ws) => {
             try { ws.setTime(0); } catch { /* skip */ }
@@ -1347,6 +1447,9 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
           Object.values(toneNodesRef.current).forEach((nodes) => {
             try { nodes.player.stop(); } catch { /* ok */ }
           });
+          Object.values(regionSchedulersRef.current).forEach((s) => {
+            try { s.cancelAll(); } catch { /* ok */ }
+          });
           return;
         }
       }
@@ -1358,11 +1461,15 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
       animRef.current = requestAnimationFrame(tickFn);
     };
     animRef.current = requestAnimationFrame(tickFn);
-  }, [ensureTone, setupMetronome, tracks, currentTime, metronomeOn, bpm, duration, looping, startDrumPlayback, stopDrumPlayback]);
+  }, [ensureTone, setupMetronome, tracks, currentTime, metronomeOn, bpm, duration, looping, startDrumPlayback, stopDrumPlayback, regions]);
 
   const stopAll = useCallback(() => {
     Object.values(toneNodesRef.current).forEach((nodes) => {
       try { nodes.player.stop(); } catch { /* ok */ }
+    });
+    // Phase 3c — also kill any in-flight region sources.
+    Object.values(regionSchedulersRef.current).forEach((s) => {
+      try { s.cancelAll(); } catch { /* ok */ }
     });
     Object.values(ytPlayersRef.current).forEach((yp) => {
       try { yp.pauseVideo(); } catch { /* ok */ }
@@ -1391,12 +1498,35 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
       try { yp.seekTo(0, true); if (!playing) yp.pauseVideo(); } catch { /* ok */ }
     });
     if (playing) {
-      Object.values(toneNodesRef.current).forEach((nodes) => {
-        try { nodes.player.stop(); nodes.player.start(undefined, 0); } catch { /* ok */ }
+      // Phase 3c — re-arm audio from the top.  Tracks with user-edited
+      // regions go through the scheduler so trims stay honoured; everything
+      // else uses the legacy single-`Player.start()` path.
+      const Tone = toneRef.current;
+      Object.entries(toneNodesRef.current).forEach(([idStr, nodes]) => {
+        const trackId = Number(idStr);
+        const trackRegions = regions.filter((r) => r.id.startsWith(`r-${trackId}-`));
+        const hasUserEdits =
+          trackRegions.length > 1 ||
+          (trackRegions.length === 1 &&
+            (trackRegions[0].startTime > 0.001 ||
+              trackRegions[0].offset > 0.001 ||
+              (trackRegions[0].bufferDuration > 0 &&
+                trackRegions[0].duration < trackRegions[0].bufferDuration - 0.005)));
+        if (hasUserEdits && Tone && nodes.player.loaded) {
+          let scheduler = regionSchedulersRef.current[trackId];
+          if (!scheduler) {
+            scheduler = createRegionScheduler(Tone, nodes.player.buffer, nodes.eq);
+            regionSchedulersRef.current[trackId] = scheduler;
+          }
+          try { nodes.player.stop(); } catch { /* ok */ }
+          scheduler.scheduleRegions(trackRegions, 0);
+        } else {
+          try { nodes.player.stop(); nodes.player.start(undefined, 0); } catch { /* ok */ }
+        }
       });
       playStartRef.current = { wallTime: performance.now(), offset: 0 };
     }
-  }, [playing]);
+  }, [playing, regions]);
 
   // ── Track controls ──
   // Volume uses a logarithmic slider curve (sliderToGain, AUDIO_SPEC §7.1)
@@ -1465,6 +1595,11 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
       try { nodes.merger.dispose(); } catch { /* ok */ }
       try { nodes.gain.dispose(); } catch { /* ok */ }
       delete toneNodesRef.current[id];
+    }
+    const sched = regionSchedulersRef.current[id];
+    if (sched) {
+      try { sched.dispose(); } catch { /* ok */ }
+      delete regionSchedulersRef.current[id];
     }
     delete trackContainersRef.current[id];
     const yp = ytPlayersRef.current[id];
@@ -1983,6 +2118,9 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
         try { nodes.panRightGain.dispose(); } catch { /* ok */ }
         try { nodes.merger.dispose(); } catch { /* ok */ }
         try { nodes.gain.dispose(); } catch { /* ok */ }
+      });
+      Object.values(regionSchedulersRef.current).forEach((s) => {
+        try { s.dispose(); } catch { /* ok */ }
       });
       if (metronomeRef.current) {
         try { metronomeRef.current.loop.dispose(); } catch { /* ok */ }
