@@ -79,9 +79,10 @@ export interface StudioState {
 /**
  * Helper: turn a React-style updater (`val | (prev => val)`) into a flat value
  * given the current value.  Pure helper, kept inline so the store has no
- * external utility dependency.
+ * external utility dependency.  Exported so sibling stores (jamStore, etc.) can
+ * reuse the same React-useState-compatible setter pattern.
  */
-function applyUpdater<T>(updater: T | ((prev: T) => T), prev: T): T {
+export function applyUpdater<T>(updater: T | ((prev: T) => T), prev: T): T {
   return typeof updater === "function"
     ? (updater as (prev: T) => T)(prev)
     : updater;

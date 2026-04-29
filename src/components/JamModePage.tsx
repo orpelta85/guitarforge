@@ -14,6 +14,11 @@ import { recordUsage, saveToLibrary, type LibraryTrack } from "@/lib/suno";
 import { createJamRecorder, type JamRecorder } from "@/lib/jamRecorder";
 import { audioBufferToWav } from "@/lib/wavEncoder";
 import { audioBufferToMp3 } from "@/lib/mp3Encoder";
+import {
+  useJamStore,
+  DEFAULT_JAM_SETTINGS,
+  type JamSettings,
+} from "@/stores/jamStore";
 
 // ── Music Theory Data ──
 
@@ -666,51 +671,10 @@ function getBluesNotes(key: string): { name: string; notes: string[] } {
 
 // ── Settings Persistence ──
 
-interface JamSettings {
-  key: string;
-  style: JamStyleKey;
-  progressionIndex: number;
-  bpm: number;
-  barsPerChord: number;
-  loop: boolean;
-  randomMode: boolean;
-  metronomeVol: number;
-  bassVol: number;
-  drumVol: number;
-  guitarVol: number;
-  aiTrackVol: number;
-  bassEnabled: boolean;
-  drumEnabled: boolean;
-  guitarEnabled: boolean;
-  aiTrackEnabled: boolean;
-  grooveStyle: GrooveStyleName;
-  scaleType: "natural" | "pentatonic" | "blues";
-  // Legacy fields kept for backwards compatibility with localStorage
-  drumStyle?: DrumStyleName;
-  bassStyle?: BassStyleName;
-  genre?: string;
-}
-
-const DEFAULT_SETTINGS: JamSettings = {
-  key: "Am",
-  style: "blues",
-  progressionIndex: 0,
-  bpm: 100,
-  barsPerChord: 2,
-  loop: true,
-  randomMode: false,
-  metronomeVol: 0.9,
-  bassVol: 0.4,
-  drumVol: 0.3,
-  guitarVol: 0.5,
-  aiTrackVol: 0.6,
-  bassEnabled: false,
-  drumEnabled: false,
-  guitarEnabled: false,
-  aiTrackEnabled: false,
-  grooveStyle: "blues",
-  scaleType: "pentatonic",
-};
+// JamSettings + DEFAULT_SETTINGS now live in @/stores/jamStore.ts (Phase 7
+// Part 4).  We re-alias DEFAULT_SETTINGS locally so loadSettings() keeps
+// reading like the original code without a churn-heavy refactor.
+const DEFAULT_SETTINGS: JamSettings = DEFAULT_JAM_SETTINGS;
 
 function loadSettings(): JamSettings {
   try {
@@ -760,7 +724,12 @@ function saveSettings(s: JamSettings) {
 // ── Component ──
 
 export default function JamModePage() {
-  const [settings, setSettings] = useState<JamSettings>(DEFAULT_SETTINGS);
+  // Persistent settings live in the Zustand store (Phase 7 Part 4).  The
+  // setter is store-bound but accepts the same `value | (prev => value)` shape
+  // as React's setState, so the existing call sites do not need to change.
+  const settings = useJamStore((s) => s.settings);
+  const setSettings = useJamStore((s) => s.setSettings);
+  const updateSettingFromStore = useJamStore((s) => s.updateSetting);
   const [playing, setPlaying] = useState(false);
   const [paused, setPaused] = useState(false);
   const [currentChordIdx, setCurrentChordIdx] = useState(0);
@@ -829,9 +798,9 @@ export default function JamModePage() {
     return () => clearTimeout(t);
   }, [settings]);
 
-  const updateSetting = useCallback(<K extends keyof JamSettings>(key: K, val: JamSettings[K]) => {
-    setSettings(prev => ({ ...prev, [key]: val }));
-  }, []);
+  // Re-export the store's updateSetting under the original local name so the
+  // hundreds of `updateSetting('key', val)` call sites below keep working.
+  const updateSetting = updateSettingFromStore;
 
   // Derived data
   const filteredProgressions: Progression[] = PROGRESSIONS_BY_STYLE[settings.style] || [];
