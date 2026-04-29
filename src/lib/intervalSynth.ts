@@ -26,13 +26,24 @@ const WET_SEND = 0.18;
 // ─── Shared room convolver cache (per AudioContext) ──────────────────────────
 
 const reverbCache = new WeakMap<AudioContext, ConvolverNode>();
+const reverbBufferPending = new WeakSet<AudioContext>();
 
+// Returns a ConvolverNode synchronously (so callers can wire it inline).
+// The IR buffer is loaded asynchronously on first request — until it lands,
+// the convolver passes signal through with an empty buffer (no reverb yet).
+// In practice this is inaudible: the wet send is only 0.18, and IR fetch /
+// synth completes in well under 100 ms.
 function getRoomReverb(ctx: AudioContext): ConvolverNode {
   const existing = reverbCache.get(ctx);
   if (existing) return existing;
   const conv = ctx.createConvolver();
-  conv.buffer = buildCabinetIR(ctx, MediumRoom);
   reverbCache.set(ctx, conv);
+  if (!reverbBufferPending.has(ctx)) {
+    reverbBufferPending.add(ctx);
+    void buildCabinetIR(ctx, MediumRoom).then((buf) => {
+      try { conv.buffer = buf; } catch { /* ctx closed */ }
+    });
+  }
   return conv;
 }
 

@@ -185,6 +185,16 @@ export default function GuitarForgeApp() {
     return () => window.removeEventListener("popstate", onPop);
   }, []);
 
+  // Listen for hash changes (URL bar edits)
+  useEffect(() => {
+    const onHash = () => {
+      const v = hashToView(window.location.hash);
+      if (v && v !== view) setViewRaw(v);
+    };
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, [view]);
+
 
   useEffect(() => {
     try {
@@ -750,7 +760,7 @@ export default function GuitarForgeApp() {
       <div id="main-content" className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden min-h-0 min-w-0">
       {view === "studio" && <StudioPage channelScale={scale} channelMode={mode} channelStyle={style} pendingSuno={pendingSuno} setPendingSuno={setPendingSuno} />}
       {view === "jam" && <JamModePage />}
-      <div key={viewKey} className={`view-transition px-2 sm:px-5 py-3 sm:py-5 pb-[72px] md:pb-5 max-w-[960px] lg:max-w-[1100px] xl:max-w-[1280px] mx-auto w-full ${view === "studio" || view === "jam" ? "hidden" : ""}`}>
+      <div key={viewKey} className={`view-transition px-2 sm:px-5 py-3 sm:py-5 pb-[72px] md:pb-5 max-w-[960px] lg:max-w-[1280px] xl:max-w-[1500px] 2xl:max-w-[1700px] mx-auto w-full ${view === "studio" || view === "jam" ? "hidden" : ""}`}>
 
         {view === "learn" && <LearningCenterPage />}
         {view === "profile" && <ProfilePage />}

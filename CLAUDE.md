@@ -29,6 +29,13 @@ Every ~1 hour of active work, automatically commit and push all changes to GitHu
 - Only commit source code files (src/, .claude/) — skip screenshots and temp files
 - If TypeScript doesn't compile, fix it before committing
 
+## Inherited from global (~/.claude/) - April 2026 v7
+- **Model routing:** Quality-First — Opus 4.7 default for code/design, Haiku only for trivial Word/PDF.
+- **big-tasks-interview rule:** new features, 3+ file changes, or new architecture → ask 3-5 questions and write SPEC.md before coding. SPEC.md already exists here, so updates flow through it.
+- **completion-verification:** before saying "done", show evidence per item from the original request.
+- **auto-format hook:** Prettier runs automatically on .ts/.tsx/.js/.jsx/.json/.css after every Write/Edit when the project has a package.json (this one does).
+- **session-start hook:** every session opens with cwd + git status + SPEC.md head briefing.
+
 ## Running
 ```bash
 cd C:\Users\User\guitarforge

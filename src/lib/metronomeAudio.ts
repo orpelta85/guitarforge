@@ -56,6 +56,9 @@ export function saveBackingCountIn(on: boolean) {
 /**
  * Play N metronome clicks in a row on a freshly-created AudioContext, then resolve.
  * Used for count-in before a backing track starts.
+ *
+ * Uses the shared `buildMetronomeClicks` buffer synth (wood-block FM) — same
+ * timbre as MetronomeBox / LooperBox / Tab Player metronomes.
  */
 export async function playCountIn(opts: { bpm?: number; beats?: number; volume?: number } = {}): Promise<void> {
   const bpm = opts.bpm && opts.bpm > 0 ? opts.bpm : 120;
@@ -64,24 +67,25 @@ export async function playCountIn(opts: { bpm?: number; beats?: number; volume?:
   if (typeof window === "undefined") return;
   const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
   if (!Ctx) return;
-  const ctx = new Ctx();
+  const ctx = new Ctx({ sampleRate: 48000, latencyHint: "interactive" });
   if (ctx.state === "suspended") { try { await ctx.resume(); } catch { /* ok */ } }
+  // Lazy import to avoid widening the module's dep graph at SSR time.
+  const { buildMetronomeClicks } = await import("./metronomeSynth");
+  const buffers = buildMetronomeClicks(ctx);
   const secsPerBeat = 60 / bpm;
   const start = ctx.currentTime + 0.05;
   for (let i = 0; i < beats; i++) {
     const t = start + i * secsPerBeat;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
     const accent = i === 0;
-    osc.frequency.value = accent ? 1200 : 900;
-    gain.gain.setValueAtTime(clickGain(accent ? "accent" : "normal", userVol), t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
-    osc.start(t);
-    osc.stop(t + 0.06);
+    const source = ctx.createBufferSource();
+    source.buffer = accent ? buffers.accent : buffers.normal;
+    const gain = ctx.createGain();
+    gain.gain.value = clickGain(accent ? "accent" : "normal", userVol);
+    source.connect(gain);
+    gain.connect(ctx.destination);
+    source.start(t);
   }
-  const totalMs = beats * secsPerBeat * 1000 + 80;
+  const totalMs = beats * secsPerBeat * 1000 + 120;
   await new Promise((r) => setTimeout(r, totalMs));
   try { await ctx.close(); } catch { /* ok */ }
 }

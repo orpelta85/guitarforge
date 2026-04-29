@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { loadMetronomeVolume, saveMetronomeVolume, clickGain } from "@/lib/metronomeAudio";
+import { buildMetronomeClicks, type MetronomeClickBuffers } from "@/lib/metronomeSynth";
 
 interface Props {
   startBpm?: number;
@@ -26,6 +27,7 @@ const SCHEDULE_AHEAD_S = 0.1;
 
 export default function LooperBox({ startBpm, standalone }: Props) {
   const ctxRef = useRef<AudioContext | null>(null);
+  const clickBuffersRef = useRef<MetronomeClickBuffers | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -66,24 +68,26 @@ export default function LooperBox({ startBpm, standalone }: Props) {
   function getOrCreateCtx(): AudioContext {
     if (!ctxRef.current) {
       const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      ctxRef.current = new Ctx({ sampleRate: 44100, latencyHint: "interactive" });
+      ctxRef.current = new Ctx({ sampleRate: 48000, latencyHint: "interactive" });
+    }
+    if (!clickBuffersRef.current) {
+      clickBuffersRef.current = buildMetronomeClicks(ctxRef.current);
     }
     return ctxRef.current;
   }
 
-  // Schedule a metronome click
+  // Schedule a metronome click — uses buffer-based wood-block synth.
   const scheduleClick = useCallback((time: number, accent: boolean) => {
     const ctx = ctxRef.current;
-    if (!ctx) return;
-    const osc = ctx.createOscillator();
+    const buffers = clickBuffersRef.current;
+    if (!ctx || !buffers) return;
+    const source = ctx.createBufferSource();
+    source.buffer = accent ? buffers.accent : buffers.normal;
     const gain = ctx.createGain();
-    osc.connect(gain);
+    gain.gain.value = clickGain(accent ? "accent" : "normal", metVolumeRef.current);
+    source.connect(gain);
     gain.connect(ctx.destination);
-    osc.frequency.value = accent ? 1200 : 900;
-    gain.gain.setValueAtTime(clickGain(accent ? "accent" : "normal", metVolumeRef.current), time);
-    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
-    osc.start(time);
-    osc.stop(time + 0.05);
+    source.start(time);
   }, []);
 
   // Metronome scheduler during recording

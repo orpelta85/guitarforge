@@ -23,50 +23,21 @@ interface ClickPreset {
 // ─── Section 5.2 parameter tables ────────────────────────────────────────────
 
 const ACCENT_PRESET: ClickPreset = {
-  durationMs: 80,
-  carrierFreq: 1050,
-  modFreq: 1580,
-  fmIndex: 2.8,
-  attackMs: 1,
-  decayMs: 70,
-  noiseAmp: 0.35,
-  noiseDecay: 260,
-  bodyMix: 0.88,
-  postFilterFreq: 2400,
-  postFilterGainDb: 3,
-  postFilterQ: 1.2,
+  durationMs: 25, carrierFreq: 2200, modFreq: 3300, fmIndex: 1.2,
+  attackMs: 0.5, decayMs: 18, noiseAmp: 0.65, noiseDecay: 800,
+  bodyMix: 0.55, postFilterFreq: 3200, postFilterGainDb: 4, postFilterQ: 2.0,
   finalPeak: 0.85,
 };
-
 const NORMAL_PRESET: ClickPreset = {
-  durationMs: 60,
-  carrierFreq: 820,
-  modFreq: 1230,
-  fmIndex: 2.0,
-  attackMs: 1,
-  decayMs: 52,
-  noiseAmp: 0.22,
-  noiseDecay: 300,
-  bodyMix: 0.92,
-  postFilterFreq: 1900,
-  postFilterGainDb: 2,
-  postFilterQ: 1.2,
+  durationMs: 20, carrierFreq: 1700, modFreq: 2400, fmIndex: 1.0,
+  attackMs: 0.5, decayMs: 14, noiseAmp: 0.55, noiseDecay: 900,
+  bodyMix: 0.60, postFilterFreq: 2600, postFilterGainDb: 3, postFilterQ: 2.0,
   finalPeak: 0.75,
 };
-
 const SUBDIVISION_PRESET: ClickPreset = {
-  durationMs: 45,
-  carrierFreq: 1600,
-  modFreq: 2200,
-  fmIndex: 1.2,
-  attackMs: 0.5,
-  decayMs: 40,
-  noiseAmp: 0.12,
-  noiseDecay: 400,
-  bodyMix: 0.95,
-  postFilterFreq: 2800,
-  postFilterGainDb: 1.5,
-  postFilterQ: 1.2,
+  durationMs: 14, carrierFreq: 2800, modFreq: 3700, fmIndex: 0.8,
+  attackMs: 0.3, decayMs: 9, noiseAmp: 0.40, noiseDecay: 1100,
+  bodyMix: 0.70, postFilterFreq: 3800, postFilterGainDb: 2, postFilterQ: 2.0,
   finalPeak: 0.55,
 };
 
@@ -166,16 +137,17 @@ export interface MetronomeClickBuffers {
   subdivision: AudioBuffer;
 }
 
-// Keyed by sampleRate so rebuild only happens when a context with a
-// different rate is encountered (rare; happens when the browser forces 48k).
-const bufferCache = new Map<number, MetronomeClickBuffers>();
+// Keyed by sampleRate + version so rebuild only happens when a context with a
+// different rate is encountered (rare; happens when the browser forces 48k),
+// or when the preset version is bumped (forcing stale caches to invalidate).
+const bufferCache = new Map<string, MetronomeClickBuffers>();
 
 /**
  * Pre-build (or return cached) accent/normal/subdivision click buffers.
  * Total CPU: ~1-3 ms per context. Safe to call during mount.
  */
 export function buildMetronomeClicks(ctx: AudioContext): MetronomeClickBuffers {
-  const key = ctx.sampleRate;
+  const key = `${ctx.sampleRate}@v2`;
   const existing = bufferCache.get(key);
   if (existing) return existing;
   const built: MetronomeClickBuffers = {
