@@ -5,6 +5,7 @@ import { idbSaveRecording, idbLoadRecordings } from "@/lib/recorderIdb";
 import { saveToLibrary } from "@/lib/recordingsLibrary";
 import { decodeBlobToBuffer, mixAudioBlobs } from "@/lib/audioMix";
 import { useAudioDevices } from "@/lib/useAudioDevices";
+import { useMediaRecorder } from "@/hooks/useMediaRecorder";
 import DarkAudioPlayer from "./DarkAudioPlayer";
 
 interface SongRecorderProps {
@@ -26,16 +27,26 @@ function generateRecordingName(songName: string, existingList: SavedRecording[])
 export default function SongRecorder({ songName, songId }: SongRecorderProps) {
   const storageKey = `song-rec-${songId}`;
 
-  const [isRec, setIsRec] = useState(false);
-  const [recTime, setRecTime] = useState(0);
   const [savedList, setSavedList] = useState<SavedRecording[]>([]);
-  const [micError, setMicError] = useState("");
+  const [extraError, setExtraError] = useState("");
   const [mode, setMode] = useState<RecordingMode>("guitar-only");
   const { devices: audioDevices, selectedDeviceId, selectDevice } = useAudioDevices();
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editName, setEditName] = useState("");
   const [expanded, setExpanded] = useState(false);
   const [librarySaved, setLibrarySaved] = useState<Set<number>>(new Set());
+
+  // Shared recorder
+  const recorder = useMediaRecorder({
+    mode: mode === "dual" ? "mic-plus-tab" : "mic-only",
+    deviceId: selectedDeviceId || undefined,
+  });
+
+  const isRec = recorder.status === "recording" || recorder.status === "paused" || recorder.status === "stopping";
+  const recTime = recorder.duration;
+  const micLevel = recorder.level;
+  const isDual = recorder.isDual;
+  const micError = recorder.error || extraError;
 
   // Post-mix state
   const [pendingMicBlob, setPendingMicBlob] = useState<Blob | null>(null);
@@ -50,25 +61,9 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
   const [decoding, setDecoding] = useState(false);
   const playOffsetRef = useRef(0);
 
-  // Refs - recording
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const secondRecorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const secondChunksRef = useRef<Blob[]>([]);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const blobMapRef = useRef<Map<number, Blob>>(new Map());
   const nextIdxRef = useRef(0);
   const savedListRef = useRef<SavedRecording[]>([]);
-  const micStreamRef = useRef<MediaStream | null>(null);
-  const tabStreamRef = useRef<MediaStream | null>(null);
-  const isDualRef = useRef(false);
-
-  // Level meter refs
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const analyserSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
-  const analyserCtxRef = useRef<AudioContext | null>(null);
-  const levelAnimRef = useRef<number>(0);
-  const [micLevel, setMicLevel] = useState(0);
 
   // Refs - post-mix playback (persistent AudioContext pattern)
   const mixCtxRef = useRef<AudioContext | null>(null);
@@ -96,17 +91,9 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
     return () => { cancelled = true; };
   }, [storageKey]);
 
-  useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current); }, []);
   useEffect(() => {
     return () => {
-      tabStreamRef.current?.getTracks().forEach(t => t.stop());
-      micStreamRef.current?.getTracks().forEach(t => t.stop());
       destroyMixCtx();
-      if (levelAnimRef.current) cancelAnimationFrame(levelAnimRef.current);
-      analyserSourceRef.current?.disconnect();
-      if (analyserCtxRef.current && analyserCtxRef.current.state !== "closed") {
-        analyserCtxRef.current.close().catch(() => {});
-      }
       savedListRef.current.forEach(item => { if (item.d) URL.revokeObjectURL(item.d); });
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -130,26 +117,7 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
     }
   }, [mixBrowserVol]);
 
-  const cleanupRecording = useCallback(() => {
-    micStreamRef.current?.getTracks().forEach(t => t.stop());
-    micStreamRef.current = null;
-    tabStreamRef.current?.getTracks().forEach(t => t.stop());
-    tabStreamRef.current = null;
-    if (levelAnimRef.current) cancelAnimationFrame(levelAnimRef.current);
-    analyserSourceRef.current?.disconnect();
-    analyserRef.current = null;
-    analyserSourceRef.current = null;
-    if (analyserCtxRef.current && analyserCtxRef.current.state !== "closed") {
-      analyserCtxRef.current.close().catch(() => {});
-    }
-    analyserCtxRef.current = null;
-    setMicLevel(0);
-  }, []);
-
   // ── Persistent AudioContext for mix playback ──
-  // The AudioContext + gain nodes live as long as isMixing is true.
-  // Play/Stop only creates/destroys BufferSourceNodes (cheap, disposable).
-
   function ensureMixCtx(): AudioContext {
     if (mixCtxRef.current && mixCtxRef.current.state !== "closed") return mixCtxRef.current;
     const rate = mixMicBufRef.current?.sampleRate || mixBrowserBufRef.current?.sampleRate || 48000;
@@ -200,7 +168,7 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
       setPlayDuration(dur);
     } catch (err) {
       setDecoding(false);
-      setMicError("Failed to decode recording: " + (err instanceof Error ? err.message : "Unknown error"));
+      setExtraError("Failed to decode recording: " + (err instanceof Error ? err.message : "Unknown error"));
       return false;
     }
     setDecoding(false);
@@ -309,227 +277,52 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
     }
   }
 
+  const persistMicOnly = useCallback((blob: Blob) => {
+    const url = URL.createObjectURL(blob);
+    const idx = nextIdxRef.current++;
+    const autoName = generateRecordingName(songName, savedListRef.current);
+    const newItem: SavedRecording = { dt: new Date().toLocaleString("en-US"), d: url, name: autoName + " [Guitar]" };
+    blobMapRef.current.set(idx, blob);
+    setSavedList(prev => {
+      const next = [newItem, ...prev].slice(0, 10);
+      const evicted = [newItem, ...prev].slice(10);
+      evicted.forEach(r => { if (r.d) URL.revokeObjectURL(r.d); });
+      savedListRef.current = next;
+      const allKeys = Array.from(blobMapRef.current.keys()).sort((a, b) => b - a);
+      const keptBlobs = new Map<number, Blob>();
+      for (const k of allKeys.slice(0, next.length)) { const b = blobMapRef.current.get(k); if (b) keptBlobs.set(k, b); }
+      idbSaveRecording(storageKey, next, keptBlobs).catch(() => {});
+      return next;
+    });
+    setExpanded(true);
+  }, [songName, storageKey]);
+
   // ── Recording ──
   const startRecording = useCallback(async () => {
-    if (!navigator.mediaDevices) { setMicError("Microphone not available on this device."); return; }
-    setMicError("");
+    setExtraError("");
     setPendingMicBlob(null);
     setPendingBrowserBlob(null);
     setIsMixing(false);
     mixMicBufRef.current = null;
     mixBrowserBufRef.current = null;
-    isDualRef.current = false;
-
-    try {
-      // Force instrument-recording constraints: mono, 48kHz, all processing OFF
-      // (echoCancellation/noiseSuppression/autoGainControl destroy guitar tone).
-      const audioConstraints: MediaTrackConstraints = {
-        sampleRate: 48000,
-        channelCount: 1,
-        echoCancellation: false,
-        noiseSuppression: false,
-        autoGainControl: false,
-      };
-      if (selectedDeviceId) audioConstraints.deviceId = { exact: selectedDeviceId };
-      const micStream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints });
-      micStreamRef.current = micStream;
-
-      // Force-disable all processing on the mic track
-      for (const track of micStream.getAudioTracks()) {
-        await track.applyConstraints({
-          autoGainControl: false,
-          echoCancellation: false,
-          noiseSuppression: false,
-        }).catch(() => {});
-      }
-
-      const settings = micStream.getAudioTracks()[0]?.getSettings();
-      const actualRate = settings?.sampleRate || 48000;
-      console.log("[GF Recorder] Mic track settings:", JSON.stringify(settings));
-      console.log("[GF Recorder] channelCount:", settings?.channelCount, "sampleSize:", settings?.sampleSize, "sampleRate:", actualRate);
-      if (settings?.channelCount === 1) console.warn("[GF Recorder] Mono capture — browser ignored stereo request. This is normal for most USB audio interfaces.");
-
-      if (analyserCtxRef.current && analyserCtxRef.current.state !== "closed") {
-        await analyserCtxRef.current.close().catch(() => {});
-        analyserCtxRef.current = null;
-      }
-      const aCtx = new AudioContext({ sampleRate: actualRate, latencyHint: "interactive" });
-      const aSource = aCtx.createMediaStreamSource(micStream);
-      const analyser = aCtx.createAnalyser();
-      analyser.fftSize = 2048;
-      aSource.connect(analyser);
-      analyserCtxRef.current = aCtx;
-      analyserSourceRef.current = aSource;
-      analyserRef.current = analyser;
-
-      const dataArr = new Float32Array(analyser.fftSize);
-      const updateLevel = () => {
-        if (!analyserRef.current) return;
-        analyserRef.current.getFloatTimeDomainData(dataArr);
-        let peak = 0;
-        for (let i = 0; i < dataArr.length; i++) {
-          const abs = Math.abs(dataArr[i]);
-          if (abs > peak) peak = abs;
-        }
-        setMicLevel(peak);
-        levelAnimRef.current = requestAnimationFrame(updateLevel);
-      };
-      levelAnimRef.current = requestAnimationFrame(updateLevel);
-
-      // Prefer PCM (lossless) for pristine quality; fall back to Opus @ 256 kbps
-      const pcmSupported = MediaRecorder.isTypeSupported("audio/webm;codecs=pcm");
-      const mimeType = pcmSupported ? "audio/webm;codecs=pcm" :
-                       MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" :
-                       MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" :
-                       MediaRecorder.isTypeSupported("audio/mp4") ? "audio/mp4" : "";
-      const mrOpts: MediaRecorderOptions = {
-        ...(mimeType ? { mimeType } : {}),
-        ...(pcmSupported ? {} : { audioBitsPerSecond: 256000 }),
-      };
-
-      const effectiveMode = (mode === "dual" && !navigator.mediaDevices.getDisplayMedia) ? "guitar-only" : mode;
-      if (mode === "dual" && !navigator.mediaDevices.getDisplayMedia) {
-        alert("Dual recording requires Chrome or Edge browser.");
-      }
-
-      if (effectiveMode === "dual") {
-        // ── DUAL: record mic + browser as separate tracks ──
-        let tabAudioStream: MediaStream;
-        try {
-          const tabStream = await navigator.mediaDevices.getDisplayMedia({
-            audio: {
-              autoGainControl: false,
-              echoCancellation: false,
-              noiseSuppression: false,
-            } as MediaTrackConstraints,
-            video: true,
-            // @ts-expect-error -- preferCurrentTab is Chrome-specific
-            preferCurrentTab: true,
-          });
-          tabStreamRef.current = tabStream;
-          tabStream.getVideoTracks().forEach(t => t.stop());
-          const tabAudioTracks = tabStream.getAudioTracks();
-          for (const track of tabAudioTracks) {
-            await track.applyConstraints({
-              autoGainControl: false,
-              echoCancellation: false,
-              noiseSuppression: false,
-            }).catch(() => {});
-          }
-          if (tabAudioTracks.length === 0) {
-            tabStream.getTracks().forEach(t => t.stop());
-            tabStreamRef.current = null;
-            micStream.getTracks().forEach(t => t.stop());
-            micStreamRef.current = null;
-            setMicError("No audio track shared. Make sure to check 'Share tab audio'.");
-            return;
-          }
-          tabAudioStream = new MediaStream(tabAudioTracks);
-        } catch (e: unknown) {
-          micStream.getTracks().forEach(t => t.stop());
-          micStreamRef.current = null;
-          setMicError((e as { name?: string }).name === "NotAllowedError"
-            ? "Tab sharing cancelled." : "Could not capture tab audio.");
-          return;
-        }
-
-        isDualRef.current = true;
-
-        // Mic recorder
-        chunksRef.current = [];
-        const micRec = new MediaRecorder(micStream, mrOpts);
-        micRec.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
-        mediaRecorderRef.current = micRec;
-
-        // Browser recorder
-        secondChunksRef.current = [];
-        const browserRec = new MediaRecorder(tabAudioStream, mrOpts);
-        browserRec.ondataavailable = (e) => { if (e.data.size > 0) secondChunksRef.current.push(e.data); };
-        secondRecorderRef.current = browserRec;
-
-        // Use promises for reliable stop detection
-        const micStopped = new Promise<void>(res => { micRec.onstop = () => res(); });
-        const browserStopped = new Promise<void>(res => { browserRec.onstop = () => res(); });
-
-        // When BOTH recorders stop → show mixer
-        Promise.all([micStopped, browserStopped]).then(() => {
-          const micBlob = new Blob(chunksRef.current, { type: micRec.mimeType || "audio/webm" });
-          const browserBlob = new Blob(secondChunksRef.current, { type: browserRec.mimeType || "audio/webm" });
-          if (micBlob.size === 0 && browserBlob.size === 0) {
-            setMicError("No audio data captured. Try recording again.");
-            cleanupRecording();
-            return;
-          }
-          setPendingMicBlob(micBlob);
-          setPendingBrowserBlob(browserBlob);
-          setIsMixing(true);
-          cleanupRecording();
-        });
-
-        // If tab sharing is stopped by user/browser, stop both recorders
-        tabAudioStream.getAudioTracks()[0].onended = () => {
-          if (micRec.state === "recording") micRec.stop();
-          if (browserRec.state === "recording") browserRec.stop();
-          setIsRec(false);
-          if (timerRef.current) clearInterval(timerRef.current);
-        };
-
-        // Start both recorders at the same time for sync
-        micRec.start(1000);
-        browserRec.start(1000);
-
-      } else {
-        // ── GUITAR ONLY ──
-        chunksRef.current = [];
-        const mr = new MediaRecorder(micStream, mrOpts);
-        mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
-        mr.onstop = () => {
-          const blob = new Blob(chunksRef.current, { type: mr.mimeType });
-          const url = URL.createObjectURL(blob);
-          cleanupRecording();
-
-          const idx = nextIdxRef.current++;
-          const autoName = generateRecordingName(songName, savedListRef.current);
-          const newItem: SavedRecording = { dt: new Date().toLocaleString("en-US"), d: url, name: autoName + " [Guitar]" };
-          blobMapRef.current.set(idx, blob);
-          setSavedList(prev => {
-            const next = [newItem, ...prev].slice(0, 10);
-            const evicted = [newItem, ...prev].slice(10);
-            evicted.forEach(r => { if (r.d) URL.revokeObjectURL(r.d); });
-            savedListRef.current = next;
-            const allKeys = Array.from(blobMapRef.current.keys()).sort((a, b) => b - a);
-            const keptBlobs = new Map<number, Blob>();
-            for (const k of allKeys.slice(0, next.length)) { const b = blobMapRef.current.get(k); if (b) keptBlobs.set(k, b); }
-            idbSaveRecording(storageKey, next, keptBlobs).catch(() => {});
-            return next;
-          });
-          setExpanded(true);
-        };
-        mr.start(1000);
-        mediaRecorderRef.current = mr;
-      }
-
-      setIsRec(true);
-      setRecTime(0);
-      timerRef.current = setInterval(() => setRecTime(t => t + 1), 1000);
-    } catch (err: unknown) {
-      const error = err as { name?: string; message?: string };
-      setMicError(error.name === "NotAllowedError"
-        ? "Microphone access denied." : "Microphone error: " + (error.message || "Unknown error"));
+    if (mode === "dual" && typeof navigator !== "undefined" && !navigator.mediaDevices?.getDisplayMedia) {
+      alert("Dual recording requires Chrome or Edge browser.");
     }
-  }, [mode, songName, storageKey, cleanupRecording, selectedDeviceId]);
+    await recorder.start();
+  }, [mode, recorder]);
 
-  const stopRecording = useCallback(() => {
-    if (!isRec) return;
-    setIsRec(false);
-    if (timerRef.current) clearInterval(timerRef.current);
-    if (isDualRef.current) {
-      if (mediaRecorderRef.current?.state === "recording") mediaRecorderRef.current.stop();
-      if (secondRecorderRef.current?.state === "recording") secondRecorderRef.current.stop();
+  const stopRecording = useCallback(async () => {
+    if (recorder.status !== "recording" && recorder.status !== "paused") return;
+    const result = await recorder.stop();
+    if (!result) return;
+    if (result.mode === "mic-plus-tab") {
+      setPendingMicBlob(result.micBlob);
+      setPendingBrowserBlob(result.tabBlob);
+      setIsMixing(true);
     } else {
-      if (mediaRecorderRef.current?.state === "recording") mediaRecorderRef.current.stop();
+      persistMicOnly(result.blob);
     }
-  }, [isRec]);
+  }, [recorder, persistMicOnly]);
 
   // Save the final mix
   const handleSaveMix = useCallback(async () => {
@@ -560,7 +353,7 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
       mixMicBufRef.current = null;
       mixBrowserBufRef.current = null;
       setExpanded(true);
-    } catch (err) { setMicError("Failed to save mix: " + (err instanceof Error ? err.message : "Unknown error")); }
+    } catch (err) { setExtraError("Failed to save mix: " + (err instanceof Error ? err.message : "Unknown error")); }
     setMixBusy(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingMicBlob, pendingBrowserBlob, mixMicVol, mixBrowserVol, songName, storageKey]);
@@ -634,7 +427,7 @@ export default function SongRecorder({ songName, songId }: SongRecorderProps) {
         <div className="flex items-center gap-2">
           <div className={`led ${isRec ? "led-red" : isMixing ? "led-amber" : "led-off"}`} />
           <span className="tracking-wider">RECORDER</span>
-          {isRec && <span className="text-[#C41E3A]/60 text-[9px] ml-1">{isDualRef.current ? "Guitar + Browser" : "Guitar Only"}</span>}
+          {isRec && <span className="text-[#C41E3A]/60 text-[9px] ml-1">{isDual ? "Guitar + Browser" : "Guitar Only"}</span>}
           {isMixing && <span className="text-[#D4A843] text-[9px] ml-1">Mixing</span>}
         </div>
         {savedList.length > 0 && !isRec && !isMixing && (

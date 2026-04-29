@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { saveToLibrary, getExerciseRecordings, deleteLibraryRecording } from "@/lib/recordingsLibrary";
 import type { LibraryRecording } from "@/lib/recordingsLibrary";
+import { useMediaRecorder } from "@/hooks/useMediaRecorder";
 import DarkAudioPlayer from "./DarkAudioPlayer";
 
 export type DailyRecState = "idle" | "recording" | "paused" | "stopped";
@@ -21,13 +22,14 @@ export interface DailyRecorderControl {
   getState: () => DailyRecState;
 }
 
-export default function DailyRecorderBox({ storageKey, onStateChange, controlRef }: DailyRecorderBoxProps) {
-  const [state, setState] = useState<DailyRecState>("idle");
+export default function DailyRecorderBox({ storageKey: _storageKey, onStateChange, controlRef }: DailyRecorderBoxProps) {
+  void _storageKey; // currently unused — saved sessions live in the shared library
+  const recorder = useMediaRecorder({ mode: "mic-only" });
+
   const [pauseReason, setPauseReason] = useState<PauseReason>(null);
-  const [recTime, setRecTime] = useState(0);
-  const [micError, setMicError] = useState("");
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [recordedSec, setRecordedSec] = useState(0);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [pastRecordings, setPastRecordings] = useState<LibraryRecording[]>([]);
@@ -36,115 +38,55 @@ export default function DailyRecorderBox({ storageKey, onStateChange, controlRef
   const pastAudioRef = useRef<HTMLAudioElement | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  const mediaRef = useRef<MediaRecorder | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const stateRef = useRef<DailyRecState>("idle");
+  // Map recorder.status + audioBlob → DailyRecState
+  const state: DailyRecState =
+    audioBlob ? "stopped" :
+    recorder.status === "recording" ? "recording" :
+    recorder.status === "paused" ? "paused" :
+    recorder.status === "stopping" ? "stopped" :
+    "idle";
 
-  // Sync state to ref for external access
+  const stateRef = useRef<DailyRecState>(state);
   useEffect(() => {
     stateRef.current = state;
     onStateChange?.(state);
   }, [state, onStateChange]);
 
-  const clearTimer = useCallback(() => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-  }, []);
-
   const startRecording = useCallback(() => {
-    if (!navigator.mediaDevices) {
-      setMicError("Microphone not available on this device.");
-      return;
-    }
-    setMicError("");
     setAudioUrl(null);
     setAudioBlob(null);
     setSaved(false);
-
-    // Force instrument-recording constraints: mono, 48kHz, all processing OFF
-    // (echoCancellation/noiseSuppression/autoGainControl destroy guitar tone).
-    navigator.mediaDevices.getUserMedia({
-      audio: {
-        sampleRate: 48000,
-        channelCount: 1,
-        echoCancellation: false,
-        noiseSuppression: false,
-        autoGainControl: false,
-      }
-    }).then((stream) => {
-      streamRef.current = stream;
-      chunksRef.current = [];
-      const pcmSupported = MediaRecorder.isTypeSupported("audio/webm;codecs=pcm");
-      const mimeType = pcmSupported ? "audio/webm;codecs=pcm" :
-                       MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" :
-                       MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" :
-                       MediaRecorder.isTypeSupported("audio/mp4") ? "audio/mp4" : "";
-      // PCM is lossless; Opus fallback @ 256 kbps
-      const mrOpts: MediaRecorderOptions = {
-        ...(mimeType ? { mimeType } : {}),
-        ...(pcmSupported ? {} : { audioBitsPerSecond: 256000 }),
-      };
-      const mr = new MediaRecorder(stream, mrOpts);
-
-      mr.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
-      };
-
-      mr.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: mr.mimeType });
-        const url = URL.createObjectURL(blob);
-        setAudioUrl(url);
-        setAudioBlob(blob);
-        stream.getTracks().forEach((t) => t.stop());
-        streamRef.current = null;
-        clearTimer();
-      };
-
-      // Request data every second so pause collects chunks
-      mr.start(1000);
-      mediaRef.current = mr;
-      setState("recording");
-      setPauseReason(null);
-      setRecTime(0);
-      timerRef.current = setInterval(() => setRecTime((t) => t + 1), 1000);
-    }).catch((err) => {
-      setMicError(err.name === "NotAllowedError"
-        ? "Microphone access denied. Please allow microphone access in your browser settings."
-        : "Microphone error: " + err.message);
-    });
-  }, [clearTimer]);
+    setRecordedSec(0);
+    setPauseReason(null);
+    void recorder.start();
+  }, [recorder]);
 
   const pauseRecording = useCallback((reason: PauseReason = "user") => {
-    if (mediaRef.current && stateRef.current === "recording") {
-      mediaRef.current.pause();
-      clearTimer();
-      setState("paused");
+    if (recorder.status === "recording") {
+      recorder.pause();
       setPauseReason(reason);
     }
-  }, [clearTimer]);
+  }, [recorder]);
 
   const resumeRecording = useCallback(() => {
-    if (mediaRef.current && stateRef.current === "paused") {
-      mediaRef.current.resume();
-      setState("recording");
+    if (recorder.status === "paused") {
+      recorder.resume();
       setPauseReason(null);
-      clearTimer();
-      timerRef.current = setInterval(() => setRecTime((t) => t + 1), 1000);
     }
-  }, [clearTimer]);
+  }, [recorder]);
 
-  const stopRecording = useCallback(() => {
-    if (mediaRef.current && (stateRef.current === "recording" || stateRef.current === "paused")) {
-      mediaRef.current.stop();
-      setState("stopped");
-      setPauseReason(null);
-      clearTimer();
+  const stopRecording = useCallback(async () => {
+    if (recorder.status !== "recording" && recorder.status !== "paused") return;
+    const finalSec = recorder.duration;
+    const result = await recorder.stop();
+    setPauseReason(null);
+    if (result && result.mode === "mic-only") {
+      const url = URL.createObjectURL(result.blob);
+      setAudioUrl(url);
+      setAudioBlob(result.blob);
+      setRecordedSec(Math.floor(result.duration || finalSec));
     }
-  }, [clearTimer]);
+  }, [recorder]);
 
   // Register control methods for parent
   useEffect(() => {
@@ -160,27 +102,15 @@ export default function DailyRecorderBox({ storageKey, onStateChange, controlRef
     };
   }, [controlRef, pauseRecording, resumeRecording]);
 
-  // NOTE: Daily recording keeps running when exercise modal opens.
-  // It only pauses if the parent explicitly calls controlRef.pause("exercise")
-  // (e.g., when an exercise-specific recording starts and the browser
-  // cannot record two audio streams simultaneously).
-
-  // Cleanup on unmount
+  // Cleanup pastAudio on unmount (recorder cleanup handled by hook)
   useEffect(() => {
     return () => {
-      clearTimer();
-      if (mediaRef.current && (mediaRef.current.state === "recording" || mediaRef.current.state === "paused")) {
-        mediaRef.current.stop();
-      }
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(t => t.stop());
-      }
       if (pastAudioRef.current) {
         pastAudioRef.current.pause();
         pastAudioRef.current.src = '';
       }
     };
-  }, [clearTimer]);
+  }, []);
 
   const handleSaveToLibrary = async () => {
     if (!audioBlob) return;
@@ -193,7 +123,7 @@ export default function DailyRecorderBox({ storageKey, onStateChange, controlRef
       await saveToLibrary("daily-session", name, audioBlob);
       setSaved(true);
     } catch {
-      setMicError("Failed to save recording to library.");
+      // recorder error handles UI; keep silent here
     }
     setSaving(false);
   };
@@ -202,18 +132,18 @@ export default function DailyRecorderBox({ storageKey, onStateChange, controlRef
     if (audioUrl) URL.revokeObjectURL(audioUrl);
     setAudioUrl(null);
     setAudioBlob(null);
-    setState("idle");
-    setRecTime(0);
+    setRecordedSec(0);
     setSaved(false);
+    recorder.reset();
   };
 
   const handleNewRecording = () => {
     if (audioUrl) URL.revokeObjectURL(audioUrl);
     setAudioUrl(null);
     setAudioBlob(null);
-    setState("idle");
-    setRecTime(0);
+    setRecordedSec(0);
     setSaved(false);
+    recorder.reset();
   };
 
   // Load past daily session recordings from library
@@ -255,8 +185,10 @@ export default function DailyRecorderBox({ storageKey, onStateChange, controlRef
     setPlayingPastId(rec.id);
   };
 
-  const totalSec = Math.floor(recTime);
+  const liveSec = state === "stopped" ? recordedSec : recorder.duration;
+  const totalSec = Math.floor(liveSec);
   const fmt = Math.floor(totalSec / 60) + ":" + String(totalSec % 60).padStart(2, "0");
+  const micError = recorder.error;
 
   return (
     <div>
@@ -334,7 +266,7 @@ export default function DailyRecorderBox({ storageKey, onStateChange, controlRef
       {/* After recording: playback + save/delete */}
       {state === "stopped" && audioUrl && (
         <div>
-          <DarkAudioPlayer src={audioUrl} title="Daily Session Recording" compact className="mb-3" knownDuration={recTime} />
+          <DarkAudioPlayer src={audioUrl} title="Daily Session Recording" compact className="mb-3" knownDuration={recordedSec} />
           <div className="flex gap-2 items-center">
             {!saved ? (
               <>
