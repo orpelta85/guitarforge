@@ -156,7 +156,7 @@ export default function ChromaticTuner({ onClose, compact = false }: ChromaticTu
           Chromatic Tuner
         </div>
         {onClose && (
-          <button type="button" onClick={onClose} className="font-label text-[10px] text-[#555] hover:text-[#aaa] cursor-pointer">Close</button>
+          <button type="button" onClick={onClose} aria-label="Close tuner" className="font-label text-[10px] text-[#888] hover:text-[#ccc] cursor-pointer">Close</button>
         )}
       </div>
 
@@ -184,10 +184,10 @@ export default function ChromaticTuner({ onClose, compact = false }: ChromaticTu
           </>
         ) : (
           <div className="py-6">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="1.5" className="mx-auto mb-3" strokeLinecap="round" strokeLinejoin="round">
+            <svg aria-hidden="true" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="1.5" className="mx-auto mb-3" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2a3 3 0 00-3 3v7a3 3 0 006 0V5a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/>
             </svg>
-            <div className="font-readout text-[12px] text-[#555]">Play a note to detect pitch...</div>
+            <div className="font-readout text-[12px] text-[#888]">Play a note to detect pitch...</div>
           </div>
         )}
       </div>

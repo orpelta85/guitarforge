@@ -343,7 +343,7 @@ export default function HomePage(props: HomePageProps) {
           </div>
           <div className="flex items-center gap-2">
             <button type="button" onClick={() => setShowAuthPage(true)} className="text-[12px] font-medium px-3 py-1 rounded-md" style={{ background: "#D4A843", color: "#121214" }}>Sign In</button>
-            <button type="button" aria-label="Dismiss" onClick={() => setAuthBannerDismissed(true)} className="text-[12px] px-1.5 py-1 rounded" style={{ color: "#666" }}>
+            <button type="button" aria-label="Dismiss" onClick={() => setAuthBannerDismissed(true)} className="text-[12px] px-1.5 py-1 rounded" style={{ color: "#888" }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
           </div>
@@ -360,9 +360,9 @@ export default function HomePage(props: HomePageProps) {
           {/* Top row: date + streak */}
           <div className="flex justify-between items-start mb-5">
             <div>
-              <div className="text-[13px] text-[#666] font-medium">{dayName}, {dateStr}</div>
+              <div className="text-[13px] text-[#888] font-medium">{dayName}, {dateStr}</div>
               <h1 className="text-2xl sm:text-3xl font-bold text-[#eee] mt-1 tracking-tight">Today&apos;s Focus</h1>
-              <div className="text-[13px] text-[#555] mt-1">{curExList.length} exercises &middot; {curMin} min &middot; {todayCats}</div>
+              <div className="text-[13px] text-[#888] mt-1">{curExList.length} exercises &middot; {curMin} min &middot; {todayCats}</div>
             </div>
             {/* Streak badge with flame animation */}
             <div className="flex items-center gap-2 px-4 py-2 rounded-full" style={{ background: streak.currentStreak > 0 ? "rgba(212,168,67,0.1)" : "rgba(255,255,255,0.03)", border: `1px solid ${streak.currentStreak > 0 ? "rgba(212,168,67,0.2)" : "rgba(255,255,255,0.05)"}` }}>
@@ -387,7 +387,7 @@ export default function HomePage(props: HomePageProps) {
               </span>
               <div className="text-right">
                 <div className="font-bold text-lg leading-none" style={{ color: streak.currentStreak > 0 ? "#D4A843" : "#555" }}>{streak.currentStreak}</div>
-                <div className="text-[9px] text-[#666] mt-0.5">day streak</div>
+                <div className="text-[9px] text-[#888] mt-0.5">day streak</div>
               </div>
             </div>
           </div>
@@ -406,18 +406,18 @@ export default function HomePage(props: HomePageProps) {
                   <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: COL[ex.c] || "#888" }} />
                   <div className="flex-1 min-w-0">
                     <div className="text-[13px] text-[#ccc] truncate">{ex.n}</div>
-                    <div className="text-[11px] text-[#555]">{ex.c} &middot; {ex.m} min</div>
+                    <div className="text-[11px] text-[#888]">{ex.c} &middot; {ex.m} min</div>
                   </div>
                   <div className="text-[12px] text-[#D4A843] font-medium flex-shrink-0">{ex.b} BPM</div>
                 </button>
               ))}
               {curExList.length > 3 && (
-                <div className="text-[11px] text-[#555] px-4">+ {curExList.length - 3} more exercises</div>
+                <div className="text-[11px] text-[#888] px-4">+ {curExList.length - 3} more exercises</div>
               )}
             </div>
           ) : (
             <div className="mb-6 px-4 py-5 rounded-xl text-center" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
-              <div className="text-[14px] text-[#666] mb-1">{curCats.length > 0 ? "No exercises built yet" : "Rest day - take it easy"}</div>
+              <div className="text-[14px] text-[#888] mb-1">{curCats.length > 0 ? "No exercises built yet" : "Rest day - take it easy"}</div>
               {curCats.length > 0 && (
                 <button type="button" onClick={buildAll} className="text-[12px] text-[#D4A843] hover:text-[#DFBD69] transition-colors mt-1">
                   Build today&apos;s routine
@@ -442,7 +442,7 @@ export default function HomePage(props: HomePageProps) {
                 <span className={`text-[13px] font-bold ${dayPct >= 100 && curExList.length > 0 ? "text-[#22c55e]" : "text-[#D4A843]"}`}>
                   {dayPct}% complete
                 </span>
-                <span className="text-[11px] text-[#555]">{curDone}/{curExList.length}</span>
+                <span className="text-[11px] text-[#888]">{curDone}/{curExList.length}</span>
               </div>
               <div className="h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
                 <div className="h-full rounded-full transition-all duration-700 ease-out" style={{ width: dayPct + "%", background: dayPct >= 100 && curExList.length > 0 ? "#22c55e" : "linear-gradient(90deg, #D4A843, #DFBD69)" }} />
@@ -486,9 +486,9 @@ export default function HomePage(props: HomePageProps) {
         </button>
         {jamOpen && (
           <div className="p-5 sm:p-7">
-            <div className="font-readout text-[11px] text-[#666] mb-4">Find a backing track to jam over</div>
+            <div className="font-readout text-[11px] text-[#888] mb-4">Find a backing track to jam over</div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 mb-4">
-              <div className="font-label text-[11px] text-[#666] relative" ref={jamStyleRef}>
+              <div className="font-label text-[11px] text-[#888] relative" ref={jamStyleRef}>
                 Style
                 <input
                   type="text"
@@ -520,13 +520,13 @@ export default function HomePage(props: HomePageProps) {
                   ) : null;
                 })()}
               </div>
-              <label className="font-label text-[11px] text-[#666]">
+              <label className="font-label text-[11px] text-[#888]">
                 Scale
                 <select value={jamScale} onChange={(e) => setJamScale(e.target.value)} className="input w-full mt-1 text-[12px]">
                   {MODES.map(m => <option key={m}>{m}</option>)}
                 </select>
               </label>
-              <label className="font-label text-[11px] text-[#666]">
+              <label className="font-label text-[11px] text-[#888]">
                 Key
                 <select value={jamKey} onChange={(e) => setJamKey(e.target.value)} className="input w-full mt-1 text-[12px]">
                   {KEYS_LIST.map(k => <option key={k}>{k}</option>)}
@@ -580,7 +580,7 @@ export default function HomePage(props: HomePageProps) {
             {jamYtLoading && (
               <div className="w-full rounded-xl overflow-hidden bg-[#0e0e10] mb-3 flex items-center justify-center"
                 style={{ aspectRatio: "16 / 9", maxWidth: 960 }}>
-                <div className="font-label text-[12px] text-[#555] animate-pulse">Searching YouTube...</div>
+                <div className="font-label text-[12px] text-[#888] animate-pulse">Searching YouTube...</div>
               </div>
             )}
             {jamCountInPending && (
@@ -602,13 +602,13 @@ export default function HomePage(props: HomePageProps) {
                     title="Jam Backing Track"
                   />
                 </div>
-                <div className="font-readout text-[10px] text-[#555] mt-2">
+                <div className="font-readout text-[10px] text-[#888] mt-2">
                   {jamVideoIds.length > 0 && `Video ${jamVideoIdx + 1} of ${jamVideoIds.length} \u00B7 `}{jamKey} {jamScale} &middot; {jamStyle}
                 </div>
               </div>
             )}
             {jamSearchFailed && !jamYtLoading && (
-              <div className="text-[12px] px-3 py-2 rounded-lg mb-3" style={{ background: "rgba(255,255,255,0.03)", color: "#666" }}>
+              <div className="text-[12px] px-3 py-2 rounded-lg mb-3" style={{ background: "rgba(255,255,255,0.03)", color: "#aaa" }}>
                 No videos found. Try a different key or style, or search directly on YouTube.
               </div>
             )}
@@ -627,7 +627,7 @@ export default function HomePage(props: HomePageProps) {
         <div className="rounded-xl p-3 mb-4" style={{ border: "1px solid rgba(255,255,255,0.05)", background: "#111114" }}>
           <div className="flex items-center gap-2 mb-2">
             <div className="font-label text-[10px] text-[#D4A843]">AI Backing Track</div>
-            <span className="font-readout text-[9px] text-[#555]">{scale} {mode} &middot; {style}</span>
+            <span className="font-readout text-[9px] text-[#888]">{scale} {mode} &middot; {style}</span>
           </div>
           <DarkAudioPlayer src={sunoSuggestUrl} title={`${scale} ${mode} \u00B7 ${style}`} loop />
         </div>
@@ -654,7 +654,7 @@ export default function HomePage(props: HomePageProps) {
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="text-[13px] text-[#ccc] font-medium truncate">{song.title}</div>
-                        <div className="text-[11px] text-[#555] truncate">{song.artist}</div>
+                        <div className="text-[11px] text-[#888] truncate">{song.artist}</div>
                         {song.difficulty && (
                           <span className={`text-[9px] mt-0.5 inline-block px-1.5 py-0.5 rounded ${song.difficulty === "Beginner" ? "text-[#22c55e] bg-[#22c55e10]" : song.difficulty === "Intermediate" ? "text-[#D4A843] bg-[#D4A84310]" : "text-[#ef4444] bg-[#ef444410]"}`}>
                             {song.difficulty}
@@ -668,7 +668,7 @@ export default function HomePage(props: HomePageProps) {
                     title="Dismiss"
                     aria-label={`Dismiss ${song.title}`}
                     onClick={() => dismissSongOfWeek(song.id)}
-                    className="flex-shrink-0 p-1 rounded text-[#555] hover:text-[#D4A843] hover:bg-white/[0.04] transition-colors opacity-60 group-hover:opacity-100"
+                    className="flex-shrink-0 p-1 rounded text-[#888] hover:text-[#D4A843] hover:bg-white/[0.04] transition-colors opacity-60 group-hover:opacity-100"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
                   </button>
@@ -676,7 +676,7 @@ export default function HomePage(props: HomePageProps) {
               ))}
             </div>
           ) : (
-            <div className="text-[12px] text-[#444]">
+            <div className="text-[12px] text-[#888]">
               No songs scheduled this week
               {Object.keys(dismissedSongIds).length > 0 && (
                 <button
@@ -724,19 +724,19 @@ export default function HomePage(props: HomePageProps) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <div className="font-bold text-xl text-[#D4A843]">{wPct}%</div>
-              <div className="text-[9px] text-[#555]">Progress</div>
+              <div className="text-[9px] text-[#888]">Progress</div>
             </div>
             <div>
               <div className="font-bold text-xl text-[#eee]">{wMin}</div>
-              <div className="text-[9px] text-[#555]">Minutes</div>
+              <div className="text-[9px] text-[#888]">Minutes</div>
             </div>
             <div>
               <div className="font-bold text-xl text-[#eee]">{wDn}/{wTot}</div>
-              <div className="text-[9px] text-[#555]">Exercises</div>
+              <div className="text-[9px] text-[#888]">Exercises</div>
             </div>
             <div>
               <div className="font-bold text-xl text-[#eee]">{DAYS.filter(d => (dayExMap[d] || []).some(e => doneMap[week + "-" + d + "-" + e.id])).length}/7</div>
-              <div className="text-[9px] text-[#555]">Days Active</div>
+              <div className="text-[9px] text-[#888]">Days Active</div>
             </div>
           </div>
         </div>
@@ -771,14 +771,14 @@ export default function HomePage(props: HomePageProps) {
         </button>
         {settingsOpen && (
           <div className="px-5 pb-4">
-            <div className="font-readout text-[10px] text-[#555] mb-3">What are you focusing on this week?</div>
+            <div className="font-readout text-[10px] text-[#888] mb-3">What are you focusing on this week?</div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
               {[
                 { l: "Week", v: <div className="segment-display text-center mt-1 flex items-center justify-center gap-1"><button onClick={() => setWeek(Math.max(1, week - 1))} className="bg-transparent border-0 text-white/70 hover:text-white cursor-pointer text-sm p-0 leading-none transition-opacity">&#9664;</button><input type="number" value={week} min={1} onChange={(e) => setWeek(Math.max(1, Number(e.target.value)))} className="bg-transparent border-none outline-none text-center w-10 font-mono font-bold text-[#D4A843]" style={{ boxShadow: 'none' }} /><button onClick={() => setWeek(week + 1)} className="bg-transparent border-0 text-white/70 hover:text-white cursor-pointer text-sm p-0 leading-none transition-opacity">&#9654;</button></div> },
                 { l: "Mode", v: <select value={mode} onChange={(e) => setMode(e.target.value)} className="input w-full text-[12px] sm:text-[14px]">{MODES.map((m) => <option key={m}>{m}</option>)}</select> },
                 { l: "Key", v: <select value={scale} onChange={(e) => setScale(e.target.value)} className="input w-full">{SCALES.map((s) => <option key={s}>{s}</option>)}</select> },
                 { l: "Style", v: <select value={style} onChange={(e) => setStyle(e.target.value)} className="input w-full text-[12px] sm:text-[14px]">{STYLES.map((s) => <option key={s}>{s}</option>)}</select> },
-              ].map(({ l, v }) => <label key={l} className="font-label text-[11px] text-[#666]">{l}<div className="mt-1">{v}</div></label>)}
+              ].map(({ l, v }) => <label key={l} className="font-label text-[11px] text-[#888]">{l}<div className="mt-1">{v}</div></label>)}
             </div>
           </div>
         )}
@@ -792,7 +792,7 @@ export default function HomePage(props: HomePageProps) {
               </svg>
               Week {week} Schedule
             </span>
-            <button onClick={() => setShowEditor(!showEditor)} className="font-readout text-[10px] text-[#555] hover:text-[#888] transition-colors flex items-center gap-1 bg-transparent border-0 cursor-pointer p-0">
+            <button onClick={() => setShowEditor(!showEditor)} className="font-readout text-[10px] text-[#888] hover:text-[#888] transition-colors flex items-center gap-1 bg-transparent border-0 cursor-pointer p-0">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               {showEditor ? "Close" : "Edit"}
             </button>
@@ -809,22 +809,22 @@ export default function HomePage(props: HomePageProps) {
                       <input type="number" value={hrs} min={0} max={8} step={0.5}
                         onChange={(e) => setDayHrs((p) => ({ ...p, [day]: Number(e.target.value) }))}
                         className="input input-gold w-14 text-center !py-1" />
-                      <span className="font-label text-[9px] text-[#444]">hrs</span>
+                      <span className="font-label text-[9px] text-[#888]">hrs</span>
                       <div className="flex gap-1 ml-auto">
-                        <button type="button" title="Copy day" onClick={() => setCopiedDay({ cats: [...ac], hrs, exs: dayExMap[day] ? [...dayExMap[day]] : [] })}
+                        <button type="button" title="Copy day" aria-label={`Copy ${day} schedule`} onClick={() => setCopiedDay({ cats: [...ac], hrs, exs: dayExMap[day] ? [...dayExMap[day]] : [] })}
                           className="text-[9px] px-1.5 py-0.5 rounded border transition-all bg-transparent cursor-pointer"
-                          style={{ borderColor: "#333", color: "#666" }}>
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                          style={{ borderColor: "#333", color: "#888" }}>
+                          <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
                         </button>
-                        <button type="button" title="Paste day" onClick={() => {
+                        <button type="button" title="Paste day" aria-label={`Paste schedule into ${day}`} disabled={!copiedDay} onClick={() => {
                           if (!copiedDay) return;
                           setDayCats(p => ({ ...p, [day]: [...copiedDay.cats] }));
                           setDayHrs(p => ({ ...p, [day]: copiedDay.hrs }));
                           setDayExMap(p => ({ ...p, [day]: [...copiedDay.exs] }));
                         }}
-                          className="text-[9px] px-1.5 py-0.5 rounded border transition-all bg-transparent cursor-pointer"
-                          style={{ borderColor: copiedDay ? "#D4A843" + "40" : "#222", color: copiedDay ? "#D4A843" : "#333" }}>
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
+                          className="text-[9px] px-1.5 py-0.5 rounded border transition-all bg-transparent cursor-pointer disabled:cursor-not-allowed"
+                          style={{ borderColor: copiedDay ? "#D4A843" + "40" : "#222", color: copiedDay ? "#D4A843" : "#888" }}>
+                          <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
                         </button>
                       </div>
                     </div>
@@ -834,7 +834,7 @@ export default function HomePage(props: HomePageProps) {
                         return (
                           <div key={group} className="mb-1.5">
                             <button onClick={() => setCollapsedGroups((p) => ({ ...p, [group]: !isCollapsed }))}
-                              className="flex items-center gap-1 mb-0.5 cursor-pointer text-[9px] font-semibold text-[#666] hover:text-[#aaa] transition-colors bg-transparent border-0 p-0">
+                              className="flex items-center gap-1 mb-0.5 cursor-pointer text-[9px] font-semibold text-[#888] hover:text-[#aaa] transition-colors bg-transparent border-0 p-0">
                               <span className="text-[8px]">{isCollapsed ? "\u25B6" : "\u25BC"}</span> {group}
                             </button>
                             {!isCollapsed && (
@@ -882,17 +882,19 @@ export default function HomePage(props: HomePageProps) {
               const d2 = exs.filter((e) => doneMap[week + "-" + day + "-" + e.id]).length;
               const off = !ac.length, pct = exs.length ? Math.round((d2 / exs.length) * 100) : 0;
               return (
-                <div key={day} onClick={() => { setSelDay(day); setView("daily"); }}
-                  className={`p-2 cursor-pointer text-center transition-all rounded-lg ${off ? "bg-[#0e0e10] border border-[#1a1a1a]" : "panel hover:border-[#D4A843]/30"} ${selDay === day ? "!border-[#D4A843] ring-1 ring-[#D4A843]/30 !bg-[#1a1708]" : ""}`}>
-                  <div className={`font-label text-[10px] ${off ? "text-[#444]" : selDay === day ? "text-[#D4A843]" : "text-[#bbb]"}`}>
+                <button type="button" key={day} onClick={() => { setSelDay(day); setView("daily"); }}
+                  aria-label={`${day} — ${off ? "rest day" : `${hrs} hours, ${d2} of ${exs.length} exercises done`}`}
+                  aria-current={selDay === day ? "true" : undefined}
+                  className={`p-2 cursor-pointer text-center transition-all rounded-lg block w-full ${off ? "bg-[#0e0e10] border border-[#1a1a1a]" : "panel hover:border-[#D4A843]/30"} ${selDay === day ? "!border-[#D4A843] ring-1 ring-[#D4A843]/30 !bg-[#1a1708]" : ""}`}>
+                  <div className={`font-label text-[10px] ${off ? "text-[#888]" : selDay === day ? "text-[#D4A843]" : "text-[#bbb]"}`}>
                     <span className="sm:hidden">{day.slice(0, 3)}</span><span className="hidden sm:inline">{day}</span>
                   </div>
-                  <div className="font-readout text-[9px] text-[#555]">{hrs}h</div>
+                  <div className="font-readout text-[9px] text-[#888]">{hrs}h</div>
                   {exs.length > 0 && <>
                     <div className="vu mt-1 !h-[3px]"><div className="vu-fill" style={{ width: pct + "%" }} /></div>
-                    <div className={`font-readout text-[8px] mt-0.5 ${pct >= 100 ? "text-[#33CC33]" : "text-[#666]"}`}>{d2}/{exs.length}</div>
+                    <div className={`font-readout text-[8px] mt-0.5 ${pct >= 100 ? "text-[#33CC33]" : "text-[#888]"}`}>{d2}/{exs.length}</div>
                   </>}
-                </div>
+                </button>
               );
             })}
           </div>
@@ -909,10 +911,10 @@ export default function HomePage(props: HomePageProps) {
               <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
             </svg>
             Songs for This Week
-            <span className="font-readout text-[9px] text-[#555]">({songs.length} songs)</span>
+            <span className="font-readout text-[9px] text-[#888]">({songs.length} songs)</span>
           </div>
           {songs.length === 0 && (
-            <div className="text-center py-3 text-[12px] text-[#444]">No songs added yet. Search your library below.</div>
+            <div className="text-center py-3 text-[12px] text-[#888]">No songs added yet. Search your library below.</div>
           )}
           {songs.map((song) => {
             const libraryEntry = SONG_LIBRARY.find(s => s.id === song.id);
@@ -923,7 +925,7 @@ export default function HomePage(props: HomePageProps) {
                   <div className="font-heading text-[13px] !font-medium !normal-case !tracking-normal truncate text-[#ccc]">{song.name}</div>
                 </button>
                 {song.url && <a href={song.url} target="_blank" rel="noopener noreferrer" className="font-label text-[9px] text-[#D4A843] no-underline hover:text-[#DFBD69] flex-shrink-0">Tab</a>}
-                <button type="button" title="Remove song" onClick={() => setSongs((p) => p.filter((s) => s.id !== song.id))} className="text-[10px] text-[#666] hover:text-[#C41E3A] transition-colors flex-shrink-0">
+                <button type="button" title="Remove song" onClick={() => setSongs((p) => p.filter((s) => s.id !== song.id))} className="text-[10px] text-[#888] hover:text-[#C41E3A] transition-colors flex-shrink-0">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
                 </button>
               </div>
@@ -933,9 +935,10 @@ export default function HomePage(props: HomePageProps) {
           {/* Song search from library */}
           <div className="mt-3">
             <div className="relative">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              <svg aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
               <input
                 type="text"
+                aria-label="Search songs from library"
                 placeholder="Search songs from library..."
                 value={songSearchQuery}
                 onChange={(e) => handleSongSearch(e.target.value)}
@@ -950,7 +953,7 @@ export default function HomePage(props: HomePageProps) {
                     className="flex items-center gap-3 w-full text-left px-3 py-2.5 hover:bg-[#1a1708] transition-colors border-b border-[#111] last:border-0">
                     <div className="flex-1 min-w-0">
                       <div className="text-[12px] text-[#ccc] truncate">{song.title}</div>
-                      <div className="text-[10px] text-[#555]">{song.artist} {song.genre ? `\u00B7 ${song.genre}` : ""}</div>
+                      <div className="text-[10px] text-[#888]">{song.artist} {song.genre ? `\u00B7 ${song.genre}` : ""}</div>
                     </div>
                     {song.difficulty && (
                       <span className={`text-[9px] px-1.5 py-0.5 rounded ${song.difficulty === "Beginner" ? "text-[#22c55e] bg-[#22c55e10]" : song.difficulty === "Intermediate" ? "text-[#D4A843] bg-[#D4A84310]" : "text-[#ef4444] bg-[#ef444410]"}`}>
@@ -966,16 +969,16 @@ export default function HomePage(props: HomePageProps) {
               </div>
             )}
             {songSearchActive && songSearchResults.length === 0 && songSearchQuery.trim() && (
-              <div className="mt-1 text-center py-3 text-[11px] text-[#444] bg-[#0e0e10] border border-[#1a1a1a] rounded-lg">No songs found for &ldquo;{songSearchQuery}&rdquo;</div>
+              <div className="mt-1 text-center py-3 text-[11px] text-[#888] bg-[#0e0e10] border border-[#1a1a1a] rounded-lg">No songs found for &ldquo;{songSearchQuery}&rdquo;</div>
             )}
           </div>
 
           {/* Manual add (collapsed) */}
           <details className="mt-2">
-            <summary className="text-[11px] text-[#555] cursor-pointer hover:text-[#D4A843] transition-colors">Add manually...</summary>
+            <summary className="text-[11px] text-[#888] cursor-pointer hover:text-[#D4A843] transition-colors">Add manually...</summary>
             <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2 mt-2">
-              <input placeholder="Song name..." value={newSongName} onChange={(e) => setNewSongName(e.target.value)} className="input min-w-0 !text-[12px]" />
-              <input placeholder="Tab URL (optional)..." value={newSongUrl} onChange={(e) => setNewSongUrl(e.target.value)} className="input min-w-0 !text-[12px]" />
+              <input aria-label="Song name" placeholder="Song name..." value={newSongName} onChange={(e) => setNewSongName(e.target.value)} className="input min-w-0 !text-[12px]" />
+              <input aria-label="Tab URL (optional)" placeholder="Tab URL (optional)..." value={newSongUrl} onChange={(e) => setNewSongUrl(e.target.value)} className="input min-w-0 !text-[12px]" />
               <button onClick={() => { if (!newSongName.trim()) return; setSongs((p) => [...p, { name: newSongName.trim(), url: newSongUrl.trim(), id: Date.now() }]); setNewSongName(""); setNewSongUrl(""); }} className="btn-gold !text-[11px]">Add</button>
             </div>
           </details>
@@ -991,7 +994,7 @@ export default function HomePage(props: HomePageProps) {
             <path d="M18 20V10M12 20V4M6 20v-6"/>
           </svg>
           <span className="flex-1">Week Analytics</span>
-          <span className="font-readout text-[10px] text-[#555]">
+          <span className="font-readout text-[10px] text-[#888]">
             {!showAnalytics && `${wDn}/${wTot} done \u00B7 ${wPct}%`}
           </span>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" className={`transition-transform ${showAnalytics ? "rotate-180" : ""}`}>
@@ -1002,11 +1005,11 @@ export default function HomePage(props: HomePageProps) {
           <div className="p-3 sm:p-5">
             {/* Calendar Heatmap */}
             <div className="mb-5 pb-4 border-b border-[#1a1a1a]">
-              <div className="font-label text-[10px] text-[#555] mb-2 flex items-center gap-2">
+              <div className="font-label text-[10px] text-[#888] mb-2 flex items-center gap-2">
                 <div className="led led-on" style={{ width: 6, height: 6 }} /> Practice Activity
               </div>
               <div className="flex gap-1" style={{ direction: "ltr" }}>
-                <div className="flex flex-col gap-[2px] text-[8px] text-[#444] font-readout pt-0" style={{ width: "20px" }}>
+                <div className="flex flex-col gap-[2px] text-[8px] text-[#888] font-readout pt-0" style={{ width: "20px" }}>
                   <div style={{ height: "12px" }}></div>
                   <div style={{ height: "12px", lineHeight: "12px" }}>Mon</div>
                   <div style={{ height: "12px" }}></div>
@@ -1048,11 +1051,11 @@ export default function HomePage(props: HomePageProps) {
                 </div>
               </div>
               <div className="flex items-center gap-1 mt-2 justify-end">
-                <span className="font-readout text-[8px] text-[#444]">Less</span>
+                <span className="font-readout text-[8px] text-[#888]">Less</span>
                 {["#111", "#1a4a1a", "#2d8a2d", "#33CC33"].map((c, i) => (
                   <div key={i} className="rounded-[2px]" style={{ width: 10, height: 10, background: c }} />
                 ))}
-                <span className="font-readout text-[8px] text-[#444]">More</span>
+                <span className="font-readout text-[8px] text-[#888]">More</span>
               </div>
             </div>
 
@@ -1060,19 +1063,19 @@ export default function HomePage(props: HomePageProps) {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center mb-5 pb-4 border-b border-[#1a1a1a]">
               <div>
                 <div className="font-stat text-xl text-[#D4A843]">{streak.currentStreak}</div>
-                <div className="font-label text-[9px] text-[#555]">Current Streak</div>
+                <div className="font-label text-[9px] text-[#888]">Current Streak</div>
               </div>
               <div>
                 <div className="font-stat text-xl text-[#D4A843]">{streak.longestStreak}</div>
-                <div className="font-label text-[9px] text-[#555]">Longest Streak</div>
+                <div className="font-label text-[9px] text-[#888]">Longest Streak</div>
               </div>
               <div>
                 <div className="font-stat text-xl text-[#D4A843]">{streak.totalDays}</div>
-                <div className="font-label text-[9px] text-[#555]">Total Days</div>
+                <div className="font-label text-[9px] text-[#888]">Total Days</div>
               </div>
               <div>
-                <div className="font-readout text-sm text-[#666] mt-1">{streak.lastPracticeDate || "\u2014"}</div>
-                <div className="font-label text-[9px] text-[#555]">Last Practice</div>
+                <div className="font-readout text-sm text-[#888] mt-1">{streak.lastPracticeDate || "\u2014"}</div>
+                <div className="font-label text-[9px] text-[#888]">Last Practice</div>
               </div>
             </div>
 
@@ -1101,7 +1104,7 @@ export default function HomePage(props: HomePageProps) {
         if (recent.length === 0) return null;
         return (
           <div className="rounded-xl p-4 mb-4" style={{ border: "1px solid rgba(255,255,255,0.05)", background: "#111114" }}>
-            <div className="font-label text-[10px] text-[#666] mb-3 flex items-center gap-2">
+            <div className="font-label text-[10px] text-[#888] mb-3 flex items-center gap-2">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
               Recent Activity
             </div>
@@ -1111,7 +1114,7 @@ export default function HomePage(props: HomePageProps) {
                   <div className="flex-1 min-w-0">
                     <div className="text-[12px] text-[#ccc] truncate">{item.name}</div>
                   </div>
-                  <span className="font-readout text-[9px] text-[#555] flex-shrink-0">{item.day}</span>
+                  <span className="font-readout text-[9px] text-[#888] flex-shrink-0">{item.day}</span>
                   {item.bpm && <span className="font-readout text-[9px] text-[#D4A843] flex-shrink-0">{item.bpm} BPM</span>}
                 </div>
               ))}

@@ -1369,8 +1369,8 @@ function TheoryWindow({ exercise: ex, week, day, bpm, note, onBpmChange, onNoteC
 }
 
 
-/* ── Focus trap hook for modals ── */
-function useFocusTrap(ref: React.RefObject<HTMLElement | null>) {
+/* ── Focus trap hook for modals (handles Tab cycle + Escape close) ── */
+function useFocusTrap(ref: React.RefObject<HTMLElement | null>, onClose?: () => void) {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -1379,6 +1379,11 @@ function useFocusTrap(ref: React.RefObject<HTMLElement | null>) {
       'a[href], button:not([disabled]), textarea, input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
     );
     const trap = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && onClose) {
+        e.preventDefault();
+        onClose();
+        return;
+      }
       if (e.key !== "Tab") return;
       const nodes = focusable();
       if (nodes.length === 0) return;
@@ -1397,7 +1402,7 @@ function useFocusTrap(ref: React.RefObject<HTMLElement | null>) {
       el.removeEventListener("keydown", trap);
       if (prev && typeof prev.focus === "function") prev.focus();
     };
-  }, [ref]);
+  }, [ref, onClose]);
 }
 
 
@@ -1407,7 +1412,7 @@ function useFocusTrap(ref: React.RefObject<HTMLElement | null>) {
 export default function ExerciseModal(props: Props) {
   const modalType = getModalType(props.exercise);
   const modalRef = useRef<HTMLDivElement>(null);
-  useFocusTrap(modalRef);
+  useFocusTrap(modalRef, props.onClose);
 
   return (
     <div

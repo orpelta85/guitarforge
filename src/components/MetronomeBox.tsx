@@ -69,7 +69,7 @@ function Stepper({
 
   return (
     <div className={`flex flex-col items-center gap-1 ${opacity}`}>
-      <span className="font-label text-[9px] text-[#555] uppercase tracking-wider">
+      <span className="font-label text-[9px] text-[#888] uppercase tracking-wider">
         {label}
       </span>
       <div className="flex items-center rounded-md overflow-hidden border border-[#2a2a2a]">
@@ -77,7 +77,7 @@ function Stepper({
           type="button"
           onClick={dec}
           disabled={disabled}
-          className="w-7 h-8 flex items-center justify-center text-[#666] hover:text-[#D4A843] hover:bg-[#1a1a1a] bg-[#111] transition-colors text-sm select-none"
+          className="w-7 h-8 flex items-center justify-center text-[#888] hover:text-[#D4A843] hover:bg-[#1a1a1a] bg-[#111] transition-colors text-sm select-none"
         >
           -
         </button>
@@ -101,7 +101,7 @@ function Stepper({
           type="button"
           onClick={inc}
           disabled={disabled}
-          className="w-7 h-8 flex items-center justify-center text-[#666] hover:text-[#D4A843] hover:bg-[#1a1a1a] bg-[#111] transition-colors text-sm select-none"
+          className="w-7 h-8 flex items-center justify-center text-[#888] hover:text-[#D4A843] hover:bg-[#1a1a1a] bg-[#111] transition-colors text-sm select-none"
         >
           +
         </button>
@@ -373,7 +373,7 @@ export default function MetronomeBox({ startBpm: propBpm, standalone }: Props) {
         >
           {on ? showBpm : bpm}
         </span>
-        <span className="font-label text-[9px] text-[#444]">BPM</span>
+        <span className="font-label text-[9px] text-[#888]">BPM</span>
 
         {/* visual beat indicators */}
         {on && beat >= 0 && (
@@ -427,7 +427,7 @@ export default function MetronomeBox({ startBpm: propBpm, standalone }: Props) {
         {/* time signature + subdivision */}
         <div className="flex gap-4 items-end flex-wrap">
           <div className="flex flex-col gap-1">
-            <span className="font-label text-[9px] text-[#555] uppercase tracking-wider">
+            <span className="font-label text-[9px] text-[#888] uppercase tracking-wider">
               Time Sig
             </span>
             <div className="flex rounded-md overflow-hidden border border-[#2a2a2a]">
@@ -438,7 +438,7 @@ export default function MetronomeBox({ startBpm: propBpm, standalone }: Props) {
                   className={`px-2 py-1.5 text-[10px] font-mono transition-colors ${
                     timeSig === ts
                       ? "bg-[#D4A843] text-[#0a0a0a] font-semibold"
-                      : "bg-[#111] text-[#666] hover:text-[#D4A843] hover:bg-[#1a1a1a]"
+                      : "bg-[#111] text-[#888] hover:text-[#D4A843] hover:bg-[#1a1a1a]"
                   } ${ts !== "4/4" ? "border-l border-[#2a2a2a]" : ""}`}
                 >
                   {ts}
@@ -448,7 +448,7 @@ export default function MetronomeBox({ startBpm: propBpm, standalone }: Props) {
           </div>
 
           <div className="flex flex-col gap-1">
-            <span className="font-label text-[9px] text-[#555] uppercase tracking-wider">
+            <span className="font-label text-[9px] text-[#888] uppercase tracking-wider">
               Subdivision
             </span>
             <div className="flex rounded-md overflow-hidden border border-[#2a2a2a]">
@@ -459,7 +459,7 @@ export default function MetronomeBox({ startBpm: propBpm, standalone }: Props) {
                   className={`px-2.5 py-1.5 text-[11px] transition-colors ${
                     subdivision === s
                       ? "bg-[#D4A843] text-[#0a0a0a] font-semibold"
-                      : "bg-[#111] text-[#666] hover:text-[#D4A843] hover:bg-[#1a1a1a]"
+                      : "bg-[#111] text-[#888] hover:text-[#D4A843] hover:bg-[#1a1a1a]"
                   } ${i > 0 ? "border-l border-[#2a2a2a]" : ""}`}
                 >
                   {SUBDIVISION_LABELS[s]}
@@ -484,7 +484,7 @@ export default function MetronomeBox({ startBpm: propBpm, standalone }: Props) {
             >
               {prog ? "✓" : ""}
             </div>
-            <span className="font-label text-[10px] text-[#666]">
+            <span className="font-label text-[10px] text-[#888]">
               Progressive
             </span>
           </label>
@@ -502,13 +502,13 @@ export default function MetronomeBox({ startBpm: propBpm, standalone }: Props) {
             >
               {countIn ? "✓" : ""}
             </div>
-            <span className="font-label text-[10px] text-[#666]">
+            <span className="font-label text-[10px] text-[#888]">
               Count In
             </span>
           </label>
 
           <div className="flex items-center gap-2 ml-auto">
-            <span className="font-label text-[9px] text-[#555] uppercase tracking-wider">Vol</span>
+            <span className="font-label text-[9px] text-[#888] uppercase tracking-wider">Vol</span>
             <input
               type="range"
               min={0}
@@ -523,7 +523,7 @@ export default function MetronomeBox({ startBpm: propBpm, standalone }: Props) {
               className="w-[70px] accent-[#D4A843]"
               title={`Metronome volume ${Math.round(volume * 100)}%`}
             />
-            <span className="font-mono text-[9px] text-[#666] w-[26px] text-right">{Math.round(volume * 100)}</span>
+            <span className="font-mono text-[9px] text-[#888] w-[26px] text-right">{Math.round(volume * 100)}</span>
           </div>
         </div>
 

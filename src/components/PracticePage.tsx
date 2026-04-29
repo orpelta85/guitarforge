@@ -195,7 +195,7 @@ export default function PracticePage(props: PracticePageProps) {
         {DAYS.map((day) => (
           <button key={day} onClick={() => setSelDay(day)}
             className={`font-label text-[11px] px-3 py-1.5 rounded-lg cursor-pointer transition-all flex-shrink-0 ${
-              selDay === day ? "bg-[#D4A843] text-[#121214]" : "text-[#555] hover:text-[#aaa]"
+              selDay === day ? "bg-[#D4A843] text-[#121214]" : "text-[#888] hover:text-[#aaa]"
             }`}><span className="sm:hidden">{day.slice(0, 3)}</span><span className="hidden sm:inline">{day}</span></button>
         ))}
       </div>
@@ -207,7 +207,7 @@ export default function PracticePage(props: PracticePageProps) {
             <div className="flex items-center gap-2">
               <div className="font-heading text-lg sm:text-xl font-bold text-[#D4A843]">{selDay}</div>
               <button type="button" onClick={() => setShowDayEditor(!showDayEditor)}
-                className={`font-label text-[9px] px-2 py-1 rounded-lg border transition-all flex items-center gap-1 cursor-pointer ${showDayEditor ? "bg-[#D4A843]/15 text-[#D4A843] border-[#D4A843]/40" : "border-[#333] text-[#555] hover:border-[#D4A843]/40 hover:text-[#D4A843]"}`}
+                className={`font-label text-[9px] px-2 py-1 rounded-lg border transition-all flex items-center gap-1 cursor-pointer ${showDayEditor ? "bg-[#D4A843]/15 text-[#D4A843] border-[#D4A843]/40" : "border-[#333] text-[#888] hover:border-[#D4A843]/40 hover:text-[#D4A843]"}`}
                 title="Edit day schedule">
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -215,7 +215,7 @@ export default function PracticePage(props: PracticePageProps) {
                 Edit
               </button>
             </div>
-            <div className="font-readout text-[10px] sm:text-[11px] text-[#555] mt-0.5">
+            <div className="font-readout text-[10px] sm:text-[11px] text-[#888] mt-0.5">
               <span>{curExList.length} exercises</span>
               <span className="mx-1">&middot;</span>
               <span>{curMin} min</span>
@@ -261,7 +261,7 @@ export default function PracticePage(props: PracticePageProps) {
                     value={exPickerSearch} onChange={e => setExPickerSearch(e.target.value)} />
                   <div className="flex gap-1 flex-wrap">
                     <button type="button" onClick={() => setExPickerCat("All")}
-                      className={`font-label text-[9px] px-2 py-0.5 rounded-sm border transition-all ${exPickerCat === "All" ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>All</button>
+                      className={`font-label text-[9px] px-2 py-0.5 rounded-sm border transition-all ${exPickerCat === "All" ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#888]"}`}>All</button>
                     {CATS.filter(c => c !== "Songs").map(cat => (
                       <button type="button" key={cat} onClick={() => setExPickerCat(cat)}
                         className="font-label text-[9px] px-2 py-0.5 rounded-sm border transition-all"
@@ -285,7 +285,7 @@ export default function PracticePage(props: PracticePageProps) {
                       <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: COL[ex.c] || "#888" }} />
                       <div className="flex-1 min-w-0">
                         <div className="text-[12px] text-[#ccc] truncate">{ex.n}</div>
-                        <div className="font-readout text-[9px] text-[#555]">{ex.c} &middot; {ex.m}min {ex.b ? "&middot; " + ex.b : ""}</div>
+                        <div className="font-readout text-[9px] text-[#888]">{ex.c} &middot; {ex.m}min {ex.b ? "&middot; " + ex.b : ""}</div>
                       </div>
                     </button>
                   ))}
@@ -306,7 +306,7 @@ export default function PracticePage(props: PracticePageProps) {
                   <div className="font-label text-[11px] text-[#f59e0b] mb-2">Add Song from Library</div>
                   <input type="text" placeholder="Search by title or artist..." className="input w-full" autoFocus
                     value={songPickerSearch} onChange={e => setSongPickerSearch(e.target.value)} />
-                  <div className="font-readout text-[9px] text-[#555] mt-2">
+                  <div className="font-readout text-[9px] text-[#888] mt-2">
                     {librarySearchDebounced
                       ? `${librarySearchResults.length} results${librarySearchResults.length >= 20 ? " (top 20)" : ""}`
                       : `${SONG_LIBRARY.length} songs in library \u00B7 showing first 20`}
@@ -320,14 +320,14 @@ export default function PracticePage(props: PracticePageProps) {
                       <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: COL["Songs"] || "#f59e0b" }} />
                       <div className="flex-1 min-w-0">
                         <div className="text-[12px] text-[#ccc] truncate">{entry.title}</div>
-                        <div className="font-readout text-[9px] text-[#555] truncate">
+                        <div className="font-readout text-[9px] text-[#888] truncate">
                           {entry.artist}{entry.genre ? ` \u00B7 ${entry.genre}` : ""}{entry.difficulty ? ` \u00B7 ${entry.difficulty}` : ""}
                         </div>
                       </div>
                     </button>
                   ))}
                   {librarySearchResults.length === 0 && (
-                    <div className="p-6 text-center text-[12px] text-[#555]">
+                    <div className="p-6 text-center text-[12px] text-[#888]">
                       No songs match &ldquo;{songPickerSearch}&rdquo;. Try a different search.
                     </div>
                   )}
@@ -351,12 +351,12 @@ export default function PracticePage(props: PracticePageProps) {
                 <input type="number" value={hrs} min={0} max={8} step={0.5} title="Practice hours"
                   onChange={(e) => setDayHrs((p) => ({ ...p, [selDay]: Number(e.target.value) }))}
                   className="input input-gold w-16 text-center !py-1" />
-                <span className="font-label text-[9px] text-[#444]">hours</span>
+                <span className="font-label text-[9px] text-[#888]">hours</span>
               </div>
               <div className="font-label text-[10px] text-[#888] mb-2">Categories</div>
               {Object.entries(CAT_GROUPS).map(([group, cats]) => (
                 <div key={group} className="mb-2">
-                  <div className="font-label text-[9px] text-[#555] mb-1">{group}</div>
+                  <div className="font-label text-[9px] text-[#888] mb-1">{group}</div>
                   <div className="flex flex-wrap gap-1">
                     {cats.map((cat) => {
                       const on = ac.includes(cat), c = COL[cat] || "#888";
@@ -387,7 +387,7 @@ export default function PracticePage(props: PracticePageProps) {
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="font-stat text-2xl text-[#D4A843] tabular-nums" style={{ minWidth: 72 }}>{fmtTimer(sessionSeconds)}</div>
-            <div className="font-label text-[10px] text-[#666]">Session</div>
+            <div className="font-label text-[10px] text-[#888]">Session</div>
             {streak.currentStreak > 0 && (
               <span className="font-label text-[10px] text-[#D4A843]">Day {streak.currentStreak}</span>
             )}
@@ -410,7 +410,7 @@ export default function PracticePage(props: PracticePageProps) {
         {curExList.length > 0 && (
           <div className="mt-2">
             <div className="flex justify-between items-center mb-1">
-              <span className="font-label text-[10px] text-[#666]">{curDone}/{curExList.length} exercises</span>
+              <span className="font-label text-[10px] text-[#888]">{curDone}/{curExList.length} exercises</span>
               <span className={`font-readout text-[11px] font-bold ${curDone === curExList.length && curExList.length > 0 ? "text-[#33CC33]" : "text-[#D4A843]"}`}>
                 {curExList.length > 0 ? Math.round((curDone / curExList.length) * 100) : 0}%
               </span>
@@ -447,9 +447,9 @@ export default function PracticePage(props: PracticePageProps) {
         {showLog && (
           <div className="mt-3 pt-3 border-t border-[#ffffff08]">
             <div className="flex items-center justify-between mb-2">
-              <span className="font-label text-[10px] text-[#666]">Practice Log - {selDay}</span>
+              <span className="font-label text-[10px] text-[#888]">Practice Log - {selDay}</span>
               {logText.trim() && (
-                <span className="font-label text-[9px] text-[#444]">Auto-saved</span>
+                <span className="font-label text-[9px] text-[#888]">Auto-saved</span>
               )}
             </div>
             <textarea
@@ -492,7 +492,7 @@ export default function PracticePage(props: PracticePageProps) {
           <path d="M9 10l12-3" stroke="#D4A843" strokeWidth="0.5" opacity="0.3" strokeDasharray="2 2"/>
         </svg>
         <div className="font-heading text-xl text-[#D4A843] mb-2">Ready to Practice?</div>
-        <div className="font-readout text-[12px] text-[#666] mb-6 max-w-[340px] mx-auto leading-relaxed">
+        <div className="font-readout text-[12px] text-[#888] mb-6 max-w-[340px] mx-auto leading-relaxed">
           {curCats.length > 0
             ? "Your categories are set. Hit Auto Fill to generate a personalized routine for today."
             : "Set your categories using the edit button above, then Auto Fill to build your session."}
@@ -525,7 +525,7 @@ export default function PracticePage(props: PracticePageProps) {
             }}>
             <div className="flex items-center gap-3 px-3 sm:px-4 py-3">
               {/* Drag handle */}
-              <div className="cursor-grab active:cursor-grabbing flex-shrink-0 text-[#333] hover:text-[#666] transition-colors hidden sm:block" title="Drag to reorder">
+              <div className="cursor-grab active:cursor-grabbing flex-shrink-0 text-[#333] hover:text-[#888] transition-colors hidden sm:block" title="Drag to reorder">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
               </div>
               <button type="button" aria-label={done ? "Mark undone" : "Mark done"} onClick={() => {
@@ -539,7 +539,7 @@ export default function PracticePage(props: PracticePageProps) {
               <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: cc }} />
               <div className="flex-1 min-w-0 cursor-pointer" tabIndex={0} role="button" onClick={() => setModal(ex)} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setModal(ex); } }}>
                 <div className="font-heading text-[13px] sm:text-sm !font-medium !normal-case !tracking-normal leading-snug">{ex.n}</div>
-                <div className="font-readout text-[10px] text-[#555] mt-0.5 flex items-center gap-0.5">
+                <div className="font-readout text-[10px] text-[#888] mt-0.5 flex items-center gap-0.5">
                   <span>{isSong ? "Song" : ex.c} &middot; </span>
                   {editingTimeIdx === idx ? (
                     <input type="number" autoFocus min={1} max={120} value={editingTimeVal}
@@ -588,13 +588,13 @@ export default function PracticePage(props: PracticePageProps) {
         const suggested = EXERCISES.filter(e => curCats.includes(e.c) && !curIds.has(e.id)).slice(0, 5);
         return suggested.length > 0 ? (
           <div className="panel p-4 mb-3 mt-2">
-            <div className="font-label text-[10px] text-[#666] mb-2">Suggested Exercises</div>
+            <div className="font-label text-[10px] text-[#888] mb-2">Suggested Exercises</div>
             {suggested.map(ex => (
               <button type="button" key={ex.id} onClick={() => setDayExMap(p => ({ ...p, [selDay]: [...(p[selDay] || []), ex] }))}
                 className="w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-[#1a1a1a] transition-colors">
                 <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: COL[ex.c] || "#888" }} />
                 <span className="text-[11px] text-[#888] flex-1 truncate">{ex.n}</span>
-                <span className="font-readout text-[9px] text-[#444]">{ex.m}m</span>
+                <span className="font-readout text-[9px] text-[#888]">{ex.m}m</span>
                 <span className="text-[10px] text-[#D4A843]">+</span>
               </button>
             ))}

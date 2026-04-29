@@ -1214,14 +1214,58 @@ input[type="number"] { -moz-appearance: textfield; }
   letter-spacing: 0.06em;
   transition: color 0.15s ease;
 }
-/* ── Focus-visible styles for accessibility ── */
+/* ══════════════════════════════════════════════════════════════
+   WCAG AA CONTRAST UTILITIES — minimum readable secondary text
+   ══════════════════════════════════════════════════════════════ */
+/* For small/secondary text on dark backgrounds, ensures >= 4.5:1 ratio */
+.text-readable-muted { color: #9a9590; }   /* ~6.2:1 on #0e0e10 */
+.text-readable-dim   { color: #8a8478; }   /* ~5.0:1 on #0e0e10 */
+
+/* Form labels inside modals/forms must hit 4.5:1 — auto-fix label color */
+form label,
+.exercise-modal-content label,
+[role="dialog"] label {
+  color: var(--text-secondary);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   FOCUS-VISIBLE — keyboard navigation indicators (WCAG 2.4.7)
+   ══════════════════════════════════════════════════════════════ */
 .btn-gold:focus-visible, .btn-ghost:focus-visible, .btn-danger:focus-visible {
   outline: 2px solid var(--gold);
   outline-offset: 2px;
 }
-.sidebar-item:focus-visible {
+.sidebar-item:focus-visible,
+.mobile-tab-item:focus-visible,
+.sidebar-profile-btn:focus-visible {
   outline: 2px solid var(--gold);
   outline-offset: -2px;
+}
+.input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 1px;
+}
+/* Generic fallback for any interactive element without specific styling */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+/* Suppress on already-styled elements above (cascade) */
+.btn-gold:focus-visible,
+.btn-ghost:focus-visible,
+.btn-danger:focus-visible,
+.sidebar-item:focus-visible,
+.mobile-tab-item:focus-visible,
+.sidebar-profile-btn:focus-visible,
+.input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  /* keep their bespoke offsets — already declared above */
 }
 
 .mobile-tab-item--active {

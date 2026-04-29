@@ -34,7 +34,7 @@ const DIFFICULTIES: SongEntry["difficulty"][] = ["Beginner", "Intermediate", "Ad
 
 export default function AddSongModal({ onClose, onSave, editSong }: AddSongModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
-  useFocusTrap(modalRef);
+  useFocusTrap(modalRef, onClose);
   const isEdit = !!editSong;
 
   // Search state
@@ -221,8 +221,9 @@ export default function AddSongModal({ onClose, onSave, editSong }: AddSongModal
             <span className="font-heading text-base font-semibold text-[#D4A843]">{isEdit ? "Edit Song" : "Add Song Manually"}</span>
           </div>
           <button type="button" onClick={onClose}
+            aria-label="Close dialog"
             className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-[#1a1a1a] transition-colors">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           </button>
@@ -261,14 +262,14 @@ export default function AddSongModal({ onClose, onSave, editSong }: AddSongModal
                       alt="" className="w-20 h-[45px] rounded object-cover flex-shrink-0 bg-[#111]" />
                     <div className="flex-1 min-w-0">
                       <div className="font-label text-[11px] text-[#ccc] truncate" dangerouslySetInnerHTML={{ __html: r.title || r.videoId }} />
-                      {r.channel && <div className="font-readout text-[9px] text-[#555] truncate">{r.channel}</div>}
+                      {r.channel && <div className="font-readout text-[9px] text-[#888] truncate">{r.channel}</div>}
                     </div>
                   </button>
                 ))}
               </div>
             )}
             {ytSearched && !ytLoading && ytResults.length === 0 && (
-              <div className="mt-2 font-readout text-[10px] text-[#555]">No results found. Try a different search.</div>
+              <div className="mt-2 font-readout text-[10px] text-[#888]">No results found. Try a different search.</div>
             )}
           </div>
 
@@ -293,22 +294,22 @@ export default function AddSongModal({ onClose, onSave, editSong }: AddSongModal
             <div className="font-label text-[11px] text-[#888] uppercase tracking-wider mb-2">Song Details</div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="font-readout text-[10px] text-[#555] mb-1 block">Song Name *</label>
+                <label className="font-readout text-[10px] text-[#888] mb-1 block">Song Name *</label>
                 <input type="text" value={title} onChange={e => setTitle(e.target.value)}
                   placeholder="e.g. Master of Puppets" className="input w-full" />
               </div>
               <div>
-                <label className="font-readout text-[10px] text-[#555] mb-1 block">Artist *</label>
+                <label className="font-readout text-[10px] text-[#888] mb-1 block">Artist *</label>
                 <input type="text" value={artist} onChange={e => setArtist(e.target.value)}
                   placeholder="e.g. Metallica" className="input w-full" />
               </div>
               <div>
-                <label className="font-readout text-[10px] text-[#555] mb-1 block">YouTube URL</label>
+                <label className="font-readout text-[10px] text-[#888] mb-1 block">YouTube URL</label>
                 <input type="url" value={ytUrl} onChange={e => setYtUrl(e.target.value)}
                   placeholder="https://youtube.com/watch?v=..." className="input w-full" />
               </div>
               <div>
-                <label className="font-readout text-[10px] text-[#555] mb-1 block">Difficulty</label>
+                <label className="font-readout text-[10px] text-[#888] mb-1 block">Difficulty</label>
                 <select value={difficulty || ""} onChange={e => setDifficulty((e.target.value || undefined) as SongEntry["difficulty"])}
                   className="input w-full">
                   <option value="">Select...</option>
@@ -316,25 +317,25 @@ export default function AddSongModal({ onClose, onSave, editSong }: AddSongModal
                 </select>
               </div>
               <div>
-                <label className="font-readout text-[10px] text-[#555] mb-1 block">Genre / Style</label>
+                <label className="font-readout text-[10px] text-[#888] mb-1 block">Genre / Style</label>
                 <select value={genre} onChange={e => setGenre(e.target.value)} className="input w-full">
                   <option value="">Select...</option>
                   {STYLES.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
               <div>
-                <label className="font-readout text-[10px] text-[#555] mb-1 block">Tuning</label>
+                <label className="font-readout text-[10px] text-[#888] mb-1 block">Tuning</label>
                 <select value={tuning} onChange={e => setTuning(e.target.value)} className="input w-full">
                   {TUNINGS.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
               <div>
-                <label className="font-readout text-[10px] text-[#555] mb-1 block">BPM</label>
+                <label className="font-readout text-[10px] text-[#888] mb-1 block">BPM</label>
                 <input type="number" value={tempo} onChange={e => setTempo(e.target.value ? Number(e.target.value) : "")}
                   placeholder="e.g. 120" min={20} max={300} className="input w-full" />
               </div>
               <div>
-                <label className="font-readout text-[10px] text-[#555] mb-1 block">Key</label>
+                <label className="font-readout text-[10px] text-[#888] mb-1 block">Key</label>
                 <select value={key} onChange={e => setKey(e.target.value)} className="input w-full">
                   <option value="">Select...</option>
                   {KEYS.map(k => <option key={k} value={k}>{k}</option>)}
@@ -342,7 +343,7 @@ export default function AddSongModal({ onClose, onSave, editSong }: AddSongModal
               </div>
             </div>
             <div className="mt-3">
-              <label className="font-readout text-[10px] text-[#555] mb-1 block">Notes</label>
+              <label className="font-readout text-[10px] text-[#888] mb-1 block">Notes</label>
               <textarea value={notes} onChange={e => setNotes(e.target.value)}
                 placeholder="Practice notes, sections to focus on, etc."
                 rows={3} className="input w-full resize-none" />
@@ -362,7 +363,7 @@ export default function AddSongModal({ onClose, onSave, editSong }: AddSongModal
               {tutorialLoading && (
                 <div className="flex items-center gap-2 py-3">
                   <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2"><circle cx="12" cy="12" r="10" strokeDasharray="60" strokeDashoffset="20" /></svg>
-                  <span className="font-readout text-[10px] text-[#555]">Finding tutorials...</span>
+                  <span className="font-readout text-[10px] text-[#888]">Finding tutorials...</span>
                 </div>
               )}
               {tutorialSearched && !tutorialLoading && tutorialResults.length > 0 && (
@@ -374,7 +375,7 @@ export default function AddSongModal({ onClose, onSave, editSong }: AddSongModal
                         alt="" className="w-24 h-[54px] rounded object-cover flex-shrink-0 bg-[#111]" />
                       <div className="flex-1 min-w-0">
                         <div className="font-label text-[11px] text-[#ccc] truncate" dangerouslySetInnerHTML={{ __html: r.title || "Guitar Tutorial" }} />
-                        {r.channel && <div className="font-readout text-[9px] text-[#555] truncate">{r.channel}</div>}
+                        {r.channel && <div className="font-readout text-[9px] text-[#888] truncate">{r.channel}</div>}
                       </div>
                       {selectedTutorialId === r.videoId && (
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="#D4A843" stroke="none"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" /></svg>
@@ -384,7 +385,7 @@ export default function AddSongModal({ onClose, onSave, editSong }: AddSongModal
                 </div>
               )}
               {tutorialSearched && !tutorialLoading && tutorialResults.length === 0 && (
-                <div className="font-readout text-[10px] text-[#555]">No tutorials found.</div>
+                <div className="font-readout text-[10px] text-[#888]">No tutorials found.</div>
               )}
             </div>
           )}
@@ -394,7 +395,7 @@ export default function AddSongModal({ onClose, onSave, editSong }: AddSongModal
             <div className="font-label text-[11px] text-[#888] uppercase tracking-wider mb-2">Attachments</div>
             <div className="flex items-center gap-3">
               <button type="button" onClick={() => fileInputRef.current?.click()}
-                className="font-label text-[11px] px-4 py-2 rounded-lg border border-dashed border-[#333] text-[#666] hover:border-[#D4A843]/40 hover:text-[#D4A843] transition-all flex items-center gap-2">
+                className="font-label text-[11px] px-4 py-2 rounded-lg border border-dashed border-[#333] text-[#888] hover:border-[#D4A843]/40 hover:text-[#D4A843] transition-all flex items-center gap-2">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
                 </svg>

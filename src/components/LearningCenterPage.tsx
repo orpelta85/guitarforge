@@ -593,7 +593,7 @@ function ChordDiagram({ pos, onPlay }: { pos: ChordPosition; onPlay: () => void 
   const base = maxF <= 5 ? 1 : minF;
   return (
     <div className="bg-[#121214] border border-[#1a1a1a] rounded-sm p-3 text-center cursor-pointer hover:border-[#333] transition-all" onClick={onPlay} dir="ltr">
-      <div className="font-readout text-[9px] text-[#555] mb-1">{base > 1 ? `Fret ${base}` : "Open"}</div>
+      <div className="font-readout text-[9px] text-[#888] mb-1">{base > 1 ? `Fret ${base}` : "Open"}</div>
       <svg viewBox="0 0 110 130" className="w-24 h-28 mx-auto">
         {base === 1 && <rect x="18" y="10" width="74" height="3" fill="#D4A843" rx="1" />}
         {base > 1 && <text x="8" y="26" fill="#D4A843" fontSize="10" fontFamily="monospace">{base}</text>}
@@ -1259,18 +1259,18 @@ export default function LearningCenterPage() {
         <div className="flex items-center gap-4">
           <div className="flex-shrink-0">
             <div className="font-heading text-lg sm:text-xl font-bold text-[#D4A843]">Learning Center</div>
-            <div className="text-[10px] text-[#555] mt-0.5">{completedLessons}/{totalLessons} lessons completed{totalExerciseAnswers > 0 ? ` \u00B7 ${totalExerciseAnswers} exercises answered` : ""}</div>
+            <div className="text-[10px] text-[#888] mt-0.5">{completedLessons}/{totalLessons} lessons completed{totalExerciseAnswers > 0 ? ` \u00B7 ${totalExerciseAnswers} exercises answered` : ""}</div>
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 justify-end mb-1">
               <span className="font-readout text-[12px] font-bold text-[#D4A843]">LV.{ls.level}</span>
-              <span className="font-readout text-[10px] text-[#555]">{ls.xp} XP</span>
-              {ls.bestStreak > 0 && <span className="font-readout text-[9px] text-[#444]">Best streak: {ls.bestStreak}</span>}
+              <span className="font-readout text-[10px] text-[#888]">{ls.xp} XP</span>
+              {ls.bestStreak > 0 && <span className="font-readout text-[9px] text-[#888]">Best streak: {ls.bestStreak}</span>}
             </div>
             <div className="h-1.5 bg-[#1a1a1a] rounded-full overflow-hidden">
               <div className="h-full bg-gradient-to-r from-[#D4A843] to-[#DFBD69] rounded-full transition-all duration-500" style={{ width: (ls.xp % 100) + "%" }} />
             </div>
-            <div className="text-[9px] text-[#444] text-right mt-0.5">{ls.xp % 100}/100 XP to next level</div>
+            <div className="text-[9px] text-[#888] text-right mt-0.5">{ls.xp % 100}/100 XP to next level</div>
           </div>
         </div>
       </div>
@@ -1300,7 +1300,7 @@ export default function LearningCenterPage() {
               <div className="h-1 bg-[#1a1a1a] rounded-full overflow-hidden">
                 <div className="h-full bg-[#D4A843] rounded-full transition-all" style={{ width: `${Math.round((completedLessons / totalLessons) * 100)}%` }} />
               </div>
-              <div className="text-[9px] text-[#555] mt-1">{Math.round((completedLessons / totalLessons) * 100)}% of all lessons completed</div>
+              <div className="text-[9px] text-[#888] mt-1">{Math.round((completedLessons / totalLessons) * 100)}% of all lessons completed</div>
             </div>
           )}
         </div>
@@ -1312,7 +1312,7 @@ export default function LearningCenterPage() {
           <button key={k} onClick={() => setMainTab(k)}
             className={`font-label text-[12px] px-4 sm:px-5 py-3 sm:py-2.5 rounded-lg cursor-pointer transition-all flex-1 min-h-[40px] font-semibold ${mainTab === k ? "bg-[#D4A843] text-[#121214] shadow-lg shadow-[#D4A843]/20" : "text-[#666] border border-[#222] hover:border-[#333] hover:text-[#888]"}`}>
             {lbl}
-            <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] ${mainTab === k ? "bg-[#121214]/20 text-[#121214]/60" : "bg-white/10 text-[#444]"}`}>{count}</span>
+            <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] ${mainTab === k ? "bg-[#121214]/20 text-[#121214]/60" : "bg-white/10 text-[#888]"}`}>{count}</span>
           </button>
         ))}
       </div>
@@ -1345,7 +1345,7 @@ export default function LearningCenterPage() {
                         <span className={`font-heading text-[14px] font-semibold ${isExpanded ? "text-[#eee]" : "text-[#ccc]"}`}>{cat}</span>
                         {allDone && <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#22c55e]/15 text-[#22c55e] font-semibold">Complete</span>}
                       </div>
-                      <div className="text-[10px] text-[#555] mt-0.5">{catLessons.length} lessons {"\u00B7"} {completedCount} completed</div>
+                      <div className="text-[10px] text-[#888] mt-0.5">{catLessons.length} lessons {"\u00B7"} {completedCount} completed</div>
                     </div>
                     <div className="flex items-center gap-3 flex-shrink-0">
                       <div className="text-right hidden sm:block">
@@ -1354,7 +1354,7 @@ export default function LearningCenterPage() {
                       <div className="w-16 h-2 bg-[#1a1a1a] rounded-full overflow-hidden">
                         <div className="h-full rounded-full transition-all duration-500" style={{ width: `${catLessons.length > 0 ? (completedCount / catLessons.length) * 100 : 0}%`, background: catColor }} />
                       </div>
-                      <span className={`text-[11px] transition-transform duration-200 ${isExpanded ? "rotate-90" : ""} ${isExpanded ? "text-[#D4A843]" : "text-[#555]"}`}>{"\u25B6"}</span>
+                      <span className={`text-[11px] transition-transform duration-200 ${isExpanded ? "rotate-90" : ""} ${isExpanded ? "text-[#D4A843]" : "text-[#888]"}`}>{"\u25B6"}</span>
                     </div>
                   </div>
                   {isExpanded && (
@@ -1375,10 +1375,10 @@ export default function LearningCenterPage() {
                                   <div className={`font-label text-[12px] font-semibold leading-tight ${done ? "text-[#D4A843]" : "text-[#ddd]"}`}>{l.title}</div>
                                   <div className="text-[10px] text-[#666] mt-1 leading-snug line-clamp-2">{l.desc}</div>
                                   <div className="flex items-center gap-2 mt-2">
-                                    <span className="text-[9px] text-[#555]">{meta.time} min</span>
+                                    <span className="text-[9px] text-[#888]">{meta.time} min</span>
                                     <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold" style={{ background: diffColor + "15", color: diffColor }}>{DIFF_LABELS[meta.difficulty]}</span>
-                                    {l.steps && <span className="text-[9px] text-[#444]">{"\u00B7"} Interactive</span>}
-                                    {l.quiz && <span className="text-[9px] text-[#444]">{"\u00B7"} Quiz</span>}
+                                    {l.steps && <span className="text-[9px] text-[#888]">{"\u00B7"} Interactive</span>}
+                                    {l.quiz && <span className="text-[9px] text-[#888]">{"\u00B7"} Quiz</span>}
                                   </div>
                                 </div>
                               </div>
@@ -1399,7 +1399,7 @@ export default function LearningCenterPage() {
             <button onClick={() => setOpenLesson(null)} className="text-amber-500 hover:text-amber-400 cursor-pointer text-[11px] font-label mb-3 transition-colors">&larr; Back to list</button>
             <div className="panel p-3 sm:p-5 mb-3">
               <div className="font-heading text-base sm:text-lg font-bold text-[#D4A843] mb-1">{activeLessonObj.title}</div>
-              <div className="font-label text-[10px] text-[#555] mb-3 sm:mb-4">{activeLessonObj.desc}</div>
+              <div className="font-label text-[10px] text-[#888] mb-3 sm:mb-4">{activeLessonObj.desc}</div>
               {activeLessonObj.content.map((block, i) => (
                 <p key={i} className="text-[12px] text-[#bbb] mb-3 leading-relaxed">{block}</p>
               ))}
@@ -1410,7 +1410,7 @@ export default function LearningCenterPage() {
               )}
               {!activeLessonObj.steps && activeLessonObj.fretboardRoot && activeLessonObj.fretboardNotes && (
                 <div className="mt-3 mb-4">
-                  <div className="font-label text-[9px] text-[#555] mb-1">Fretboard — {activeLessonObj.fretboardRoot}</div>
+                  <div className="font-label text-[9px] text-[#888] mb-1">Fretboard — {activeLessonObj.fretboardRoot}</div>
                   <LCFretboard highlightNotes={activeLessonObj.fretboardNotes} rootNote={activeLessonObj.fretboardRoot} maxFret={12} />
                 </div>
               )}
@@ -1462,19 +1462,19 @@ export default function LearningCenterPage() {
                       Next
                     </button>
                     <div className="flex-1" />
-                    <div className="font-readout text-[9px] text-[#444]">{currentStep + 1}/{steps.length}</div>
+                    <div className="font-readout text-[9px] text-[#888]">{currentStep + 1}/{steps.length}</div>
                   </div>
 
                   {/* Step list */}
                   <div className="border-t border-[#1a1a1a] pt-3">
-                    <div className="font-label text-[9px] text-[#555] mb-2">All steps</div>
+                    <div className="font-label text-[9px] text-[#888] mb-2">All steps</div>
                     <div className="max-h-[200px] overflow-y-auto space-y-1">
                       {steps.map((s, i) => (
                         <div
                           key={i}
                           onClick={() => setCurrentStep(i)}
                           className={`flex items-center gap-2 px-3 py-2 rounded-sm cursor-pointer transition-all ${i === currentStep ? "bg-[#D4A843]/10 border border-[#D4A843]/30" : "hover:bg-[#141414] border border-transparent"}`}>
-                          <div className={`font-readout text-[9px] w-5 text-center flex-shrink-0 ${i === currentStep ? "text-[#D4A843]" : i < currentStep ? "text-[#22c55e]" : "text-[#444]"}`}>
+                          <div className={`font-readout text-[9px] w-5 text-center flex-shrink-0 ${i === currentStep ? "text-[#D4A843]" : i < currentStep ? "text-[#22c55e]" : "text-[#888]"}`}>
                             {i < currentStep ? "✓" : i + 1}
                           </div>
                           <div className={`text-[10px] leading-tight ${i === currentStep ? "text-[#ccc]" : "text-[#666]"}`}>
@@ -1542,11 +1542,11 @@ export default function LearningCenterPage() {
                       {LESSON_META[nextLesson.id]?.icon || "?"}
                     </div>
                     <div className="min-w-0">
-                      <div className="font-label text-[10px] text-[#555]">Next Lesson</div>
+                      <div className="font-label text-[10px] text-[#888]">Next Lesson</div>
                       <div className="font-heading text-[13px] text-[#ccc] truncate group-hover:text-[#eee] transition-colors">{nextLesson.title}</div>
                     </div>
                   </div>
-                  <span className="text-[#555] group-hover:text-[#D4A843] transition-colors text-sm flex-shrink-0 ml-2">&rarr;</span>
+                  <span className="text-[#888] group-hover:text-[#D4A843] transition-colors text-sm flex-shrink-0 ml-2">&rarr;</span>
                 </button>
               );
             })()}
@@ -1614,13 +1614,13 @@ export default function LearningCenterPage() {
                           <span className={`font-heading text-[14px] font-semibold ${activeInGroup ? "text-[#eee]" : "text-[#ccc]"}`}>{group.title}</span>
                           <span className="font-readout text-[9px] px-1.5 py-0.5 rounded bg-[#1a1a1a] text-[#666]">{group.items.length} exercises</span>
                         </div>
-                        <div className="text-[10px] text-[#555] leading-tight mt-0.5">{group.desc}</div>
+                        <div className="text-[10px] text-[#888] leading-tight mt-0.5">{group.desc}</div>
                       </div>
                       <div className="flex items-center gap-3 flex-shrink-0">
                         {answeredInGroup > 0 && (
                           <span className="font-readout text-[10px] text-[#666]">{answeredInGroup} answered</span>
                         )}
-                        <span className={`text-[11px] transition-transform duration-200 ${isOpen ? "rotate-90" : ""} ${activeInGroup ? "text-[#D4A843]" : "text-[#555]"}`}>{"\u25B6"}</span>
+                        <span className={`text-[11px] transition-transform duration-200 ${isOpen ? "rotate-90" : ""} ${activeInGroup ? "text-[#D4A843]" : "text-[#888]"}`}>{"\u25B6"}</span>
                       </div>
                     </div>
                     {isOpen && (
@@ -1640,7 +1640,7 @@ export default function LearningCenterPage() {
                                   <div className={`w-2 h-full min-h-[32px] rounded-full flex-shrink-0 ${exMode === m ? "bg-[#D4A843]" : "bg-[#222]"}`} />
                                   <div className="flex-1 min-w-0">
                                     <div className={`font-label text-[12px] font-semibold leading-tight ${exMode === m ? "text-[#D4A843]" : "text-[#ddd]"}`}>{label}</div>
-                                    <div className="text-[9px] text-[#555] leading-tight mt-0.5">{desc}</div>
+                                    <div className="text-[9px] text-[#888] leading-tight mt-0.5">{desc}</div>
                                     <div className="flex items-center gap-2 mt-1.5">
                                       <span className="flex gap-0.5">
                                         {[1,2,3].map(d => (
@@ -1668,7 +1668,7 @@ export default function LearningCenterPage() {
                           <div className="flex gap-1 mb-3">
                             {([["exercise","Exercise"],["achievements","Achievements"],["reference","Reference"]] as [SubTab,string][]).map(([t,lbl]) => (
                               <button key={t} onClick={() => setSubTab(t)}
-                                className={`font-label text-[10px] px-3 py-2 sm:py-1 rounded-sm cursor-pointer border flex-1 transition-all min-h-[36px] ${subTab === t ? "border-[#D4A843] text-[#D4A843]" : "border-[#222] text-[#444]"}`}>{lbl}</button>
+                                className={`font-label text-[10px] px-3 py-2 sm:py-1 rounded-sm cursor-pointer border flex-1 transition-all min-h-[36px] ${subTab === t ? "border-[#D4A843] text-[#D4A843]" : "border-[#222] text-[#888]"}`}>{lbl}</button>
                             ))}
                           </div>
                         )}
@@ -1681,7 +1681,7 @@ export default function LearningCenterPage() {
                               <div className="flex gap-1 mb-4 flex-wrap">
                                 {(["scale","interval","chord"] as ConSubMode[]).map(m => (
                                   <button key={m} onClick={() => { setConSubMode(m); setConSelected(new Set()); setConRevealed(false); }}
-                                    className={`font-label text-[10px] px-3 py-1.5 rounded-sm cursor-pointer border ${conSubMode === m ? "border-[#D4A843] text-[#D4A843] bg-[#D4A843]/8" : "border-[#222] text-[#555]"}`}>
+                                    className={`font-label text-[10px] px-3 py-1.5 rounded-sm cursor-pointer border ${conSubMode === m ? "border-[#D4A843] text-[#D4A843] bg-[#D4A843]/8" : "border-[#222] text-[#888]"}`}>
                                     {m === "scale" ? "Scale" : m === "interval" ? "Interval" : "Chord"}
                                   </button>
                                 ))}
@@ -1689,7 +1689,7 @@ export default function LearningCenterPage() {
 
                               {/* Root selector */}
                               <div className="mb-3">
-                                <div className="font-label text-[9px] text-[#555] mb-1">Root</div>
+                                <div className="font-label text-[9px] text-[#888] mb-1">Root</div>
                                 <div className="flex gap-1 flex-wrap">
                                   {NOTES.map(n => (
                                     <button key={n} onClick={() => { setConRoot(n); setConSelected(new Set()); setConRevealed(false); }}
@@ -1701,11 +1701,11 @@ export default function LearningCenterPage() {
                               {/* Scale sub-mode */}
                               {conSubMode === "scale" && (
                                 <div className="mb-3">
-                                  <div className="font-label text-[9px] text-[#555] mb-1">Scale</div>
+                                  <div className="font-label text-[9px] text-[#888] mb-1">Scale</div>
                                   <div className="flex gap-1 flex-wrap">
                                     {ALL_SCALES.map(s => (
                                       <button key={s.name} onClick={() => { setConScale(s.name); setConSelected(new Set()); setConRevealed(false); }}
-                                        className={`font-label text-[10px] px-2 py-1 rounded-sm cursor-pointer border ${conScale === s.name ? "border-[#D4A843] text-[#D4A843]" : "border-[#222] text-[#555]"}`}>{s.name}</button>
+                                        className={`font-label text-[10px] px-2 py-1 rounded-sm cursor-pointer border ${conScale === s.name ? "border-[#D4A843] text-[#D4A843]" : "border-[#222] text-[#888]"}`}>{s.name}</button>
                                     ))}
                                   </div>
                                 </div>
@@ -1714,11 +1714,11 @@ export default function LearningCenterPage() {
                               {/* Interval sub-mode */}
                               {conSubMode === "interval" && (
                                 <div className="mb-3">
-                                  <div className="font-label text-[9px] text-[#555] mb-1">Interval</div>
+                                  <div className="font-label text-[9px] text-[#888] mb-1">Interval</div>
                                   <div className="flex gap-1 flex-wrap">
                                     {ALL_INTERVALS.map(iv => (
                                       <button key={iv.name} onClick={() => { setConIvName(iv.name); setConSelected(new Set()); setConRevealed(false); }}
-                                        className={`font-label text-[10px] px-2 py-1 rounded-sm cursor-pointer border ${conIvName === iv.name ? "border-[#D4A843] text-[#D4A843]" : "border-[#222] text-[#555]"}`}>{iv.name}</button>
+                                        className={`font-label text-[10px] px-2 py-1 rounded-sm cursor-pointer border ${conIvName === iv.name ? "border-[#D4A843] text-[#D4A843]" : "border-[#222] text-[#888]"}`}>{iv.name}</button>
                                     ))}
                                   </div>
                                 </div>
@@ -1727,11 +1727,11 @@ export default function LearningCenterPage() {
                               {/* Chord sub-mode */}
                               {conSubMode === "chord" && (
                                 <div className="mb-3">
-                                  <div className="font-label text-[9px] text-[#555] mb-1">Chord Type</div>
+                                  <div className="font-label text-[9px] text-[#888] mb-1">Chord Type</div>
                                   <div className="flex gap-1 flex-wrap">
                                     {ALL_CHORDS.map(c => (
                                       <button key={c.name} onClick={() => { setConChordType(c.name); setConSelected(new Set()); setConRevealed(false); }}
-                                        className={`font-label text-[10px] px-2 py-1 rounded-sm cursor-pointer border ${conChordType === c.name ? "border-[#D4A843] text-[#D4A843]" : "border-[#222] text-[#555]"}`}>{c.name}</button>
+                                        className={`font-label text-[10px] px-2 py-1 rounded-sm cursor-pointer border ${conChordType === c.name ? "border-[#D4A843] text-[#D4A843]" : "border-[#222] text-[#888]"}`}>{c.name}</button>
                                     ))}
                                   </div>
                                 </div>
@@ -1740,7 +1740,7 @@ export default function LearningCenterPage() {
                               <div className="font-label text-[11px] text-[#ccc] mb-2">
                                 Build: {conRoot} {conSubMode === "scale" ? conScale : conSubMode === "interval" ? conIvName : conChordType}
                               </div>
-                              <div className="text-[10px] text-[#555] mb-3">
+                              <div className="text-[10px] text-[#888] mb-3">
                                 Selected: {conSelected.size > 0 ? [...conSelected].join(", ") : "—"}
                               </div>
 
@@ -1835,7 +1835,7 @@ export default function LearningCenterPage() {
                                   <div className="flex items-center gap-1.5">
                                     <div className={`led ${scorePct >= 80 ? "led-on" : scorePct >= 50 ? "led-gold" : score.total > 0 ? "led-red" : "led-off"}`} />
                                     <span className="font-readout text-sm text-[#D4A843]">{score.correct}/{score.total}</span>
-                                    {score.total > 0 && <span className="font-readout text-[10px] text-[#555]">({scorePct}%)</span>}
+                                    {score.total > 0 && <span className="font-readout text-[10px] text-[#888]">({scorePct}%)</span>}
                                   </div>
                                   {score.streak > 0 && <span className="font-readout text-sm" style={{ color: score.streak >= 10 ? "#33CC33" : score.streak >= 5 ? "#D4A843" : "#888" }}>{score.streak}x</span>}
                                 </div>
@@ -1845,7 +1845,7 @@ export default function LearningCenterPage() {
 
                             <div className="panel p-3 sm:p-4 mb-3">
                               <div className="flex justify-between items-center mb-4">
-                                <div className="font-label text-[10px] text-[#555]">
+                                <div className="font-label text-[10px] text-[#888]">
                                   {exMode === "fb-intervals" ? "What is the interval between the two points?" :
                                    exMode === "fb-scales" ? "What is the highlighted scale?" :
                                    "What type of chord is this?"}
@@ -1912,7 +1912,7 @@ export default function LearningCenterPage() {
                                   <div className="flex items-center gap-1.5">
                                     <div className={`led ${scorePct >= 80 ? "led-on" : scorePct >= 50 ? "led-gold" : score.total > 0 ? "led-red" : "led-off"}`} />
                                     <span className="font-readout text-sm text-[#D4A843]">{score.correct}/{score.total}</span>
-                                    {score.total > 0 && <span className="font-readout text-[10px] text-[#555]">({scorePct}%)</span>}
+                                    {score.total > 0 && <span className="font-readout text-[10px] text-[#888]">({scorePct}%)</span>}
                                   </div>
                                   {score.streak > 0 && <span className="font-readout text-sm" style={{ color: score.streak >= 10 ? "#33CC33" : score.streak >= 5 ? "#D4A843" : "#888" }}>{score.streak}x</span>}
                                 </div>
@@ -1922,7 +1922,7 @@ export default function LearningCenterPage() {
 
                             <div className="panel p-6 mb-3">
                               <div className="text-center mb-4">
-                                <div className="font-label text-[10px] text-[#555] mb-2">Identify the note you hear</div>
+                                <div className="font-label text-[10px] text-[#888] mb-2">Identify the note you hear</div>
                               </div>
                               <div className="flex justify-center gap-3 mb-6">
                                 <button onClick={newQ} className="w-16 h-16 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95 flex items-center justify-center"
@@ -1972,7 +1972,7 @@ export default function LearningCenterPage() {
                                   <div className="flex items-center gap-1.5">
                                     <div className={`led ${scorePct >= 80 ? "led-on" : scorePct >= 50 ? "led-gold" : score.total > 0 ? "led-red" : "led-off"}`} />
                                     <span className="font-readout text-sm text-[#D4A843]">{score.correct}/{score.total}</span>
-                                    {score.total > 0 && <span className="font-readout text-[10px] text-[#555]">({scorePct}%)</span>}
+                                    {score.total > 0 && <span className="font-readout text-[10px] text-[#888]">({scorePct}%)</span>}
                                   </div>
                                   {score.streak > 0 && <span className="font-readout text-sm" style={{ color: score.streak >= 10 ? "#33CC33" : score.streak >= 5 ? "#D4A843" : "#888" }}>{score.streak}x</span>}
                                 </div>
@@ -1982,7 +1982,7 @@ export default function LearningCenterPage() {
 
                             <div className="panel p-6 mb-3">
                               <div className="text-center mb-2">
-                                <div className="font-label text-[10px] text-[#555]">Find the note at the given interval</div>
+                                <div className="font-label text-[10px] text-[#888]">Find the note at the given interval</div>
                               </div>
                               <div className="flex justify-center gap-3 mb-4">
                                 <button onClick={newQ} className="w-16 h-16 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95 flex items-center justify-center"
@@ -1998,7 +1998,7 @@ export default function LearningCenterPage() {
                               {ivConRoot && ivConInterval && (
                                 <div className="text-center mb-4">
                                   <div className="font-heading text-2xl text-[#D4A843]">Build {ivConInterval} from {ivConRoot}</div>
-                                  <div className="text-[11px] text-[#555] mt-1">Select the note that is {ivConInterval} above {ivConRoot}</div>
+                                  <div className="text-[11px] text-[#888] mt-1">Select the note that is {ivConInterval} above {ivConRoot}</div>
                                 </div>
                               )}
 
@@ -2047,7 +2047,7 @@ export default function LearningCenterPage() {
                                   <div className="flex items-center gap-1.5">
                                     <div className={`led ${scorePct >= 80 ? "led-on" : scorePct >= 50 ? "led-gold" : score.total > 0 ? "led-red" : "led-off"}`} />
                                     <span className="font-readout text-sm text-[#D4A843]">{score.correct}/{score.total}</span>
-                                    {score.total > 0 && <span className="font-readout text-[10px] text-[#555]">({scorePct}%)</span>}
+                                    {score.total > 0 && <span className="font-readout text-[10px] text-[#888]">({scorePct}%)</span>}
                                   </div>
                                   {score.streak > 0 && <span className="font-readout text-sm" style={{ color: score.streak >= 10 ? "#33CC33" : score.streak >= 5 ? "#D4A843" : "#888" }}>{score.streak}x</span>}
                                 </div>
@@ -2057,7 +2057,7 @@ export default function LearningCenterPage() {
 
                             <div className="panel p-6 mb-3">
                               <div className="text-center mb-2">
-                                <div className="font-label text-[10px] text-[#555]">Select all notes of the chord</div>
+                                <div className="font-label text-[10px] text-[#888]">Select all notes of the chord</div>
                               </div>
                               <div className="flex justify-center gap-3 mb-4">
                                 <button onClick={newQ} className="w-16 h-16 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95 flex items-center justify-center"
@@ -2073,7 +2073,7 @@ export default function LearningCenterPage() {
                               {chConRoot && chConType && (
                                 <div className="text-center mb-4">
                                   <div className="font-heading text-2xl text-[#D4A843]">Build: {chConRoot} {chConType}</div>
-                                  <div className="text-[11px] text-[#555] mt-1">Select all notes of the chord</div>
+                                  <div className="text-[11px] text-[#888] mt-1">Select all notes of the chord</div>
                                   <div className="text-[10px] text-[#666] mt-1">
                                     Selected: {chConSelected.size > 0 ? [...chConSelected].join(", ") : "—"}
                                   </div>
@@ -2133,7 +2133,7 @@ export default function LearningCenterPage() {
                                 <div className="flex items-center gap-1.5">
                                   <div className={`led ${scorePct >= 80 ? "led-on" : scorePct >= 50 ? "led-gold" : score.total > 0 ? "led-red" : "led-off"}`} />
                                   <span className="font-readout text-sm text-[#D4A843]">{score.correct}/{score.total}</span>
-                                  {score.total > 0 && <span className="font-readout text-[10px] text-[#555]">({scorePct}%)</span>}
+                                  {score.total > 0 && <span className="font-readout text-[10px] text-[#888]">({scorePct}%)</span>}
                                 </div>
                                 {score.streak > 0 && <span className="font-readout text-sm" style={{ color: score.streak >= 10 ? "#33CC33" : score.streak >= 5 ? "#D4A843" : "#888" }}>{score.streak}x</span>}
                               </div>
@@ -2149,24 +2149,24 @@ export default function LearningCenterPage() {
                             <div className="panel p-3 sm:p-4 mb-3">
                               <div className="font-label text-[10px] text-[#D4A843] mb-3">Exercise Settings</div>
                               {exMode === "intervals" && (<>
-                                <div className="mb-3"><div className="font-label text-[9px] text-[#555] mb-1">Direction</div>
+                                <div className="mb-3"><div className="font-label text-[9px] text-[#888] mb-1">Direction</div>
                                   <div className="flex gap-1">{(["ascending","descending","harmonic"] as const).map(d => (
-                                    <button key={d} onClick={() => setDirection(d)} className={`font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border ${direction === d ? "border-[#D4A843] text-[#D4A843]" : "border-[#222] text-[#444]"}`}>{d}</button>
+                                    <button key={d} onClick={() => setDirection(d)} className={`font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border ${direction === d ? "border-[#D4A843] text-[#D4A843]" : "border-[#222] text-[#888]"}`}>{d}</button>
                                   ))}</div></div>
-                                <div className="font-label text-[9px] text-[#555] mb-1">Active Intervals</div>
+                                <div className="font-label text-[9px] text-[#888] mb-1">Active Intervals</div>
                                 <div className="flex flex-wrap gap-1">{ALL_INTERVALS.map(i => (
                                   <button key={i.name} onClick={() => setEnabledIntervals(toggleSet(enabledIntervals, i.st))}
                                     className="font-label text-[10px] px-2 py-1 rounded-sm cursor-pointer border"
                                     style={enabledIntervals.has(i.st) ? { borderColor: i.color, color: i.color, background: i.color + "12" } : { borderColor: "#222", color: "#444" }}>{i.name}</button>
                                 ))}</div>
                               </>)}
-                              {exMode === "chords" && (<><div className="font-label text-[9px] text-[#555] mb-1">Chord Qualities in Play (root is randomized)</div>
+                              {exMode === "chords" && (<><div className="font-label text-[9px] text-[#888] mb-1">Chord Qualities in Play (root is randomized)</div>
                                 <div className="flex flex-wrap gap-1">{ALL_CHORDS.map(c => (
                                   <button key={c.name} onClick={() => setEnabledChords(toggleSet(enabledChords, c.name))}
                                     className="font-label text-[10px] px-2 py-1 rounded-sm cursor-pointer border"
                                     style={enabledChords.has(c.name) ? { borderColor: c.color, color: c.color, background: c.color + "12" } : { borderColor: "#222", color: "#444" }}>{c.name}</button>
                                 ))}</div></>)}
-                              {exMode === "scales" && (<><div className="font-label text-[9px] text-[#555] mb-1">Active Scales</div>
+                              {exMode === "scales" && (<><div className="font-label text-[9px] text-[#888] mb-1">Active Scales</div>
                                 <div className="flex flex-wrap gap-1">{ALL_SCALES.map(s => (
                                   <button key={s.name} onClick={() => setEnabledScales(toggleSet(enabledScales, s.name))}
                                     className="font-label text-[10px] px-2 py-1 rounded-sm cursor-pointer border"
@@ -2184,7 +2184,7 @@ export default function LearningCenterPage() {
                           {/* Play area */}
                           <div className="panel p-6 mb-3">
                             <div className="text-center mb-4">
-                              <div className="font-label text-[10px] text-[#555] mb-2">
+                              <div className="font-label text-[10px] text-[#888] mb-2">
                                 {exMode === "intervals" ? "Identify the interval you hear" :
                                  exMode === "chords" ? "Identify the chord you hear (root + quality)" :
                                  exMode === "scales" ? "Identify the scale you hear" :
@@ -2261,7 +2261,7 @@ export default function LearningCenterPage() {
                                 <div className="flex items-center gap-1.5">
                                   <div className={`led ${scorePct >= 80 ? "led-on" : scorePct >= 50 ? "led-gold" : score.total > 0 ? "led-red" : "led-off"}`} />
                                   <span className="font-readout text-sm text-[#D4A843]">{score.correct}/{score.total}</span>
-                                  {score.total > 0 && <span className="font-readout text-[10px] text-[#555]">({scorePct}%)</span>}
+                                  {score.total > 0 && <span className="font-readout text-[10px] text-[#888]">({scorePct}%)</span>}
                                 </div>
                                 {score.streak > 0 && <span className="font-readout text-sm" style={{ color: score.streak >= 10 ? "#33CC33" : score.streak >= 5 ? "#D4A843" : "#888" }}>{score.streak}x</span>}
                               </div>
@@ -2273,7 +2273,7 @@ export default function LearningCenterPage() {
                             <div className="flex justify-between items-center mb-4">
                               <div>
                                 {fbTarget
-                                  ? <><span className="font-label text-[10px] text-[#555]">Find:</span><span className="font-heading text-3xl text-[#D4A843] mr-3">{fbTarget}</span></>
+                                  ? <><span className="font-label text-[10px] text-[#888]">Find:</span><span className="font-heading text-3xl text-[#D4A843] mr-3">{fbTarget}</span></>
                                   : <span className="font-label text-sm text-[#333]">Press New Note</span>}
                               </div>
                               <div className="flex gap-2">
@@ -2288,7 +2288,7 @@ export default function LearningCenterPage() {
                                   const s = 5 - si;
                                   return (
                                     <div key={s} className="flex items-center h-7">
-                                      <div className="w-6 font-readout text-[9px] text-[#444] text-center">{STR[s]}</div>
+                                      <div className="w-6 font-readout text-[9px] text-[#888] text-center">{STR[s]}</div>
                                       {Array.from({length: 13}, (_,f) => {
                                         const hit = fbFeedback && fbFeedback.str === s && fbFeedback.fret === f;
                                         return (
@@ -2323,7 +2323,7 @@ export default function LearningCenterPage() {
                                   <div key={a.id} className={`p-3 rounded-sm border ${done ? "border-[#D4A843]/40 bg-[#D4A843]/5" : "border-[#1a1a1a]"}`}>
                                     <div className="flex items-center gap-2">
                                       <div className={`led ${done ? "led-gold" : "led-off"}`} />
-                                      <div><div className={`font-label text-[11px] ${done ? "text-[#D4A843]" : "text-[#555]"}`}>{a.name}</div><div className="text-[10px] text-[#444]">{a.desc}</div></div>
+                                      <div><div className={`font-label text-[11px] ${done ? "text-[#D4A843]" : "text-[#888]"}`}>{a.name}</div><div className="text-[10px] text-[#888]">{a.desc}</div></div>
                                     </div>
                                   </div>
                                 );
@@ -2343,8 +2343,8 @@ export default function LearningCenterPage() {
                                     onClick={() => { tone(60, 0.5, 0); tone(60 + i.st, 0.5, 0.6); }}>
                                     <div className="w-2 h-5 rounded-sm" style={{ background: i.color }} />
                                     <div className="w-8 font-readout text-sm" style={{ color: i.color }}>{i.name}</div>
-                                    <div className="flex-1"><div className="text-[11px] text-[#aaa]">{i.label}</div><div className="text-[9px] text-[#555] italic">{i.ref}</div></div>
-                                    <div className="font-readout text-[10px] text-[#444]">{i.st}st</div>
+                                    <div className="flex-1"><div className="text-[11px] text-[#aaa]">{i.label}</div><div className="text-[9px] text-[#888] italic">{i.ref}</div></div>
+                                    <div className="font-readout text-[10px] text-[#888]">{i.st}st</div>
                                     {ls.history["intervals-" + i.name] && (() => {
                                       const h = ls.history["intervals-" + i.name]; const p = Math.round((h.c / h.t) * 100);
                                       return <span className="font-readout text-[9px]" style={{ color: p >= 80 ? "#33CC33" : p >= 50 ? "#D4A843" : "#C41E3A" }}>{p}%</span>;
@@ -2361,7 +2361,7 @@ export default function LearningCenterPage() {
                                     onClick={() => playChordAudio(c.iv)}>
                                     <div className="w-2 h-5 rounded-sm" style={{ background: c.color }} />
                                     <span className="font-label text-sm flex-1" style={{ color: c.color }}>{c.name}</span>
-                                    <span className="font-readout text-[10px] text-[#444]">{c.iv.join("-")}</span>
+                                    <span className="font-readout text-[10px] text-[#888]">{c.iv.join("-")}</span>
                                   </div>
                                 ))}
                               </div>
@@ -2374,13 +2374,13 @@ export default function LearningCenterPage() {
                                     onClick={() => playScaleNotes(s.notes)}>
                                     <div className="w-2 h-5 rounded-sm" style={{ background: s.color }} />
                                     <span className="font-label text-sm flex-1" style={{ color: s.color }}>{s.name}</span>
-                                    <span className="font-readout text-[10px] text-[#444]">{s.notes.join("-")}</span>
+                                    <span className="font-readout text-[10px] text-[#888]">{s.notes.join("-")}</span>
                                   </div>
                                 ))}
                               </div>
                             )}
                             {(exMode === "fretboard" || exMode === "progressions" || isFbVisualMode || isNoteEarMode || isIvConMode) && (
-                              <div className="py-4 text-center font-label text-sm text-[#444]">
+                              <div className="py-4 text-center font-label text-sm text-[#888]">
                                 {exMode === "fretboard" ? "Use the fretboard exercise and timed challenge above" :
                                  exMode === "progressions" ? "Listen for root movement and chord qualities in progressions" :
                                  isNoteEarMode ? "Train your ear to identify individual notes by their pitch" :
@@ -2446,9 +2446,9 @@ export default function LearningCenterPage() {
                           <span className={`font-heading text-[14px] font-semibold ${activeInGroup ? "text-[#eee]" : "text-[#ccc]"}`}>{group.title}</span>
                           <span className="font-readout text-[9px] px-1.5 py-0.5 rounded bg-[#1a1a1a] text-[#666]">{group.items.length}</span>
                         </div>
-                        <div className="text-[10px] text-[#555] leading-tight mt-0.5">{group.desc}</div>
+                        <div className="text-[10px] text-[#888] leading-tight mt-0.5">{group.desc}</div>
                       </div>
-                      <span className={`text-[11px] transition-transform duration-200 ${isOpen ? "rotate-90" : ""} ${activeInGroup ? "text-[#D4A843]" : "text-[#555]"}`}>{"\u25B6"}</span>
+                      <span className={`text-[11px] transition-transform duration-200 ${isOpen ? "rotate-90" : ""} ${activeInGroup ? "text-[#D4A843]" : "text-[#888]"}`}>{"\u25B6"}</span>
                     </div>
                     {isOpen && (
                       <div className="border-t border-[#1a1a1a] p-2 sm:p-3">
@@ -2458,12 +2458,12 @@ export default function LearningCenterPage() {
                               onClick={() => setToolTab(item.key)}
                               className={`rounded-xl p-3 cursor-pointer transition-all duration-200 border ${toolTab === item.key ? "bg-[#D4A843]/8 border-[#D4A843]/30" : "bg-[#111] border-[#1a1a1a] hover:border-[#333] hover:bg-[#141414]"}`}>
                               <div className="flex items-center gap-3">
-                                <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-sm flex-shrink-0 ${toolTab === item.key ? "bg-[#D4A843]/20 text-[#D4A843]" : "bg-[#1a1a1a] text-[#555]"}`}>
+                                <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-sm flex-shrink-0 ${toolTab === item.key ? "bg-[#D4A843]/20 text-[#D4A843]" : "bg-[#1a1a1a] text-[#888]"}`}>
                                   {item.icon}
                                 </div>
                                 <div className="min-w-0">
                                   <div className={`font-label text-[11px] font-semibold leading-tight ${toolTab === item.key ? "text-[#D4A843]" : "text-[#bbb]"}`}>{item.label}</div>
-                                  <div className="text-[9px] text-[#555] leading-tight mt-0.5">{item.desc}</div>
+                                  <div className="text-[9px] text-[#888] leading-tight mt-0.5">{item.desc}</div>
                                 </div>
                               </div>
                             </div>
@@ -2481,7 +2481,7 @@ export default function LearningCenterPage() {
         {/* Root selector (not for tempo tapper) */}
         {toolTab !== "tempo" && toolTab !== "tuner" && (
           <div className="panel p-3 mb-3">
-            <div className="font-label text-[9px] text-[#555] mb-1.5">Root Note</div>
+            <div className="font-label text-[9px] text-[#888] mb-1.5">Root Note</div>
             <div className="flex gap-1 flex-wrap">
               {NOTES.map(n => (
                 <button key={n} onClick={() => setRoot(n)}
@@ -2497,7 +2497,7 @@ export default function LearningCenterPage() {
             <div className="flex gap-1 flex-wrap">
               {Object.keys(SCALE_F).map(s => (
                 <button key={s} onClick={() => setSelScale(s)}
-                  className={`font-label text-[10px] px-2 py-1 rounded-sm cursor-pointer border ${selScale === s ? "border-[#D4A843] text-[#D4A843] bg-[#D4A843]/8" : "border-[#1a1a1a] text-[#555]"}`}>{s}</button>
+                  className={`font-label text-[10px] px-2 py-1 rounded-sm cursor-pointer border ${selScale === s ? "border-[#D4A843] text-[#D4A843] bg-[#D4A843]/8" : "border-[#1a1a1a] text-[#888]"}`}>{s}</button>
               ))}
             </div>
           </div>
@@ -2521,7 +2521,7 @@ export default function LearningCenterPage() {
                     style={{ background: s === 0 ? "#D4A843" : "#1a1a1a", color: s === 0 ? "#121214" : "#ccc", border: `1px solid ${s === 0 ? "#D4A843" : "#333"}` }}>
                     {scNotes[i]}
                   </div>
-                  <div className="font-readout text-[8px] text-[#555] mt-0.5">{IV_NAMES[s]}</div>
+                  <div className="font-readout text-[8px] text-[#888] mt-0.5">{IV_NAMES[s]}</div>
                 </div>
               ))}
             </div>
@@ -2537,16 +2537,16 @@ export default function LearningCenterPage() {
             <div className="flex gap-1 flex-wrap">
               {CHORD_SUFFIXES.map(({ name, label }) => (
                 <button key={name} onClick={() => setSelChord(name)}
-                  className={`font-label text-[10px] px-2 py-1 rounded-sm cursor-pointer border ${selChord === name ? "border-[#D4A843] text-[#D4A843] bg-[#D4A843]/8" : "border-[#1a1a1a] text-[#555]"}`}>{label}</button>
+                  className={`font-label text-[10px] px-2 py-1 rounded-sm cursor-pointer border ${selChord === name ? "border-[#D4A843] text-[#D4A843] bg-[#D4A843]/8" : "border-[#1a1a1a] text-[#888]"}`}>{label}</button>
               ))}
             </div>
           </div>
           <div className="panel p-3 sm:p-5">
             <div className="font-heading text-lg font-bold text-[#D4A843] mb-1">{root}{selChord === "major" ? "" : " " + selChord}</div>
-            {chordLoading && <div className="font-label text-[10px] text-[#444] py-4">Loading...</div>}
+            {chordLoading && <div className="font-label text-[10px] text-[#888] py-4">Loading...</div>}
             {chordData?.positions && (
               <div>
-                <div className="font-label text-[9px] text-[#555] mb-2 mt-2">{chordData.positions.length} voicings — click to hear</div>
+                <div className="font-label text-[9px] text-[#888] mb-2 mt-2">{chordData.positions.length} voicings — click to hear</div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {chordData.positions.map((pos, i) => (
                     <ChordDiagram key={i} pos={pos} onPlay={() => {
@@ -2557,31 +2557,31 @@ export default function LearningCenterPage() {
                 </div>
               </div>
             )}
-            {!chordLoading && !chordData && <div className="text-[11px] text-[#444] py-4">No data for this chord</div>}
+            {!chordLoading && !chordData && <div className="text-[11px] text-[#888] py-4">No data for this chord</div>}
           </div>
         </div>)}
 
         {/* ── Fretboard Tool ── */}
         {toolTab === "fretboard" && (<div>
           <div className="panel p-3 mb-3">
-            <div className="font-label text-[9px] text-[#555] mb-1.5">Display Mode</div>
+            <div className="font-label text-[9px] text-[#888] mb-1.5">Display Mode</div>
             <div className="flex gap-1 mb-2">
               {(["notes","scale","chord"] as const).map(m => (
                 <button key={m} onClick={() => setFbMode(m)}
-                  className={`font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border ${fbMode === m ? "border-[#D4A843] text-[#D4A843]" : "border-[#222] text-[#555]"}`}>{m}</button>
+                  className={`font-label text-[10px] px-3 py-1 rounded-sm cursor-pointer border ${fbMode === m ? "border-[#D4A843] text-[#D4A843]" : "border-[#222] text-[#888]"}`}>{m}</button>
               ))}
             </div>
             {fbMode === "scale" && (
               <div className="flex gap-1 flex-wrap">
                 {Object.keys(SCALE_F).map(s => (
                   <button key={s} onClick={() => setFbScale(s)}
-                    className={`font-label text-[9px] px-2 py-0.5 rounded-sm cursor-pointer border ${fbScale === s ? "border-[#D4A843] text-[#D4A843]" : "border-[#1a1a1a] text-[#444]"}`}>{s}</button>
+                    className={`font-label text-[9px] px-2 py-0.5 rounded-sm cursor-pointer border ${fbScale === s ? "border-[#D4A843] text-[#D4A843]" : "border-[#1a1a1a] text-[#888]"}`}>{s}</button>
                 ))}
               </div>
             )}
           </div>
           <div className="panel p-3 sm:p-4">
-            <div className="font-label text-[9px] text-[#555] mb-2">
+            <div className="font-label text-[9px] text-[#888] mb-2">
               {fbMode === "notes" ? `All notes — ${root} highlighted — click to hear` :
                fbMode === "scale" ? `${root} ${fbScale} — click to hear` :
                `${root} chord tones`}
@@ -2648,7 +2648,7 @@ export default function LearningCenterPage() {
         {toolTab === "circle" && (<div>
           <div className="panel p-4 sm:p-6 mb-3">
             <div className="font-heading text-base font-bold text-[#D4A843] mb-2">Circle of Fifths</div>
-            <div className="text-[10px] text-[#555] mb-4">Click any key to set it as root note for other tools</div>
+            <div className="text-[10px] text-[#888] mb-4">Click any key to set it as root note for other tools</div>
             <div className="flex justify-center">
               <svg viewBox="0 0 340 340" className="w-80 h-80 sm:w-96 sm:h-96">
                 {MAJOR_KEYS.map((k, i) => {
@@ -2694,8 +2694,8 @@ export default function LearningCenterPage() {
                     <span className="font-readout font-bold" style={{ color: i.color }}>{i.name}</span>
                     <span className="font-readout text-[10px] text-[#888]">{root} → {NOTES[(ri + i.st) % 12]}</span>
                   </div>
-                  <div className="text-[9px] text-[#555]">{i.label}</div>
-                  <div className="text-[9px] text-[#444] italic mt-0.5">🎵 {i.ref}</div>
+                  <div className="text-[9px] text-[#888]">{i.label}</div>
+                  <div className="text-[9px] text-[#888] italic mt-0.5">🎵 {i.ref}</div>
                 </div>
               ))}
             </div>
@@ -2718,7 +2718,7 @@ export default function LearningCenterPage() {
               {tapBpm ? (
                 <div>
                   <div className="font-readout text-5xl font-bold text-[#D4A843]">{tapBpm}</div>
-                  <div className="font-label text-[11px] text-[#555] mt-1">BPM</div>
+                  <div className="font-label text-[11px] text-[#888] mt-1">BPM</div>
                 </div>
               ) : (
                 <div className="font-label text-sm text-[#333]">Tap at least twice</div>
@@ -2737,7 +2737,7 @@ export default function LearningCenterPage() {
             <div className="text-[11px] text-[#666] mb-3">Choose a starting note and interval — see and hear the result</div>
 
             <div className="mb-3">
-              <div className="font-label text-[9px] text-[#555] mb-1">Starting Note</div>
+              <div className="font-label text-[9px] text-[#888] mb-1">Starting Note</div>
               <div className="flex gap-1 flex-wrap">
                 {NOTES.map(n => (
                   <button key={n} onClick={() => setCalcNote(n)}
@@ -2747,11 +2747,11 @@ export default function LearningCenterPage() {
             </div>
 
             <div className="mb-4">
-              <div className="font-label text-[9px] text-[#555] mb-1">Interval</div>
+              <div className="font-label text-[9px] text-[#888] mb-1">Interval</div>
               <div className="flex gap-1 flex-wrap">
                 {ALL_INTERVALS.map(iv => (
                   <button key={iv.name} onClick={() => setCalcIv(iv.st)}
-                    className={`font-label text-[10px] px-2 py-1 rounded-sm cursor-pointer border ${calcIv === iv.st ? "border-[#D4A843] text-[#D4A843] bg-[#D4A843]/8" : "border-[#222] text-[#555]"}`}>{iv.name}</button>
+                    className={`font-label text-[10px] px-2 py-1 rounded-sm cursor-pointer border ${calcIv === iv.st ? "border-[#D4A843] text-[#D4A843] bg-[#D4A843]/8" : "border-[#222] text-[#888]"}`}>{iv.name}</button>
                 ))}
               </div>
             </div>
@@ -2763,7 +2763,7 @@ export default function LearningCenterPage() {
               return (
                 <div className="bg-[#0d0d0d] border border-[#1a1a1a] rounded-sm p-4 text-center">
                   <div className="font-heading text-2xl text-[#D4A843] mb-1">{calcNote} + {ivObj?.name || calcIv + "st"} = {resultNote}</div>
-                  <div className="text-[11px] text-[#555]">{ivObj?.label} — {calcIv} semitones</div>
+                  <div className="text-[11px] text-[#888]">{ivObj?.label} — {calcIv} semitones</div>
                   <button onClick={() => { const m = 60 + startIdx; playNote(m); playNote(m + calcIv, 0.5); }} className="btn-gold !text-[10px] mt-3">
                     Play Both Notes
                   </button>

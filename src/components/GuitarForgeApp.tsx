@@ -757,7 +757,7 @@ export default function GuitarForgeApp() {
     <ErrorBoundary>
     <div className="flex h-[100dvh] text-white" style={{ background: "#121214" }} dir="ltr">
       <Navbar view={view} onViewChange={setView} onShowAuth={() => setShowAuthPage(true)} onOpenTuner={openTuner} onOpenSuno={openSuno} lastSynced={lastSynced} syncing={syncing} />
-      <div id="main-content" className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden min-h-0 min-w-0">
+      <main id="main-content" className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden min-h-0 min-w-0">
       {view === "studio" && <StudioPage channelScale={scale} channelMode={mode} channelStyle={style} pendingSuno={pendingSuno} setPendingSuno={setPendingSuno} />}
       {view === "jam" && <JamModePage />}
       <div key={viewKey} className={`view-transition px-2 sm:px-5 py-3 sm:py-5 pb-[72px] md:pb-5 max-w-[960px] lg:max-w-[1280px] xl:max-w-[1500px] 2xl:max-w-[1700px] mx-auto w-full ${view === "studio" || view === "jam" ? "hidden" : ""}`}>
@@ -976,7 +976,7 @@ export default function GuitarForgeApp() {
           </div>
         );
       })()}
-    </div>
+    </main>
 
     {/* Sync error toast */}
     {syncError && (

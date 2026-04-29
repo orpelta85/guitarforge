@@ -103,7 +103,7 @@ function Dropdown({ label, open, setOpen, children, activeCount }: {
         type="button"
         onClick={() => setOpen(!open)}
         className={`font-label text-[11px] px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1.5 cursor-pointer ${
-          activeCount ? "border-[#D4A843] text-[#D4A843] bg-[#D4A843]/10" : "border-[#333] text-[#666] hover:border-[#555] hover:text-[#888]"
+          activeCount ? "border-[#D4A843] text-[#D4A843] bg-[#D4A843]/10" : "border-[#333] text-[#888] hover:border-[#555] hover:text-[#888]"
         }`}
       >
         {label}
@@ -200,7 +200,7 @@ export default function SongFilterBar(props: SongFilterBarProps) {
                 </span>
                 {g}
               </span>
-              <span className="text-[#555] text-[10px]">{cnt}</span>
+              <span className="text-[#888] text-[10px]">{cnt}</span>
             </button>
           );
         })}
@@ -268,11 +268,12 @@ export default function SongFilterBar(props: SongFilterBarProps) {
     <div className="mb-4">
       {/* Search bar */}
       <div className="relative mb-2.5">
-        <svg className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
         </svg>
         <input
           type="text"
+          aria-label="Search songs, artists, genres, keys"
           placeholder="Search songs, artists, genres, keys..."
           className="input w-full !pl-9 !pr-8"
           value={search}
@@ -282,9 +283,10 @@ export default function SongFilterBar(props: SongFilterBarProps) {
           <button
             type="button"
             onClick={() => { setSearch(""); onResetLimit(); }}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#555] hover:text-[#888] transition-colors cursor-pointer"
+            aria-label="Clear search"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#888] hover:text-[#ccc] transition-colors cursor-pointer"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
             </svg>
           </button>
@@ -302,7 +304,7 @@ export default function SongFilterBar(props: SongFilterBarProps) {
           type="button"
           onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
           className={`font-label text-[11px] px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1.5 cursor-pointer w-full justify-center ${
-            hasActiveFilters ? "border-[#D4A843] text-[#D4A843] bg-[#D4A843]/10" : "border-[#333] text-[#666]"
+            hasActiveFilters ? "border-[#D4A843] text-[#D4A843] bg-[#D4A843]/10" : "border-[#333] text-[#888]"
           }`}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -366,7 +368,7 @@ export default function SongFilterBar(props: SongFilterBarProps) {
           <button
             type="button"
             onClick={clearAll}
-            className="font-label text-[10px] px-2 py-1 text-[#666] hover:text-[#999] cursor-pointer transition-colors"
+            className="font-label text-[10px] px-2 py-1 text-[#888] hover:text-[#999] cursor-pointer transition-colors"
           >
             Clear all
           </button>
@@ -374,7 +376,7 @@ export default function SongFilterBar(props: SongFilterBarProps) {
       )}
 
       {/* Result count */}
-      <div className="font-readout text-[10px] text-[#555]">
+      <div className="font-readout text-[10px] text-[#888]">
         Showing {filteredCount} of {totalCount} songs
       </div>
     </div>

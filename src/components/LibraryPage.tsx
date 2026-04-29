@@ -298,12 +298,12 @@ function RecordingsTab({
       {/* Sub-tab selector */}
       <div className="flex gap-2 mb-4">
         <button type="button" onClick={() => setRecSubTab("practice")}
-          className={`flex-1 font-label text-[11px] px-3 py-2.5 rounded-lg cursor-pointer border transition-all flex items-center justify-center gap-2 ${recSubTab === "practice" ? "bg-[#D4A843]/10 text-[#D4A843] border-[#D4A843]/40" : "border-[#222] text-[#555] hover:border-[#333] hover:text-[#777]"}`}>
+          className={`flex-1 font-label text-[11px] px-3 py-2.5 rounded-lg cursor-pointer border transition-all flex items-center justify-center gap-2 ${recSubTab === "practice" ? "bg-[#D4A843]/10 text-[#D4A843] border-[#D4A843]/40" : "border-[#222] text-[#888] hover:border-[#333] hover:text-[#777]"}`}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 19V6l12-3v13"/></svg>
           Practice{practiceCount > 0 ? ` (${practiceCount})` : ""}
         </button>
         <button type="button" onClick={() => setRecSubTab("studio")}
-          className={`flex-1 font-label text-[11px] px-3 py-2.5 rounded-lg cursor-pointer border transition-all flex items-center justify-center gap-2 ${recSubTab === "studio" ? "bg-[#D4A843]/10 text-[#D4A843] border-[#D4A843]/40" : "border-[#222] text-[#555] hover:border-[#333] hover:text-[#777]"}`}>
+          className={`flex-1 font-label text-[11px] px-3 py-2.5 rounded-lg cursor-pointer border transition-all flex items-center justify-center gap-2 ${recSubTab === "studio" ? "bg-[#D4A843]/10 text-[#D4A843] border-[#D4A843]/40" : "border-[#222] text-[#888] hover:border-[#333] hover:text-[#777]"}`}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
           Studio{studioCount > 0 ? ` (${studioCount})` : ""}
         </button>
@@ -318,18 +318,18 @@ function RecordingsTab({
                 <path d="M9 19V6l12-3v13"/>
               </svg>
               <div className="font-heading text-lg text-[#D4A843] mb-2">No Practice Recordings</div>
-              <div className="font-readout text-[11px] text-[#444] mb-4">Record yourself during exercises or practice sessions to see them here.</div>
+              <div className="font-readout text-[11px] text-[#888] mb-4">Record yourself during exercises or practice sessions to see them here.</div>
             </div>
           ) : (
             <>
-              <div className="font-readout text-[10px] text-[#555] mb-3">{allPractice.length} practice recordings</div>
+              <div className="font-readout text-[10px] text-[#888] mb-3">{allPractice.length} practice recordings</div>
               {allPractice.map(rec => (
                 <div key={rec.id} className="panel p-4 mb-1.5">
                   <div className="flex items-center gap-3">
                     <PlayButton id={rec.id} onClick={() => playUrl(rec.id, rec.url)} />
                     <div className="flex-1 min-w-0">
                       <div className="font-heading text-[13px] !font-medium !normal-case !tracking-normal truncate">{rec.name}</div>
-                      <div className="font-readout text-[10px] text-[#444]">
+                      <div className="font-readout text-[10px] text-[#888]">
                         {(() => {
                           try { return new Date(rec.date).toLocaleDateString(); } catch { return rec.date; }
                         })()}
@@ -356,19 +356,19 @@ function RecordingsTab({
                 <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/>
               </svg>
               <div className="font-heading text-lg text-[#D4A843] mb-2">No Studio Recordings</div>
-              <div className="font-readout text-[11px] text-[#444] mb-4">Record or export tracks in the Studio to see them here.</div>
+              <div className="font-readout text-[11px] text-[#888] mb-4">Record or export tracks in the Studio to see them here.</div>
               <button type="button" onClick={() => setView("studio")} className="btn-ghost">Open Studio</button>
             </div>
           ) : (
             <>
-              <div className="font-readout text-[10px] text-[#555] mb-3">{libRecordings.length} studio recordings</div>
+              <div className="font-readout text-[10px] text-[#888] mb-3">{libRecordings.length} studio recordings</div>
               {libRecordings.map(rec => (
                 <div key={rec.id} className="panel p-4 mb-1.5">
                   <div className="flex items-center gap-3">
                     <PlayButton id={rec.id} onClick={() => playStudioRecording(rec.id)} />
                     <div className="flex-1 min-w-0">
                       <div className="font-heading text-[13px] !font-medium !normal-case !tracking-normal truncate">{rec.name}</div>
-                      <div className="font-readout text-[10px] text-[#444]">
+                      <div className="font-readout text-[10px] text-[#888]">
                         {new Date(rec.date).toLocaleDateString()} · {Math.round(rec.duration)}s · {rec.format?.toUpperCase() || "WAV"}
                       </div>
                     </div>
@@ -541,7 +541,7 @@ export default function LibraryPage(props: LibraryPageProps) {
           ["songlib", "Song Library", "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"],
         ] as const).map(([key, label, iconPath]) => (
           <button type="button" key={key} onClick={() => setLibTab(key as typeof libTab)}
-            className={`font-label text-[11px] px-3 py-2 rounded-lg cursor-pointer border transition-all flex-shrink-0 flex items-center gap-1.5 ${libTab === key ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666] hover:border-[#555] hover:text-[#888]"}`}>
+            className={`font-label text-[11px] px-3 py-2 rounded-lg cursor-pointer border transition-all flex-shrink-0 flex items-center gap-1.5 ${libTab === key ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#888] hover:border-[#555] hover:text-[#888]"}`}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={iconPath} /></svg>
             {label}
           </button>
@@ -598,7 +598,7 @@ export default function LibraryPage(props: LibraryPageProps) {
         )}
 
         <div className="flex gap-1 flex-wrap mb-4">
-          <button onClick={() => setLibFilter("All")} className={`font-label text-[10px] px-3 py-1 rounded-lg cursor-pointer border ${libFilter === "All" ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#666]"}`}>All ({allExercises.length})</button>
+          <button onClick={() => setLibFilter("All")} className={`font-label text-[10px] px-3 py-1 rounded-lg cursor-pointer border ${libFilter === "All" ? "bg-[#D4A843] text-[#121214] border-[#D4A843]" : "border-[#333] text-[#888]"}`}>All ({allExercises.length})</button>
           {CATS.filter((c) => c !== "Songs").map((cat) => {
             const cnt = allExercises.filter((e) => e.c === cat).length, c = COL[cat];
             if (!cnt) return null;
@@ -619,7 +619,7 @@ export default function LibraryPage(props: LibraryPageProps) {
           )}
           {trashedExercises.length > 0 && (
             <button onClick={() => setShowTrash(!showTrash)}
-              className={`font-label text-[10px] px-3 py-1 rounded-lg cursor-pointer border transition-all flex items-center gap-1 ${showTrash ? "bg-[#C41E3A]/20 text-[#C41E3A] border-[#C41E3A]/40" : "border-[#333] text-[#555] hover:border-[#555] hover:text-[#777]"}`}>
+              className={`font-label text-[10px] px-3 py-1 rounded-lg cursor-pointer border transition-all flex items-center gap-1 ${showTrash ? "bg-[#C41E3A]/20 text-[#C41E3A] border-[#C41E3A]/40" : "border-[#333] text-[#888] hover:border-[#555] hover:text-[#777]"}`}>
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
               Trash ({trashedExercises.length})
             </button>
@@ -645,8 +645,8 @@ export default function LibraryPage(props: LibraryPageProps) {
                 <div key={ex.id} className="flex items-center gap-3 px-3 py-2 rounded-lg mb-1 bg-[#1a1a1a]/50 border border-[#222]">
                   <span className="tag min-w-[48px] text-center opacity-50" style={{ border: `1px solid ${c}40`, color: c }}>{ex.c}</span>
                   <div className="flex-1 min-w-0">
-                    <div className="font-heading text-[12px] !font-medium !normal-case !tracking-normal text-[#666]">{ex.n}</div>
-                    <div className="font-readout text-[9px] text-[#444]">{ex.f} · {ex.m}min</div>
+                    <div className="font-heading text-[12px] !font-medium !normal-case !tracking-normal text-[#888]">{ex.n}</div>
+                    <div className="font-readout text-[9px] text-[#888]">{ex.f} · {ex.m}min</div>
                   </div>
                   <button type="button" onClick={() => restoreExercise(ex.id)}
                     className="font-label text-[9px] px-2 py-1 rounded cursor-pointer border border-[#22c55e]/30 text-[#22c55e] hover:bg-[#22c55e]/10 transition-all">
@@ -686,7 +686,7 @@ export default function LibraryPage(props: LibraryPageProps) {
                   <span className="tag min-w-[48px] text-center" style={{ border: `1px solid ${c}40`, color: c }}>{ex.c}</span>
                   <div className="flex-1 min-w-0">
                     <div className="font-heading text-[13px] !font-medium !normal-case !tracking-normal">{ex.n}</div>
-                    <div className="font-readout text-[10px] text-[#444]">{ex.f} · {ex.m}min {ex.b ? "· " + ex.b : ""}</div>
+                    <div className="font-readout text-[10px] text-[#888]">{ex.f} · {ex.m}min {ex.b ? "· " + ex.b : ""}</div>
                   </div>
                   {practiceCount > 0 && (
                     <span className="font-readout text-[9px] px-1.5 py-0.5 rounded-sm bg-[#D4A843]/10 text-[#D4A843] border border-[#D4A843]/20" title={`Practiced ${practiceCount} time${practiceCount > 1 ? "s" : ""}`}>{practiceCount}x practiced</span>
@@ -705,7 +705,7 @@ export default function LibraryPage(props: LibraryPageProps) {
           if (libShowAll) {
             return (<>
               {filtered.map(renderExCard)}
-              <div className="font-readout text-[10px] text-[#444] text-center mt-2">{filtered.length} exercises</div>
+              <div className="font-readout text-[10px] text-[#888] text-center mt-2">{filtered.length} exercises</div>
             </>);
           }
 
@@ -776,8 +776,8 @@ export default function LibraryPage(props: LibraryPageProps) {
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={sd?.color || "#D4A843"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={sd?.icon || "M9 19V6l12-3v13"} /></svg>
                       </div>
                       <div className="font-heading text-sm font-bold" style={{ color: sd?.color || "#D4A843" }}>{s}</div>
-                      <div className="font-readout text-[10px] text-[#555] mt-1">{cnt} exercises</div>
-                      {songCnt > 0 && <div className="font-readout text-[10px] text-[#444] mt-0.5">{songCnt} songs</div>}
+                      <div className="font-readout text-[10px] text-[#888] mt-1">{cnt} exercises</div>
+                      {songCnt > 0 && <div className="font-readout text-[10px] text-[#888] mt-0.5">{songCnt} songs</div>}
                     </div>
                   );
                 })}
@@ -795,12 +795,12 @@ export default function LibraryPage(props: LibraryPageProps) {
                     </div>
                     <div>
                       <div className="font-heading text-lg font-bold" style={{ color: STYLE_DATA[activeStyle]?.color || "#D4A843" }}>{activeStyle}</div>
-                      <div className="font-readout text-[10px] text-[#555]">{styleExercises.length} exercises · {allSongsForStyle.length} songs</div>
+                      <div className="font-readout text-[10px] text-[#888]">{styleExercises.length} exercises · {allSongsForStyle.length} songs</div>
                     </div>
                   </div>
                   {STYLE_DATA[activeStyle]?.techniques.length > 0 && (
                     <div className="mb-3">
-                      <div className="font-label text-[10px] text-[#666] mb-1.5">Key Techniques</div>
+                      <div className="font-label text-[10px] text-[#888] mb-1.5">Key Techniques</div>
                       <div className="flex gap-1.5 flex-wrap">
                         {STYLE_DATA[activeStyle].techniques.map(t => (
                           <span key={t} className="font-readout text-[10px] px-2 py-1 rounded-sm border border-[#333] text-[#888]">{t}</span>
@@ -810,7 +810,7 @@ export default function LibraryPage(props: LibraryPageProps) {
                   )}
                   {STYLE_DATA[activeStyle]?.scales.length > 0 && (
                     <div>
-                      <div className="font-label text-[10px] text-[#666] mb-1.5">Recommended Scales</div>
+                      <div className="font-label text-[10px] text-[#888] mb-1.5">Recommended Scales</div>
                       <div className="flex gap-1.5 flex-wrap">
                         {STYLE_DATA[activeStyle].scales.map(s => (
                           <span key={s} className="font-readout text-[10px] px-2 py-1 rounded-sm border border-[#D4A843]/20 text-[#D4A843]">{s}</span>
@@ -821,7 +821,7 @@ export default function LibraryPage(props: LibraryPageProps) {
                 </div>
                 {styleExercises.length > 0 && (
                   <div className="mb-4">
-                    <div className="font-label text-[11px] text-[#666] mb-2">Exercises for {activeStyle}</div>
+                    <div className="font-label text-[11px] text-[#888] mb-2">Exercises for {activeStyle}</div>
                     {styleExercises.map(ex => {
                       const c = COL[ex.c];
                       return (
@@ -830,7 +830,7 @@ export default function LibraryPage(props: LibraryPageProps) {
                             <span className="tag min-w-[48px] text-center" style={{ border: `1px solid ${c}40`, color: c }}>{ex.c}</span>
                             <div className="flex-1">
                               <div className="font-heading text-[13px] !font-medium !normal-case !tracking-normal">{ex.n}</div>
-                              <div className="font-readout text-[10px] text-[#444]">{ex.m}min {ex.b ? "\u00B7 " + ex.b : ""}</div>
+                              <div className="font-readout text-[10px] text-[#888]">{ex.m}min {ex.b ? "\u00B7 " + ex.b : ""}</div>
                             </div>
                           </div>
                         </div>
@@ -840,11 +840,11 @@ export default function LibraryPage(props: LibraryPageProps) {
                 )}
                 {allSongsForStyle.length > 0 && (
                   <div>
-                    <div className="font-label text-[11px] text-[#666] mb-2">Songs ({allSongsForStyle.length})</div>
+                    <div className="font-label text-[11px] text-[#888] mb-2">Songs ({allSongsForStyle.length})</div>
                     {allSongsForStyle.slice(0, 10).map(song => (
                       <div key={song.id} onClick={() => setSongModal(song)} className="panel p-3 mb-1.5 cursor-pointer hover:border-[#D4A843]/30 transition-all">
                         <div className="font-heading text-[13px] !font-medium !normal-case !tracking-normal">{song.title}</div>
-                        <div className="font-readout text-[10px] text-[#555]">{song.artist}</div>
+                        <div className="font-readout text-[10px] text-[#888]">{song.artist}</div>
                       </div>
                     ))}
                     {allSongsForStyle.length > 10 && (
@@ -872,12 +872,12 @@ export default function LibraryPage(props: LibraryPageProps) {
                   <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                 </svg>
                 <div className="font-heading text-lg text-[#D4A843] mb-2">No Songs Saved</div>
-                <div className="font-readout text-[11px] text-[#444] mb-4">Browse the Song Library and tap the heart to save songs here.</div>
+                <div className="font-readout text-[11px] text-[#888] mb-4">Browse the Song Library and tap the heart to save songs here.</div>
                 <button type="button" onClick={() => setLibTab("songlib")} className="btn-ghost">Browse Song Library</button>
               </div>
             ) : (
               <>
-                <div className="font-readout text-[10px] text-[#555] mb-3">{savedSongs.length} saved songs</div>
+                <div className="font-readout text-[10px] text-[#888] mb-3">{savedSongs.length} saved songs</div>
                 {savedSongs.map(song => {
                   const dc = song.difficulty ? ({ Beginner: "#22c55e", Intermediate: "#D4A843", Advanced: "#ef4444", Expert: "#dc2626" }[song.difficulty] || "#888") : "#888";
                   return (
@@ -888,11 +888,11 @@ export default function LibraryPage(props: LibraryPageProps) {
                             <span className="font-heading text-[13px] !font-medium !normal-case !tracking-normal">{song.title}</span>
                             {song.difficulty && <span className="tag" style={{ border: `1px solid ${dc}60`, color: dc, background: dc + "15" }}>{song.difficulty}</span>}
                           </div>
-                          <div className="font-readout text-[11px] text-[#666] mt-1">{song.artist}</div>
+                          <div className="font-readout text-[11px] text-[#888] mt-1">{song.artist}</div>
                           <div className="flex gap-2 mt-1 flex-wrap">
-                            {song.genre && <span className="font-readout text-[9px] text-[#555]">{song.genre}</span>}
-                            {song.key && <span className="font-readout text-[9px] text-[#555]">Key: {song.key}</span>}
-                            {song.tempo && <span className="font-readout text-[9px] text-[#555]">{song.tempo} BPM</span>}
+                            {song.genre && <span className="font-readout text-[9px] text-[#888]">{song.genre}</span>}
+                            {song.key && <span className="font-readout text-[9px] text-[#888]">Key: {song.key}</span>}
+                            {song.tempo && <span className="font-readout text-[9px] text-[#888]">{song.tempo} BPM</span>}
                           </div>
                         </div>
                         <button type="button" onClick={(e) => { e.stopPropagation(); setMySongs(p => p.filter(id => id !== song.id)); }}
@@ -962,19 +962,19 @@ export default function LibraryPage(props: LibraryPageProps) {
                   <path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z"/>
                 </svg>
                 <div className="font-heading text-lg text-[#D4A843] mb-2">No Backing Tracks</div>
-                <div className="font-readout text-[11px] text-[#444] mb-4">Generate a backing track in any exercise, or save YouTube backing tracks from the exercise modal.</div>
+                <div className="font-readout text-[11px] text-[#888] mb-4">Generate a backing track in any exercise, or save YouTube backing tracks from the exercise modal.</div>
                 <button type="button" onClick={() => setView("studio")} className="btn-ghost">Open Studio</button>
               </div>
             ) : (
               <>
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="font-readout text-[10px] text-[#555]">{totalCount} backing track{totalCount !== 1 ? "s" : ""}</div>
+                  <div className="font-readout text-[10px] text-[#888]">{totalCount} backing track{totalCount !== 1 ? "s" : ""}</div>
                   <CountInToggle />
                 </div>
 
                 {libBackingTracks.length > 0 && (
                   <>
-                    {ytBackingTracks.length > 0 && <div className="font-label text-[10px] text-[#666] uppercase tracking-wider mb-2">Suno AI Tracks</div>}
+                    {ytBackingTracks.length > 0 && <div className="font-label text-[10px] text-[#888] uppercase tracking-wider mb-2">Suno AI Tracks</div>}
                     {libBackingTracks.map(track => (
                       <div key={track.id} className="panel p-4 mb-1.5">
                         <div className="flex items-center gap-3">
@@ -989,7 +989,7 @@ export default function LibraryPage(props: LibraryPageProps) {
                           </button>
                           <div className="flex-1 min-w-0">
                             <div className="font-heading text-[13px] !font-medium !normal-case !tracking-normal truncate">{track.title}</div>
-                            <div className="font-readout text-[10px] text-[#444]">
+                            <div className="font-readout text-[10px] text-[#888]">
                               {track.params.style} · {track.params.scale} {track.params.mode} · {track.params.bpm} BPM
                             </div>
                             <div className="font-readout text-[9px] text-[#333] mt-0.5">
@@ -1007,7 +1007,7 @@ export default function LibraryPage(props: LibraryPageProps) {
 
                 {ytBackingTracks.length > 0 && (
                   <>
-                    {libBackingTracks.length > 0 && <div className="font-label text-[10px] text-[#666] uppercase tracking-wider mb-2 mt-4">YouTube Backing Tracks</div>}
+                    {libBackingTracks.length > 0 && <div className="font-label text-[10px] text-[#888] uppercase tracking-wider mb-2 mt-4">YouTube Backing Tracks</div>}
                     {ytBackingTracks.map(track => {
                       const isExpanded = expandedYtId === track.id;
                       return (
@@ -1023,9 +1023,9 @@ export default function LibraryPage(props: LibraryPageProps) {
                             <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setExpandedYtId(isExpanded ? null : track.id)}>
                               <div className="font-heading text-[13px] !font-medium !normal-case !tracking-normal truncate">{track.title}</div>
                               {track.exerciseName && track.exerciseName !== track.title && (
-                                <div className="font-readout text-[10px] text-[#555] truncate">{track.exerciseName}</div>
+                                <div className="font-readout text-[10px] text-[#888] truncate">{track.exerciseName}</div>
                               )}
-                              <div className="font-readout text-[10px] text-[#444]">
+                              <div className="font-readout text-[10px] text-[#888]">
                                 {track.style} · {track.scale} {track.mode}
                               </div>
                               <div className="font-readout text-[9px] text-[#333] mt-0.5">
@@ -1081,7 +1081,7 @@ export default function LibraryPage(props: LibraryPageProps) {
                   className={`font-label text-[9px] w-7 h-7 rounded flex items-center justify-center cursor-pointer border transition-all ${
                     (letter === "All" && !songLibSearch) || (letter !== "All" && songLibSearch === (letter === "#" ? "0" : letter === "א-ת" ? "א" : letter))
                       ? "bg-[#D4A843] text-[#121214] border-[#D4A843]"
-                      : "border-[#222] text-[#555] hover:border-[#444] hover:text-[#888]"
+                      : "border-[#222] text-[#888] hover:border-[#444] hover:text-[#888]"
                   }`}>{letter}</button>
               ))}
             </div>
@@ -1106,7 +1106,7 @@ export default function LibraryPage(props: LibraryPageProps) {
               />
             )}
             {songLibFiltered.length === 0 && (
-              <div className="panel p-8 text-center"><div className="font-label text-sm text-[#444]">No songs found</div></div>
+              <div className="panel p-8 text-center"><div className="font-label text-sm text-[#888]">No songs found</div></div>
             )}
             {(() => {
               const limited = songLibFiltered.slice(0, songLibLimit);
@@ -1130,12 +1130,12 @@ export default function LibraryPage(props: LibraryPageProps) {
                               <span className="font-readout text-[8px] px-1.5 py-0.5 rounded bg-[#8b5cf6]/10 text-[#8b5cf6] border border-[#8b5cf6]/20">Personal</span>
                             )}
                           </div>
-                          <div className="font-readout text-[11px] text-[#666] mt-1">{song.artist}</div>
+                          <div className="font-readout text-[11px] text-[#888] mt-1">{song.artist}</div>
                           <div className="flex gap-2 mt-1 flex-wrap">
-                            {song.genre && <span className="font-readout text-[9px] text-[#555]">{song.genre}</span>}
-                            {song.key && <span className="font-readout text-[9px] text-[#555]">Key: {song.key}</span>}
-                            {song.tempo && <span className="font-readout text-[9px] text-[#555]">{song.tempo} BPM</span>}
-                            {song.tuning && song.tuning !== "Standard" && <span className="font-readout text-[9px] text-[#555]">{song.tuning}</span>}
+                            {song.genre && <span className="font-readout text-[9px] text-[#888]">{song.genre}</span>}
+                            {song.key && <span className="font-readout text-[9px] text-[#888]">Key: {song.key}</span>}
+                            {song.tempo && <span className="font-readout text-[9px] text-[#888]">{song.tempo} BPM</span>}
+                            {song.tuning && song.tuning !== "Standard" && <span className="font-readout text-[9px] text-[#888]">{song.tuning}</span>}
                           </div>
                         </div>
                         <div className="flex items-center gap-1 flex-shrink-0">
@@ -1143,8 +1143,11 @@ export default function LibraryPage(props: LibraryPageProps) {
                             e.stopPropagation();
                             if (isSaved) setMySongs(p => p.filter(id => id !== song.id));
                             else setMySongs(p => [...p, song.id]);
-                          }} className="p-1.5 rounded-lg hover:bg-[#1a1a1a] transition-colors" title={isSaved ? "Remove from My Songs" : "Add to My Songs"}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill={isSaved ? "#ef4444" : "none"} stroke={isSaved ? "#ef4444" : "#555"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          }} className="p-1.5 rounded-lg hover:bg-[#1a1a1a] transition-colors"
+                            aria-label={isSaved ? `Remove ${song.title} from My Songs` : `Add ${song.title} to My Songs`}
+                            aria-pressed={isSaved}
+                            title={isSaved ? "Remove from My Songs" : "Add to My Songs"}>
+                            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill={isSaved ? "#ef4444" : "none"} stroke={isSaved ? "#ef4444" : "#888"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                               <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                             </svg>
                           </button>

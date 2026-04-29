@@ -383,7 +383,7 @@ export default function SongModal({ song, onClose, targetMinutes, mySongs, onTog
     : undefined;
 
   const modalRef = useRef<HTMLDivElement>(null);
-  useFocusTrap(modalRef);
+  useFocusTrap(modalRef, onClose);
 
   return (
     <div

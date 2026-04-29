@@ -279,7 +279,7 @@ export default function DailyRecorderBox({ storageKey, onStateChange, controlRef
             <button type="button" title="Start recording session" onClick={startRecording}
               className="w-10 h-10 rounded-full cursor-pointer transition-transform hover:scale-105 active:scale-95"
               style={{ background: "radial-gradient(circle at 40% 40%, #C41E3A, #7f1d1d 80%)", border: "2px solid #555", boxShadow: "0 2px 6px rgba(0,0,0,0.4)" }} />
-            <span className="font-label text-[10px] text-[#444]">Press to record full session</span>
+            <span className="font-label text-[10px] text-[#888]">Press to record full session</span>
           </>
         )}
 
@@ -327,7 +327,7 @@ export default function DailyRecorderBox({ storageKey, onStateChange, controlRef
         )}
 
         {state === "stopped" && !audioUrl && (
-          <span className="font-label text-[10px] text-[#444]">Processing...</span>
+          <span className="font-label text-[10px] text-[#888]">Processing...</span>
         )}
       </div>
 
@@ -364,7 +364,7 @@ export default function DailyRecorderBox({ storageKey, onStateChange, controlRef
       {/* Past daily session recordings */}
       {pastLoaded && pastRecordings.length > 0 && (
         <div className="mt-4 pt-3 border-t border-[#1a1a1a]">
-          <div className="font-label text-[10px] text-[#555] mb-2">
+          <div className="font-label text-[10px] text-[#888] mb-2">
             Saved Sessions ({pastRecordings.length})
           </div>
           <div className="space-y-1">
@@ -383,7 +383,7 @@ export default function DailyRecorderBox({ storageKey, onStateChange, controlRef
                 {/* Name + date */}
                 <div className="flex-1 min-w-0">
                   <div className="font-heading text-[11px] !font-medium !normal-case !tracking-normal truncate text-[#ccc]">{rec.exerciseName}</div>
-                  <div className="font-readout text-[9px] text-[#444]">
+                  <div className="font-readout text-[9px] text-[#888]">
                     {(() => { try { return new Date(rec.savedAt).toLocaleDateString(); } catch { return rec.savedAt; } })()}
                   </div>
                 </div>
@@ -395,14 +395,14 @@ export default function DailyRecorderBox({ storageKey, onStateChange, controlRef
                       Yes
                     </button>
                     <button type="button" onClick={() => setConfirmDeleteId(null)}
-                      className="font-label text-[9px] px-1.5 py-0.5 rounded border border-[#333] text-[#555] hover:text-[#888] cursor-pointer transition-all">
+                      className="font-label text-[9px] px-1.5 py-0.5 rounded border border-[#333] text-[#888] hover:text-[#888] cursor-pointer transition-all">
                       No
                     </button>
                   </div>
                 ) : (
                   <button type="button" onClick={() => setConfirmDeleteId(rec.id)}
                     title="Delete recording"
-                    className="w-6 h-6 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 transition-all text-[#555] hover:text-[#C41E3A] hover:bg-[#C41E3A]/10 cursor-pointer flex-shrink-0">
+                    className="w-6 h-6 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 transition-all text-[#888] hover:text-[#C41E3A] hover:bg-[#C41E3A]/10 cursor-pointer flex-shrink-0">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
                     </svg>

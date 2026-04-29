@@ -401,7 +401,7 @@ export default function LooperBox({ startBpm, standalone }: Props) {
           {countingIn && <span className="text-[#D4A843] animate-pulse">COUNT IN...</span>}
         </div>
         <div className="flex items-center gap-2">
-          <span className="font-label text-[9px] text-[#555]">BPM</span>
+          <span className="font-label text-[9px] text-[#888]">BPM</span>
           <input
             type="number"
             value={bpm}
@@ -416,7 +416,7 @@ export default function LooperBox({ startBpm, standalone }: Props) {
 
       {/* Loop length selector */}
       <div className="flex items-center gap-2 mb-3">
-        <span className="font-label text-[9px] text-[#555]">Loop:</span>
+        <span className="font-label text-[9px] text-[#888]">Loop:</span>
         <div className="flex gap-1">
           {BAR_OPTIONS.map((b) => (
             <button
@@ -426,18 +426,18 @@ export default function LooperBox({ startBpm, standalone }: Props) {
               className={`font-label text-[10px] px-2.5 py-1 rounded cursor-pointer border transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
                 bars === b
                   ? "bg-[#D4A843] text-[#121214] border-[#D4A843]"
-                  : "border-[#333] text-[#666] hover:border-[#555]"
+                  : "border-[#333] text-[#888] hover:border-[#555]"
               }`}
             >
               {b} {b === 1 ? "bar" : "bars"}
             </button>
           ))}
         </div>
-        <span className="font-readout text-[10px] text-[#444] ml-auto">
+        <span className="font-readout text-[10px] text-[#888] ml-auto">
           {loopDuration.toFixed(1)}s
         </span>
         <div className="flex items-center gap-1.5 ml-2" title={`Metronome volume ${Math.round(metVolume * 100)}%`}>
-          <span className="font-label text-[9px] text-[#555] uppercase">Vol</span>
+          <span className="font-label text-[9px] text-[#888] uppercase">Vol</span>
           <input
             type="range"
             min={0}
@@ -498,7 +498,7 @@ export default function LooperBox({ startBpm, standalone }: Props) {
             {/* Delete */}
             <button
               onClick={() => deleteLayer(layer.id)}
-              className="text-[#555] hover:text-[#C41E3A] cursor-pointer transition-colors min-w-[34px] min-h-[34px] flex items-center justify-center"
+              className="text-[#888] hover:text-[#C41E3A] cursor-pointer transition-colors min-w-[34px] min-h-[34px] flex items-center justify-center"
               title="Delete layer"
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -510,7 +510,7 @@ export default function LooperBox({ startBpm, standalone }: Props) {
 
         {/* Empty layer slots */}
         {layers.length < MAX_LAYERS && layers.length > 0 && (
-          <div className="flex items-center gap-2 rounded-lg px-3 py-2 border border-dashed border-[#222] text-[#333]">
+          <div className="flex items-center gap-2 rounded-lg px-3 py-2 border border-dashed border-[#222] text-[#888]">
             <span className="font-label text-[10px]">
               Layer {layers.length + 1}: (empty)
             </span>
@@ -519,8 +519,8 @@ export default function LooperBox({ startBpm, standalone }: Props) {
 
         {layers.length === 0 && !recording && !countingIn && (
           <div className="border border-dashed border-[#222] rounded-lg p-6 text-center">
-            <div className="font-label text-[11px] text-[#444] mb-1">No layers yet</div>
-            <div className="font-label text-[9px] text-[#333]">Press Record to start your first loop</div>
+            <div className="font-label text-[11px] text-[#888] mb-1">No layers yet</div>
+            <div className="font-label text-[9px] text-[#888]">Press Record to start your first loop</div>
           </div>
         )}
       </div>
@@ -584,7 +584,7 @@ export default function LooperBox({ startBpm, standalone }: Props) {
         {layers.length > 0 && (
           <button
             onClick={clearAll}
-            className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg font-label text-[10px] cursor-pointer transition-all border border-[#333] text-[#555] hover:border-[#C41E3A40] hover:text-[#C41E3A]"
+            className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg font-label text-[10px] cursor-pointer transition-all border border-[#333] text-[#888] hover:border-[#C41E3A40] hover:text-[#C41E3A]"
           >
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2" />

@@ -662,7 +662,7 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
             background: micLevel > 0.8 ? "#ef4444" : micLevel > 0.5 ? "#f59e0b" : "#22c55e",
           }} />
       </div>
-      <span className="font-readout text-[8px] text-[#444] tabular-nums w-6">{Math.round(micLevel * 100)}%</span>
+      <span className="font-readout text-[8px] text-[#888] tabular-nums w-6">{Math.round(micLevel * 100)}%</span>
     </div>
   );
 
@@ -671,7 +671,7 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
     <div className="flex items-center gap-2">
     <button type="button" onClick={() => setMode(m => m === "guitar-only" ? "dual" : "guitar-only")}
       className={`flex items-center gap-1 px-2 py-1 rounded text-[9px] font-medium cursor-pointer border transition-all ${
-        mode === "dual" ? "bg-[#C41E3A]/15 text-[#C41E3A] border-[#C41E3A]/30" : "border-[#333] text-[#555] hover:text-[#888] hover:border-[#555]"
+        mode === "dual" ? "bg-[#C41E3A]/15 text-[#C41E3A] border-[#C41E3A]/30" : "border-[#333] text-[#888] hover:text-[#888] hover:border-[#555]"
       }`}
       title={mode === "dual" ? "Recording: Guitar + Browser Audio" : "Recording: Guitar Only - click to add browser audio"}>
       {mode === "dual" ? (
@@ -722,8 +722,8 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
           </div>
           {/* Time display */}
           <div className="flex justify-between">
-            <span className="font-readout text-[10px] text-[#666] tabular-nums">{playFmt(playTime)}</span>
-            <span className="font-readout text-[10px] text-[#444] tabular-nums">{playFmt(playDuration)}</span>
+            <span className="font-readout text-[10px] text-[#888] tabular-nums">{playFmt(playTime)}</span>
+            <span className="font-readout text-[10px] text-[#888] tabular-nums">{playFmt(playDuration)}</span>
           </div>
         </div>
       </div>
@@ -734,7 +734,7 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
         <div>
           <div className="flex items-center justify-between mb-1">
             <span className="font-label text-[10px] text-[#C41E3A]">Guitar</span>
-            <span className="font-readout text-[10px] text-[#555] tabular-nums">{mixMicVol}%</span>
+            <span className="font-readout text-[10px] text-[#888] tabular-nums">{mixMicVol}%</span>
           </div>
           <input type="range" min="0" max="150" value={mixMicVol}
             onChange={e => setMixMicVol(Number(e.target.value))}
@@ -745,7 +745,7 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
         <div>
           <div className="flex items-center justify-between mb-1">
             <span className="font-label text-[10px] text-[#D4A843]">Browser</span>
-            <span className="font-readout text-[10px] text-[#555] tabular-nums">{mixBrowserVol}%</span>
+            <span className="font-readout text-[10px] text-[#888] tabular-nums">{mixBrowserVol}%</span>
           </div>
           <input type="range" min="0" max="150" value={mixBrowserVol}
             onChange={e => setMixBrowserVol(Number(e.target.value))}
@@ -887,7 +887,7 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
               {levelMeter}
             </div>
           )}
-          {!isRec && <span className="font-label text-[10px] text-[#444]">
+          {!isRec && <span className="font-label text-[10px] text-[#888]">
             {mode === "dual" ? "Record guitar + browser audio" : "Press to record"}
           </span>}
         </div>
@@ -903,7 +903,7 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
 
       {savedList.length > 0 && !isMixing && (
         <div>
-          <div className="font-label text-[9px] text-[#444] mb-1">Recordings ({savedList.length})</div>
+          <div className="font-label text-[9px] text-[#888] mb-1">Recordings ({savedList.length})</div>
           {savedList.map((item, idx) => (
             <div key={idx} className="mb-2">
               <div className="flex items-center gap-1.5 mb-0.5">
@@ -912,13 +912,13 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
                     <input type="text" value={editName} onChange={e => setEditName(e.target.value)} autoFocus
                       className="input !py-0.5 !px-1.5 !text-[11px] flex-1" />
                     <button type="submit" className="font-label text-[9px] text-[#D4A843] hover:text-[#e5c060] cursor-pointer">Save</button>
-                    <button type="button" onClick={() => setEditingIdx(null)} className="font-label text-[9px] text-[#555] hover:text-[#888] cursor-pointer">Cancel</button>
+                    <button type="button" onClick={() => setEditingIdx(null)} className="font-label text-[9px] text-[#888] hover:text-[#888] cursor-pointer">Cancel</button>
                   </form>
                 ) : (
                   <>
                     <span className="font-heading text-[11px] text-[#999] truncate">{item.name || item.dt}</span>
                     <button type="button" onClick={() => { setEditingIdx(idx); setEditName(item.name || item.dt); }}
-                      className="flex-shrink-0 text-[#444] hover:text-[#D4A843] transition-colors cursor-pointer" title="Rename">
+                      className="flex-shrink-0 text-[#888] hover:text-[#D4A843] transition-colors cursor-pointer" title="Rename">
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
                       </svg>
@@ -929,14 +929,14 @@ export default function RecorderBox({ storageKey, exerciseName, expectedNotes, c
                       </span>
                     ) : (
                       <button type="button" onClick={() => handleSaveToLibrary(idx)}
-                        className="flex-shrink-0 text-[#444] hover:text-[#33CC33] transition-colors cursor-pointer" title="Save to Library">
+                        className="flex-shrink-0 text-[#888] hover:text-[#33CC33] transition-colors cursor-pointer" title="Save to Library">
                         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
                           <polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" />
                         </svg>
                       </button>
                     )}
-                    <span className="font-readout text-[9px] text-[#333]">{item.dt}</span>
+                    <span className="font-readout text-[9px] text-[#888]">{item.dt}</span>
                   </>
                 )}
               </div>
