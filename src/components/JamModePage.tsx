@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 import JamLooper from "@/components/JamLooper";
+import { JamFretboard } from "@/components/JamFretboard";
 import {
   PROGRESSIONS_BY_STYLE,
   JAM_STYLE_LIST,
@@ -1923,6 +1924,18 @@ export default function JamModePage() {
         </div>
 
         <div className="text-xs text-[#9a9590] font-label mb-2">{scaleInfo.name}</div>
+
+        {/* Visual fretboard — scale notes + current chord highlights */}
+        <div className="mb-3 -mx-1 sm:mx-0">
+          <JamFretboard
+            scaleNotes={scaleInfo.notes}
+            rootNote={settings.key.replace("m", "")}
+            chordRoot={currentChord.root}
+            chordQuality={currentChord.quality}
+            frets={15}
+            preferFlats={["F", "Bb", "Eb", "Ab", "Db"].includes(settings.key.replace("m", ""))}
+          />
+        </div>
 
         <div className="flex flex-wrap gap-1.5">
           {scaleInfo.notes.map((n, i) => (
