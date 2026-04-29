@@ -32,6 +32,9 @@ import {
 import ClipRegion, { type TrackRegion } from "./studio/ClipRegion";
 import TrackTimeline from "./studio/TrackTimeline";
 import TrackRow from "./studio/TrackRow";
+import TransportBar from "./studio/TransportBar";
+import DrumMachineGrid from "./studio/DrumMachineGrid";
+import MixerPanel from "./studio/MixerPanel";
 import { createRegionScheduler, type RegionScheduler } from "@/lib/regionScheduler";
 import { useStudioStore, type StudioTrack } from "@/stores/studioStore";
 
@@ -2430,295 +2433,43 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
     <div className="flex flex-col overflow-hidden select-none flex-1 min-h-0 h-full" style={{ background: "#0a0a0a", fontFamily: "'Inter', system-ui, sans-serif" }} dir="ltr">
 
       {/* ═══════════ TOP BAR: Transport + Toolbar (DAW style) ═══════════ */}
-      <div className="flex flex-wrap items-center min-h-14 px-2 sm:px-4 py-1 sm:py-0 gap-1 sm:gap-2 border-b flex-shrink-0 sm:flex-nowrap sm:overflow-x-auto scrollbar-hide" style={{ background: "linear-gradient(180deg, #151515 0%, #111111 100%)", borderColor: "#1e1e1e" }}>
+      <TransportBar
+        isRec={isRec}
+        recTime={recTime}
+        recLevel={recLevel}
+        inputDevices={inputDevices}
+        selectedInputDevice={selectedInputDevice}
+        setSelectedInputDevice={setSelectedInputDevice}
+        editingProjectName={editingProjectName}
+        setEditingProjectName={setEditingProjectName}
+        saveState={saveState}
+        lastSavedAt={lastSavedAt}
+        tracksLength={tracks.length}
+        zoom={zoom}
+        setZoom={setZoom}
+        pxPerSec={pxPerSec}
+        snapToGrid={snapToGrid}
+        setSnapToGrid={setSnapToGrid}
+        showExportMenu={showExportMenu}
+        setShowExportMenu={setShowExportMenu}
+        exportMenuPos={exportMenuPos}
+        setExportMenuPos={setExportMenuPos}
+        exporting={exporting}
+        exportProgress={exportProgress}
+        savingToLibrary={savingToLibrary}
+        exportMenuRef={exportMenuRef}
+        exportButtonRef={exportButtonRef}
+        onSetupMetronome={setupMetronome}
+        onPlay={playAll}
+        onStop={stopAll}
+        onRewind={rewindToStart}
+        onStartRec={startRec}
+        onStopRec={stopRec}
+        onSaveToRecordings={saveToRecordings}
+        onExportMix={exportMix}
+        fmtTime={fmtTime}
+      />
 
-        {/* LEFT: BPM + Metronome + Mic */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <div className="flex items-center gap-1 rounded-md px-2 py-1" style={{ background: "#0a0a0a", border: "1px solid #1e1e1e" }}>
-            <input type="number" min={40} max={300} value={bpm}
-              onChange={(e) => setBpm(Number(e.target.value))}
-              className="w-11 h-6 bg-transparent text-[#D4A843] text-xs text-center font-mono focus:outline-none" />
-            <span className="text-[8px] text-[#444] font-medium tracking-wider">BPM</span>
-          </div>
-
-          <button onClick={async () => { await setupMetronome(); setMetronomeOn(!metronomeOn); }}
-            title="Metronome (M)"
-            className={`w-8 h-8 rounded flex items-center justify-center transition-all cursor-pointer ${metronomeOn ? "text-[#D4A843]" : "text-[#555] hover:text-[#888]"}`}
-            style={{ background: metronomeOn ? "#2a2418" : "#0e0e0e", border: metronomeOn ? "1px solid #D4A84355" : "1px solid #1e1e1e" }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L8 22h8L12 2z"/><path d="M12 8l6-3"/></svg>
-          </button>
-          <div className="flex items-center gap-1" title={`Metronome volume ${Math.round(metronomeVolume * 100)}%`}>
-            <span className="text-[8px] text-[#555] font-medium tracking-wider">VOL</span>
-            <input type="range" min={0} max={1} step={0.05} value={metronomeVolume}
-              onChange={(e) => setMetronomeVolume(parseFloat(e.target.value))}
-              className="w-[60px] accent-[#D4A843]" />
-          </div>
-
-          <div className="hidden sm:flex items-center gap-1.5">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2">
-              <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/>
-            </svg>
-            <select value={selectedInputDevice}
-              onChange={(e) => setSelectedInputDevice(e.target.value)}
-              dir="ltr"
-              className="bg-[#0e0e0e] border border-[#1e1e1e] rounded px-1.5 py-0.5 text-[9px] text-[#666] outline-none focus:border-[#D4A843] cursor-pointer max-w-[120px] truncate">
-              {inputDevices.map((d) => {
-                const raw = d.label || `Mic ${d.deviceId.slice(0, 6)}`;
-                // Replace OS-locale "default" labels with English
-                const label = /^(default|ברירת|standard)/i.test(raw)
-                  ? "Default Mic"
-                  : (raw.length > 30 ? raw.slice(0, 30) + "..." : raw);
-                return <option key={d.deviceId} value={d.deviceId}>{label}</option>;
-              })}
-              {inputDevices.length === 0 && <option value="">No devices</option>}
-            </select>
-          </div>
-
-          {/* Preset selector — 5 buttons: Clean / Rock / Metal / Ambient / Lofi.
-              Drives every track's EQ3 / Compressor / Saturation / Pan per AUDIO_SPEC §3. */}
-          <div className="hidden md:flex items-center gap-0.5 rounded-md p-0.5"
-            style={{ background: "#0a0a0a", border: "1px solid #1e1e1e" }}
-            title="Studio preset (per-track EQ, compression, saturation, pan)">
-            <span className="text-[7px] text-[#444] font-medium tracking-wider px-1">PRESET</span>
-            {STUDIO_PRESET_LIST.map(p => (
-              <button key={p.id}
-                onClick={() => setStudioPresetId(p.id)}
-                className="text-[9px] px-1.5 py-[3px] rounded font-semibold transition-all cursor-pointer"
-                style={{
-                  background: studioPresetId === p.id ? "#D4A843" : "transparent",
-                  color: studioPresetId === p.id ? "#111" : "#666",
-                  border: studioPresetId === p.id ? "none" : "1px solid transparent",
-                }}
-                title={`${p.label} preset`}>
-                {p.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* CENTER: Transport controls */}
-        <div className="flex-1 flex items-center justify-center gap-1 sm:gap-1.5">
-          <button onClick={rewindToStart} title="Rewind (Enter)"
-            className="w-10 h-10 sm:w-8 sm:h-8 rounded flex items-center justify-center transition-all cursor-pointer group"
-            style={{ background: "#1a1a1a", border: "1px solid #252525" }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-[#777] group-hover:text-[#ccc] transition-colors">
-              <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
-            </svg>
-          </button>
-
-          {!playing ? (
-            <button onClick={playAll} title="Play (Space)" disabled={tracks.length === 0}
-              className="w-11 h-11 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer group disabled:opacity-30"
-              style={{ background: "linear-gradient(180deg, #1a3a1a 0%, #143014 100%)", border: "1px solid #33aa3355", boxShadow: "0 2px 8px rgba(34,197,94,0.1)" }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="ml-0.5 text-[#4ade80] group-hover:text-white transition-colors">
-                <path d="M8 5v14l11-7z"/>
-              </svg>
-            </button>
-          ) : (
-            <button onClick={stopAll} title="Pause (Space)"
-              className="w-11 h-11 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer"
-              style={{ background: "linear-gradient(180deg, #1a3a1a 0%, #143014 100%)", border: "1px solid #22c55e", boxShadow: "0 0 12px rgba(34,197,94,0.25)" }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="text-white">
-                <path d="M6 4h4v16H6zM14 4h4v16h-4z"/>
-              </svg>
-            </button>
-          )}
-
-          <button onClick={stopAll} title="Stop"
-            className="w-10 h-10 sm:w-8 sm:h-8 rounded flex items-center justify-center transition-all cursor-pointer group"
-            style={{ background: "#1a1a1a", border: "1px solid #252525" }}>
-            <div className="w-3 h-3 rounded-[2px] bg-[#777] group-hover:bg-[#ccc] transition-colors" />
-          </button>
-
-          {/* Record */}
-          {!isRec ? (
-            <button onClick={startRec} title="Record (R)"
-              className="w-10 h-10 sm:w-8 sm:h-8 rounded flex items-center justify-center transition-all cursor-pointer group"
-              style={{ background: "#1e1215", border: "1px solid #C41E3A44" }}>
-              <div className="w-3.5 h-3.5 rounded-full group-hover:scale-110 transition-transform" style={{ background: "radial-gradient(circle at 40% 35%, #ff4466, #C41E3A)" }} />
-            </button>
-          ) : (
-            <button onClick={stopRec} title="Stop Recording"
-              className="w-10 h-10 sm:w-8 sm:h-8 rounded flex items-center justify-center transition-all cursor-pointer"
-              style={{ background: "#C41E3A", border: "1px solid #ee3355", animation: "pulse 1.5s ease-in-out infinite" }}>
-              <div className="w-3 h-3 rounded-sm bg-white" />
-            </button>
-          )}
-
-          {/* Loop */}
-          <button onClick={() => setLooping(!looping)} title="Loop (C)"
-            className={`hidden sm:flex w-8 h-8 rounded items-center justify-center transition-all cursor-pointer ${looping ? "text-[#D4A843]" : "text-[#555] hover:text-[#888]"}`}
-            style={{ background: looping ? "#2a2418" : "#1a1a1a", border: looping ? "1px solid #D4A84355" : "1px solid #252525" }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/>
-            </svg>
-          </button>
-
-          <div className="hidden sm:block w-px h-6 bg-[#1e1e1e] mx-1" />
-
-          {/* Time display */}
-          <div className="hidden sm:flex px-3 py-1 rounded font-mono text-sm items-center min-w-[120px] justify-center relative overflow-hidden"
-            style={{ background: "#050505", border: "1px solid #1a1a1a", boxShadow: "inset 0 1px 4px rgba(0,0,0,0.5)" }}>
-            <span className="text-[#D4A84322] absolute tracking-[2px]" style={{ fontFamily: "'Courier New', monospace", fontSize: "15px" }}>88:88.8</span>
-            <span className="text-[#D4A843] relative tracking-[2px]" style={{ fontFamily: "'Courier New', monospace", fontSize: "15px", textShadow: "0 0 8px rgba(212,168,67,0.4)" }}>{fmtTime(currentTime)}</span>
-          </div>
-          <span className="hidden sm:inline text-[10px] text-[#333] font-mono">/</span>
-          <span className="hidden sm:inline text-[10px] text-[#444] font-mono">{fmtTime(duration)}</span>
-
-          {/* Recording indicator */}
-          {isRec && (
-            <div className="flex items-center gap-1.5 ml-2">
-              <div className="w-2 h-2 rounded-full bg-[#C41E3A] animate-pulse" />
-              <span className="font-mono text-[11px] text-[#C41E3A]">{fmtTime(recTime)}</span>
-              <div className="w-14 h-1.5 bg-[#0a0a0a] rounded overflow-hidden" style={{ border: "1px solid #1a1a1a" }}>
-                <div className="h-full transition-all duration-75 rounded" style={{
-                  width: `${Math.min(100, recLevel * 100)}%`,
-                  background: recLevel > 0.8 ? "linear-gradient(90deg, #22c55e, #ef4444)" : "linear-gradient(90deg, #22c55e, #D4A843)",
-                }} />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* RIGHT: Master volume + Save + Track count */}
-        <div className="flex items-center gap-2">
-          {/* Project name + auto-save status (Phase 3a) */}
-          <div className="hidden md:flex items-center gap-1.5 rounded-md px-2 py-1" style={{ background: "#0a0a0a", border: "1px solid #1e1e1e" }} title="Project name (auto-saves)">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            {editingProjectName ? (
-              <input
-                type="text"
-                value={projectName}
-                autoFocus
-                onChange={(e) => setProjectName(e.target.value)}
-                onBlur={() => setEditingProjectName(false)}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === "Escape") { e.preventDefault(); setEditingProjectName(false); } }}
-                maxLength={48}
-                className="w-28 bg-transparent text-[10px] text-[#D4A843] focus:outline-none"
-              />
-            ) : (
-              <button
-                onClick={() => setEditingProjectName(true)}
-                className="text-[10px] text-[#D4A843] hover:text-[#e8c66a] cursor-text max-w-[140px] truncate"
-                title="Click to rename project">
-                {projectName || "Untitled"}
-              </button>
-            )}
-            <span
-              className="text-[7px] font-mono tracking-wider"
-              style={{ color: saveState === "saving" ? "#D4A843" : saveState === "saved" ? "#22c55e" : "#444" }}
-              title={lastSavedAt ? `Last saved ${new Date(lastSavedAt).toLocaleTimeString()}` : "Not saved yet"}>
-              {saveState === "saving" ? "SAVING…" : lastSavedAt ? "SAVED" : ""}
-            </span>
-          </div>
-
-          <span className="text-[8px] text-[#333] font-mono hidden sm:inline">{tracks.length} trk</span>
-          {looping && <span className="text-[7px] text-[#D4A843] bg-[#D4A84315] px-1 py-0.5 rounded font-bold tracking-wider">LOOP</span>}
-
-          {/* Phase 3c: Snap-to-grid toggle */}
-          <button
-            onClick={() => setSnapToGrid((v) => !v)}
-            title="Snap to Grid (G)"
-            className={`hidden sm:flex items-center gap-1 px-2 py-1 rounded text-[9px] font-mono transition-all cursor-pointer ${snapToGrid ? "text-[#D4A843]" : "text-[#555] hover:text-[#888]"}`}
-            style={{ background: snapToGrid ? "#2a2418" : "#0e0e0e", border: snapToGrid ? "1px solid #D4A84355" : "1px solid #1e1e1e" }}>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-              <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
-            </svg>
-            <span>SNAP</span>
-          </button>
-
-          {/* Phase 3c: Zoom slider */}
-          <div className="hidden md:flex items-center gap-1" title={`Zoom ${zoom}% (${Math.round(pxPerSec)} px/sec)`}>
-            <span className="text-[7px] text-[#444] font-mono">ZOOM</span>
-            <input
-              type="range"
-              min={0}
-              max={100}
-              value={zoom}
-              onChange={(e) => setZoom(Number(e.target.value))}
-              className="w-16 accent-[#D4A843] h-[2px] cursor-pointer"
-            />
-            <span className="text-[8px] text-[#444] font-mono w-7 text-right">{zoom}%</span>
-          </div>
-
-          <div className="hidden sm:flex items-center gap-1">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" className="flex-shrink-0">
-              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 010 7.07"/>
-            </svg>
-            <input type="range" min={0} max={100} value={masterVol}
-              onChange={(e) => setMasterVol(Number(e.target.value))}
-              className="w-16 accent-[#D4A843] h-1 cursor-pointer" />
-            <span className="text-[8px] text-[#444] font-mono w-6">{masterVol}%</span>
-          </div>
-
-          <div ref={exportMenuRef} className="relative">
-            <button
-              ref={exportButtonRef}
-              onClick={() => {
-                const btn = exportButtonRef.current;
-                if (btn) {
-                  const r = btn.getBoundingClientRect();
-                  setExportMenuPos({ top: r.bottom + 4, right: Math.max(8, window.innerWidth - r.right) });
-                }
-                setShowExportMenu((v) => !v);
-              }}
-              disabled={tracks.length === 0 || savingToLibrary || exporting}
-              className="text-[9px] font-semibold px-2.5 py-1.5 rounded transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
-              style={{
-                background: tracks.length > 0 ? "linear-gradient(180deg, #D4A843 0%, #B8922E 100%)" : "#1a1a1a",
-                color: tracks.length > 0 ? "#111" : "#555",
-                border: tracks.length > 0 ? "none" : "1px solid #252525",
-              }}
-              title="Save / Export"
-              aria-haspopup="menu"
-              aria-expanded={showExportMenu}>
-              {exporting ? `Export ${exportProgress}%` : savingToLibrary ? "..." : "Save"}
-              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="6 9 12 15 18 9"/></svg>
-            </button>
-            {showExportMenu && (
-              <div
-                role="menu"
-                className="fixed w-44 rounded-md shadow-lg z-[100] overflow-hidden"
-                style={{
-                  background: "#0e0e0e",
-                  border: "1px solid #2a2a2a",
-                  top: exportMenuPos.top,
-                  right: exportMenuPos.right,
-                }}>
-                <button
-                  role="menuitem"
-                  onClick={() => { setShowExportMenu(false); saveToRecordings(); }}
-                  disabled={tracks.length === 0 || savingToLibrary}
-                  className="w-full text-left text-[10px] px-3 py-2 hover:bg-[#1a1a1a] transition-colors flex items-center gap-2 disabled:opacity-40"
-                  style={{ color: "#ccc" }}>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                  Save to Recordings
-                </button>
-                <div style={{ borderTop: "1px solid #1e1e1e" }} />
-                <button
-                  role="menuitem"
-                  onClick={() => exportMix("wav")}
-                  disabled={tracks.length === 0 || exporting}
-                  className="w-full text-left text-[10px] px-3 py-2 hover:bg-[#1a1a1a] transition-colors flex items-center gap-2 disabled:opacity-40"
-                  style={{ color: "#ccc" }}>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                  Download WAV
-                </button>
-                <button
-                  role="menuitem"
-                  onClick={() => exportMix("mp3")}
-                  disabled={tracks.length === 0 || exporting}
-                  className="w-full text-left text-[10px] px-3 py-2 hover:bg-[#1a1a1a] transition-colors flex items-center gap-2 disabled:opacity-40"
-                  style={{ color: "#ccc" }}>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                  Download MP3
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
 
       {/* ═══════════ CENTER: TRACK AREA (full width timeline) ═══════════ */}
       <div className="flex-1 overflow-y-auto overflow-x-auto"
@@ -2911,77 +2662,23 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
             {/* ─── DRUM MACHINE panel ─── */}
             {dockPanel === "drums" && (
               <div className="p-3">
-                {activeDrumTrack && activeDrumTrack.drumPattern ? (
-                  <div className="overflow-x-auto">
-                    <div className="flex items-center gap-3 mb-3">
-                      <button
-                        onClick={() => {
-                          if (drumPlaying) stopDrumPlayback();
-                          else if (activeDrumTrack.drumPattern) startDrumPlayback(activeDrumTrack.drumPattern, activeDrumTrack.id);
-                        }}
-                        className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-[11px] font-medium cursor-pointer transition-colors ${drumPlaying ? "bg-[#ef4444] text-white" : "bg-[#D4A843] text-[#111]"}`}>
-                        {drumPlaying ? "Stop" : "Play Pattern"}
-                      </button>
-                      <span className="text-[10px] text-[#555] font-mono">{bpm} BPM</span>
-                      <button onClick={() => {
-                        setTracks((prev) => prev.map((t) => t.id === activeDrumTrack.id ? { ...t, drumPattern: createEmptyDrumPattern() } : t));
-                      }} className="text-[10px] text-[#555] hover:text-[#ef4444] cursor-pointer transition-colors px-2 py-1 rounded border border-[#1e1e1e]">Clear</button>
-                      <select title="Drum preset"
-                        onChange={(e) => {
-                          const idx = Number(e.target.value);
-                          if (idx >= 0 && idx < DRUM_PRESETS.length) {
-                            setTracks((prev) => prev.map((t) => t.id === activeDrumTrack.id ? { ...t, drumPattern: DRUM_PRESETS[idx].pattern.map(r => [...r]) } : t));
-                          }
-                          e.target.value = "";
-                        }}
-                        defaultValue=""
-                        className="bg-[#1a1a1a] text-[10px] text-[#888] border border-[#2a2a2a] rounded px-2 py-1 cursor-pointer">
-                        <option value="" disabled>Presets...</option>
-                        {DRUM_PRESETS.map((p, i) => <option key={p.name} value={i}>{p.name}</option>)}
-                      </select>
-                      <span className="text-[9px] text-[#333] ml-auto">{activeDrumTrack.name}</span>
-                    </div>
-
-                    {/* Step grid - bigger cells (32px) with beat grouping */}
-                    <div className="inline-block" style={{ minWidth: "fit-content" }}>
-                      <div className="flex items-center mb-1" style={{ paddingLeft: 80 }}>
-                        {Array.from({ length: DRUM_STEPS }, (_, i) => (
-                          <div key={i}
-                            className={`flex items-center justify-center text-[8px] font-mono ${drumStep === i ? "text-[#D4A843] font-bold" : i % 4 === 0 ? "text-[#666]" : "text-[#333]"}`}
-                            style={{ width: 32, marginRight: i % 4 === 3 && i < DRUM_STEPS - 1 ? 6 : 0 }}>
-                            {i + 1}
-                          </div>
-                        ))}
-                      </div>
-                      {DRUM_INSTRUMENTS.map((instr, instrIdx) => (
-                        <div key={instr.name} className="flex items-center mb-[2px]">
-                          <div className="w-[80px] flex-shrink-0 text-[10px] text-[#888] truncate pr-2 text-right font-medium">{instr.name}</div>
-                          {activeDrumTrack.drumPattern![instrIdx].map((on, stepIdx) => (
-                            <button key={stepIdx}
-                              onClick={() => toggleDrumCell(activeDrumTrack.id, instrIdx, stepIdx)}
-                              style={{
-                                width: 32,
-                                height: 32,
-                                marginRight: stepIdx % 4 === 3 && stepIdx < DRUM_STEPS - 1 ? 6 : 0,
-                                borderRadius: 3,
-                                border: on ? "1px solid #D4A84366" : stepIdx % 4 === 0 ? "1px solid #2a2a2a" : "1px solid #1e1e1e",
-                                background: on
-                                  ? drumStep === stepIdx ? "#D4A843" : "#D4A84399"
-                                  : drumStep === stepIdx ? "#252525" : stepIdx % 4 === 0 ? "#1a1a1a" : "#141414",
-                                cursor: "pointer",
-                                transition: "all 0.1s",
-                              }}
-                            />
-                          ))}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-10 text-[#444] text-[11px]">
-                    No drum track selected. Add a drum track and click GRID to edit.
-                  </div>
-                )}
+                <DrumMachineGrid
+                  activeDrumTrack={activeDrumTrack}
+                  drumPlaying={drumPlaying}
+                  drumStep={drumStep}
+                  drumPresets={DRUM_PRESETS}
+                  onTogglePlay={() => {
+                    if (drumPlaying) stopDrumPlayback();
+                    else if (activeDrumTrack?.drumPattern) startDrumPlayback(activeDrumTrack.drumPattern, activeDrumTrack.id);
+                  }}
+                  onClearPattern={(trackId) => {
+                    setTracks((prev) => prev.map((t) => t.id === trackId ? { ...t, drumPattern: createEmptyDrumPattern() } : t));
+                  }}
+                  onLoadPreset={(trackId, idx) => {
+                    setTracks((prev) => prev.map((t) => t.id === trackId ? { ...t, drumPattern: DRUM_PRESETS[idx].pattern.map(r => [...r]) } : t));
+                  }}
+                  onToggleCell={toggleDrumCell}
+                />
               </div>
             )}
 
@@ -3195,61 +2892,22 @@ export default function StudioPage({ channelScale, channelMode, channelStyle, pe
             {/* ─── MIXER panel ─── */}
             {dockPanel === "mixer" && (
               <div className="p-3">
-                {tracks.length === 0 ? (
-                  <div className="text-center py-10 text-[#444] text-[11px]">No tracks to mix. Add some tracks first.</div>
-                ) : (
-                  <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: "thin", scrollbarColor: "#333 transparent" }}>
-                    {tracks.map((tr) => (
-                      <div key={tr.id} className="flex flex-col items-center gap-2 px-3 py-2 rounded-lg min-w-[70px]"
-                        style={{ background: "#0e0e0e", border: `1px solid ${tr.color}33` }}>
-                        <div className="w-2 h-2 rounded-full" style={{ background: tr.color }} />
-                        <span className="text-[8px] text-[#888] truncate max-w-[60px] text-center">{tr.name}</span>
-                        {/* Vertical fader representation */}
-                        <div className="relative w-3 h-32 rounded-full overflow-hidden" style={{ background: "#1a1a1a" }}>
-                          <div className="absolute bottom-0 w-full rounded-full transition-all" style={{ height: `${tr.volume}%`, background: `${tr.color}88` }} />
-                        </div>
-                        <input type="range" min={0} max={100} value={tr.volume}
-                          onChange={(e) => updateTrackVol(tr.id, Number(e.target.value))}
-                          className="w-20 h-[2px] cursor-pointer -rotate-0" style={{ accentColor: tr.color }} />
-                        <span className="text-[8px] text-[#555] font-mono">{tr.volume}%</span>
-                        <div className="flex gap-1">
-                          <button onClick={() => {
-                            setTracks(prev => {
-                              const allOthersMuted = prev.filter(t => t.id !== tr.id).every(t => t.muted);
-                              if (allOthersMuted) return prev.map(t => ({ ...t, muted: false }));
-                              return prev.map(t => t.id === tr.id ? { ...t, muted: false } : { ...t, muted: true });
-                            });
-                          }}
-                            className={`text-[7px] font-bold w-5 h-5 rounded cursor-pointer flex items-center justify-center transition-all ${
-                              !tr.muted && tracks.filter(t => t.id !== tr.id).every(t => t.muted) && tracks.length > 1
-                                ? "text-[#111]" : "border border-[#2a2a2a] text-[#555] hover:border-[#D4A843] hover:text-[#D4A843]"
-                            }`}
-                            style={{ background: !tr.muted && tracks.filter(t => t.id !== tr.id).every(t => t.muted) && tracks.length > 1 ? "#D4A843" : "transparent" }}>
-                            S
-                          </button>
-                          <button onClick={() => toggleMute(tr.id)}
-                            className={`text-[7px] font-bold w-5 h-5 rounded cursor-pointer flex items-center justify-center transition-all ${tr.muted ? "text-white" : "border border-[#2a2a2a] text-[#555] hover:border-[#ef4444] hover:text-[#ef4444]"}`}
-                            style={{ background: tr.muted ? "#ef4444" : "transparent" }}>
-                            M
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                    {/* Master channel */}
-                    <div className="flex flex-col items-center gap-2 px-3 py-2 rounded-lg min-w-[70px]"
-                      style={{ background: "#0e0e0e", border: "1px solid #D4A84333" }}>
-                      <div className="w-2 h-2 rounded-full" style={{ background: "#D4A843" }} />
-                      <span className="text-[8px] text-[#D4A843] font-medium">Master</span>
-                      <div className="relative w-3 h-32 rounded-full overflow-hidden" style={{ background: "#1a1a1a" }}>
-                        <div className="absolute bottom-0 w-full rounded-full transition-all" style={{ height: `${masterVol}%`, background: "#D4A84388" }} />
-                      </div>
-                      <input type="range" min={0} max={100} value={masterVol}
-                        onChange={(e) => setMasterVol(Number(e.target.value))}
-                        className="w-20 h-[2px] cursor-pointer accent-[#D4A843]" />
-                      <span className="text-[8px] text-[#555] font-mono">{masterVol}%</span>
-                    </div>
-                  </div>
-                )}
+                <MixerPanel
+                  updateTrackVol={updateTrackVol}
+                  toggleMute={toggleMute}
+                  onSoloToggle={(trackId) => {
+                    setTracks(prev => {
+                      const allOthersMuted = prev.filter(t => t.id !== trackId).every(t => t.muted);
+                      if (allOthersMuted) return prev.map(t => ({ ...t, muted: false }));
+                      return prev.map(t => t.id === trackId ? { ...t, muted: false } : { ...t, muted: true });
+                    });
+                  }}
+                  isSoloByMute={(trackId) => {
+                    const t = tracks.find(x => x.id === trackId);
+                    if (!t) return false;
+                    return !t.muted && tracks.filter(x => x.id !== trackId).every(x => x.muted) && tracks.length > 1;
+                  }}
+                />
               </div>
             )}
 
