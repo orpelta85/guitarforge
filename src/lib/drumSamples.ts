@@ -9,12 +9,15 @@
 // at the network layer (404, decode error) is treated as "use synth" and is
 // not retried — keeps the Studio responsive without manual setup.
 
+// `null` entries skip the fetch and force the synth fallback (no 404 noise in
+// the console). Add a real file to /public/audio/drums/ then swap the entry
+// to its filename to enable sample playback.
 export const DRUM_SAMPLE_FILES = [
   "kick.wav",
   "snare.wav",
   "hihat-closed.wav",
   "hihat-open.wav",
-  "clap.wav",
+  null, // clap — no sample yet, use synth
   "ride.wav",
   "tom-low.wav",
   "tom-high.wav",
@@ -46,7 +49,7 @@ async function fetchSample(
   index: DrumIndex,
 ): Promise<AudioBuffer | null> {
   const filename = DRUM_SAMPLE_FILES[index];
-  if (!filename) return null;
+  if (!filename) return null; // null entry → use synth, no fetch
   const url = `/audio/drums/${filename}`;
   try {
     const response = await fetch(url);

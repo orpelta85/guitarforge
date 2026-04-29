@@ -606,7 +606,8 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
         s.player.scrollOffsetY = 0;
         s.player.scrollMode = 0 as any; // ScrollMode.Off
         s.display.layoutMode = 0;
-        s.display.staveProfile = 4;
+        // Default to ScoreTab (both notation + tab) to match initial staveMode="both"
+        s.display.staveProfile = 1;
 
         // CRITICAL: Register a capture-phase mousedown blocker on mainRef
         // BEFORE alphaTab does. Same-element capture listeners fire in
@@ -1210,7 +1211,8 @@ export default function GpFileUploader({ exerciseId, tex, songName, gpUrl }: { e
     const api = apiRef.current;
     if (!api) return;
     api.settings.display.layoutMode = l === "horizontal" ? 1 : 0;
-    api.settings.display.staveProfile = s === "tab" ? 2 : s === "score" ? 4 : 3;
+    // alphaTab StaveProfile enum: 1=ScoreTab(both), 2=Score(notation only), 3=Tab(tab only)
+    api.settings.display.staveProfile = s === "tab" ? 3 : s === "score" ? 2 : 1;
     api.settings.display.scale = z;
     api.updateSettings(); api.render();
   }
