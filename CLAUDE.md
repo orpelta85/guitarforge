@@ -38,7 +38,15 @@ Every ~1 hour of active work, automatically commit and push all changes to GitHu
 
 ## Running
 ```bash
-cd C:\Users\User\guitarforge
+cd C:\Users\orpel\guitarforge
 npm run dev    # http://localhost:3000
 npm run build  # production build
+npx tsc --noEmit   # type check
 ```
+
+## Working with agents on this project
+Subagents receive CLAUDE.md, rules and memory - but NOT the conversation. Anything
+task-specific (which file, which error, what was already decided) must be in the prompt.
+
+Subagents collect information and verify. Implementation stays in the main session.
+Invoke an agent by name; auto-routing is unreliable.
